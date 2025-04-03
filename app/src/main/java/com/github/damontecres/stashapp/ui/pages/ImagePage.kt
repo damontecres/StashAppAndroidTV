@@ -74,6 +74,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asFlow
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -85,6 +87,7 @@ import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
+import androidx.preference.PreferenceManager
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
@@ -136,12 +139,40 @@ import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.formatBytes
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlin.properties.Delegates
 
 private const val TAG = "ImagePage"
 
-class ImageDetailsViewModel : ViewModel() {
+class ImageDetailsViewModel :
+    ViewModel(),
+    SlideshowControls {
     private var server: StashServer? = null
+
+    private val _slideshow = MutableLiveData(false)
+
+    /**
+     * Whether slideshow mode is on or off
+     */
+    val slideshow: LiveData<Boolean> = _slideshow
+    private val _slideshowPaused = MutableLiveData(false)
+    val slideshowPaused: LiveData<Boolean> = _slideshowPaused
+
+    /**
+     * Whether the slideshow is actively running meaning slideshow mode is ON and is currently NOT paused
+     */
+    val slideshowActive =
+        slideshow
+            .asFlow()
+            .combine(slideshowPaused.asFlow()) { slideshow, paused ->
+                slideshow && !paused
+            }.asLiveData()
+
+    var slideshowDelay by Delegates.notNull<Long>()
 
     val pager = MutableLiveData<ComposePager<ImageData>>()
     private var position = 0
@@ -160,8 +191,11 @@ class ImageDetailsViewModel : ViewModel() {
         server: StashServer,
         filterArgs: FilterArgs,
         startPosition: Int,
+        slideshow: Boolean,
+        slideshowDelay: Long,
     ): ImageDetailsViewModel {
         Log.v(TAG, "View model init")
+        this.slideshowDelay = slideshowDelay
         if (pager.value?.filter != filterArgs || server != this.server) {
             if (filterArgs.dataType != DataType.IMAGE) {
                 throw IllegalArgumentException("Cannot use ${filterArgs.dataType}")
@@ -178,7 +212,12 @@ class ImageDetailsViewModel : ViewModel() {
                 pager.init()
                 Log.v(TAG, "Pager size: ${pager.size()}")
                 this@ImageDetailsViewModel.pager.value = pager
+                this@ImageDetailsViewModel._slideshow.value = slideshow
                 updatePosition(startPosition)
+                if (slideshow) {
+                    startSlideshow()
+                    pulseSlideshow()
+                }
             }
         }
 
@@ -320,6 +359,54 @@ class ImageDetailsViewModel : ViewModel() {
         }
     }
 
+    private var slideshowJob: Job? = null
+
+    override fun startSlideshow() {
+        _slideshow.value = true
+        _slideshowPaused.value = false
+        if (_image.value?.isImageClip == false) {
+            pulseSlideshow()
+        }
+    }
+
+    override fun stopSlideshow() {
+        slideshowJob?.cancel()
+        _slideshow.value = false
+    }
+
+    override fun pauseSlideshow() {
+        if (_slideshow.value == true) {
+            _slideshowPaused.value = true
+            slideshowJob?.cancel()
+        }
+    }
+
+    override fun unpauseSlideshow() {
+        if (_slideshow.value == true) {
+            _slideshowPaused.value = false
+        }
+    }
+
+    override fun pulseSlideshow() = pulseSlideshow(slideshowDelay)
+
+    override fun pulseSlideshow(milliseconds: Long) {
+        Log.v(TAG, "pulseSlideshow")
+        slideshowJob?.cancel()
+        if (slideshow.value!!) {
+            slideshowJob =
+                viewModelScope
+                    .launch(StashCoroutineExceptionHandler()) {
+                        delay(milliseconds)
+                        Log.v(TAG, "pulseSlideshow after delay")
+                        if (slideshowActive.value == true) {
+                            nextImage()
+                        }
+                    }.apply {
+                        invokeOnCompletion { if (it !is CancellationException) pulseSlideshow() }
+                    }
+        }
+    }
+
     companion object {
 //        val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
 //        val FILTER_KEY = object : CreationExtras.Key<FilterArgs> {}
@@ -334,6 +421,20 @@ class ImageDetailsViewModel : ViewModel() {
 //                }
 //            }
     }
+}
+
+interface SlideshowControls {
+    fun startSlideshow()
+
+    fun stopSlideshow()
+
+    fun pauseSlideshow()
+
+    fun unpauseSlideshow()
+
+    fun pulseSlideshow()
+
+    fun pulseSlideshow(milliseconds: Long)
 }
 
 sealed class ImageLoadingState {
@@ -359,9 +460,17 @@ fun ImagePage(
     modifier: Modifier = Modifier,
     viewModel: ImageDetailsViewModel = viewModel(),
 ) {
+    val context = LocalContext.current
     LaunchedEffect(server, filter) {
-        viewModel.init(server, filter, startPosition)
+        val slideshowDelay =
+            PreferenceManager.getDefaultSharedPreferences(context).getInt(
+                StashApplication.getApplication().getString(R.string.pref_key_slideshow_duration),
+                StashApplication.getApplication().resources.getInteger(R.integer.pref_key_slideshow_duration_default),
+            ) * 1000L
+
+        viewModel.init(server, filter, startPosition, startSlideshow, slideshowDelay)
     }
+    val slideshowControls: SlideshowControls = viewModel
 
     val imageState by viewModel.image.observeAsState()
     val tags by viewModel.tags.observeAsState(listOf())
@@ -392,6 +501,9 @@ fun ImagePage(
         label = "image_panY",
     )
 
+    val slideshowEnabled by viewModel.slideshow.observeAsState(false)
+    val slideshowActive by viewModel.slideshowActive.observeAsState(false)
+
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
@@ -410,8 +522,6 @@ fun ImagePage(
     LaunchedEffect(imageState) {
         reset(true)
     }
-
-    val context = LocalContext.current
     val player =
         remember {
             StashExoPlayer.getInstance(context, server).apply {
@@ -425,9 +535,30 @@ fun ImagePage(
         }
     }
 
+    val playSlideshowDelay =
+        remember {
+            PreferenceManager
+                .getDefaultSharedPreferences(context)
+                .getInt(
+                    context.getString(R.string.pref_key_slideshow_duration_image_clip),
+                    context.resources.getInteger(R.integer.pref_key_slideshow_duration_default_image_clip),
+                ).toLong()
+        }
     val presentationState = rememberPresentationState(player)
     LaunchedEffect(player) {
         maybeMuteAudio(context, player)
+        StashExoPlayer.addListener(
+            object : Player.Listener {
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (playbackState == Player.STATE_ENDED) {
+                        viewModel.pulseSlideshow(playSlideshowDelay)
+                    }
+                }
+            },
+        )
+    }
+    LaunchedEffect(slideshowActive) {
+        player.repeatMode = if (slideshowEnabled) Player.REPEAT_MODE_OFF else Player.REPEAT_MODE_ONE
     }
 
     Box(
@@ -459,10 +590,16 @@ fun ImagePage(
                         }
                     } else if (showOverlay && it.key == Key.Back) {
                         showOverlay = false
+                        viewModel.unpauseSlideshow()
                         result = true
                     } else if (!showOverlay && it.key != Key.Back) {
                         showOverlay = true
+                        viewModel.pauseSlideshow()
                         result = true
+                    }
+                    if (result) {
+                        // Handled the key, so reset the slideshow timer
+                        viewModel.pulseSlideshow()
                     }
                     result
                 },
@@ -477,9 +614,20 @@ fun ImagePage(
                                 .setUri(image.paths.image)
                                 .build()
                         player.setMediaItem(mediaItem)
-                        player.repeatMode = Player.REPEAT_MODE_ONE
+                        player.repeatMode =
+                            if (slideshowEnabled) {
+                                Player.REPEAT_MODE_OFF
+                            } else {
+                                Player.REPEAT_MODE_ONE
+                            }
                         player.prepare()
                         player.play()
+                        viewModel.pulseSlideshow(Long.MAX_VALUE)
+                    }
+                    LifecycleStartEffect(Unit) {
+                        onStopOrDispose {
+                            player.stop()
+                        }
                     }
                     val contentScale = ContentScale.Fit
                     val scaledModifier =
@@ -537,6 +685,8 @@ fun ImagePage(
                             .background(AppColors.TransparentBlack50),
                     server = server,
                     player = player,
+                    slideshowControls = slideshowControls,
+                    slideshowEnabled = slideshowEnabled,
                     image = image,
                     tags = tags,
                     performers = performers,
@@ -570,10 +720,13 @@ fun ImagePage(
     }
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun ImageOverlay(
     server: StashServer,
     player: Player,
+    slideshowControls: SlideshowControls,
+    slideshowEnabled: Boolean,
     image: ImageData,
     tags: List<TagData>,
     performers: List<PerformerData>,
@@ -632,6 +785,28 @@ fun ImageOverlay(
                         },
                 )
         }
+
+    val startStopSlideshow =
+        DialogItem(
+            headlineContent = {
+                Text(
+                    text =
+                        if (slideshowEnabled) {
+                            stringResource(R.string.play_slideshow)
+                        } else {
+                            stringResource(R.string.stop_slideshow)
+                        },
+                )
+            },
+            leadingContent = {
+                Icon(
+                    painter = painterResource(if (slideshowEnabled) R.drawable.baseline_pause_24 else R.drawable.baseline_play_arrow_24),
+                    contentDescription = null,
+                )
+            },
+            onClick = { if (slideshowEnabled) slideshowControls.stopSlideshow() else slideshowControls.startSlideshow() },
+        )
+
     LazyColumn(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 135.dp),
         modifier = modifier.fillMaxSize(),
@@ -650,20 +825,28 @@ fun ImageOverlay(
                             title = context.getString(R.string.more) + "...",
                             fromLongClick = false,
                             items =
-                                listOf(
-                                    DialogItem(
-                                        context.getString(R.string.add_performer),
-                                        DataType.PERFORMER.iconStringId,
-                                    ) {
-                                        searchForDataType = SearchForParams(DataType.PERFORMER)
-                                    },
-                                    DialogItem(
-                                        context.getString(R.string.add_tag),
-                                        DataType.TAG.iconStringId,
-                                    ) {
-                                        searchForDataType = SearchForParams(DataType.TAG)
-                                    },
-                                ),
+                                buildList {
+                                    add(startStopSlideshow)
+                                    if (readOnlyModeDisabled()) {
+                                        add(
+                                            DialogItem(
+                                                context.getString(R.string.add_performer),
+                                                DataType.PERFORMER.iconStringId,
+                                            ) {
+                                                searchForDataType =
+                                                    SearchForParams(DataType.PERFORMER)
+                                            },
+                                        )
+                                        add(
+                                            DialogItem(
+                                                context.getString(R.string.add_tag),
+                                                DataType.TAG.iconStringId,
+                                            ) {
+                                                searchForDataType = SearchForParams(DataType.TAG)
+                                            },
+                                        )
+                                    }
+                                },
                         )
                 },
                 oCounterOnClick = { oCountAction.invoke(MutationEngine::incrementImageOCounter) },
