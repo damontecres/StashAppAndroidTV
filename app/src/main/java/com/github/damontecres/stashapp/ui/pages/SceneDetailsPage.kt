@@ -47,7 +47,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
@@ -58,7 +57,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -88,7 +86,6 @@ import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import androidx.tv.material3.surfaceColorAtElevation
 import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
@@ -118,7 +115,6 @@ import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
-import com.github.damontecres.stashapp.ui.Material3MainTheme
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -308,7 +304,7 @@ class SceneDetailsViewModel(
                 initializer {
                     val server = this[SERVER_KEY]!!
                     val sceneId = this[SCENE_ID_KEY]!!
-                    SceneDetailsViewModel(server, sceneId).init()
+                    SceneDetailsViewModel(server, sceneId)
                 }
             }
     }
@@ -349,6 +345,10 @@ fun SceneDetailsPage(
     val markers by viewModel.markers.observeAsState(listOf())
     val rating100 by viewModel.rating100.observeAsState(0)
     val oCount by viewModel.oCount.observeAsState(0)
+
+    LaunchedEffect(Unit) {
+        viewModel.init()
+    }
 
     when (val state = loadingState) {
         SceneLoadingState.Error ->
@@ -673,50 +673,24 @@ fun SceneDetails(
             waitToLoad = params.fromLongClick,
         )
     }
-    searchForDataType?.let { params ->
-        Material3MainTheme {
-            Dialog(
-                onDismissRequest = { searchForDataType = null },
-                properties =
-                    DialogProperties(
-                        usePlatformDefaultWidth = false,
-                    ),
-            ) {
-                val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
-                val color = MaterialTheme.colorScheme.secondaryContainer
-                Box(
-                    Modifier
-                        .fillMaxSize(.9f)
-                        .graphicsLayer {
-                            this.clip = true
-                            this.shape = RoundedCornerShape(28.0.dp)
-                        }.drawBehind { drawRect(color = color) }
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
-                        .padding(PaddingValues(12.dp)),
-                    propagateMinConstraints = true,
-                ) {
-                    SearchForPage(
-                        server = server,
-                        title = "Add " + stringResource(params.dataType.stringId),
-                        searchId = params.id,
-                        dataType = params.dataType,
-                        itemOnClick = { id, item ->
-                            // Close dialog
-                            searchForDataType = null
-                            if (item is TagData && id >= 0) {
-                                // Marker primary tag
-                                val marker = fakeMarker(item.id, id.toSeconds, scene)
-                                addItem.invoke(marker)
-                            } else {
-                                addItem.invoke(item)
-                            }
-                        },
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
+    SearchForDialog(
+        show = searchForDataType != null,
+        dataType = searchForDataType?.dataType ?: DataType.TAG,
+        onItemClick = { item ->
+            val id = searchForDataType!!.id
+            searchForDataType = null
+            if (item is TagData && id >= 0) {
+                // Marker primary tag
+                val marker = fakeMarker(item.id, id.toSeconds, scene)
+                addItem.invoke(marker)
+            } else {
+                addItem.invoke(item)
             }
-        }
-    }
+        },
+        onDismissRequest = { searchForDataType = null },
+        dialogTitle = null,
+        dismissOnClick = false,
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)

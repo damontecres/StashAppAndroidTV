@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
-import android.util.Log
 import androidx.annotation.IntRange
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
@@ -24,13 +23,16 @@ import kotlinx.coroutines.flow.debounce
 class ControllerViewState internal constructor(
     @IntRange(from = 0)
     private val hideSeconds: Int,
+    val controlsEnabled: Boolean,
 ) {
     private val channel = Channel<Int>(CONFLATED)
     private var _controlsVisible by mutableStateOf(false)
     val controlsVisible get() = _controlsVisible
 
     fun showControls(seconds: Int = hideSeconds) {
-        _controlsVisible = true
+        if (controlsEnabled) {
+            _controlsVisible = true
+        }
         pulseControls(seconds)
     }
 
@@ -42,7 +44,7 @@ class ControllerViewState internal constructor(
             .consumeAsFlow()
             .debounce { it.toLong() * 1000 }
             .collect {
-                Log.i("ControllerViewState", "collect")
+//                Log.i("ControllerViewState", "collect")
                 _controlsVisible = false
             }
     }

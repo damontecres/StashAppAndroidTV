@@ -1,11 +1,16 @@
 package com.github.damontecres.stashapp.ui.pages
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -20,14 +25,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import androidx.tv.material3.surfaceColorAtElevation
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SearchForFragment
@@ -44,6 +54,7 @@ import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.room.RecentSearchItem
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.Material3MainTheme
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -55,6 +66,57 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val TAG = "SearchForPage"
+
+@Composable
+fun SearchForDialog(
+    show: Boolean,
+    dataType: DataType,
+    onItemClick: (StashData) -> Unit,
+    onDismissRequest: () -> Unit,
+    dialogTitle: String? = null,
+    dismissOnClick: Boolean = true,
+) {
+    if (show) {
+        Material3MainTheme {
+            val server = LocalGlobalContext.current.server
+            Dialog(
+                onDismissRequest = onDismissRequest,
+                properties =
+                    DialogProperties(
+                        usePlatformDefaultWidth = false,
+                    ),
+            ) {
+                val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+                val color = MaterialTheme.colorScheme.secondaryContainer
+                Box(
+                    Modifier
+                        .fillMaxSize(.9f)
+                        .graphicsLayer {
+                            this.clip = true
+                            this.shape = RoundedCornerShape(28.0.dp)
+                        }.drawBehind { drawRect(color = color) }
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                        .padding(PaddingValues(12.dp)),
+                    propagateMinConstraints = true,
+                ) {
+                    SearchForPage(
+                        server = server,
+                        title = dialogTitle ?: ("Add " + stringResource(dataType.stringId)),
+                        searchId = 0,
+                        dataType = dataType,
+                        itemOnClick = { id, item ->
+                            if (dismissOnClick) {
+                                onDismissRequest.invoke()
+                            }
+                            onItemClick.invoke(item)
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun SearchForPage(

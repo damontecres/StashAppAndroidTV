@@ -25,7 +25,10 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.PlayerSurface
@@ -33,13 +36,42 @@ import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
 import com.github.damontecres.stashapp.StashExoPlayer
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
+import com.github.damontecres.stashapp.ui.pages.SearchForDialog
+import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 const val TAG = "PlaybackPageContent"
+
+class PlaybackViewModel : ViewModel() {
+    private lateinit var server: StashServer
+    private lateinit var scene: Scene
+
+    fun init(
+        server: StashServer,
+        scene: Scene,
+    ) {
+        this.server = server
+        this.scene = scene
+    }
+
+    fun addMarker(
+        position: Long,
+        tagId: String,
+    ) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            val mutationEngine = MutationEngine(server)
+            mutationEngine.createMarker(scene.id, position, tagId)
+        }
+    }
+}
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -49,6 +81,8 @@ fun PlaybackPageContent(
     startPosition: Long,
     playbackMode: PlaybackMode,
     modifier: Modifier = Modifier,
+    controlsEnabled: Boolean = true,
+    viewModel: PlaybackViewModel = viewModel(),
 ) {
     val context = LocalContext.current
     val player =
@@ -63,6 +97,9 @@ fun PlaybackPageContent(
             StashExoPlayer.releasePlayer()
         }
     }
+    LaunchedEffect(server, scene.id) {
+        viewModel.init(server, scene)
+    }
 
     var showControls by remember { mutableStateOf(true) }
     var currentContentScaleIndex by remember { mutableIntStateOf(0) }
@@ -74,6 +111,9 @@ fun PlaybackPageContent(
 
     var contentCurrentPosition by remember { mutableLongStateOf(0L) }
 
+    var createMarkerPosition by remember { mutableLongStateOf(-1L) }
+    var playingBeforeCreateMarker by remember { mutableStateOf(false) }
+
     LaunchedEffect(server, scene, player) {
         val streamDecision = getStreamDecision(context, scene, playbackMode)
         val media = buildMediaItem(context, streamDecision, scene)
@@ -82,7 +122,7 @@ fun PlaybackPageContent(
     }
 
     val controllerViewState =
-        remember { ControllerViewState(3) }.also {
+        remember { ControllerViewState(3, controlsEnabled) }.also {
             LaunchedEffect(it) {
                 it.observe()
             }
@@ -96,7 +136,9 @@ fun PlaybackPageContent(
             .background(Color.Black)
             .onKeyEvent {
                 var result = true
-                if (it.type != KeyEventType.KeyUp) {
+                if (!controlsEnabled) {
+                    result = false
+                } else if (it.type != KeyEventType.KeyUp) {
                     result = false
                 } else if (isDpad(it)) {
                     if (!controllerViewState.controlsVisible) {
@@ -151,8 +193,40 @@ fun PlaybackPageContent(
             scene = scene,
             oCounter = scene.oCounter ?: 0,
             player = player,
-            onPlaybackActionClick = {},
+            onPlaybackActionClick = {
+                when (it) {
+                    PlaybackAction.CreateMarker -> {
+                        playingBeforeCreateMarker = player.isPlaying
+                        player.pause()
+                        createMarkerPosition = player.currentPosition
+                    }
+
+                    PlaybackAction.OCount -> {
+                    }
+
+                    PlaybackAction.ShowDebug -> {
+                        // no-op
+                    }
+                }
+            },
             controllerViewState = controllerViewState,
         )
     }
+    val dismiss = {
+        createMarkerPosition = -1
+        if (playingBeforeCreateMarker) {
+            player.play()
+        }
+    }
+    SearchForDialog(
+        show = createMarkerPosition >= 0,
+        dataType = DataType.TAG,
+        onItemClick = { item ->
+            viewModel.addMarker(createMarkerPosition, item.id)
+            dismiss.invoke()
+        },
+        onDismissRequest = dismiss,
+        dialogTitle = "Create marker at ${createMarkerPosition.milliseconds}?",
+        dismissOnClick = false,
+    )
 }
