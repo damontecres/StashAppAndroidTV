@@ -48,6 +48,7 @@ fun MainTheme(content: @Composable () -> Unit) {
         colorScheme =
             darkColorScheme(
                 primary = Color(0xFF30404D),
+                primaryContainer = Color(0xFF30404d),
                 onPrimary = Color.White,
                 onPrimaryContainer = Color.White,
                 secondary = Color(0xFF111a20),
@@ -55,7 +56,6 @@ fun MainTheme(content: @Composable () -> Unit) {
                 onSecondary = Color.White,
                 onSecondaryContainer = Color.White,
                 onTertiary = Color.White,
-                primaryContainer = Color(0xFF30404d),
                 background = Color(0xFF202b33),
                 onBackground = Color.White,
                 surface = Color(0xFF202b33),

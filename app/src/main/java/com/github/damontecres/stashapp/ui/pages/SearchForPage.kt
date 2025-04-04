@@ -11,14 +11,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,12 +25,10 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.preference.PreferenceManager
-import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
@@ -61,6 +53,7 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.Material3MainTheme
+import com.github.damontecres.stashapp.ui.components.SearchEditTextBox
 import com.github.damontecres.stashapp.util.CreateNew
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -291,35 +284,15 @@ fun SearchForPage(
                 color = MaterialTheme.colorScheme.onBackground,
             )
         }
-        Material3MainTheme {
-            TextField(
-                value = searchQuery,
-                onValueChange = { newQuery ->
-                    searchQuery = newQuery
-                    search(newQuery)
-                },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.Search,
-                        contentDescription = stringResource(R.string.stashapp_actions_search),
-                    )
-                },
-                maxLines = 1,
-                shape = CircleShape,
-                keyboardOptions =
-                    KeyboardOptions(
-                        autoCorrectEnabled = false,
-                        imeAction = ImeAction.Search,
-                    ),
-                keyboardActions =
-                    KeyboardActions(
-                        onSearch = {
-                            search(searchQuery)
-                            this.defaultKeyboardAction(ImeAction.Done)
-                        },
-                    ),
-            )
-        }
+        SearchEditTextBox(
+            value = searchQuery,
+            onValueChange = { newQuery ->
+                searchQuery = newQuery
+                search(newQuery)
+            },
+            onSearchClick = { search(searchQuery) },
+        )
+
         val startPadding = 8.dp
         val bottomPadding = 8.dp
 

@@ -10,13 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,14 +26,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.preference.PreferenceManager
-import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.apollographql.apollo.api.Optional
@@ -52,10 +43,10 @@ import com.github.damontecres.stashapp.data.toStashFindFilter
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.Material3MainTheme
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.SearchEditTextBox
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -192,61 +183,31 @@ fun SearchPage(
         contentPadding = PaddingValues(16.dp),
     ) {
         stickyHeader {
-            Material3MainTheme {
-                var job: Job? = null
-                val searchDelay =
-                    PreferenceManager
-                        .getDefaultSharedPreferences(context)
-                        .getInt(context.getString(R.string.pref_key_search_delay), 500)
-                        .toLong()
-                TextField(
-                    modifier = Modifier.focusRequester(focusRequester),
-                    textStyle = MaterialTheme.typography.bodyMedium,
-                    colors =
-                        TextFieldDefaults.colors().copy(
-                            unfocusedContainerColor =
-                                MaterialTheme.colorScheme.surfaceVariant.copy(
-                                    alpha = 0.8f,
-                                ),
-                            focusedContainerColor =
-                                MaterialTheme.colorScheme.surfaceVariant.copy(
-                                    alpha = 0.8f,
-                                ),
-                        ),
-                    value = searchQuery,
-                    onValueChange = { newQuery ->
-                        searchQuery = newQuery
-                        job?.cancel()
-                        job =
-                            scope.launch {
-                                delay(searchDelay)
-                                viewModel.search(newQuery)
-                            }
-                    },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = stringResource(R.string.stashapp_actions_search),
-                        )
-                    },
-                    maxLines = 1,
-                    shape = CircleShape,
-                    keyboardOptions =
-                        KeyboardOptions(
-                            autoCorrectEnabled = false,
-                            imeAction = ImeAction.Search,
-                        ),
-                    keyboardActions =
-                        KeyboardActions(
-                            onSearch = {
-                                job?.cancel()
-                                viewModel.search(searchQuery)
-                                this.defaultKeyboardAction(ImeAction.Done)
-                            },
-                        ),
-                )
-            }
+            var job: Job? = null
+            val searchDelay =
+                PreferenceManager
+                    .getDefaultSharedPreferences(context)
+                    .getInt(context.getString(R.string.pref_key_search_delay), 500)
+                    .toLong()
+            SearchEditTextBox(
+                modifier = Modifier.focusRequester(focusRequester),
+                value = searchQuery,
+                onValueChange = { newQuery ->
+                    searchQuery = newQuery
+                    job?.cancel()
+                    job =
+                        scope.launch {
+                            delay(searchDelay)
+                            viewModel.search(newQuery)
+                        }
+                },
+                onSearchClick = {
+                    job?.cancel()
+                    viewModel.search(searchQuery)
+                },
+            )
         }
+
         DataType.entries.forEach { dataType ->
             val data = itemLists[dataType]!!
             if (data.isNotEmpty()) {

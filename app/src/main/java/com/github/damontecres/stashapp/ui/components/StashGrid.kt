@@ -17,13 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -44,11 +37,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.Button
-import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
@@ -62,7 +53,6 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
-import com.github.damontecres.stashapp.ui.Material3MainTheme
 import com.github.damontecres.stashapp.ui.SwitchWithLabel
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
@@ -174,71 +164,40 @@ fun StashGridControls(
                         )
                     }
                 }
-                Material3MainTheme {
-                    var job: Job? = null
-                    val searchDelay =
-                        PreferenceManager
-                            .getDefaultSharedPreferences(context)
-                            .getInt(context.getString(R.string.pref_key_search_delay), 500)
-                            .toLong()
-                    TextField(
-                        modifier =
-                            Modifier.onFocusChanged {
-                                if (it.isFocused) {
-                                    shouldRequestFocus = false
-                                } else {
-                                    shouldRequestFocus = requestFocus
-                                }
-                            },
-                        textStyle = MaterialTheme.typography.bodyMedium,
-                        colors =
-                            TextFieldDefaults.colors().copy(
-                                unfocusedContainerColor =
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(
-                                        alpha = 0.8f,
-                                    ),
-                                focusedContainerColor =
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(
-                                        alpha = 0.8f,
-                                    ),
-                            ),
-                        value = searchQuery,
-                        onValueChange = { newQuery ->
-                            searchQuery = newQuery
-                            job?.cancel()
-                            job =
-                                scope.launch {
-                                    delay(searchDelay)
-                                    if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
-                                        updateFilter(filterArgs.withQuery(searchQuery))
-                                    }
-                                }
+                var job: Job? = null
+                val searchDelay =
+                    PreferenceManager
+                        .getDefaultSharedPreferences(context)
+                        .getInt(context.getString(R.string.pref_key_search_delay), 500)
+                        .toLong()
+                SearchEditTextBox(
+                    modifier =
+                        Modifier.onFocusChanged {
+                            if (it.isFocused) {
+                                shouldRequestFocus = false
+                            } else {
+                                shouldRequestFocus = requestFocus
+                            }
                         },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Default.Search,
-                                contentDescription = stringResource(R.string.stashapp_actions_search),
-                            )
-                        },
-                        maxLines = 1,
-                        shape = CircleShape,
-                        keyboardOptions =
-                            KeyboardOptions(
-                                autoCorrectEnabled = false,
-                                imeAction = ImeAction.Search,
-                            ),
-                        keyboardActions =
-                            KeyboardActions(
-                                onSearch = {
-                                    job?.cancel()
-                                    if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
-                                        updateFilter(filterArgs.withQuery(searchQuery))
-                                    }
-                                    this.defaultKeyboardAction(ImeAction.Done)
-                                },
-                            ),
-                    )
-                }
+                    value = searchQuery,
+                    onValueChange = { newQuery ->
+                        searchQuery = newQuery
+                        job?.cancel()
+                        job =
+                            scope.launch {
+                                delay(searchDelay)
+                                if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
+                                    updateFilter(filterArgs.withQuery(searchQuery))
+                                }
+                            }
+                    },
+                    onSearchClick = {
+                        job?.cancel()
+                        if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
+                            updateFilter(filterArgs.withQuery(searchQuery))
+                        }
+                    },
+                )
             }
         }
         StashGrid(
