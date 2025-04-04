@@ -4,6 +4,7 @@ import android.net.Uri
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.FrameLayout
 import androidx.annotation.DrawableRes
+import androidx.annotation.OptIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -81,6 +82,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.StashPresenter.Companion.isDefaultUrl
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -204,7 +206,7 @@ fun IconRowText(
 /**
  * Main card based on [ClassicCard]
  */
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
 fun RootCard(
     item: Any,
@@ -257,7 +259,7 @@ fun RootCard(
 /**
  * Main card based on [ClassicCard]
  */
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
 fun RootCard(
     item: Any,
@@ -542,6 +544,15 @@ fun StashCard(
                 getFilterAndPosition,
                 modifier,
             )
+        is FilterArgs -> {
+            ViewAllCard(
+                filter = item,
+                itemOnClick = itemOnClick,
+                longClicker = longClicker,
+                getFilterAndPosition = getFilterAndPosition,
+                modifier = modifier,
+            )
+        }
         else -> throw UnsupportedOperationException("Item with class ${item.javaClass} not supported.")
     }
 }

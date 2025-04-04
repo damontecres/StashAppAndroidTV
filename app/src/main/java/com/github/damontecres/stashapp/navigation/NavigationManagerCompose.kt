@@ -14,7 +14,6 @@ import com.github.damontecres.stashapp.PinFragment
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.SettingsFragment
-import com.github.damontecres.stashapp.StashSearchFragment
 import com.github.damontecres.stashapp.UpdateAppFragment
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterFragment
@@ -62,7 +61,7 @@ class NavigationManagerCompose(
         val fragment =
             when (destination) {
                 Destination.Main -> null // ComposeMainFragment()
-                Destination.Search -> StashSearchFragment()
+                Destination.Search -> null // StashSearchFragment()
                 is Destination.Settings -> SettingsFragment()
                 Destination.Pin -> PinFragment()
                 Destination.SettingsPin -> SettingsPinEntryFragment()
