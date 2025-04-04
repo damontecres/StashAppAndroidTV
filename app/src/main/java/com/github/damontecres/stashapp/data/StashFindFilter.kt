@@ -65,3 +65,23 @@ fun FindFilterType.toStashFindFilter(): StashFindFilter =
                 null
             },
     )
+
+fun <T> Optional<T>.merge(other: Optional<T>): Optional<T> =
+    if (other is Optional.Present) {
+        other
+    } else {
+        this
+    }
+
+fun FindFilterType.merge(other: FindFilterType?): FindFilterType =
+    if (other != null) {
+        this.copy(
+            q = q.merge(other.q),
+            page = page.merge(other.page),
+            per_page = per_page.merge(other.per_page),
+            sort = sort.merge(other.sort),
+            direction = direction.merge(direction),
+        )
+    } else {
+        this
+    }

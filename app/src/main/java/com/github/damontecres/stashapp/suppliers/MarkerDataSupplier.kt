@@ -9,6 +9,7 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.merge
 
 class MarkerDataSupplier(
     private val findFilter: FindFilterType?,
@@ -30,7 +31,7 @@ class MarkerDataSupplier(
 
     override fun parseQuery(data: FindMarkersQuery.Data): List<MarkerData> = data.findSceneMarkers.scene_markers.map { it.markerData }
 
-    override fun getDefaultFilter(): FindFilterType = findFilter ?: DataType.MARKER.asDefaultFindFilterType
+    override fun getDefaultFilter(): FindFilterType = DataType.MARKER.asDefaultFindFilterType.merge(findFilter)
 
     override fun createCountQuery(filter: FindFilterType?): Query<CountMarkersQuery.Data> = CountMarkersQuery(filter, markerFilter)
 

@@ -7,6 +7,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.merge
 
 class SceneDataSupplier(
     private val findFilter: FindFilterType?,
@@ -23,7 +24,7 @@ class SceneDataSupplier(
 
     override fun parseQuery(data: FindScenesQuery.Data): List<SlimSceneData> = data.findScenes.scenes.map { it.slimSceneData }
 
-    override fun getDefaultFilter(): FindFilterType = findFilter ?: DataType.SCENE.asDefaultFindFilterType
+    override fun getDefaultFilter(): FindFilterType = DataType.SCENE.asDefaultFindFilterType.merge(findFilter)
 
     override fun createCountQuery(filter: FindFilterType?): Query<CountScenesQuery.Data> = CountScenesQuery(filter, sceneFilter, null)
 
