@@ -802,7 +802,6 @@ fun SceneDetailsHeader(
                                 scene.date,
                                 file?.let { durationToString(it.duration) },
                                 file?.resolutionName(),
-                                file?.bitRateString(),
                             ),
                     )
                     // Description
@@ -1152,7 +1151,6 @@ fun SceneDetailsFooter(
                 .fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        TitleValueText(stringResource(R.string.stashapp_scene_id), scene.id)
         if (scene.created_at.toString().length >= 10) {
             TitleValueText(
                 stringResource(R.string.stashapp_created_at),
@@ -1165,6 +1163,7 @@ fun SceneDetailsFooter(
                 scene.updated_at.toString().substring(0..<10),
             )
         }
+        TitleValueText(stringResource(R.string.stashapp_scene_id), scene.id)
         val file = scene.files.firstOrNull()?.videoFile
         if (file != null) {
             TitleValueText(
@@ -1178,6 +1177,10 @@ fun SceneDetailsFooter(
             TitleValueText(
                 stringResource(R.string.format),
                 file.format,
+            )
+            TitleValueText(
+                stringResource(R.string.stashapp_bitrate),
+                file.bitRateString().toString(),
             )
         }
         if (!scene.captions.isNullOrEmpty()) {
