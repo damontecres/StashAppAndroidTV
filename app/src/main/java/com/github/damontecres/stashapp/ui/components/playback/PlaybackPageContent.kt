@@ -42,6 +42,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.StreamDecision
+import com.github.damontecres.stashapp.playback.TrackActivityPlaybackListener
 import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
@@ -97,8 +98,10 @@ fun PlaybackPageContent(
                 playWhenReady = true
             }
         }
+    var trackActivityListener = remember<TrackActivityPlaybackListener?>(server, scene) { null }
     LifecycleStartEffect(Unit) {
         onStopOrDispose {
+            trackActivityListener?.release(player.currentPosition)
             StashExoPlayer.releasePlayer()
         }
     }
@@ -140,12 +143,34 @@ fun PlaybackPageContent(
     }
 
     LaunchedEffect(server, scene, player) {
+        trackActivityListener?.apply {
+            release()
+            StashExoPlayer.removeListener(this)
+        }
+        val appTracking =
+            PreferenceManager
+                .getDefaultSharedPreferences(context)
+                .getBoolean(context.getString(R.string.pref_key_playback_track_activity), true)
+        trackActivityListener =
+            if (appTracking && server.serverPreferences.trackActivity) {
+                TrackActivityPlaybackListener(
+                    context = context,
+                    server = server,
+                    scene = scene,
+                    getCurrentPosition = {
+                        player.currentPosition
+                    },
+                )
+            } else {
+                null
+            }
         maybeMuteAudio(context, player)
         val decision = getStreamDecision(context, scene, playbackMode)
         val media = buildMediaItem(context, streamDecision, scene)
         player.setMediaItem(media, startPosition.coerceAtLeast(0L))
         player.prepare()
         streamDecision = decision
+        trackActivityListener?.let { StashExoPlayer.addListener(it) }
     }
 
     val controllerViewState =
