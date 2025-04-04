@@ -74,6 +74,24 @@ class ComposePager<T : StashData>(
             }
         }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ComposePager<*>
+
+        if (filter != other.filter) return false
+        if (pageSize != other.pageSize) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = filter.hashCode()
+        result = 31 * result + pageSize
+        return result
+    }
+
     companion object {
         private const val TAG = "ComposePager"
         private const val DEBUG = false

@@ -15,6 +15,7 @@ import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class FilterViewModel : ViewModel() {
@@ -24,11 +25,14 @@ class FilterViewModel : ViewModel() {
     val currentFilter: FilterArgs? get() = pager.value?.filter
     val dataType: DataType? get() = currentFilter?.dataType
 
+    private var job: Job? = null
+
     fun setFilter(
         server: StashServer,
         filterArgs: FilterArgs,
     ) {
         if (pager.value?.filter != filterArgs || server != this.server) {
+            job?.cancel()
             Log.d("FilterPageViewModel", "filterArgs=$filterArgs")
             this.server = server
             val dataSupplierFactory = DataSupplierFactory(server.version)
@@ -37,8 +41,11 @@ class FilterViewModel : ViewModel() {
             val pagingSource =
                 StashPagingSource(QueryEngine(server), dataSupplier) { _, _, item -> item }
             val pager = ComposePager(filterArgs, pagingSource, viewModelScope)
-            viewModelScope.launch { pager.init() }
-            this.pager.value = pager
+            job =
+                viewModelScope.launch {
+                    pager.init()
+                    this@FilterViewModel.pager.value = pager
+                }
         }
     }
 
