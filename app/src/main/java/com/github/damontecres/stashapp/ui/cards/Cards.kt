@@ -72,6 +72,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
@@ -92,6 +93,7 @@ import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.LocalPlayerContext
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
+import com.github.damontecres.stashapp.util.CreateNew
 import com.github.damontecres.stashapp.util.asSlimeSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
@@ -608,6 +610,28 @@ fun StashCard(
             ViewAllCard(
                 filter = item,
                 itemOnClick = itemOnClick,
+                longClicker = longClicker,
+                getFilterAndPosition = getFilterAndPosition,
+                modifier = modifier,
+            )
+        }
+
+        is CreateNew -> {
+            RootCard(
+                item = item,
+                title = StashAction.CREATE_NEW.actionName,
+                subtitle = {
+                    Text(text = item.name.replaceFirstChar(Char::titlecase))
+                },
+                imageWidth = dataTypeImageWidth(item.dataType).dp / 2,
+                imageHeight = dataTypeImageHeight(item.dataType).dp / 2,
+                imageContent = {
+                    Image(
+                        painter = painterResource(id = R.drawable.baseline_add_box_24),
+                        contentDescription = null,
+                    )
+                },
+                onClick = { itemOnClick.invoke(item) },
                 longClicker = longClicker,
                 getFilterAndPosition = getFilterAndPosition,
                 modifier = modifier,

@@ -26,6 +26,30 @@ import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.components.LongClicker
 
+fun dataTypeImageWidth(dataType: DataType) =
+    when (dataType) {
+        DataType.GALLERY -> GalleryPresenter.CARD_WIDTH
+        DataType.IMAGE -> ImagePresenter.CARD_WIDTH
+        DataType.MARKER -> MarkerPresenter.CARD_WIDTH
+        DataType.GROUP -> GroupPresenter.CARD_WIDTH
+        DataType.PERFORMER -> PerformerPresenter.CARD_WIDTH
+        DataType.SCENE -> ScenePresenter.CARD_WIDTH
+        DataType.STUDIO -> StudioPresenter.CARD_WIDTH
+        DataType.TAG -> TagPresenter.CARD_WIDTH
+    }
+
+fun dataTypeImageHeight(dataType: DataType) =
+    when (dataType) {
+        DataType.GALLERY -> GalleryPresenter.CARD_HEIGHT
+        DataType.IMAGE -> ImagePresenter.CARD_HEIGHT
+        DataType.MARKER -> MarkerPresenter.CARD_HEIGHT
+        DataType.GROUP -> GroupPresenter.CARD_HEIGHT
+        DataType.PERFORMER -> PerformerPresenter.CARD_HEIGHT
+        DataType.SCENE -> ScenePresenter.CARD_HEIGHT
+        DataType.STUDIO -> StudioPresenter.CARD_HEIGHT
+        DataType.TAG -> TagPresenter.CARD_HEIGHT
+    }
+
 @Composable
 fun ViewAllCard(
     filter: FilterArgs,
@@ -34,28 +58,8 @@ fun ViewAllCard(
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
 ) {
-    val width =
-        when (filter.dataType) {
-            DataType.GALLERY -> GalleryPresenter.CARD_WIDTH
-            DataType.IMAGE -> ImagePresenter.CARD_WIDTH
-            DataType.MARKER -> MarkerPresenter.CARD_WIDTH
-            DataType.GROUP -> GroupPresenter.CARD_WIDTH
-            DataType.PERFORMER -> PerformerPresenter.CARD_WIDTH
-            DataType.SCENE -> ScenePresenter.CARD_WIDTH
-            DataType.STUDIO -> StudioPresenter.CARD_WIDTH
-            DataType.TAG -> TagPresenter.CARD_WIDTH
-        }
-    val height =
-        when (filter.dataType) {
-            DataType.GALLERY -> GalleryPresenter.CARD_HEIGHT
-            DataType.IMAGE -> ImagePresenter.CARD_HEIGHT
-            DataType.MARKER -> MarkerPresenter.CARD_HEIGHT
-            DataType.GROUP -> GroupPresenter.CARD_HEIGHT
-            DataType.PERFORMER -> PerformerPresenter.CARD_HEIGHT
-            DataType.SCENE -> ScenePresenter.CARD_HEIGHT
-            DataType.STUDIO -> StudioPresenter.CARD_HEIGHT
-            DataType.TAG -> TagPresenter.CARD_HEIGHT
-        }
+    val width = dataTypeImageWidth(filter.dataType)
+    val height = dataTypeImageHeight(filter.dataType)
 
     RootCard(
         item = filter,

@@ -1,6 +1,8 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,8 +49,11 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.GroupCreateInput
+import com.github.damontecres.stashapp.api.type.PerformerCreateInput
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
+import com.github.damontecres.stashapp.api.type.TagCreateInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.room.RecentSearchItem
@@ -56,6 +61,8 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.Material3MainTheme
+import com.github.damontecres.stashapp.util.CreateNew
+import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -64,6 +71,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private val TAG = "SearchForPage"
 
@@ -143,22 +151,36 @@ fun SearchForPage(
 
     var searchQuery by remember { mutableStateOf("") }
 
-    var results by remember { mutableStateOf<List<StashData>>(listOf()) }
+    var results by remember { mutableStateOf<List<Any>>(listOf()) }
     var suggestions by remember { mutableStateOf<List<StashData>>(listOf()) }
     var recent by remember { mutableStateOf<List<StashData>>(listOf()) }
 
     val itemOnClickWrapper =
         { item: Any, _: FilterAndPosition? ->
-            item as StashData
-            if (dataType in DATA_TYPE_SUGGESTIONS) {
-                scope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                    StashApplication
-                        .getDatabase()
-                        .recentSearchItemsDao()
-                        .insert(RecentSearchItem(server.url, item.id, dataType))
+            if (item is StashData) {
+                if (dataType in DATA_TYPE_SUGGESTIONS) {
+                    scope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+                        StashApplication
+                            .getDatabase()
+                            .recentSearchItemsDao()
+                            .insert(RecentSearchItem(server.url, item.id, dataType))
+                    }
+                }
+                itemOnClick.invoke(searchId, item)
+            } else if (item is CreateNew) {
+                scope.launch(Dispatchers.Main + StashCoroutineExceptionHandler()) {
+                    val newItem = handleCreate(context, server, item.dataType, item.name)
+                    if (newItem != null) {
+                        withContext(Dispatchers.IO) {
+                            StashApplication
+                                .getDatabase()
+                                .recentSearchItemsDao()
+                                .insert(RecentSearchItem(server.url, newItem.id, dataType))
+                        }
+                        itemOnClick.invoke(searchId, newItem)
+                    }
                 }
             }
-            itemOnClick.invoke(searchId, item)
         }
 
     var job: Job? = null
@@ -170,11 +192,26 @@ fun SearchForPage(
                 scope.launch {
                     delay(searchDelay)
                     Log.v(TAG, "Starting search")
-                    results = queryEngine.find(dataType, FindFilterType(q = Optional.present(query), per_page = Optional.present(perPage)))
+                    val items =
+                        queryEngine.find(
+                            dataType,
+                            FindFilterType(
+                                q = Optional.present(query),
+                                per_page = Optional.present(perPage),
+                            ),
+                        )
+                    results =
+                        if (SearchForFragment.allowCreate(dataType, query, items)) {
+                            val mutableItems = (items as List<Any>).toMutableList()
+                            mutableItems.add(CreateNew(dataType, query))
+                            mutableItems
+                        } else {
+                            items
+                        }
                 }
         } else {
             Log.v(TAG, "Query is empty")
-            results = listOf()
+            results = listOf(CreateNew(dataType, query))
         }
     }
 
@@ -285,6 +322,7 @@ fun SearchForPage(
         }
         val startPadding = 8.dp
         val bottomPadding = 8.dp
+
         if (results.isEmpty()) {
             if (searchQuery.isBlank()) {
                 Text(
@@ -301,8 +339,8 @@ fun SearchForPage(
                 )
             }
         } else {
-            ItemsRow(
-                title = R.string.results,
+            SearchItemsRow(
+                title = stringResource(R.string.results),
                 items = results,
                 uiConfig = ComposeUiConfig.fromStashServer(server),
                 itemOnClick = itemOnClickWrapper,
@@ -335,5 +373,44 @@ fun SearchForPage(
                 modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
             )
         }
+    }
+}
+
+suspend fun handleCreate(
+    context: Context,
+    server: StashServer,
+    dataType: DataType,
+    query: String?,
+): StashData? {
+    if (query.isNotNullOrBlank()) {
+        val name = query.replaceFirstChar(Char::titlecase)
+        val mutationEngine = MutationEngine(server)
+        val item =
+            when (dataType) {
+                DataType.TAG -> {
+                    mutationEngine.createTag(TagCreateInput(name = name))
+                }
+
+                DataType.PERFORMER -> {
+                    mutationEngine.createPerformer(PerformerCreateInput(name = name))
+                }
+
+                DataType.GROUP -> {
+                    mutationEngine.createGroup(GroupCreateInput(name = name))
+                }
+
+                else -> throw IllegalArgumentException("Unsupported datatype $dataType")
+            }
+        if (item != null) {
+            Toast
+                .makeText(
+                    context,
+                    "Created new ${context.getString(dataType.stringId)}: $name",
+                    Toast.LENGTH_LONG,
+                ).show()
+        }
+        return item
+    } else {
+        return null
     }
 }
