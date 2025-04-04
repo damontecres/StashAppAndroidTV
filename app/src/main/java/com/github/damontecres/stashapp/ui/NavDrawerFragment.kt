@@ -43,6 +43,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.DialogProperties
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
@@ -56,6 +57,7 @@ import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
@@ -376,15 +378,24 @@ fun FragmentContent(
                     }
                 },
             ) {
-                NavDrawerContent(
-                    navManager = navigationManager,
-                    server = server,
-                    destination = destination,
-                    cardUiSettings = cardUiSettings,
-                    itemOnClick = itemOnClick,
-                    longClicker = longClicker,
-                    modifier = Modifier.fillMaxSize(),
-                )
+                CompositionLocalProvider(
+                    LocalPlayerContext provides PlayerContext,
+                ) {
+                    NavDrawerContent(
+                        navManager = navigationManager,
+                        server = server,
+                        destination = destination,
+                        cardUiSettings = cardUiSettings,
+                        itemOnClick = itemOnClick,
+                        longClicker = longClicker,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    LifecycleStartEffect(Unit) {
+                        onStopOrDispose {
+                            StashExoPlayer.releasePlayer()
+                        }
+                    }
+                }
             }
         }
         dialogParams?.let { params ->

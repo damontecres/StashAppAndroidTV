@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui
 
+import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.MarqueeAnimationMode
@@ -28,10 +29,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.Player
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.util.StashServer
@@ -43,6 +46,20 @@ data class GlobalContext(
 
 val LocalGlobalContext =
     compositionLocalOf<GlobalContext> { throw IllegalStateException("Shouldn't call this") }
+
+object PlayerContext {
+    fun player(
+        context: Context,
+        server: StashServer,
+    ): Player =
+        StashExoPlayer.getInstance(context, server).apply {
+            repeatMode = Player.REPEAT_MODE_ONE
+            playWhenReady = true
+        }
+}
+
+val LocalPlayerContext =
+    compositionLocalOf<PlayerContext> { PlayerContext }
 
 fun Modifier.enableMarquee(focused: Boolean) =
     if (focused) {

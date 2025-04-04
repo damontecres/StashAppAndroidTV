@@ -39,7 +39,7 @@ fun MarkerCard(
         } + " - ${item.seconds.toInt().toDuration(DurationUnit.SECONDS)}"
 
     val imageUrl = item.screenshot
-    val videoUrl = item.preview
+    val videoUrl = item.stream
 
     val details =
         listOf(

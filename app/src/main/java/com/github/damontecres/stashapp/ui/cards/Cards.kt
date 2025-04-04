@@ -1,10 +1,12 @@
 package com.github.damontecres.stashapp.ui.cards
 
 import android.net.Uri
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.widget.FrameLayout
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,14 +47,15 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
+import androidx.media3.ui.compose.PlayerSurface
+import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
+import androidx.media3.ui.compose.modifiers.resizeWithContentScale
+import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardBorder
@@ -68,7 +72,6 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
@@ -85,12 +88,14 @@ import com.github.damontecres.stashapp.presenters.StashPresenter.Companion.isDef
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.LocalPlayerContext
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asSlimeSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
+import kotlinx.coroutines.delay
 import java.util.EnumMap
 
 @Composable
@@ -219,9 +224,9 @@ fun RootCard(
     modifier: Modifier = Modifier,
     imageUrl: String? = null,
     @DrawableRes defaultImageDrawableRes: Int? = null,
-    imageContent: @Composable BoxScope.() -> Unit = {},
+    imageContent: @Composable (BoxScope.() -> Unit)? = null,
     videoUrl: String? = null,
-    imageOverlay: @Composable BoxScope.() -> Unit = {},
+    imageOverlay: @Composable AnimatedVisibilityScope.() -> Unit = {},
     subtitle: @Composable () -> Unit = {},
     description: @Composable BoxScope.(focused: Boolean) -> Unit = {},
     shape: CardShape = CardDefaults.shape(),
@@ -272,9 +277,9 @@ fun RootCard(
     modifier: Modifier = Modifier,
     imageUrl: String? = null,
     @DrawableRes defaultImageDrawableRes: Int? = null,
-    imageContent: @Composable BoxScope.() -> Unit = {},
+    imageContent: @Composable (BoxScope.() -> Unit)? = null,
     videoUrl: String? = null,
-    imageOverlay: @Composable BoxScope.() -> Unit = {},
+    imageOverlay: @Composable AnimatedVisibilityScope.() -> Unit = {},
     subtitle: @Composable () -> Unit = {},
     description: @Composable BoxScope.(focused: Boolean) -> Unit = {},
     shape: CardShape = CardDefaults.shape(),
@@ -289,20 +294,32 @@ fun RootCard(
 
     // TODO
     val videoDelay =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getInt(
-                context.getString(R.string.pref_key_ui_card_overlay_delay),
-                context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
-            ).toLong()
+        remember {
+            PreferenceManager
+                .getDefaultSharedPreferences(context)
+                .getInt(
+                    context.getString(R.string.pref_key_ui_card_overlay_delay),
+                    context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
+                ).toLong()
+        }
 
     var focused by remember { mutableStateOf(false) }
+    var focusedAfterDelay by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
     val playVideoPreviews =
         PreferenceManager
             .getDefaultSharedPreferences(context)
             .getBoolean("playVideoPreviews", true)
+
+    if (focused) {
+        LaunchedEffect(Unit) {
+            delay(videoDelay)
+            if (focused) {
+                focusedAfterDelay = true
+            }
+        }
+    }
 
     Card(
         onClick = onClick,
@@ -311,6 +328,7 @@ fun RootCard(
             modifier
                 .onFocusChanged { focusState ->
                     focused = focusState.isFocused
+                    if (!focusState.isFocused) focusedAfterDelay = false
                 }.padding(0.dp),
         interactionSource = interactionSource,
         shape = shape,
@@ -328,81 +346,84 @@ fun RootCard(
                         .fillMaxWidth(),
                 contentAlignment = Alignment.Center,
             ) {
-                if (playVideoPreviews && focused && videoUrl.isNotNullOrBlank()) {
-                    AndroidView(
-                        modifier = Modifier,
-                        factory = { context ->
-                            PlayerView(context).apply {
-                                hideController()
-                                useController = false
-                                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT
-                                layoutParams =
-                                    FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
-                                val exoPlayer =
-                                    StashExoPlayer.getInstance(
-                                        context,
-                                        StashServer.requireCurrentServer(),
-                                    )
-                                player = exoPlayer
-
-                                val mediaItem =
-                                    MediaItem
-                                        .Builder()
-                                        .setUri(Uri.parse(videoUrl))
-                                        .setMimeType(MimeTypes.VIDEO_MP4)
-                                        .build()
-
-                                exoPlayer.setMediaItem(mediaItem, C.TIME_UNSET)
-                                if (PreferenceManager
-                                        .getDefaultSharedPreferences(context)
-                                        .getBoolean("videoPreviewAudio", false)
-                                ) {
-                                    exoPlayer.volume = 1f
-                                } else {
-                                    exoPlayer.volume = 0f
-                                }
-                                exoPlayer.prepare()
-                                exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
-                                exoPlayer.playWhenReady = true
-                                exoPlayer.seekToDefaultPosition()
-                            }
-                        },
-                        onRelease = { videoView ->
-                            videoView.player?.stop()
-                        },
-                    )
-                } else {
-                    Box(
-                        modifier =
-                            Modifier
-                                .height(imageHeight)
-                                .fillMaxWidth()
-                                .padding(0.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (imageUrl.isDefaultUrl && defaultImageDrawableRes != null) {
-                            Image(
-                                painter = painterResource(id = defaultImageDrawableRes),
-                                contentDescription = null,
-                            )
-                        } else if (imageUrl.isNotNullOrBlank()) {
-                            AsyncImage(
-                                modifier = Modifier,
-                                model =
-                                    ImageRequest
-                                        .Builder(LocalContext.current)
-                                        .data(imageUrl)
-                                        .crossfade(true)
-                                        .build(),
-                                contentDescription = null,
-                                contentScale = ContentScale.Fit,
-                            )
+                if (focusedAfterDelay && playVideoPreviews && videoUrl.isNotNullOrBlank()) {
+                    val player =
+                        LocalPlayerContext.current.player(
+                            context,
+                            LocalGlobalContext.current.server,
+                        )
+                    LaunchedEffect(player) {
+                        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+                        val videoPreviewAudio =
+                            prefs.getBoolean("videoPreviewAudio", false) &&
+                                !prefs.getBoolean(
+                                    context.getString(R.string.pref_key_playback_start_muted),
+                                    false,
+                                )
+                        if (!videoPreviewAudio && C.TRACK_TYPE_AUDIO !in player.trackSelectionParameters.disabledTrackTypes) {
+                            player.trackSelectionParameters =
+                                player.trackSelectionParameters
+                                    .buildUpon()
+                                    .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
+                                    .build()
                         }
-                        imageContent.invoke(this)
-                        if (!focused) {
-                            imageOverlay.invoke(this)
+                        val mediaItem =
+                            MediaItem
+                                .Builder()
+                                .setUri(Uri.parse(videoUrl))
+                                .setMimeType(MimeTypes.VIDEO_MP4)
+                                .build()
+
+                        player.setMediaItem(mediaItem, C.TIME_UNSET)
+                        player.playWhenReady = true
+                        player.prepare()
+                    }
+                    LifecycleStartEffect(Unit) {
+                        onStopOrDispose {
+                            player.stop()
                         }
                     }
+                    val contentScale = ContentScale.Fit
+                    val presentationState = rememberPresentationState(player)
+                    val scaledModifier =
+                        Modifier.resizeWithContentScale(contentScale, presentationState.videoSizeDp)
+
+                    PlayerSurface(
+                        player = player,
+                        surfaceType = SURFACE_TYPE_SURFACE_VIEW,
+                        modifier = scaledModifier,
+                    )
+                    if (!focusedAfterDelay || presentationState.coverSurface) {
+                        CardImage(
+                            imageHeight = imageHeight,
+                            imageUrl = imageUrl,
+                            defaultImageDrawableRes = defaultImageDrawableRes,
+                            imageContent =
+                                imageContent ?: {
+                                    Box(
+                                        Modifier
+                                            .matchParentSize()
+                                            .background(Color.Black),
+                                    )
+                                },
+                            modifier = Modifier,
+                        )
+                    }
+                } else {
+                    CardImage(
+                        imageHeight = imageHeight,
+                        imageUrl = imageUrl,
+                        defaultImageDrawableRes = defaultImageDrawableRes,
+                        imageContent = imageContent,
+                        modifier = Modifier,
+                    )
+                }
+                this@Column.AnimatedVisibility(
+                    visible = !focusedAfterDelay,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                ) {
+                    imageOverlay.invoke(this)
                 }
             }
             Column(modifier = Modifier.padding(6.dp)) {
@@ -413,7 +434,7 @@ fun RootCard(
                         maxLines = 1,
                         modifier =
                             Modifier
-                                .enableMarquee(focused),
+                                .enableMarquee(focusedAfterDelay),
                     )
                 }
                 // Subtitle
@@ -427,9 +448,48 @@ fun RootCard(
                             .graphicsLayer {
                                 alpha = 0.8f
                             }.fillMaxWidth(),
-                    ) { description.invoke(this, focused) }
+                    ) { description.invoke(this, focusedAfterDelay) }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun CardImage(
+    imageHeight: Dp,
+    imageUrl: String?,
+    @DrawableRes defaultImageDrawableRes: Int?,
+    imageContent: @Composable (BoxScope.() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .height(imageHeight)
+                .fillMaxWidth()
+                .padding(0.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (imageUrl.isDefaultUrl && defaultImageDrawableRes != null) {
+            Image(
+                painter = painterResource(id = defaultImageDrawableRes),
+                contentDescription = null,
+            )
+        } else if (imageUrl.isNotNullOrBlank()) {
+            AsyncImage(
+                modifier = Modifier,
+                model =
+                    ImageRequest
+                        .Builder(LocalContext.current)
+                        .data(imageUrl)
+                        .crossfade(true)
+                        .build(),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+            )
+        } else {
+            imageContent?.invoke(this)
         }
     }
 }
