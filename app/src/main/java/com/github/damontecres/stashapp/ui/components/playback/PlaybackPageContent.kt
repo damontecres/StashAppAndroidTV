@@ -38,6 +38,7 @@ import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.PlaybackMode
@@ -58,11 +59,11 @@ const val TAG = "PlaybackPageContent"
 
 class PlaybackViewModel : ViewModel() {
     private lateinit var server: StashServer
-    private lateinit var scene: Scene
+    private lateinit var scene: FullSceneData
 
     fun init(
         server: StashServer,
-        scene: Scene,
+        scene: FullSceneData,
     ) {
         this.server = server
         this.scene = scene
@@ -83,7 +84,7 @@ class PlaybackViewModel : ViewModel() {
 @Composable
 fun PlaybackPageContent(
     server: StashServer,
-    scene: Scene,
+    scene: FullSceneData,
     startPosition: Long,
     playbackMode: PlaybackMode,
     modifier: Modifier = Modifier,
@@ -108,6 +109,7 @@ fun PlaybackPageContent(
     LaunchedEffect(server, scene.id) {
         viewModel.init(server, scene)
     }
+    val playbackScene = remember { Scene.fromFullSceneData(scene) }
 
     var showControls by remember { mutableStateOf(true) }
     var currentContentScaleIndex by remember { mutableIntStateOf(0) }
@@ -156,7 +158,7 @@ fun PlaybackPageContent(
                 TrackActivityPlaybackListener(
                     context = context,
                     server = server,
-                    scene = scene,
+                    scene = playbackScene,
                     getCurrentPosition = {
                         player.currentPosition
                     },
@@ -165,8 +167,8 @@ fun PlaybackPageContent(
                 null
             }
         maybeMuteAudio(context, player)
-        val decision = getStreamDecision(context, scene, playbackMode)
-        val media = buildMediaItem(context, streamDecision, scene)
+        val decision = getStreamDecision(context, playbackScene, playbackMode)
+        val media = buildMediaItem(context, streamDecision, playbackScene)
         player.setMediaItem(media, startPosition.coerceAtLeast(0L))
         player.prepare()
         streamDecision = decision
@@ -202,7 +204,7 @@ fun PlaybackPageContent(
                             controllerViewState.showControls()
                         }
                     } else {
-                        controllerViewState.pulseControls()
+                        // When controller is visible, its buttons will handle pulsing
                     }
                 } else if (isMedia(it)) {
                     when (it.key) {
@@ -244,7 +246,7 @@ fun PlaybackPageContent(
             server = server,
             scene = scene,
             streamDecision = streamDecision,
-            oCounter = scene.oCounter ?: 0,
+            oCounter = scene.o_counter ?: 0,
             player = player,
             onPlaybackActionClick = {
                 when (it) {

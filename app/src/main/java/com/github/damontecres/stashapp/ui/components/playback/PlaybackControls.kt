@@ -4,8 +4,10 @@ import android.util.Log
 import android.view.Gravity
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
@@ -51,10 +56,12 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.ui.AppColors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 sealed interface PlaybackAction {
@@ -65,33 +72,48 @@ sealed interface PlaybackAction {
     data object CreateMarker : PlaybackAction
 }
 
+@kotlin.OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlaybackControls(
-    scene: Scene,
+    scene: FullSceneData,
     oCounter: Int,
     player: Player,
     controllerViewState: ControllerViewState,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
     showDebugInfo: Boolean,
+    onSeekProgress: (Float) -> Unit,
     modifier: Modifier = Modifier,
     initialFocusRequester: FocusRequester = remember { FocusRequester() },
+    seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
+    val scope = rememberCoroutineScope()
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val onControllerInteraction = {
+        scope.launch {
+            bringIntoViewRequester.bringIntoView()
+        }
+        controllerViewState.pulseControls()
+    }
+    val playbackScene = remember(scene.id) { Scene.fromFullSceneData(scene) }
     LaunchedEffect(controllerViewState.controlsVisible) {
         if (controllerViewState.controlsVisible) {
             initialFocusRequester.requestFocus()
         }
     }
     Column(
-        modifier = modifier,
+        modifier = modifier.bringIntoViewRequester(bringIntoViewRequester),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         SeekBar(
-            scene,
-            player,
-            controllerViewState,
-            Modifier
-                .padding(vertical = 8.dp)
-                .fillMaxWidth(.95f),
+            scene = playbackScene,
+            player = player,
+            controllerViewState = controllerViewState,
+            onSeekProgress = onSeekProgress,
+            interactionSource = seekBarInteractionSource,
+            modifier =
+                Modifier
+                    .padding(vertical = 8.dp)
+                    .fillMaxWidth(.95f),
         )
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -102,7 +124,7 @@ fun PlaybackControls(
                     .fillMaxWidth(),
         ) {
             LeftPlaybackButtons(
-                onControllerInteraction = { controllerViewState.showControls() },
+                onControllerInteraction = onControllerInteraction,
                 onPlaybackActionClick = onPlaybackActionClick,
                 showDebugInfo = showDebugInfo,
                 modifier = Modifier,
@@ -110,11 +132,11 @@ fun PlaybackControls(
             PlaybackButtons(
                 player,
                 initialFocusRequester,
-                onControllerInteraction = { controllerViewState.showControls() },
+                onControllerInteraction = onControllerInteraction,
                 modifier = Modifier,
             )
             RightPlaybackButtons(
-                onControllerInteraction = { controllerViewState.showControls() },
+                onControllerInteraction = onControllerInteraction,
                 onPlaybackActionClick = onPlaybackActionClick,
                 modifier = Modifier,
             )
@@ -128,7 +150,9 @@ fun SeekBar(
     scene: Scene,
     player: Player,
     controllerViewState: ControllerViewState,
+    onSeekProgress: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     val scope = rememberCoroutineScope()
     val state = rememberSeekBarState(player, scope)
@@ -153,12 +177,16 @@ fun SeekBar(
             progress = progress,
             bufferedProgress = bufferedProgress,
             duration = player.duration,
-            onSeek = state::onValueChange,
+            onSeek = {
+                onSeekProgress(it)
+                state.onValueChange(it)
+            },
             controllerViewState = controllerViewState,
             intervals = 15,
             aspectRatio = aspectRatio,
             previewImageUrl = scene.spriteUrl,
             modifier = Modifier.fillMaxWidth(),
+            interactionSource = interactionSource,
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -329,7 +357,8 @@ fun PlaybackButton(
         modifier =
             modifier
                 .padding(8.dp)
-                .size(56.dp, 56.dp),
+                .size(56.dp, 56.dp)
+                .onFocusChanged { onControllerInteraction.invoke() },
     ) {
         Icon(
             modifier = Modifier.fillMaxSize(),

@@ -40,7 +40,7 @@ import androidx.compose.ui.layout.onPlaced
 fun Modifier.handleDPadKeyEvents(
     onLeft: (() -> Unit)? = null,
     onRight: (() -> Unit)? = null,
-    onEnter: (() -> Unit)? = null,
+    onCenter: (() -> Unit)? = null,
 ) = onPreviewKeyEvent {
     fun onActionUp(block: () -> Unit) {
         if (it.nativeKeyEvent.action == KeyEvent.ACTION_UP) block()
@@ -62,7 +62,7 @@ fun Modifier.handleDPadKeyEvents(
         }
 
         KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> {
-            onEnter?.apply {
+            onCenter?.apply {
                 onActionUp(::invoke)
                 return@onPreviewKeyEvent true
             }

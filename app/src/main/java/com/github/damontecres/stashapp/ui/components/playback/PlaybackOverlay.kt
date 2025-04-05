@@ -1,30 +1,82 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
+import android.util.Log
 import androidx.annotation.IntRange
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.request.transformations
+import coil3.size.Scale
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.StreamDecision
+import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.ui.AppColors
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.cards.RootCard
+import com.github.damontecres.stashapp.ui.util.CoilPreviewTransformation
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.asMarkerData
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class ControllerViewState internal constructor(
     @IntRange(from = 0)
@@ -42,7 +94,14 @@ class ControllerViewState internal constructor(
         pulseControls(seconds)
     }
 
-    fun pulseControls(seconds: Int = hideSeconds) = channel.trySend(seconds)
+    fun hideControls() {
+        _controlsVisible = false
+    }
+
+    fun pulseControls(seconds: Int = hideSeconds) {
+        Log.i("PlaybackPageContent", "pulseControls=$seconds")
+        channel.trySend(seconds)
+    }
 
     @OptIn(FlowPreview::class)
     suspend fun observe() {
@@ -50,16 +109,17 @@ class ControllerViewState internal constructor(
             .consumeAsFlow()
             .debounce { it.toLong() * 1000 }
             .collect {
-//                Log.i("ControllerViewState", "collect")
+                Log.i("PlaybackPageContent", "collect")
                 _controlsVisible = false
             }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlaybackOverlay(
     server: StashServer,
-    scene: Scene,
+    scene: FullSceneData,
     streamDecision: StreamDecision,
     oCounter: Int,
     player: Player,
@@ -68,6 +128,30 @@ fun PlaybackOverlay(
     showDebugInfo: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    val playbackScene = remember(scene.id) { Scene.fromFullSceneData(scene) }
+
+    var seekProgress by remember { mutableFloatStateOf(-1f) }
+    val seekBarInteractionSource = remember { MutableInteractionSource() }
+    val seekBarFocused by seekBarInteractionSource.collectIsFocusedAsState()
+
+    val previewImageUrl = playbackScene.spriteUrl
+    val imageLoader = SingletonImageLoader.get(LocalPlatformContext.current)
+    var imageLoaded by remember { mutableStateOf(false) }
+    if (previewImageUrl.isNotNullOrBlank()) {
+        LaunchedEffect(previewImageUrl) {
+            val request =
+                ImageRequest
+                    .Builder(context)
+                    .data(previewImageUrl)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .scale(Scale.FILL)
+                    .build()
+            val result = imageLoader.enqueue(request).job.await()
+            imageLoaded = result.image != null
+        }
+    }
+
     AnimatedVisibility(
         controllerViewState.controlsVisible,
         Modifier,
@@ -79,7 +163,7 @@ fun PlaybackOverlay(
         ) {
             if (showDebugInfo) {
                 PlaybackDebugInfo(
-                    scene = scene,
+                    scene = playbackScene,
                     streamDecision = streamDecision,
                     modifier =
                         Modifier
@@ -90,15 +174,242 @@ fun PlaybackOverlay(
                             .width(280.dp),
                 )
             }
-            PlaybackControls(
-                modifier = Modifier.align(Alignment.BottomCenter),
-                scene = scene,
-                oCounter = oCounter,
-                player = player,
-                onPlaybackActionClick = onPlaybackActionClick,
-                controllerViewState = controllerViewState,
-                showDebugInfo = showDebugInfo,
-            )
+            val controlHeight = .4f
+
+            AnimatedVisibility(seekBarFocused && seekProgress >= 0) {
+                SeekPreviewImage(
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .offsetByPercent(
+                                xPercentage = seekProgress.coerceIn(0f, 1f),
+                                yPercentage = 1 - controlHeight,
+                            ),
+                    previewImageUrl = previewImageUrl,
+                    imageLoaded = imageLoaded,
+                    imageLoader = imageLoader,
+                    duration = player.duration,
+                    seekProgress = seekProgress,
+                    videoWidth = playbackScene.videoWidth,
+                    videoHeight = playbackScene.videoHeight,
+                )
+            }
+
+            LazyColumn(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .fillMaxHeight(controlHeight),
+                contentPadding = PaddingValues(top = 600.dp),
+            ) {
+                item {
+                    PlaybackControls(
+                        modifier = Modifier.fillMaxWidth(),
+                        scene = scene,
+                        oCounter = oCounter,
+                        player = player,
+                        onPlaybackActionClick = onPlaybackActionClick,
+                        controllerViewState = controllerViewState,
+                        showDebugInfo = showDebugInfo,
+                        onSeekProgress = {
+                            seekProgress = it
+                        },
+                        seekBarInteractionSource = seekBarInteractionSource,
+                    )
+                }
+                if (scene.scene_markers.isNotEmpty()) {
+                    item {
+//                    Spacer(Modifier.height(12.dp))
+                        Text(
+                            modifier = Modifier.padding(start = 8.dp),
+                            text = stringResource(DataType.MARKER.pluralStringId),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onBackground,
+                        )
+                    }
+                    item {
+                        SceneMarkerBar(
+                            modifier =
+                                Modifier
+                                    .padding(start = 8.dp, top = 48.dp, bottom = 64.dp)
+                                    .fillMaxWidth(),
+                            server = server,
+                            scene = scene,
+                            player = player,
+                            controllerViewState = controllerViewState,
+                        )
+                    }
+                }
+            }
         }
     }
+}
+
+fun Modifier.offsetByPercent(
+    xPercentage: Float,
+    yPercentage: Float,
+) = this.then(
+    Modifier.layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints)
+        layout(placeable.width, placeable.height) {
+            placeable.placeRelative(
+                x =
+                    ((constraints.maxWidth * xPercentage).toInt() - placeable.width / 2)
+                        .coerceIn(0, constraints.maxWidth - placeable.width),
+                y = (constraints.maxHeight * yPercentage).toInt() - (placeable.height / 1.5).toInt(),
+            )
+        }
+    },
+)
+
+@Composable
+fun SeekPreviewImage(
+    imageLoaded: Boolean,
+    previewImageUrl: String?,
+    imageLoader: ImageLoader,
+    duration: Long,
+    seekProgress: Float,
+    videoWidth: Int?,
+    videoHeight: Int?,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        if (imageLoaded &&
+            previewImageUrl.isNotNullOrBlank() &&
+            videoWidth != null &&
+            videoHeight != null
+        ) {
+            val height = 160.dp
+            val width = height * (videoWidth.toFloat() / videoHeight)
+            val heightPx = with(LocalDensity.current) { height.toPx().toInt() }
+            val widthPx = with(LocalDensity.current) { width.toPx().toInt() }
+
+            AsyncImage(
+                modifier =
+                    Modifier
+                        .width(width)
+                        .height(height)
+                        .background(Color.Black)
+                        .border(1.5.dp, color = MaterialTheme.colorScheme.border),
+                model =
+                    ImageRequest
+                        .Builder(context)
+                        .data(previewImageUrl)
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .transformations(
+                            CoilPreviewTransformation(
+                                widthPx,
+                                heightPx,
+                                duration,
+                                (duration * seekProgress).toLong(),
+                            ),
+                        ).build(),
+                contentScale = ContentScale.None,
+                imageLoader = imageLoader,
+                contentDescription = null,
+            )
+        }
+        Text(
+            text = (seekProgress * duration / 1000).toLong().seconds.toString(),
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.labelLarge,
+        )
+    }
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun SceneMarkerBar(
+    server: StashServer,
+    scene: FullSceneData,
+    player: Player,
+    controllerViewState: ControllerViewState,
+    modifier: Modifier = Modifier,
+    markers: List<MarkerData> = scene.scene_markers.map { it.asMarkerData(scene) },
+) {
+    // TODO handle adding markers
+    if (scene.scene_markers.isNotEmpty()) {
+        val uiConfig = remember(server) { ComposeUiConfig.fromStashServer(server) }
+        val firstFocus = remember { FocusRequester() }
+        Column(
+            modifier = modifier,
+        ) {
+            LazyRow(
+                modifier =
+                    Modifier
+                        .padding(top = 8.dp)
+                        .focusRestorer { firstFocus },
+                contentPadding = PaddingValues(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                itemsIndexed(markers, key = { _, item -> item.id }) { index, item ->
+                    val cardModifier =
+                        if (index == 0) {
+                            Modifier.focusRequester(firstFocus)
+                        } else {
+                            Modifier
+                        }
+                    BasicMarkerCard(
+                        marker = item,
+                        onClick = {
+                            player.seekTo(item.seconds.toLongMilliseconds)
+                            controllerViewState.hideControls()
+                        },
+                        modifier =
+                            cardModifier
+                                .onFocusChanged {
+                                    Log.i(TAG, "Marker ${item.id} focused: ${it.isFocused}")
+                                    if (it.isFocused) {
+                                        controllerViewState.pulseControls(Int.MAX_VALUE)
+                                    } else {
+                                        controllerViewState.pulseControls()
+                                    }
+                                },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BasicMarkerCard(
+    marker: MarkerData,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val title =
+        marker.title.ifBlank {
+            marker.primary_tag.slimTagData.name
+        } + " - ${marker.seconds.toInt().toDuration(DurationUnit.SECONDS)}"
+
+    val imageUrl = marker.screenshot
+    val videoUrl = null // marker.stream
+
+    RootCard(
+        item = marker,
+        modifier =
+            modifier
+                .padding(0.dp)
+                .width(MarkerPresenter.CARD_WIDTH.dp / 2),
+        onClick = onClick,
+        longClicker = { _, _ -> },
+        getFilterAndPosition = null,
+        imageWidth = MarkerPresenter.CARD_WIDTH.dp / 2,
+        imageHeight = MarkerPresenter.CARD_HEIGHT.dp / 2,
+        imageUrl = imageUrl,
+        defaultImageDrawableRes = R.drawable.default_scene,
+        videoUrl = videoUrl,
+        title = title,
+        subtitle = {},
+        description = {},
+        imageOverlay = {},
+    )
 }

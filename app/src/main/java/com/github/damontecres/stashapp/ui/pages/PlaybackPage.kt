@@ -11,7 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageContent
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -25,11 +25,11 @@ fun PlaybackPage(
     playbackMode: PlaybackMode,
     modifier: Modifier = Modifier,
 ) {
-    var scene by remember { mutableStateOf<Scene?>(null) }
+    var scene by remember { mutableStateOf<FullSceneData?>(null) }
     LaunchedEffect(server, sceneId) {
         val fullScene = QueryEngine(server).getScene(sceneId)
         if (fullScene != null) {
-            scene = Scene.fromFullSceneData(fullScene)
+            scene = fullScene
         } else {
             Log.w("PlaybackPage", "Scene $sceneId not found")
         }
