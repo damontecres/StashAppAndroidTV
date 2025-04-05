@@ -125,12 +125,14 @@ class RootActivity :
                 }
             }
 
-            serverViewModel.currentServer.observe(this) { server ->
-                if (server != null) {
-                    if (savedInstanceState == null) {
-                        if (!appHasPin) {
-                            serverViewModel.currentServer.removeObservers(this@RootActivity)
-                            navigationManager.goToMain()
+            if (!useCompose) {
+                serverViewModel.currentServer.observe(this) { server ->
+                    if (server != null) {
+                        if (savedInstanceState == null) {
+                            if (!appHasPin) {
+                                serverViewModel.currentServer.removeObservers(this@RootActivity)
+                                navigationManager.goToMain()
+                            }
                         }
                     }
                 }
