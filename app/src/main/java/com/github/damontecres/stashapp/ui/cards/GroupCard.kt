@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.ui.cards
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,8 +42,7 @@ fun GroupCard(
         item = item,
         modifier =
             modifier
-                .padding(0.dp)
-                .width(GroupPresenter.CARD_WIDTH.dp / 2),
+                .padding(0.dp),
         onClick = onClick,
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,

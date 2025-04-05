@@ -50,6 +50,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
+import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
@@ -59,6 +60,7 @@ import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.defaultCardWidth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -238,7 +240,9 @@ fun StashGrid(
 ) {
     val startPosition = initialPosition.coerceIn(0, (pager.size() - 1).coerceAtLeast(0))
 
-    val columns = 5
+    val columns =
+        (uiConfig.cardSettings.columns * (ScenePresenter.CARD_WIDTH.toDouble() / pager.filter.dataType.defaultCardWidth)).toInt()
+
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
     val filterArgs = pager.filter

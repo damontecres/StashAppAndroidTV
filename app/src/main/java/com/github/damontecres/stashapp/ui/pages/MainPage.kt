@@ -209,8 +209,7 @@ fun HomePageRow(
             contentPadding = PaddingValues(start = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            items(row.data.size) { index ->
-                val item = row.data[index]
+            itemsIndexed(row.data) { index, item ->
                 val cardModifier =
                     if (index == focusedIndex) {
                         Modifier.focusRequester(firstFocus)

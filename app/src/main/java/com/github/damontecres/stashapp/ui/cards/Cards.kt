@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.Composable
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -328,7 +330,11 @@ fun RootCard(
         }
     }
 
-    // TODO resize cards
+    val height =
+        (imageHeight * (1 + (5f - uiConfig.cardSettings.columns) / uiConfig.cardSettings.columns))
+            .coerceAtMost(224.dp) // Prevent tall cards from being excessively tall
+    val width =
+        imageWidth * (1 + (5f - uiConfig.cardSettings.columns) / uiConfig.cardSettings.columns)
 
     Card(
         onClick = onClick,
@@ -338,7 +344,8 @@ fun RootCard(
                 .onFocusChanged { focusState ->
                     focused = focusState.isFocused
                     if (!focusState.isFocused) focusedAfterDelay = false
-                }.padding(0.dp),
+                }.padding(0.dp)
+                .width(width),
         interactionSource = interactionSource,
         shape = shape,
         colors = colors,
@@ -350,7 +357,8 @@ fun RootCard(
         Box(
             modifier =
                 Modifier
-                    .height(imageHeight)
+                    .height(height)
+//                    .fillMaxHeight(.7f)
                     .fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
@@ -403,7 +411,7 @@ fun RootCard(
                 )
                 if (!focusedAfterDelay || presentationState.coverSurface) {
                     CardImage(
-                        imageHeight = imageHeight,
+                        imageHeight = height,
                         imageUrl = imageUrl,
                         defaultImageDrawableRes = defaultImageDrawableRes,
                         imageContent =
@@ -419,7 +427,7 @@ fun RootCard(
                 }
             } else {
                 CardImage(
-                    imageHeight = imageHeight,
+                    imageHeight = height,
                     imageUrl = imageUrl,
                     defaultImageDrawableRes = defaultImageDrawableRes,
                     imageContent = imageContent,
@@ -474,6 +482,7 @@ fun CardImage(
         modifier =
             modifier
                 .height(imageHeight)
+//                .fillMaxHeight()
                 .fillMaxWidth()
                 .padding(0.dp),
         contentAlignment = Alignment.Center,
@@ -485,7 +494,7 @@ fun CardImage(
             )
         } else if (imageUrl.isNotNullOrBlank()) {
             AsyncImage(
-                modifier = Modifier,
+                modifier = Modifier.fillMaxSize(),
                 model =
                     ImageRequest
                         .Builder(LocalContext.current)

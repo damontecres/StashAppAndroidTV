@@ -53,8 +53,7 @@ fun SceneCard(
         item = item,
         modifier =
             modifier
-                .padding(0.dp)
-                .width(ScenePresenter.CARD_WIDTH.dp / 2),
+                .padding(0.dp),
         contentPadding = PaddingValues(0.dp),
         onClick = onClick,
         longClicker = longClicker,

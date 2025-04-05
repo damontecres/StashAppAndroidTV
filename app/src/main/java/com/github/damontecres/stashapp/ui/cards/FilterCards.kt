@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp.ui.cards
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -67,8 +66,7 @@ fun ViewAllCard(
         item = filter,
         modifier =
             modifier
-                .padding(0.dp)
-                .width(width.dp / 2),
+                .padding(0.dp),
         onClick = {
             itemOnClick(filter)
         },
