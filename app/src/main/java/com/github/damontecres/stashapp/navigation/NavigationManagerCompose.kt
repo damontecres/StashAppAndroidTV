@@ -7,8 +7,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.leanback.app.GuidedStepSupportFragment
-import com.github.damontecres.stashapp.GalleryFragment
-import com.github.damontecres.stashapp.GroupFragment
 import com.github.damontecres.stashapp.MarkerDetailsFragment
 import com.github.damontecres.stashapp.PinFragment
 import com.github.damontecres.stashapp.R
@@ -75,10 +73,10 @@ class NavigationManagerCompose(
                     when (destination.dataType) {
                         DataType.SCENE -> null
                         DataType.TAG -> null
-                        DataType.GROUP -> GroupFragment()
+                        DataType.GROUP -> null
                         DataType.PERFORMER -> null
                         DataType.STUDIO -> null
-                        DataType.GALLERY -> GalleryFragment()
+                        DataType.GALLERY -> null
                         DataType.MARKER -> throw IllegalArgumentException("Marker not supported here")
                         DataType.IMAGE -> throw IllegalArgumentException("Image not supported here")
                     }

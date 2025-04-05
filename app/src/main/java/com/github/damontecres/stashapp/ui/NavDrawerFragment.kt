@@ -71,6 +71,8 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.FilterPage
+import com.github.damontecres.stashapp.ui.pages.GalleryPage
+import com.github.damontecres.stashapp.ui.pages.GroupPage
 import com.github.damontecres.stashapp.ui.pages.ImagePage
 import com.github.damontecres.stashapp.ui.pages.MainPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
@@ -503,6 +505,25 @@ fun NavDrawerContent(
                         server = server,
                         id = destination.id,
                         includeSubStudios = false,
+                        itemOnClick = itemOnClick,
+                        longClicker = longClicker,
+                    )
+
+                DataType.GALLERY ->
+                    GalleryPage(
+                        modifier = modifier,
+                        server = server,
+                        id = destination.id,
+                        itemOnClick = itemOnClick,
+                        longClicker = longClicker,
+                    )
+
+                DataType.GROUP ->
+                    GroupPage(
+                        modifier = modifier,
+                        server = server,
+                        id = destination.id,
+                        includeSubGroups = false,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
                     )

@@ -1,0 +1,284 @@
+package com.github.damontecres.stashapp.ui.pages
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import com.apollographql.apollo.api.Optional
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.GroupData
+import com.github.damontecres.stashapp.api.fragment.GroupRelationshipType
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
+import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.StarRating
+import com.github.damontecres.stashapp.ui.components.StashGridTab
+import com.github.damontecres.stashapp.ui.components.TabPage
+import com.github.damontecres.stashapp.ui.components.TabProvider
+import com.github.damontecres.stashapp.ui.components.TableRow
+import com.github.damontecres.stashapp.ui.components.TableRowComposable
+import com.github.damontecres.stashapp.ui.components.createTabFunc
+import com.github.damontecres.stashapp.ui.components.tabFindFilter
+import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.PageFilterKey
+import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getUiTabs
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.showDebugInfo
+import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.views.parseTimeToString
+import kotlinx.coroutines.launch
+
+@Composable
+fun GroupPage(
+    server: StashServer,
+    id: String,
+    includeSubGroups: Boolean,
+    itemOnClick: ItemOnClicker<Any>,
+    longClicker: LongClicker<Any>,
+    modifier: Modifier = Modifier,
+) {
+    var group by remember { mutableStateOf<GroupData?>(null) }
+    // Remember separately so we don't have refresh the whole page
+    var rating100 by remember { mutableIntStateOf(0) }
+    LaunchedEffect(id) {
+        group = QueryEngine(server).getGroup(id)
+        group?.let {
+            rating100 = it.rating100 ?: 0
+        }
+    }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val createTab =
+        createTabFunc(
+            server,
+            itemOnClick,
+            longClicker,
+            stringResource(R.string.stashapp_include_sub_group_content),
+        )
+
+    group?.let { group ->
+        val groups =
+            Optional.present(
+                HierarchicalMultiCriterionInput(
+                    value = Optional.present(listOf(group.id)),
+                    modifier = CriterionModifier.INCLUDES_ALL,
+                    depth = Optional.present(if (includeSubGroups) -1 else 0),
+                ),
+            )
+        val uiTabs = getUiTabs(context, DataType.GALLERY)
+        val tabs =
+            listOf(
+                TabProvider(stringResource(R.string.stashapp_details)) {
+                    GroupDetails(
+                        modifier = Modifier.fillMaxSize(),
+                        uiConfig = ComposeUiConfig.fromStashServer(server),
+                        group = group,
+                        rating100 = rating100,
+                        rating100Click = { newRating100 ->
+                            val mutationEngine = MutationEngine(server)
+                            scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                                TODO()
+                                val newStudio =
+                                    mutationEngine.updateStudio(
+                                        studioId = group.id,
+                                        rating100 = newRating100,
+                                    )
+                                if (newStudio != null) {
+                                    rating100 = newStudio.rating100 ?: 0
+                                    showSetRatingToast(
+                                        context,
+                                        newStudio.rating100 ?: 0,
+                                        server.serverPreferences.ratingsAsStars,
+                                    )
+                                }
+                            }
+                        },
+                    )
+                },
+                createTab(
+                    FilterArgs(
+                        dataType = DataType.SCENE,
+                        findFilter = tabFindFilter(server, PageFilterKey.GROUP_SCENES),
+                        objectFilter = SceneFilterType(groups = groups),
+                    ),
+                ),
+                createTab(
+                    FilterArgs(
+                        dataType = DataType.MARKER,
+                        objectFilter =
+                            SceneMarkerFilterType(
+                                scene_filter =
+                                    Optional.present(
+                                        SceneFilterType(
+                                            groups = groups,
+                                        ),
+                                    ),
+                            ),
+                    ),
+                ),
+                createTab(
+                    FilterArgs(
+                        dataType = DataType.TAG,
+                        override = DataSupplierOverride.GroupTags(group.id),
+                    ),
+                ),
+                TabProvider
+                    (stringResource(R.string.stashapp_containing_groups)) { positionCallback ->
+                        StashGridTab(
+                            name = stringResource(R.string.stashapp_containing_groups),
+                            server = server,
+                            initialFilter =
+                                FilterArgs(
+                                    dataType = DataType.GROUP,
+                                    override =
+                                        DataSupplierOverride.GroupRelationship(
+                                            group.id,
+                                            GroupRelationshipType.CONTAINING,
+                                        ),
+                                ),
+                            itemOnClick = itemOnClick,
+                            longClicker = longClicker,
+                            modifier = Modifier,
+                            positionCallback = positionCallback,
+                            subToggleLabel = null,
+                        )
+                    },
+                TabProvider
+                    (stringResource(R.string.stashapp_sub_groups)) { positionCallback ->
+                        StashGridTab(
+                            name = stringResource(R.string.stashapp_sub_groups),
+                            server = server,
+                            initialFilter =
+                                FilterArgs(
+                                    dataType = DataType.GROUP,
+                                    override =
+                                        DataSupplierOverride.GroupRelationship(
+                                            group.id,
+                                            GroupRelationshipType.SUB,
+                                        ),
+                                ),
+                            itemOnClick = itemOnClick,
+                            longClicker = longClicker,
+                            modifier = Modifier,
+                            positionCallback = positionCallback,
+                            subToggleLabel = stringResource(R.string.stashapp_include_sub_group_content),
+                        )
+                    },
+            ).filter { it.name in uiTabs }
+        val title = AnnotatedString(group.name)
+        TabPage(title, tabs, modifier)
+    }
+}
+
+@Composable
+fun GroupDetails(
+    group: GroupData,
+    uiConfig: ComposeUiConfig,
+    rating100: Int,
+    rating100Click: (rating100: Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val rows =
+        buildList {
+            if (showDebugInfo()) {
+                add(TableRow.from(R.string.id, group.id))
+            }
+            add(TableRow.from(R.string.stashapp_date, group.date))
+            add(TableRow.from(R.string.stashapp_duration, group.duration?.toString()))
+            add(TableRow.from(R.string.stashapp_studio, group.studio?.name))
+            add(TableRow.from(R.string.stashapp_director, group.director))
+            add(TableRow.from(R.string.stashapp_synopsis, group.synopsis))
+
+            add(TableRow.from(R.string.stashapp_created_at, parseTimeToString(group.created_at)))
+            add(TableRow.from(R.string.stashapp_updated_at, parseTimeToString(group.updated_at)))
+        }.filterNotNull()
+    LazyColumn(modifier = modifier) {
+        item {
+            Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+                // Images
+                if (group.front_image_path.isNotNullOrBlank()) {
+                    AsyncImage(
+                        modifier =
+                            Modifier
+                                .padding(12.dp)
+                                .weight(1f)
+                                .fillMaxHeight(.66f),
+                        model =
+                            ImageRequest
+                                .Builder(LocalContext.current)
+                                .data(group.front_image_path)
+                                .crossfade(true)
+                                .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.FillWidth,
+                    )
+                }
+                if (group.back_image_path.isNotNullOrBlank()) {
+                    AsyncImage(
+                        modifier =
+                            Modifier
+                                .padding(12.dp)
+                                .weight(1f)
+                                .fillMaxHeight(.66f),
+                        model =
+                            ImageRequest
+                                .Builder(LocalContext.current)
+                                .data(group.back_image_path)
+                                .crossfade(true)
+                                .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.FillWidth,
+                    )
+                }
+            }
+        }
+        item {
+            StarRating(
+                rating100 = rating100 ?: 0,
+                precision = uiConfig.starPrecision,
+                onRatingChange = rating100Click,
+                enabled = true,
+                modifier =
+                    Modifier
+                        .height(30.dp)
+                        .padding(start = 12.dp),
+            )
+        }
+
+        items(rows) { row ->
+            TableRowComposable(row)
+        }
+    }
+}
