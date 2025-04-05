@@ -56,6 +56,7 @@ fun ImageCard(
         onClick = onClick,
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
+        uiConfig = uiConfig,
         imageWidth = ImagePresenter.CARD_WIDTH.dp / 2,
         imageHeight = ImagePresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

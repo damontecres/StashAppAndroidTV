@@ -1,18 +1,27 @@
 package com.github.damontecres.stashapp.ui
 
+import android.content.Context
+import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 data class ComposeUiConfig(
     val ratingAsStars: Boolean,
     val starPrecision: StarRatingPrecision,
     val showStudioAsText: Boolean,
-    val debugTextEnabled: Boolean = false,
+    val debugTextEnabled: Boolean,
+    val cardSettings: ServerViewModel.CardUiSettings,
 ) {
     companion object {
-        fun fromStashServer(server: StashServer): ComposeUiConfig =
-            ComposeUiConfig(
+        fun fromStashServer(
+            context: Context,
+            server: StashServer,
+        ): ComposeUiConfig {
+            val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+            return ComposeUiConfig(
                 ratingAsStars = server.serverPreferences.ratingsAsStars,
                 starPrecision =
                     StarRatingPrecision.fromFloat(
@@ -22,6 +31,13 @@ data class ComposeUiConfig(
                         ),
                     ),
                 showStudioAsText = server.serverPreferences.showStudioAsText,
+                debugTextEnabled =
+                    prefs.getBoolean(
+                        context.getString(R.string.pref_key_show_playback_debug_info),
+                        false,
+                    ),
+                cardSettings = ServerViewModel.createUiSettings(context),
             )
+        }
     }
 }

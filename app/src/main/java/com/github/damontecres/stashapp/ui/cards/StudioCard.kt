@@ -53,6 +53,7 @@ fun StudioCard(
         onClick = onClick,
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
+        uiConfig = uiConfig,
         imageWidth = StudioPresenter.CARD_WIDTH.dp / 2,
         imageHeight = StudioPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

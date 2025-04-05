@@ -66,6 +66,7 @@ fun GroupPage(
     includeSubGroups: Boolean,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
     var group by remember { mutableStateOf<GroupData?>(null) }
@@ -85,6 +86,7 @@ fun GroupPage(
             server,
             itemOnClick,
             longClicker,
+            uiConfig,
             stringResource(R.string.stashapp_include_sub_group_content),
         )
 
@@ -103,7 +105,7 @@ fun GroupPage(
                 TabProvider(stringResource(R.string.stashapp_details)) {
                     GroupDetails(
                         modifier = Modifier.fillMaxSize(),
-                        uiConfig = ComposeUiConfig.fromStashServer(server),
+                        uiConfig = uiConfig,
                         group = group,
                         rating100 = rating100,
                         rating100Click = { newRating100 ->
@@ -172,6 +174,7 @@ fun GroupPage(
                             longClicker = longClicker,
                             modifier = Modifier,
                             positionCallback = positionCallback,
+                            composeUiConfig = uiConfig,
                             subToggleLabel = null,
                         )
                     },
@@ -191,6 +194,7 @@ fun GroupPage(
                                 ),
                             itemOnClick = itemOnClick,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
                             modifier = Modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = stringResource(R.string.stashapp_include_sub_group_content),

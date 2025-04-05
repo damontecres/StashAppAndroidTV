@@ -59,6 +59,7 @@ fun SceneCard(
         onClick = onClick,
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
+        uiConfig = uiConfig,
         imageWidth = ScenePresenter.CARD_WIDTH.dp / 2,
         imageHeight = ScenePresenter.CARD_HEIGHT.dp / 2,
         imageUrl = item.paths.screenshot,

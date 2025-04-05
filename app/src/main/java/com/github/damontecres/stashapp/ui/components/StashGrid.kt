@@ -236,16 +236,18 @@ fun StashGrid(
     initialPosition: Int = 0,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
 ) {
+    val startPosition = initialPosition.coerceIn(0, (pager.size() - 1).coerceAtLeast(0))
+
     val columns = 5
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
     val filterArgs = pager.filter
     val firstFocus = remember(pager) { FocusRequester() }
-    var focusedIndex by rememberSaveable(pager) { mutableIntStateOf(initialPosition) }
-    if (initialPosition > 0) {
-        Log.v(TAG, "Scroll to $initialPosition")
+    var focusedIndex by rememberSaveable(pager) { mutableIntStateOf(startPosition) }
+    if (startPosition > 0) {
+        Log.v(TAG, "Scroll to $startPosition")
         LaunchedEffect(Unit) {
-            gridState.scrollToItem(initialPosition, -columns)
+            gridState.scrollToItem(startPosition, -columns)
         }
     }
     Row(

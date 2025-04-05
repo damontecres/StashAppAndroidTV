@@ -47,6 +47,7 @@ fun TagCard(
         onClick = onClick,
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
+        uiConfig = uiConfig,
         imageWidth = TagPresenter.CARD_WIDTH.dp / 2,
         imageHeight = TagPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

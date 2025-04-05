@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageContent
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
@@ -20,6 +21,7 @@ import com.github.damontecres.stashapp.util.StashServer
 @Composable
 fun PlaybackPage(
     server: StashServer,
+    uiConfig: ComposeUiConfig,
     sceneId: String,
     startPosition: Long,
     playbackMode: PlaybackMode,
@@ -41,6 +43,7 @@ fun PlaybackPage(
             scene = it,
             startPosition = startPosition,
             playbackMode = playbackMode,
+            uiConfig = uiConfig,
             modifier =
                 modifier
                     .fillMaxSize()

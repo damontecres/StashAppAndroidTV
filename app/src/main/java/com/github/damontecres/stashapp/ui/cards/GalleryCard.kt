@@ -49,6 +49,7 @@ fun GalleryCard(
         onClick = onClick,
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
+        uiConfig = uiConfig,
         imageWidth = GalleryPresenter.CARD_WIDTH.dp / 2,
         imageHeight = GalleryPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

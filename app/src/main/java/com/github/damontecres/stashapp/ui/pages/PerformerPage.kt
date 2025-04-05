@@ -87,6 +87,7 @@ import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.floor
 import kotlin.math.round
@@ -222,6 +223,7 @@ fun PerformerPage(
     id: String,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
     val viewModel =
@@ -260,7 +262,7 @@ fun PerformerPage(
                 perf = state.performer,
                 tags = tags,
                 studios = studios,
-                uiConfig = ComposeUiConfig.fromStashServer(server),
+                uiConfig = uiConfig,
                 favorite = favorite,
                 onFavoriteClick = viewModel::toggleFavorite,
                 rating100 = rating100,
@@ -297,7 +299,7 @@ fun PerformerDetailsPage(
             ),
         )
     val uiTabs = getUiTabs(LocalContext.current, DataType.PERFORMER)
-    val createTab = createTabFunc(server, itemOnClick, longClicker)
+    val createTab = createTabFunc(server, itemOnClick, longClicker, uiConfig)
     val tabs =
         listOf(
             TabProvider(stringResource(R.string.stashapp_details)) {
@@ -596,6 +598,16 @@ private fun PerformerDetailsPreview() {
                     starPrecision = StarRatingPrecision.HALF,
                     showStudioAsText = true,
                     debugTextEnabled = true,
+                    cardSettings =
+                        ServerViewModel.CardUiSettings(
+                            maxSearchResults = 25,
+                            playVideoPreviews = true,
+                            videoPreviewAudio = false,
+                            columns = 5,
+                            showRatings = true,
+                            imageCrop = true,
+                            videoDelay = 1,
+                        ),
                 ),
             itemOnClick = itemOnClick,
             longClicker = longClicker,

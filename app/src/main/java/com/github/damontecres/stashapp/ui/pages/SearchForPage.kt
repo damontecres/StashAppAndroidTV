@@ -74,6 +74,7 @@ fun SearchForDialog(
     dataType: DataType,
     onItemClick: (StashData) -> Unit,
     onDismissRequest: () -> Unit,
+    uiConfig: ComposeUiConfig,
     dialogTitle: String? = null,
     dismissOnClick: Boolean = true,
 ) {
@@ -111,6 +112,7 @@ fun SearchForDialog(
                             }
                             onItemClick.invoke(item)
                         },
+                        uiConfig = uiConfig,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -126,6 +128,7 @@ fun SearchForPage(
     searchId: Long,
     dataType: DataType,
     itemOnClick: (Long, StashData) -> Unit,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -315,7 +318,7 @@ fun SearchForPage(
             SearchItemsRow(
                 title = stringResource(R.string.results),
                 items = results,
-                uiConfig = ComposeUiConfig.fromStashServer(server),
+                uiConfig = uiConfig,
                 itemOnClick = itemOnClickWrapper,
                 longClicker = { _, _ -> },
                 modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
@@ -325,7 +328,7 @@ fun SearchForPage(
             ItemsRow(
                 title = R.string.suggestions,
                 items = suggestions,
-                uiConfig = ComposeUiConfig.fromStashServer(server),
+                uiConfig = uiConfig,
                 itemOnClick = itemOnClickWrapper,
                 longClicker = { _, _ -> },
                 modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
@@ -340,7 +343,7 @@ fun SearchForPage(
             ItemsRow(
                 title = title,
                 items = recent,
-                uiConfig = ComposeUiConfig.fromStashServer(server),
+                uiConfig = uiConfig,
                 itemOnClick = itemOnClickWrapper,
                 longClicker = { _, _ -> },
                 modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),

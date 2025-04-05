@@ -54,6 +54,7 @@ fun TagPage(
     includeSubTags: Boolean,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
     var tag by remember { mutableStateOf<TagData?>(null) }
@@ -73,6 +74,7 @@ fun TagPage(
             server,
             itemOnClick,
             longClicker,
+            uiConfig,
             stringResource(R.string.stashapp_include_sub_tag_content),
         )
 
@@ -91,7 +93,7 @@ fun TagPage(
                 TabProvider(stringResource(R.string.stashapp_details)) {
                     TagDetails(
                         modifier = Modifier.fillMaxSize(),
-                        uiConfig = ComposeUiConfig.fromStashServer(server),
+                        uiConfig = uiConfig,
                         tag = tag,
                         favorite = favorite,
                         favoriteClick = {
@@ -173,6 +175,7 @@ fun TagPage(
                             longClicker = longClicker,
                             modifier = Modifier,
                             positionCallback = positionCallback,
+                            composeUiConfig = uiConfig,
                             subToggleLabel = stringResource(R.string.stashapp_include_sub_tag_content),
                         )
                     },

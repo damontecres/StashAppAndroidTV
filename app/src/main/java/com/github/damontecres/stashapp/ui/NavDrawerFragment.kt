@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import androidx.annotation.StringRes
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -12,9 +13,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -37,7 +38,6 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.DialogProperties
@@ -81,6 +81,7 @@ import com.github.damontecres.stashapp.ui.pages.SceneDetailsPage
 import com.github.damontecres.stashapp.ui.pages.SearchPage
 import com.github.damontecres.stashapp.ui.pages.StudioPage
 import com.github.damontecres.stashapp.ui.pages.TagPage
+import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
@@ -135,7 +136,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun FragmentContent(
     server: StashServer,
@@ -143,15 +144,14 @@ fun FragmentContent(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val defaultSelection: DrawerPage = DrawerPage.HOME_PAGE
-    var currentScreen by remember { mutableStateOf(defaultSelection) }
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-
-    val collapsedDrawerItemWidth = 48.dp
-    val paddingValue = 12.dp
-
-    val composeUiConfig = ComposeUiConfig.fromStashServer(server)
-    val cardUiSettings by remember { mutableStateOf(ServerViewModel.createUiSettings()) }
+    val composeUiConfig by remember {
+        mutableStateOf(
+            ComposeUiConfig.fromStashServer(
+                context,
+                server,
+            ),
+        )
+    }
 
     val itemOnClick =
         ItemOnClicker { item: Any, filterAndPosition ->
@@ -233,6 +233,10 @@ fun FragmentContent(
         }
 
     val initialFocus = remember { FocusRequester() }
+    val listState = rememberLazyListState()
+    val defaultSelection: DrawerPage = DrawerPage.HOME_PAGE
+    var currentScreen by remember { mutableStateOf(defaultSelection) }
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
 
     NavHost(navigationManager.controller, modifier = modifier) { destination ->
         if (destination.fullScreen) {
@@ -243,6 +247,7 @@ fun FragmentContent(
                         sceneId = destination.sceneId,
                         startPosition = destination.position,
                         playbackMode = destination.mode,
+                        uiConfig = composeUiConfig,
                     )
                 }
 
@@ -255,6 +260,7 @@ fun FragmentContent(
                         startSlideshow = destination.automatic,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
+                        uiConfig = composeUiConfig,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -269,14 +275,7 @@ fun FragmentContent(
                     Column(
                         Modifier
                             .fillMaxHeight()
-                            .background(MaterialTheme.colorScheme.secondaryContainer)
-                            .width(
-                                if (drawerState.currentValue == DrawerValue.Closed) {
-                                    collapsedDrawerItemWidth
-                                } else {
-                                    Dp.Unspecified
-                                },
-                            ),
+                            .background(MaterialTheme.colorScheme.secondaryContainer),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
@@ -319,6 +318,7 @@ fun FragmentContent(
                                     .focusGroup()
                                     .focusRestorer { initialFocus }
                                     .selectableGroup(),
+                            state = listState,
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement =
                                 Arrangement.spacedBy(
@@ -330,14 +330,14 @@ fun FragmentContent(
                                 pages,
                                 key = null,
                             ) { page ->
-                                val mod =
-                                    if (currentScreen == page) {
-                                        Modifier.focusRequester(initialFocus)
-                                    } else {
-                                        Modifier
-                                    }
                                 NavigationDrawerItem(
-                                    modifier = mod,
+                                    modifier =
+                                        Modifier
+                                            .ifElse(
+                                                currentScreen == page,
+                                                Modifier
+                                                    .focusRequester(initialFocus),
+                                            ),
                                     selected = currentScreen == page,
                                     onClick = {
                                         currentScreen = page
@@ -387,7 +387,7 @@ fun FragmentContent(
                         navManager = navigationManager,
                         server = server,
                         destination = destination,
-                        cardUiSettings = cardUiSettings,
+                        composeUiConfig = composeUiConfig,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         modifier = Modifier.fillMaxSize(),
@@ -419,18 +419,16 @@ fun NavDrawerContent(
     navManager: NavigationManagerCompose,
     server: StashServer,
     destination: Destination,
-    cardUiSettings: ServerViewModel.CardUiSettings,
+    composeUiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
-    composeUiConfig: ComposeUiConfig = ComposeUiConfig.fromStashServer(server),
 ) {
     when (destination) {
         Destination.Main -> {
             MainPage(
                 server = server,
                 uiConfig = composeUiConfig,
-                cardUiSettings = cardUiSettings,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 modifier = modifier,
@@ -454,7 +452,7 @@ fun NavDrawerContent(
             SearchPage(
                 server = server,
                 navigationManager = navManager,
-                uiConfig = ComposeUiConfig.fromStashServer(server),
+                uiConfig = composeUiConfig,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 modifier = modifier,
@@ -469,6 +467,7 @@ fun NavDrawerContent(
                         server = server,
                         sceneId = destination.id,
                         itemOnClick = itemOnClick,
+                        uiConfig = composeUiConfig,
                         playOnClick = { position, mode ->
                             navManager.navigate(
                                 Destination.Playback(
@@ -487,6 +486,7 @@ fun NavDrawerContent(
                         id = destination.id,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
+                        uiConfig = composeUiConfig,
                     )
 
                 DataType.TAG ->
@@ -497,6 +497,7 @@ fun NavDrawerContent(
                         includeSubTags = false,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
+                        uiConfig = composeUiConfig,
                     )
 
                 DataType.STUDIO ->
@@ -507,6 +508,7 @@ fun NavDrawerContent(
                         includeSubStudios = false,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
+                        uiConfig = composeUiConfig,
                     )
 
                 DataType.GALLERY ->
@@ -516,6 +518,7 @@ fun NavDrawerContent(
                         id = destination.id,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
+                        uiConfig = composeUiConfig,
                     )
 
                 DataType.GROUP ->
@@ -526,6 +529,7 @@ fun NavDrawerContent(
                         includeSubGroups = false,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
+                        uiConfig = composeUiConfig,
                     )
 
                 else -> FragmentView(navManager, destination, modifier)

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,7 +50,6 @@ import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getCaseInsensitive
-import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 
 private const val TAG = "MainPage"
@@ -109,7 +107,6 @@ class MainPageViewModel(
 fun MainPage(
     server: StashServer,
     uiConfig: ComposeUiConfig,
-    cardUiSettings: ServerViewModel.CardUiSettings,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
@@ -252,6 +249,7 @@ fun HomePageRow(
                             )
                         },
                         longClicker = longClicker,
+                        uiConfig = uiConfig,
                         getFilterAndPosition = { FilterAndPosition(row.filter, row.data.size) },
                     )
                 }

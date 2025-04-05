@@ -24,6 +24,7 @@ import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
 
 fun dataTypeImageWidth(dataType: DataType) =
@@ -56,6 +57,7 @@ fun ViewAllCard(
     itemOnClick: (Any) -> Unit,
     longClicker: LongClicker<Any>,
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
     val width = dataTypeImageWidth(filter.dataType)
@@ -72,6 +74,7 @@ fun ViewAllCard(
         },
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
+        uiConfig = uiConfig,
         imageWidth = width.dp / 2,
         imageContent = {
             Image(

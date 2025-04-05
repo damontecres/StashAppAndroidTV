@@ -49,6 +49,7 @@ fun GalleryPage(
     id: String,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
     var gallery by remember { mutableStateOf<GalleryData?>(null) }
@@ -68,6 +69,7 @@ fun GalleryPage(
             server,
             itemOnClick,
             longClicker,
+            uiConfig,
             null,
         )
 
@@ -85,7 +87,7 @@ fun GalleryPage(
                 TabProvider(stringResource(R.string.stashapp_details)) {
                     GalleryDetails(
                         modifier = Modifier.fillMaxSize(),
-                        uiConfig = ComposeUiConfig.fromStashServer(server),
+                        uiConfig = uiConfig,
                         gallery = gallery,
                         rating100 = rating100,
                         rating100Click = { newRating100 ->

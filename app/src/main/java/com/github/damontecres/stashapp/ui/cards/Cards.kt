@@ -219,6 +219,7 @@ fun RootCard(
     item: Any,
     onClick: () -> Unit,
     title: String,
+    uiConfig: ComposeUiConfig,
     imageWidth: Dp,
     imageHeight: Dp,
     longClicker: LongClicker<Any>,
@@ -242,6 +243,7 @@ fun RootCard(
     item,
     onClick,
     AnnotatedString(title),
+    uiConfig,
     imageWidth,
     imageHeight,
     longClicker,
@@ -272,6 +274,7 @@ fun RootCard(
     item: Any,
     onClick: () -> Unit,
     title: AnnotatedString,
+    uiConfig: ComposeUiConfig,
     imageWidth: Dp,
     imageHeight: Dp,
     longClicker: LongClicker<Any>,
@@ -323,6 +326,8 @@ fun RootCard(
         }
     }
 
+    // TODO resize cards
+
     Card(
         onClick = onClick,
         onLongClick = { longClicker.longClick(item, getFilterAndPosition?.invoke(item)) },
@@ -339,119 +344,117 @@ fun RootCard(
         border = border,
         glow = glow,
     ) {
-        Column(modifier = Modifier.padding(contentPadding)) {
-            // Image/Video
-            Box(
-                modifier =
-                    Modifier
-                        .height(imageHeight)
-                        .fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (focusedAfterDelay && playVideoPreviews && videoUrl.isNotNullOrBlank()) {
-                    val player =
-                        LocalPlayerContext.current.player(
-                            context,
-                            LocalGlobalContext.current.server,
-                        )
-                    LaunchedEffect(player) {
-                        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-                        val videoPreviewAudio =
-                            prefs.getBoolean("videoPreviewAudio", false) &&
-                                !prefs.getBoolean(
-                                    context.getString(R.string.pref_key_playback_start_muted),
-                                    false,
-                                )
-                        if (!videoPreviewAudio && C.TRACK_TYPE_AUDIO !in player.trackSelectionParameters.disabledTrackTypes) {
-                            player.trackSelectionParameters =
-                                player.trackSelectionParameters
-                                    .buildUpon()
-                                    .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
-                                    .build()
-                        }
-                        val mediaItem =
-                            MediaItem
-                                .Builder()
-                                .setUri(Uri.parse(videoUrl))
-                                .setMimeType(MimeTypes.VIDEO_MP4)
-                                .build()
-
-                        player.setMediaItem(mediaItem, C.TIME_UNSET)
-                        player.playWhenReady = true
-                        player.prepare()
-                    }
-                    LifecycleStartEffect(Unit) {
-                        onStopOrDispose {
-                            player.stop()
-                        }
-                    }
-                    val contentScale = ContentScale.Fit
-                    val presentationState = rememberPresentationState(player)
-                    val scaledModifier =
-                        Modifier.resizeWithContentScale(contentScale, presentationState.videoSizeDp)
-
-                    PlayerSurface(
-                        player = player,
-                        surfaceType = SURFACE_TYPE_SURFACE_VIEW,
-                        modifier = scaledModifier,
+        // Image/Video
+        Box(
+            modifier =
+                Modifier
+                    .height(imageHeight)
+                    .fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (focusedAfterDelay && playVideoPreviews && videoUrl.isNotNullOrBlank()) {
+                val player =
+                    LocalPlayerContext.current.player(
+                        context,
+                        LocalGlobalContext.current.server,
                     )
-                    if (!focusedAfterDelay || presentationState.coverSurface) {
-                        CardImage(
-                            imageHeight = imageHeight,
-                            imageUrl = imageUrl,
-                            defaultImageDrawableRes = defaultImageDrawableRes,
-                            imageContent =
-                                imageContent ?: {
-                                    Box(
-                                        Modifier
-                                            .matchParentSize()
-                                            .background(Color.Black),
-                                    )
-                                },
-                            modifier = Modifier,
-                        )
+                LaunchedEffect(player) {
+                    val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+                    val videoPreviewAudio =
+                        prefs.getBoolean("videoPreviewAudio", false) &&
+                            !prefs.getBoolean(
+                                context.getString(R.string.pref_key_playback_start_muted),
+                                false,
+                            )
+                    if (!videoPreviewAudio && C.TRACK_TYPE_AUDIO !in player.trackSelectionParameters.disabledTrackTypes) {
+                        player.trackSelectionParameters =
+                            player.trackSelectionParameters
+                                .buildUpon()
+                                .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
+                                .build()
                     }
-                } else {
+                    val mediaItem =
+                        MediaItem
+                            .Builder()
+                            .setUri(Uri.parse(videoUrl))
+                            .setMimeType(MimeTypes.VIDEO_MP4)
+                            .build()
+
+                    player.setMediaItem(mediaItem, C.TIME_UNSET)
+                    player.playWhenReady = true
+                    player.prepare()
+                }
+                LifecycleStartEffect(Unit) {
+                    onStopOrDispose {
+                        player.stop()
+                    }
+                }
+                val contentScale = ContentScale.Fit
+                val presentationState = rememberPresentationState(player)
+                val scaledModifier =
+                    Modifier.resizeWithContentScale(contentScale, presentationState.videoSizeDp)
+
+                PlayerSurface(
+                    player = player,
+                    surfaceType = SURFACE_TYPE_SURFACE_VIEW,
+                    modifier = scaledModifier,
+                )
+                if (!focusedAfterDelay || presentationState.coverSurface) {
                     CardImage(
                         imageHeight = imageHeight,
                         imageUrl = imageUrl,
                         defaultImageDrawableRes = defaultImageDrawableRes,
-                        imageContent = imageContent,
+                        imageContent =
+                            imageContent ?: {
+                                Box(
+                                    Modifier
+                                        .matchParentSize()
+                                        .background(Color.Black),
+                                )
+                            },
                         modifier = Modifier,
                     )
                 }
-                this@Column.AnimatedVisibility(
-                    visible = !focusedAfterDelay,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                ) {
-                    imageOverlay.invoke(this)
-                }
+            } else {
+                CardImage(
+                    imageHeight = imageHeight,
+                    imageUrl = imageUrl,
+                    defaultImageDrawableRes = defaultImageDrawableRes,
+                    imageContent = imageContent,
+                    modifier = Modifier,
+                )
             }
-            Column(modifier = Modifier.padding(6.dp)) {
-                // Title
-                ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                    Text(
-                        title,
-                        maxLines = 1,
-                        modifier =
-                            Modifier
-                                .enableMarquee(focusedAfterDelay),
-                    )
-                }
-                // Subtitle
-                ProvideTextStyle(MaterialTheme.typography.bodySmall) {
-                    Box(Modifier.graphicsLayer { alpha = 0.6f }) { subtitle.invoke() }
-                }
-                // Description
-                ProvideTextStyle(MaterialTheme.typography.bodySmall) {
-                    Box(
+            this@Card.AnimatedVisibility(
+                visible = !focusedAfterDelay,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                imageOverlay.invoke(this)
+            }
+        }
+        Column(modifier = Modifier.padding(6.dp)) {
+            // Title
+            ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                Text(
+                    title,
+                    maxLines = 1,
+                    modifier =
                         Modifier
-                            .graphicsLayer {
-                                alpha = 0.8f
-                            }.fillMaxWidth(),
-                    ) { description.invoke(this, focusedAfterDelay) }
-                }
+                            .enableMarquee(focusedAfterDelay),
+                )
+            }
+            // Subtitle
+            ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+                Box(Modifier.graphicsLayer { alpha = 0.6f }) { subtitle.invoke() }
+            }
+            // Description
+            ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+                Box(
+                    Modifier
+                        .graphicsLayer {
+                            alpha = 0.8f
+                        }.fillMaxWidth(),
+                ) { description.invoke(this, focusedAfterDelay) }
             }
         }
     }
@@ -612,6 +615,7 @@ fun StashCard(
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 getFilterAndPosition = getFilterAndPosition,
+                uiConfig = uiConfig,
                 modifier = modifier,
             )
         }
@@ -623,6 +627,7 @@ fun StashCard(
                 subtitle = {
                     Text(text = item.name.replaceFirstChar(Char::titlecase))
                 },
+                uiConfig = uiConfig,
                 imageWidth = dataTypeImageWidth(item.dataType).dp / 2,
                 imageHeight = dataTypeImageHeight(item.dataType).dp / 2,
                 imageContent = {

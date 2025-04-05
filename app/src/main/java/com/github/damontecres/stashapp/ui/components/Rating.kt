@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -13,17 +14,20 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.tv.material3.Icon
+import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.ui.MainTheme
 import kotlin.math.abs
 
@@ -72,7 +76,16 @@ fun StarRating(
                 } else {
                     0f
                 }
+            var focused by remember { mutableStateOf(false) }
 
+            // TODO this looks weird
+            // TODO half stars with background fill the rectangle
+            val backgroundColor =
+                if (focused) {
+                    MaterialTheme.colorScheme.border
+                } else {
+                    Color.Unspecified
+                }
             Icon(
                 imageVector = icon,
                 tint =
@@ -87,6 +100,8 @@ fun StarRating(
                 modifier =
                     if (enabled) {
                         Modifier
+                            .onFocusChanged { focused = it.isFocused }
+                            .background(backgroundColor)
                             .selectable(
                                 selected = isRated,
                                 onClick = {

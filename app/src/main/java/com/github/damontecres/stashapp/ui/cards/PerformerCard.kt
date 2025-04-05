@@ -104,6 +104,7 @@ fun PerformerCard(
         onClick = onClick,
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
+        uiConfig = uiConfig,
         imageWidth = PerformerPresenter.CARD_WIDTH.dp / 2,
         imageHeight = PerformerPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = item.image_path,

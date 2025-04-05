@@ -119,6 +119,7 @@ class ControllerViewState internal constructor(
 @Composable
 fun PlaybackOverlay(
     server: StashServer,
+    uiConfig: ComposeUiConfig,
     scene: FullSceneData,
     streamDecision: StreamDecision,
     oCounter: Int,
@@ -238,6 +239,7 @@ fun PlaybackOverlay(
                             scene = scene,
                             player = player,
                             controllerViewState = controllerViewState,
+                            uiConfig = uiConfig,
                         )
                     }
                 }
@@ -328,6 +330,7 @@ fun SeekPreviewImage(
 @Composable
 fun SceneMarkerBar(
     server: StashServer,
+    uiConfig: ComposeUiConfig,
     scene: FullSceneData,
     player: Player,
     controllerViewState: ControllerViewState,
@@ -336,7 +339,7 @@ fun SceneMarkerBar(
 ) {
     // TODO handle adding markers
     if (scene.scene_markers.isNotEmpty()) {
-        val uiConfig = remember(server) { ComposeUiConfig.fromStashServer(server) }
+        val context = LocalContext.current
         val firstFocus = remember { FocusRequester() }
         Column(
             modifier = modifier,
@@ -362,6 +365,7 @@ fun SceneMarkerBar(
                             player.seekTo(item.seconds.toLongMilliseconds)
                             controllerViewState.hideControls()
                         },
+                        uiConfig = uiConfig,
                         modifier =
                             cardModifier
                                 .onFocusChanged {
@@ -383,6 +387,7 @@ fun SceneMarkerBar(
 fun BasicMarkerCard(
     marker: MarkerData,
     onClick: () -> Unit,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
     val title =
@@ -402,6 +407,7 @@ fun BasicMarkerCard(
         onClick = onClick,
         longClicker = { _, _ -> },
         getFilterAndPosition = null,
+        uiConfig = uiConfig,
         imageWidth = MarkerPresenter.CARD_WIDTH.dp / 2,
         imageHeight = MarkerPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

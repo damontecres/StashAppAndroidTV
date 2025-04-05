@@ -58,6 +58,7 @@ fun StudioPage(
     includeSubStudios: Boolean,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
     var studio by remember { mutableStateOf<StudioData?>(null) }
@@ -79,6 +80,7 @@ fun StudioPage(
             server,
             itemOnClick,
             longClicker,
+            uiConfig,
             stringResource(R.string.stashapp_include_sub_studio_content),
         )
 
@@ -97,7 +99,7 @@ fun StudioPage(
                 TabProvider(stringResource(R.string.stashapp_details)) {
                     StudioDetails(
                         modifier = Modifier.fillMaxSize(),
-                        uiConfig = ComposeUiConfig.fromStashServer(server),
+                        uiConfig = uiConfig,
                         studio = studio,
                         favorite = favorite,
                         favoriteClick = {
@@ -206,6 +208,7 @@ fun StudioPage(
                         longClicker = longClicker,
                         modifier = Modifier,
                         positionCallback = positionCallback,
+                        composeUiConfig = uiConfig,
                         subToggleLabel = stringResource(R.string.stashapp_include_sub_studio_content),
                     )
                 },

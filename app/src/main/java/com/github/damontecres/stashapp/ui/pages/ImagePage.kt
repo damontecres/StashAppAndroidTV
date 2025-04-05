@@ -457,6 +457,7 @@ fun ImagePage(
     startSlideshow: Boolean,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
     viewModel: ImageDetailsViewModel = viewModel(),
 ) {
@@ -697,7 +698,7 @@ fun ImagePage(
                     onReset = { reset(true) },
                     rating100 = rating100,
                     oCount = oCount,
-                    uiConfig = ComposeUiConfig.fromStashServer(server),
+                    uiConfig = uiConfig,
                     oCountAction = viewModel::updateOCount,
                     onRatingChange = { viewModel.updateRating(image.id, it) },
                     addItem = { item ->
@@ -951,6 +952,7 @@ fun ImageOverlay(
                             searchForDataType = null
                             addItem.invoke(item)
                         },
+                        uiConfig = uiConfig,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }

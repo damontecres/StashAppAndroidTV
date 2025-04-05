@@ -44,6 +44,7 @@ fun GroupCard(
         onClick = onClick,
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
+        uiConfig = uiConfig,
         imageWidth = GroupPresenter.CARD_WIDTH.dp / 2,
         imageHeight = GroupPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

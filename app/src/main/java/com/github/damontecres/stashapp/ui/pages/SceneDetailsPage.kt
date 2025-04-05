@@ -326,6 +326,7 @@ fun SceneDetailsPage(
     sceneId: String,
     itemOnClick: ItemOnClicker<Any>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
     val viewModel =
@@ -374,7 +375,7 @@ fun SceneDetailsPage(
                 galleries = galleries,
                 groups = groups,
                 markers = markers,
-                uiConfig = ComposeUiConfig.fromStashServer(server),
+                uiConfig = uiConfig,
                 itemOnClick = itemOnClick,
                 playOnClick = playOnClick,
                 addItem = { item ->
@@ -690,6 +691,7 @@ fun SceneDetails(
         onDismissRequest = { searchForDataType = null },
         dialogTitle = null,
         dismissOnClick = false,
+        uiConfig = uiConfig,
     )
 }
 

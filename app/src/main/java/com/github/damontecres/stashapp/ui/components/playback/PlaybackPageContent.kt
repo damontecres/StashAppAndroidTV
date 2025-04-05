@@ -48,6 +48,7 @@ import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -87,6 +88,7 @@ fun PlaybackPageContent(
     scene: FullSceneData,
     startPosition: Long,
     playbackMode: PlaybackMode,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
     controlsEnabled: Boolean = true,
     viewModel: PlaybackViewModel = viewModel(),
@@ -243,6 +245,7 @@ fun PlaybackPageContent(
                 Modifier
                     .fillMaxSize()
                     .background(Color.Transparent),
+            uiConfig = uiConfig,
             server = server,
             scene = scene,
             streamDecision = streamDecision,
@@ -276,6 +279,7 @@ fun PlaybackPageContent(
     }
     SearchForDialog(
         show = createMarkerPosition >= 0,
+        uiConfig = uiConfig,
         dataType = DataType.TAG,
         onItemClick = { item ->
             viewModel.addMarker(createMarkerPosition, item.id)

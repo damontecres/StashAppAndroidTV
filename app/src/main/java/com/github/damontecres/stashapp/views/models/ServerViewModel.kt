@@ -126,8 +126,7 @@ open class ServerViewModel : ViewModel() {
     }
 
     companion object {
-        fun createUiSettings(): CardUiSettings {
-            val context = StashApplication.getApplication()
+        fun createUiSettings(context: Context = StashApplication.getApplication()): CardUiSettings {
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
             val maxSearchResults = manager.getInt("maxSearchResults", 25)
             val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
