@@ -444,6 +444,8 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
             director = this.director,
             urls = this.urls,
             date = this.date,
+            play_count = play_count,
+            play_duration = play_duration,
             rating100 = this.rating100,
             o_counter = this.o_counter,
             organized = this.organized,

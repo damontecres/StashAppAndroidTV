@@ -3,10 +3,12 @@ package com.github.damontecres.stashapp.ui.pages
 import android.util.Log
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -16,6 +18,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -39,12 +42,14 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.cards.ViewAllCard
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.main.MainPageSceneDetails
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -120,7 +125,7 @@ fun MainPage(
             },
         )[MainPageViewModel::class]
 
-    val frontPageRows by viewModel.frontPageRows.observeAsState()
+    val frontPageRows by viewModel.frontPageRows.observeAsState(listOf())
 
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(server, frontPageRows) {
@@ -132,7 +137,7 @@ fun MainPage(
                 .padding(16.dp)
                 .focusRequester(focusRequester),
         uiConfig = uiConfig,
-        rows = frontPageRows!!,
+        rows = frontPageRows,
         itemOnClick = itemOnClick,
         longClicker = longClicker,
     )
@@ -147,29 +152,53 @@ fun HomePage(
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
-    val focusRequester = remember { FocusRequester() }
-    var focusedIndex by rememberSaveable { mutableIntStateOf(0) }
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-        contentPadding = PaddingValues(bottom = 75.dp),
+    var focusedItem by remember { mutableStateOf<Any?>(null) }
+    Column(
         modifier =
             modifier
-                .fillMaxSize()
-                .focusGroup()
-                .focusRestorer { focusRequester },
+                .fillMaxSize(),
     ) {
-        itemsIndexed(rows) { index, row ->
-            HomePageRow(
-                uiConfig,
-                row,
-                itemOnClick,
-                longClicker,
-                onFocus = {
-                    focusedIndex = index
-                },
-                rowFocusRequester = if (index == focusedIndex) focusRequester else null,
-                modifier = Modifier,
-            )
+        focusedItem?.let { item ->
+            Box(
+                modifier =
+                    Modifier
+                        .height(200.dp)
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+            ) {
+                if (item is SlimSceneData) {
+                    MainPageSceneDetails(
+                        scene = item,
+                        uiConfig = uiConfig,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+        }
+        val focusRequester = remember { FocusRequester() }
+        var focusedIndex by rememberSaveable { mutableIntStateOf(0) }
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(bottom = 75.dp),
+            modifier =
+                Modifier
+                    .focusGroup()
+                    .focusRestorer { focusRequester },
+        ) {
+            itemsIndexed(rows) { index, row ->
+                HomePageRow(
+                    uiConfig,
+                    row,
+                    itemOnClick,
+                    longClicker,
+                    onFocus = { idx, item ->
+                        focusedIndex = index
+                        focusedItem = item
+                    },
+                    rowFocusRequester = if (index == focusedIndex) focusRequester else null,
+                    modifier = Modifier,
+                )
+            }
         }
     }
 }
@@ -181,7 +210,7 @@ fun HomePageRow(
     row: FrontPageParser.FrontPageRow.Success,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
-    onFocus: (Int) -> Unit,
+    onFocus: (Int, Any) -> Unit,
     rowFocusRequester: FocusRequester?,
     modifier: Modifier = Modifier,
 ) {
@@ -210,18 +239,18 @@ fun HomePageRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             itemsIndexed(row.data) { index, item ->
-                val cardModifier =
-                    if (index == focusedIndex) {
-                        Modifier.focusRequester(firstFocus)
-                    } else {
-                        Modifier
-                    }.onFocusChanged { focusState ->
-                        if (focusState.isFocused) {
-                            focusedIndex = index
-                            onFocus(index)
-                        }
-                    }
                 if (item != null) {
+                    val cardModifier =
+                        if (index == focusedIndex) {
+                            Modifier.focusRequester(firstFocus)
+                        } else {
+                            Modifier
+                        }.onFocusChanged { focusState ->
+                            if (focusState.isFocused) {
+                                focusedIndex = index
+                                onFocus(index, item)
+                            }
+                        }
                     StashCard(
                         modifier = cardModifier,
                         uiConfig = uiConfig,
