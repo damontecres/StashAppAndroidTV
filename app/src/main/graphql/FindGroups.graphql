@@ -95,3 +95,9 @@ mutation CreateGroup($input: GroupCreateInput!) {
     ...GroupData
   }
 }
+
+mutation UpdateGroup($input: GroupUpdateInput!) {
+  groupUpdate(input: $input) {
+    ...GroupData
+  }
+}

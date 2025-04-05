@@ -167,6 +167,7 @@ fun IconRowText(
     iconMap: EnumMap<DataType, Int>,
     oCounter: Int?,
     modifier: Modifier = Modifier,
+    additionalIcons: (@Composable AnnotatedString.Builder.() -> Unit)? = null,
 ) {
     val annotatedString =
         buildAnnotatedString {
@@ -180,6 +181,7 @@ fun IconRowText(
                     append("  ")
                 }
             }
+            additionalIcons?.invoke(this)
             if (oCounter != null && oCounter > 0) {
                 appendInlineContent(id = "ocounter", "O")
                 append(" $oCounter")

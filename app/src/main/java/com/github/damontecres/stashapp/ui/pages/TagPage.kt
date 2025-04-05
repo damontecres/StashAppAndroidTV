@@ -69,16 +69,15 @@ fun TagPage(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val createTab =
-        createTabFunc(
-            server,
-            itemOnClick,
-            longClicker,
-            uiConfig,
-            stringResource(R.string.stashapp_include_sub_tag_content),
-        )
-
     tag?.let { tag ->
+        val createTab =
+            createTabFunc(
+                server,
+                itemOnClick,
+                longClicker,
+                uiConfig,
+                if (tag.child_count > 0) stringResource(R.string.stashapp_include_sub_tag_content) else null,
+            )
         val tags =
             Optional.present(
                 HierarchicalMultiCriterionInput(
@@ -176,7 +175,7 @@ fun TagPage(
                             modifier = Modifier,
                             positionCallback = positionCallback,
                             composeUiConfig = uiConfig,
-                            subToggleLabel = stringResource(R.string.stashapp_include_sub_tag_content),
+                            subToggleLabel = if (tag.child_count > 0) stringResource(R.string.stashapp_include_sub_tag_content) else null,
                         )
                     },
             ).filter { it.name in uiTabs }

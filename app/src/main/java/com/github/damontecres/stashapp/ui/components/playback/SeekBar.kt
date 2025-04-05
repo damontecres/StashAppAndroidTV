@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
@@ -123,6 +124,11 @@ fun SeekBarImpl(
                         ),
                     strokeWidth = size.height,
                     cap = StrokeCap.Round,
+                )
+                drawCircle(
+                    color = Color.White,
+                    radius = size.height + 2,
+                    center = Offset(x = size.width.times(seekProgress), y = yOffset),
                 )
             },
         )

@@ -81,16 +81,15 @@ fun GroupPage(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val createTab =
-        createTabFunc(
-            server,
-            itemOnClick,
-            longClicker,
-            uiConfig,
-            stringResource(R.string.stashapp_include_sub_group_content),
-        )
-
     group?.let { group ->
+        val createTab =
+            createTabFunc(
+                server,
+                itemOnClick,
+                longClicker,
+                uiConfig,
+                if (group.sub_group_count > 0) stringResource(R.string.stashapp_include_sub_group_content) else null,
+            )
         val groups =
             Optional.present(
                 HierarchicalMultiCriterionInput(
@@ -111,17 +110,16 @@ fun GroupPage(
                         rating100Click = { newRating100 ->
                             val mutationEngine = MutationEngine(server)
                             scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                                TODO()
-                                val newStudio =
-                                    mutationEngine.updateStudio(
-                                        studioId = group.id,
+                                val newGroup =
+                                    mutationEngine.updateGroup(
+                                        groupId = group.id,
                                         rating100 = newRating100,
                                     )
-                                if (newStudio != null) {
-                                    rating100 = newStudio.rating100 ?: 0
+                                if (newGroup != null) {
+                                    rating100 = newGroup.rating100 ?: 0
                                     showSetRatingToast(
                                         context,
-                                        newStudio.rating100 ?: 0,
+                                        newGroup.rating100 ?: 0,
                                         server.serverPreferences.ratingsAsStars,
                                     )
                                 }
@@ -197,7 +195,7 @@ fun GroupPage(
                             composeUiConfig = uiConfig,
                             modifier = Modifier,
                             positionCallback = positionCallback,
-                            subToggleLabel = stringResource(R.string.stashapp_include_sub_group_content),
+                            if (group.sub_group_count > 0) stringResource(R.string.stashapp_include_sub_group_content) else null,
                         )
                     },
             ).filter { it.name in uiTabs }

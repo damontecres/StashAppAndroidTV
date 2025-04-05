@@ -75,16 +75,15 @@ fun StudioPage(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val createTab =
-        createTabFunc(
-            server,
-            itemOnClick,
-            longClicker,
-            uiConfig,
-            stringResource(R.string.stashapp_include_sub_studio_content),
-        )
-
     studio?.let { studio ->
+        val createTab =
+            createTabFunc(
+                server,
+                itemOnClick,
+                longClicker,
+                uiConfig,
+                if (studio.child_studios.isNotEmpty()) stringResource(R.string.stashapp_include_sub_studio_content) else null,
+            )
         val studios =
             Optional.present(
                 HierarchicalMultiCriterionInput(
@@ -209,7 +208,14 @@ fun StudioPage(
                         modifier = Modifier,
                         positionCallback = positionCallback,
                         composeUiConfig = uiConfig,
-                        subToggleLabel = stringResource(R.string.stashapp_include_sub_studio_content),
+                        subToggleLabel =
+                            if (studio.child_studios.isNotEmpty()) {
+                                stringResource(
+                                    R.string.stashapp_include_sub_studio_content,
+                                )
+                            } else {
+                                null
+                            },
                     )
                 },
                 createTab(

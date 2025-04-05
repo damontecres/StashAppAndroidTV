@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -13,6 +16,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.GroupPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
 import java.util.EnumMap
@@ -61,7 +65,29 @@ fun GroupCard(
                 Modifier
                     .enableMarquee(it)
                     .align(Alignment.Center),
-            )
+            ) {
+                if (item.containing_groups.isNotEmpty() || item.sub_group_count > 0) {
+                    if (length > 0) {
+                        append(" ")
+                    }
+                    withStyle(SpanStyle(fontFamily = FontAwesome)) {
+                        append(stringResource(DataType.GROUP.iconStringId))
+                    }
+                    append(" ")
+                    if (item.containing_groups.isNotEmpty()) {
+                        append(item.containing_groups.size.toString())
+                        withStyle(SpanStyle(fontFamily = FontAwesome)) {
+                            append(stringResource(R.string.fa_arrow_up_long))
+                        }
+                    }
+                    if (item.sub_group_count > 0) {
+                        append(item.sub_group_count.toString())
+                        withStyle(SpanStyle(fontFamily = FontAwesome)) {
+                            append(stringResource(R.string.fa_arrow_down_long))
+                        }
+                    }
+                }
+            }
         },
         imageOverlay = {
             ImageOverlay(uiConfig.ratingAsStars, rating100 = item.rating100)

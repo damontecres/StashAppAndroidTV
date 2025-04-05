@@ -219,6 +219,8 @@ fun PlaybackPageContent(
                         Key.MediaPrevious -> player.seekToPrevious()
                         else -> result = false
                     }
+                } else if (it.key == Key.Back && controllerViewState.controlsVisible) {
+                    controllerViewState.hideControls()
                 } else {
                     controllerViewState.pulseControls()
                     result = false

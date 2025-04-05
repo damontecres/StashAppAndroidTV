@@ -23,6 +23,7 @@ import com.github.damontecres.stashapp.api.SceneResetOMutation
 import com.github.damontecres.stashapp.api.SceneSaveActivityMutation
 import com.github.damontecres.stashapp.api.SceneUpdateMutation
 import com.github.damontecres.stashapp.api.UpdateGalleryMutation
+import com.github.damontecres.stashapp.api.UpdateGroupMutation
 import com.github.damontecres.stashapp.api.UpdateImageMutation
 import com.github.damontecres.stashapp.api.UpdateMarkerMutation
 import com.github.damontecres.stashapp.api.UpdatePerformerMutation
@@ -38,6 +39,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.GalleryUpdateInput
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
 import com.github.damontecres.stashapp.api.type.GroupCreateInput
+import com.github.damontecres.stashapp.api.type.GroupUpdateInput
 import com.github.damontecres.stashapp.api.type.ImageUpdateInput
 import com.github.damontecres.stashapp.api.type.PackageSpecInput
 import com.github.damontecres.stashapp.api.type.PackageType
@@ -468,6 +470,19 @@ class MutationEngine(
             )
         val mutation = UpdateStudioMutation(input)
         return executeMutation(mutation).data?.studioUpdate?.studioData
+    }
+
+    suspend fun updateGroup(
+        groupId: String,
+        rating100: Int? = null,
+    ): GroupData? {
+        val input =
+            GroupUpdateInput(
+                id = groupId,
+                rating100 = Optional.present(rating100),
+            )
+        val mutation = UpdateGroupMutation(input)
+        return executeMutation(mutation).data?.groupUpdate?.groupData
     }
 
     companion object {
