@@ -66,6 +66,7 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.MainTheme
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StarRating
 import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
@@ -508,7 +509,7 @@ fun PerformerDetails(
             if (tags.isNotEmpty()) {
                 item {
                     ItemsRow(
-                        title = R.string.stashapp_tags,
+                        title = stringResource(R.string.stashapp_tags),
                         items = tags,
                         uiConfig = uiConfig,
                         itemOnClick = itemOnClick,
@@ -520,7 +521,7 @@ fun PerformerDetails(
             if (studios.isNotEmpty()) {
                 item {
                     ItemsRow(
-                        title = R.string.stashapp_studios,
+                        title = stringResource(R.string.stashapp_studios),
                         items = studios,
                         uiConfig = uiConfig,
                         itemOnClick = itemOnClick,

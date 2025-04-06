@@ -53,6 +53,7 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.Material3MainTheme
+import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.SearchEditTextBox
 import com.github.damontecres.stashapp.util.CreateNew
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -326,26 +327,23 @@ fun SearchForPage(
         }
         if (suggestions.isNotEmpty()) {
             ItemsRow(
-                title = R.string.suggestions,
+                title = stringResource(R.string.suggestions),
                 items = suggestions,
                 uiConfig = uiConfig,
                 itemOnClick = itemOnClickWrapper,
-                longClicker = { _, _ -> },
                 modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
             )
         }
         if (recent.isNotEmpty()) {
-            val title =
-                context.getString(
-                    R.string.format_recently_used,
-                    context.getString(dataType.pluralStringId).lowercase(),
-                )
             ItemsRow(
-                title = title,
+                title =
+                    stringResource(
+                        R.string.format_recently_used,
+                        context.getString(dataType.pluralStringId).lowercase(),
+                    ),
                 items = recent,
                 uiConfig = uiConfig,
                 itemOnClick = itemOnClickWrapper,
-                longClicker = { _, _ -> },
                 modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
             )
         }

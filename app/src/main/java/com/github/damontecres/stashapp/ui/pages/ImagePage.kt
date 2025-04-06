@@ -121,6 +121,7 @@ import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StarRating
 import com.github.damontecres.stashapp.ui.components.TitleValueText
@@ -883,7 +884,7 @@ fun ImageOverlay(
         if (performers.isNotEmpty()) {
             item {
                 ItemsRow(
-                    title = R.string.stashapp_performers,
+                    title = stringResource(R.string.stashapp_performers),
                     items = performers,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
@@ -895,7 +896,7 @@ fun ImageOverlay(
         if (tags.isNotEmpty()) {
             item {
                 ItemsRow(
-                    title = R.string.stashapp_tags,
+                    title = stringResource(R.string.stashapp_tags),
                     items = tags,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
