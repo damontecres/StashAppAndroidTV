@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,12 +23,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -41,6 +48,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
@@ -55,6 +65,7 @@ import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getCaseInsensitive
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.launch
 
 private const val TAG = "MainPage"
@@ -134,7 +145,6 @@ fun MainPage(
     HomePage(
         modifier =
             Modifier
-                .padding(16.dp)
                 .focusRequester(focusRequester),
         uiConfig = uiConfig,
         rows = frontPageRows,
@@ -153,51 +163,117 @@ fun HomePage(
     modifier: Modifier = Modifier,
 ) {
     var focusedItem by remember { mutableStateOf<Any?>(null) }
-    Column(
+    Box(
         modifier =
             modifier
                 .fillMaxSize(),
     ) {
-        focusedItem?.let { item ->
-            Box(
-                modifier =
-                    Modifier
-                        .height(200.dp)
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-            ) {
-                if (item is SlimSceneData) {
-                    MainPageSceneDetails(
-                        scene = item,
-                        uiConfig = uiConfig,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
+        focusedItem?.let { scene ->
+            if (scene is SlimSceneData && scene.paths.screenshot.isNotNullOrBlank()) {
+                val gradientColor = MaterialTheme.colorScheme.background
+                AsyncImage(
+                    model =
+                        ImageRequest
+                            .Builder(LocalContext.current)
+                            .data(scene.paths.screenshot)
+                            .crossfade(true)
+                            .build(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    alignment = Alignment.TopEnd,
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .fillMaxHeight(.6f)
+                            .drawWithContent {
+                                drawContent()
+                                drawRect(
+                                    Brush.verticalGradient(
+                                        colorStops =
+                                            arrayOf(
+                                                0f to Color.Transparent,
+                                                .9f to gradientColor,
+                                            ),
+                                        startY = 0f,
+                                    ),
+                                )
+                                drawRect(
+                                    Brush.horizontalGradient(
+                                        colorStops =
+                                            arrayOf(
+                                                0f to Color.Transparent,
+                                                .8f to gradientColor,
+                                            ),
+                                        startX = size.width * .33f,
+                                        endX = 0f,
+                                    ),
+                                )
+//                                drawLine(
+//                                    color = Color.Red,
+//                                    start = Offset(x = 0f, y = size.height * .5f),
+//                                    end = Offset(x = size.width, y = size.height),
+//                                )
+//                                drawLine(
+//                                    color = Color.Red,
+//                                    start = Offset.Zero,
+//                                    end = Offset(x = size.width, y = size.height),
+//                                )
+                            },
+                )
             }
         }
-        val focusRequester = remember { FocusRequester() }
-        var focusedIndex by rememberSaveable { mutableIntStateOf(0) }
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 75.dp),
+        Column(
             modifier =
                 Modifier
-                    .focusGroup()
-                    .focusRestorer { focusRequester },
+                    .fillMaxSize()
+                    .padding(16.dp),
         ) {
-            itemsIndexed(rows) { index, row ->
-                HomePageRow(
-                    uiConfig,
-                    row,
-                    itemOnClick,
-                    longClicker,
-                    onFocus = { idx, item ->
-                        focusedIndex = index
-                        focusedItem = item
-                    },
-                    rowFocusRequester = if (index == focusedIndex) focusRequester else null,
-                    modifier = Modifier,
-                )
+            focusedItem?.let { item ->
+                val height =
+                    when (item) {
+                        is SlimSceneData -> 200.dp
+                        else -> 0.dp
+                    }
+                Box(
+                    modifier =
+                        Modifier
+                            .height(height)
+                            .fillMaxWidth(.6f)
+                            .padding(bottom = 8.dp),
+                ) {
+                    if (item is SlimSceneData) {
+                        MainPageSceneDetails(
+                            scene = item,
+                            uiConfig = uiConfig,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+            }
+            val focusRequester = remember { FocusRequester() }
+            var focusedIndex by rememberSaveable { mutableIntStateOf(0) }
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 75.dp),
+                modifier =
+                    Modifier
+                        .focusGroup()
+                        .focusRestorer { focusRequester },
+            ) {
+                itemsIndexed(rows) { index, row ->
+                    HomePageRow(
+                        uiConfig,
+                        row,
+                        itemOnClick,
+                        longClicker,
+                        onFocus = { idx, item ->
+                            focusedIndex = index
+                            focusedItem = item
+                        },
+                        rowFocusRequester = if (index == focusedIndex) focusRequester else null,
+                        modifier = Modifier,
+                    )
+                }
             }
         }
     }
@@ -269,6 +345,13 @@ fun HomePageRow(
             if (row.data.isNotEmpty()) {
                 item {
                     ViewAllCard(
+                        modifier =
+                            Modifier.onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    focusedIndex = row.data.size
+                                    onFocus(row.data.size, row.filter)
+                                }
+                            },
                         filter = row.filter,
                         itemOnClick = {
                             itemOnClick.onClick(

@@ -6,7 +6,6 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,18 +14,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -53,7 +49,6 @@ fun MainPageSceneDetails(
         Column(
             modifier =
                 Modifier
-                    .padding(start = 16.dp)
                     .weight(1 - imageWeight),
         ) {
             // Title
@@ -157,34 +152,6 @@ fun MainPageSceneDetails(
                     )
                 }
             }
-        }
-        if (scene.paths.screenshot.isNotNullOrBlank()) {
-            val gradientColor = MaterialTheme.colorScheme.background
-            AsyncImage(
-                model = scene.paths.screenshot,
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                modifier =
-                    Modifier
-                        .fillMaxHeight()
-                        .weight(imageWeight)
-                        .drawWithContent {
-                            drawContent()
-//                            drawRect(
-//                                Brush.verticalGradient(
-//                                    colors = listOf(Color.Transparent, gradientColor),
-//                                    startY = 500f,
-//                                ),
-//                            )
-//                            drawRect(
-//                                Brush.horizontalGradient(
-//                                    colors = listOf(gradientColor, Color.Transparent),
-//                                    endX = 400f,
-//                                    startX = 100f,
-//                                ),
-//                            )
-                        },
-            )
         }
     }
 }
