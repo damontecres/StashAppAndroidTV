@@ -236,6 +236,7 @@ fun FragmentContent(
     val listState = rememberLazyListState()
     val defaultSelection: DrawerPage = DrawerPage.HOME_PAGE
     var currentScreen by remember { mutableStateOf(defaultSelection) }
+    var selectedScreen by remember { mutableStateOf<DrawerPage?>(defaultSelection) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
     NavHost(navigationManager.controller, modifier = modifier) { destination ->
@@ -268,6 +269,33 @@ fun FragmentContent(
                 else -> FragmentView(navigationManager, destination)
             }
         } else {
+            // Highlight on the nav drawer as user navigates around the app
+            selectedScreen =
+                when (destination) {
+                    Destination.Main -> DrawerPage.HOME_PAGE
+                    Destination.Search -> DrawerPage.SEARCH_PAGE
+
+                    is Destination.Item ->
+                        pages.firstOrNull {
+                            val dest = it.destination
+                            dest is Destination.Filter && dest.filterArgs.dataType == destination.dataType
+                        }
+
+                    is Destination.MarkerDetails ->
+                        pages.firstOrNull {
+                            val dest = it.destination
+                            dest is Destination.Filter && dest.filterArgs.dataType == DataType.MARKER
+                        }
+
+                    is Destination.Filter ->
+                        pages.firstOrNull {
+                            val dest = it.destination
+                            dest is Destination.Filter && dest.filterArgs.dataType == destination.filterArgs.dataType
+                        }
+
+                    else -> null
+                }
+
             NavigationDrawer(
                 modifier = Modifier,
                 drawerState = drawerState,
@@ -338,9 +366,10 @@ fun FragmentContent(
                                                 Modifier
                                                     .focusRequester(initialFocus),
                                             ),
-                                    selected = currentScreen == page,
+                                    selected = selectedScreen == page,
                                     onClick = {
                                         currentScreen = page
+                                        selectedScreen = page
                                         drawerState.setValue(DrawerValue.Closed)
                                         Log.v(
                                             TAG,
@@ -353,7 +382,7 @@ fun FragmentContent(
                                     leadingContent = {
                                         if (page != DrawerPage.SETTINGS_PAGE) {
                                             val color =
-                                                if (currentScreen == page) {
+                                                if (selectedScreen == page) {
                                                     MaterialTheme.colorScheme.border
                                                 } else {
                                                     MaterialTheme.colorScheme.onSecondaryContainer

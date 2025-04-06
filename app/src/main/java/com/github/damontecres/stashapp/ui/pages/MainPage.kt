@@ -1,6 +1,11 @@
 package com.github.damontecres.stashapp.ui.pages
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,10 +36,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -52,14 +60,26 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.GroupData
+import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.cards.ViewAllCard
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.main.MainPageSceneDetails
+import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -168,14 +188,26 @@ fun HomePage(
             modifier
                 .fillMaxSize(),
     ) {
-        focusedItem?.let { scene ->
-            if (scene is SlimSceneData && scene.paths.screenshot.isNotNullOrBlank()) {
+        focusedItem?.let { item ->
+            val imageUrl =
+                when (item) {
+                    is SlimSceneData -> item.paths.screenshot
+                    is ImageData -> item.paths.image
+                    is PerformerData -> item.image_path
+                    is StudioData -> item.image_path
+                    is TagData -> item.image_path
+                    is MarkerData -> item.screenshot
+                    is GroupData -> item.front_image_path
+                    is GalleryData -> item.paths.cover
+                    else -> null
+                }
+            if (imageUrl.isNotNullOrBlank()) {
                 val gradientColor = MaterialTheme.colorScheme.background
                 AsyncImage(
                     model =
                         ImageRequest
                             .Builder(LocalContext.current)
-                            .data(scene.paths.screenshot)
+                            .data(imageUrl)
                             .crossfade(true)
                             .build(),
                     contentDescription = null,
@@ -184,7 +216,7 @@ fun HomePage(
                     modifier =
                         Modifier
                             .align(Alignment.TopEnd)
-                            .fillMaxHeight(.6f)
+                            .fillMaxHeight(.85f)
                             .drawWithContent {
                                 drawContent()
                                 drawRect(
@@ -229,24 +261,60 @@ fun HomePage(
                     .padding(16.dp),
         ) {
             focusedItem?.let { item ->
-                val height =
-                    when (item) {
-                        is SlimSceneData -> 200.dp
-                        else -> 0.dp
+                val datatype =
+                    if (item is StashData) {
+                        Destination.getDataType(item)
+                    } else if (item is FilterArgs) {
+                        item.dataType
+                    } else {
+                        null
                     }
-                Box(
-                    modifier =
-                        Modifier
-                            .height(height)
-                            .fillMaxWidth(.6f)
-                            .padding(bottom = 8.dp),
+                val visible =
+                    when (datatype) {
+                        DataType.SCENE -> true
+                        else -> false
+                    }
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
+                    exit = fadeOut() + slideOutVertically(targetOffsetY = { -it }),
                 ) {
-                    if (item is SlimSceneData) {
-                        MainPageSceneDetails(
-                            scene = item,
-                            uiConfig = uiConfig,
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth(.6f)
+                                .padding(bottom = 8.dp),
+                    ) {
+                        if (item is SlimSceneData) {
+                            MainPageSceneDetails(
+                                scene = item,
+                                uiConfig = uiConfig,
+                                modifier =
+                                    Modifier
+                                        .height(200.dp)
+                                        .fillMaxWidth(),
+                            )
+                        } else if (item is FilterArgs && datatype == DataType.SCENE) {
+                            Box(Modifier.height(200.dp)) {
+                                Text(
+                                    modifier = Modifier.enableMarquee(true),
+                                    text =
+                                        item.name
+                                            ?: stringResource(item.dataType.pluralStringId),
+                                    color = Color.LightGray,
+                                    style =
+                                        MaterialTheme.typography.displayMedium.copy(
+                                            shadow =
+                                                Shadow(
+                                                    color = Color.DarkGray,
+                                                    offset = Offset(5f, 2f),
+                                                    blurRadius = 2f,
+                                                ),
+                                        ),
+                                    maxLines = 1,
+                                )
+                            }
+                        }
                     }
                 }
             }

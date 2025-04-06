@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components
 
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -33,9 +35,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -45,11 +51,15 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
+import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -61,6 +71,8 @@ import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.defaultCardWidth
+import com.github.damontecres.stashapp.util.resume_position
+import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -109,6 +121,9 @@ fun StashGridControls(
     }
     var shouldRequestFocus by remember { mutableStateOf(requestFocus) }
     val gridFocusRequester = remember { FocusRequester() }
+//    LaunchedEffect(Unit) {
+//        gridFocusRequester.requestFocus()
+//    }
 
     val navManager = LocalGlobalContext.current.navigationManager
 
@@ -238,8 +253,8 @@ fun StashGrid(
     initialPosition: Int = 0,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
 ) {
+    val navigationManager = LocalGlobalContext.current.navigationManager
     val startPosition = initialPosition.coerceIn(0, (pager.size() - 1).coerceAtLeast(0))
-
     val columns =
         (uiConfig.cardSettings.columns * (ScenePresenter.CARD_WIDTH.toDouble() / pager.filter.dataType.defaultCardWidth)).toInt()
 
@@ -247,25 +262,92 @@ fun StashGrid(
     val scope = rememberCoroutineScope()
     val filterArgs = pager.filter
     val firstFocus = remember(pager) { FocusRequester() }
+    var previouslyFocusedIndex by rememberSaveable(pager) { mutableIntStateOf(0) }
     var focusedIndex by rememberSaveable(pager) { mutableIntStateOf(startPosition) }
+
+    val focusOn = { index: Int ->
+        previouslyFocusedIndex = focusedIndex
+        focusedIndex = index
+    }
+
     if (startPosition > 0) {
         Log.v(TAG, "Scroll to $startPosition")
         LaunchedEffect(Unit) {
             gridState.scrollToItem(startPosition, -columns)
+            firstFocus.requestFocus()
         }
     }
     Row(
         modifier =
             modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .onKeyEvent {
+                    if (it.type != KeyEventType.KeyUp) {
+                        return@onKeyEvent false
+                    } else if (it.key == Key.Back && it.nativeKeyEvent.isLongPress) {
+                        // TODO doesn't work?
+                        focusOn(previouslyFocusedIndex)
+                        scope.launch {
+                            gridState.scrollToItem(previouslyFocusedIndex, -columns)
+                            firstFocus.requestFocus()
+                        }
+                        return@onKeyEvent true
+                    } else if (it.key == Key.Back && focusedIndex > 0) {
+                        focusOn(0)
+                        scope.launch {
+                            gridState.scrollToItem(0, -columns)
+                            firstFocus.requestFocus()
+                        }
+                        return@onKeyEvent true
+                    } else if (it.key == Key.MediaPlay || it.key == Key.MediaPlayPause) {
+                        val item = pager[focusedIndex]
+                        val destination =
+                            when (item) {
+                                is SlimSceneData ->
+                                    Destination.Playback(
+                                        item.id,
+                                        item.resume_position ?: 0L,
+                                        PlaybackMode.Choose,
+                                    )
+
+                                is MarkerData ->
+                                    Destination.Playback(
+                                        item.scene.minimalSceneData.id,
+                                        item.seconds.toLongMilliseconds,
+                                        PlaybackMode.Choose,
+                                    )
+
+                                is ImageData ->
+                                    Destination.Slideshow(
+                                        filterArgs = pager.filter,
+                                        position = focusedIndex,
+                                        automatic = true,
+                                    )
+
+                                else -> null
+                            }
+                        if (destination != null) {
+                            navigationManager.navigate(destination)
+                            return@onKeyEvent true
+                        } else if (item != null) {
+                            itemOnClick.onClick(item, FilterAndPosition(pager.filter, focusedIndex))
+                            return@onKeyEvent true
+                        }
+                        return@onKeyEvent false
+                    } else {
+                        return@onKeyEvent false
+                    }
+                },
     ) {
         JumpButtons(
             itemCount = pager.size(),
+            columns = columns,
             jumpClick = { jump ->
                 scope.launch {
                     val newPosition =
-                        (gridState.firstVisibleItemIndex + jump).coerceIn(0..<pager.size())
-                    gridState.scrollToItem(newPosition)
+                        (focusedIndex + jump).coerceIn(0..<pager.size())
+                    focusOn(newPosition)
+                    gridState.scrollToItem(newPosition, -columns)
                 }
             },
             modifier = Modifier.align(Alignment.CenterVertically),
@@ -283,9 +365,11 @@ fun StashGrid(
                     Modifier
                         .fillMaxSize()
                         .focusGroup()
-                        .focusRestorer { firstFocus }
-                        .focusRequester(gridFocusRequester),
-//                    .focusRestorer(),
+                        .focusProperties {
+                            enter = {
+                                firstFocus
+                            }
+                        }.focusRequester(gridFocusRequester),
             ) {
                 if (pager.size() < 0) {
                     item {
@@ -330,16 +414,11 @@ fun StashGrid(
                                         .wrapContentWidth(Alignment.CenterHorizontally),
                             )
                         } else {
-                            if (requestFocus && focusedIndex == index) {
-                                LaunchedEffect(Unit) {
-                                    firstFocus.requestFocus()
-                                }
-                            }
                             StashCard(
                                 modifier =
                                     mod.onFocusChanged { focusState ->
                                         if (focusState.isFocused) {
-                                            focusedIndex = index
+                                            focusOn(index)
                                             positionCallback?.invoke(columns, index)
                                         }
                                     },
@@ -407,26 +486,59 @@ fun StashGrid(
 @Composable
 fun JumpButtons(
     itemCount: Int,
+    columns: Int,
     jumpClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val jump2 =
+        remember {
+            if (itemCount >= 25_000) {
+                columns * 2000
+            } else if (itemCount >= 7_000) {
+                columns * 200
+            } else if (itemCount >= 2_000) {
+                columns * 50
+            } else {
+                columns * 20
+            }
+        }
+    val jump1 =
+        remember {
+            if (itemCount >= 25_000) {
+                columns * 500
+            } else if (itemCount >= 7_000) {
+                columns * 50
+            } else if (itemCount >= 2_000) {
+                columns * 15
+            } else {
+                columns * 6
+            }
+        }
     Column(
         modifier = modifier,
     ) {
-        Button(
-            onClick = {
-                jumpClick.invoke(-10)
-            },
-        ) {
-            Text(text = stringResource(R.string.fa_angle_up), fontFamily = FontAwesome)
-        }
-        Button(
-            onClick = {
-                jumpClick.invoke(10)
-            },
-        ) {
-            Text(text = stringResource(R.string.fa_angle_down), fontFamily = FontAwesome)
-        }
+        JumpButton(R.string.fa_angles_up, -jump2, jumpClick)
+        JumpButton(R.string.fa_angle_up, -jump1, jumpClick)
+        JumpButton(R.string.fa_angle_down, jump1, jumpClick)
+        JumpButton(R.string.fa_angles_down, jump2, jumpClick)
+    }
+}
+
+@Composable
+fun JumpButton(
+    @StringRes stringRes: Int,
+    jumpAmount: Int,
+    jumpClick: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Button(
+        modifier = modifier.width(40.dp),
+        contentPadding = PaddingValues(4.dp),
+        onClick = {
+            jumpClick.invoke(jumpAmount)
+        },
+    ) {
+        Text(text = stringResource(stringRes), fontFamily = FontAwesome)
     }
 }
 
