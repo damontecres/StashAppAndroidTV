@@ -115,7 +115,7 @@ sealed class Destination(
     data class UpdateMarker(
         val markerId: String,
         val sceneId: String,
-    ) : Destination()
+    ) : Destination(true)
 
     @Serializable
     data class UpdateApp(

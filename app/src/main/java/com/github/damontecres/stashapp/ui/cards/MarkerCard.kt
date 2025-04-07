@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -62,7 +63,13 @@ fun MarkerCard(
         videoUrl = videoUrl,
         title = title,
         subtitle = {
-            Text(details)
+            // TODO marquee?
+            Text(
+                text = details,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier,
+            )
         },
         description = {
             IconRowText(

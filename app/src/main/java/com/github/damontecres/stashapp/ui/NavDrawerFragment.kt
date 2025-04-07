@@ -75,6 +75,7 @@ import com.github.damontecres.stashapp.ui.pages.GalleryPage
 import com.github.damontecres.stashapp.ui.pages.GroupPage
 import com.github.damontecres.stashapp.ui.pages.ImagePage
 import com.github.damontecres.stashapp.ui.pages.MainPage
+import com.github.damontecres.stashapp.ui.pages.MarkerPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
 import com.github.damontecres.stashapp.ui.pages.PlaybackPage
 import com.github.damontecres.stashapp.ui.pages.PlaylistPlaybackPage
@@ -502,6 +503,23 @@ fun NavDrawerContent(
             )
         }
 
+        is Destination.MarkerDetails ->
+            MarkerPage(
+                server = server,
+                uiConfig = composeUiConfig,
+                markerId = destination.id,
+                itemOnClick = itemOnClick,
+                playOnClick = { position, mode ->
+                    navManager.navigate(
+                        Destination.Playback(
+                            destination.id,
+                            position,
+                            mode,
+                        ),
+                    )
+                },
+            )
+
         is Destination.Item -> {
             when (destination.dataType) {
                 DataType.SCENE ->
@@ -573,6 +591,23 @@ fun NavDrawerContent(
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
+                    )
+
+                DataType.MARKER ->
+                    MarkerPage(
+                        server = server,
+                        uiConfig = composeUiConfig,
+                        markerId = destination.id,
+                        itemOnClick = itemOnClick,
+                        playOnClick = { position, mode ->
+                            navManager.navigate(
+                                Destination.Playback(
+                                    destination.id,
+                                    position,
+                                    mode,
+                                ),
+                            )
+                        },
                     )
 
                 else -> FragmentView(navManager, destination, modifier)

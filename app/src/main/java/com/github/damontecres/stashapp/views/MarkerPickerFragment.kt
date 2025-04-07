@@ -49,7 +49,7 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
         super.onViewCreated(view, savedInstanceState)
 
         val dest = requireArguments().getDestination<Destination.UpdateMarker>()
-        viewModel.init(dest.markerId)
+        viewModel.init(serverViewModel.requireServer(), dest.markerId)
 
         val picker = view.findViewById<DurationPicker2>(R.id.duration_picker)
         val endPicker = view.findViewById<DurationPicker2>(R.id.end_duration_picker)
