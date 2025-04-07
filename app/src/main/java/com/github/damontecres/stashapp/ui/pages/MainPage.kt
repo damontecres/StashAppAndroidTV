@@ -78,6 +78,7 @@ import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.cards.ViewAllCard
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.main.MainPagePerformerDetails
 import com.github.damontecres.stashapp.ui.components.main.MainPageSceneDetails
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.FilterParser
@@ -271,7 +272,7 @@ fun HomePage(
                     }
                 val visible =
                     when (datatype) {
-                        DataType.SCENE -> true
+                        DataType.SCENE, DataType.PERFORMER -> true
                         else -> false
                     }
                 AnimatedVisibility(
@@ -292,6 +293,15 @@ fun HomePage(
                                 modifier =
                                     Modifier
                                         .height(200.dp)
+                                        .fillMaxWidth(),
+                            )
+                        } else if (item is PerformerData) {
+                            MainPagePerformerDetails(
+                                perf = item,
+                                uiConfig = uiConfig,
+                                modifier =
+                                    Modifier
+                                        .height(168.dp)
                                         .fillMaxWidth(),
                             )
                         } else if (item is FilterArgs && datatype == DataType.SCENE) {

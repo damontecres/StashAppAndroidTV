@@ -41,7 +41,7 @@ fun TitleValueText(
             text = value,
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Normal),
             color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 3,
+            maxLines = 1,
         )
     }
 }
