@@ -254,7 +254,7 @@ fun StashGrid(
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
-    val startPosition = initialPosition.coerceIn(0, (pager.size() - 1).coerceAtLeast(0))
+    val startPosition = initialPosition.coerceIn(0, (pager.size - 1).coerceAtLeast(0))
     val columns =
         (uiConfig.cardSettings.columns * (ScenePresenter.CARD_WIDTH.toDouble() / pager.filter.dataType.defaultCardWidth)).toInt()
 
@@ -340,12 +340,12 @@ fun StashGrid(
                 },
     ) {
         JumpButtons(
-            itemCount = pager.size(),
+            itemCount = pager.size,
             columns = columns,
             jumpClick = { jump ->
                 scope.launch {
                     val newPosition =
-                        (focusedIndex + jump).coerceIn(0..<pager.size())
+                        (focusedIndex + jump).coerceIn(0..<pager.size)
                     focusOn(newPosition)
                     gridState.scrollToItem(newPosition, -columns)
                 }
@@ -371,7 +371,7 @@ fun StashGrid(
                             }
                         }.focusRequester(gridFocusRequester),
             ) {
-                if (pager.size() < 0) {
+                if (pager.size < 0) {
                     item {
                         Text(
                             text = "Waiting for items to load from the backend",
@@ -383,7 +383,7 @@ fun StashGrid(
                                     .wrapContentHeight(Alignment.CenterVertically),
                         )
                     }
-                } else if (pager.size() == 0) {
+                } else if (pager.size == 0) {
                     item {
                         Text(
                             text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
@@ -396,7 +396,7 @@ fun StashGrid(
                         )
                     }
                 } else {
-                    items(pager.size()) { index ->
+                    items(pager.size) { index ->
                         val mod =
                             if (index == focusedIndex) {
                                 Modifier.focusRequester(firstFocus)
@@ -459,12 +459,12 @@ fun StashGrid(
                 Text(
                     modifier = Modifier.padding(4.dp),
                     color = MaterialTheme.colorScheme.onBackground,
-                    text = "${focusedIndex + 1} / ${pager.size()}",
+                    text = "${focusedIndex + 1} / ${pager.size}",
                 )
             }
         }
         // Letters
-        if (pager.size() > 0 &&
+        if (pager.size > 0 &&
             SortOption.isJumpSupported(
                 filterArgs.dataType,
                 filterArgs.sortAndDirection.sort,

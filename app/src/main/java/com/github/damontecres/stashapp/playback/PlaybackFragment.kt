@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.playback
 
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
@@ -58,6 +57,7 @@ import com.github.damontecres.stashapp.util.toSeconds
 import com.github.damontecres.stashapp.views.ListPopupWindowBuilder
 import com.github.damontecres.stashapp.views.SkipIndicator
 import com.github.damontecres.stashapp.views.durationToString
+import com.github.damontecres.stashapp.views.formatDate
 import com.github.damontecres.stashapp.views.models.PlaybackViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.rubensousa.previewseekbar.PreviewBar
@@ -66,9 +66,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import kotlin.collections.set
 
 /**
@@ -260,18 +257,7 @@ abstract class PlaybackFragment(
                 .getBoolean("exoShowTitle", true)
         if (showTitle) {
             titleText.text = scene.title
-            dateText.text =
-                if (scene.date != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    try {
-                        val dateFormatter = DateTimeFormatter.ofPattern("MMMM d, yyyy")
-                        val date = LocalDate.parse(scene.date, DateTimeFormatter.ISO_DATE)
-                        date.format(dateFormatter)
-                    } catch (ex: DateTimeParseException) {
-                        scene.date
-                    }
-                } else {
-                    scene.date
-                }
+            dateText.text = formatDate(scene.date)
             if (dateText.text.isNullOrBlank()) {
                 dateText.visibility = View.GONE
             }

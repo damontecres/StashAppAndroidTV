@@ -5,7 +5,6 @@ import androidx.annotation.IntRange
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -42,7 +41,9 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -55,7 +56,6 @@ import coil3.request.ImageRequest
 import coil3.request.transformations
 import coil3.size.Scale
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
@@ -66,9 +66,9 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.RootCard
 import com.github.damontecres.stashapp.ui.util.CoilPreviewTransformation
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.toLongMilliseconds
+import com.github.damontecres.stashapp.views.formatDate
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
@@ -115,12 +115,12 @@ class ControllerViewState internal constructor(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlaybackOverlay(
     server: StashServer,
     uiConfig: ComposeUiConfig,
-    scene: FullSceneData,
+    scene: Scene,
+    markers: List<MarkerData>,
     streamDecision: StreamDecision,
     oCounter: Int,
     player: Player,
@@ -130,13 +130,12 @@ fun PlaybackOverlay(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val playbackScene = remember(scene.id) { Scene.fromFullSceneData(scene) }
 
     var seekProgress by remember { mutableFloatStateOf(-1f) }
     val seekBarInteractionSource = remember { MutableInteractionSource() }
     val seekBarFocused by seekBarInteractionSource.collectIsFocusedAsState()
 
-    val previewImageUrl = playbackScene.spriteUrl
+    val previewImageUrl = scene.spriteUrl
     val imageLoader = SingletonImageLoader.get(LocalPlatformContext.current)
     var imageLoaded by remember { mutableStateOf(false) }
     if (previewImageUrl.isNotNullOrBlank()) {
@@ -164,7 +163,7 @@ fun PlaybackOverlay(
         ) {
             if (showDebugInfo) {
                 PlaybackDebugInfo(
-                    scene = playbackScene,
+                    scene = scene,
                     streamDecision = streamDecision,
                     modifier =
                         Modifier
@@ -176,34 +175,48 @@ fun PlaybackOverlay(
                 )
             }
             val controlHeight = .4f
-
-            AnimatedVisibility(seekBarFocused && seekProgress >= 0) {
-                SeekPreviewImage(
-                    modifier =
-                        Modifier
-                            .align(Alignment.TopStart)
-                            .offsetByPercent(
-                                xPercentage = seekProgress.coerceIn(0f, 1f),
-                                yPercentage = 1 - controlHeight,
-                            ),
-                    previewImageUrl = previewImageUrl,
-                    imageLoaded = imageLoaded,
-                    imageLoader = imageLoader,
-                    duration = player.duration,
-                    seekProgress = seekProgress,
-                    videoWidth = playbackScene.videoWidth,
-                    videoHeight = playbackScene.videoHeight,
-                )
-            }
-
             LazyColumn(
                 modifier =
                     Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .fillMaxHeight(controlHeight),
-                contentPadding = PaddingValues(top = 600.dp),
+//                contentPadding = PaddingValues(top = 420.dp),
             ) {
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier =
+                            Modifier
+                                .padding(start = 8.dp)
+                                .fillMaxWidth(.7f),
+                    ) {
+                        if (scene.title.isNotNullOrBlank()) {
+                            Text(
+                                text = scene.title,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style =
+                                    MaterialTheme.typography.titleLarge.copy(
+                                        fontSize = 24.sp,
+                                    ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        if (scene.date.isNotNullOrBlank()) {
+                            Text(
+                                text = formatDate(scene.date)!!,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style =
+                                    MaterialTheme.typography.titleMedium.copy(
+                                        fontSize = 16.sp,
+                                    ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
                 item {
                     PlaybackControls(
                         modifier = Modifier.fillMaxWidth(),
@@ -219,7 +232,7 @@ fun PlaybackOverlay(
                         seekBarInteractionSource = seekBarInteractionSource,
                     )
                 }
-                if (scene.scene_markers.isNotEmpty()) {
+                if (markers.isNotEmpty()) {
                     item {
 //                    Spacer(Modifier.height(12.dp))
                         Text(
@@ -236,13 +249,31 @@ fun PlaybackOverlay(
                                     .padding(start = 8.dp, top = 48.dp, bottom = 64.dp)
                                     .fillMaxWidth(),
                             server = server,
-                            scene = scene,
+                            markers = markers,
                             player = player,
                             controllerViewState = controllerViewState,
                             uiConfig = uiConfig,
                         )
                     }
                 }
+            }
+            AnimatedVisibility(seekBarFocused && seekProgress >= 0) {
+                SeekPreviewImage(
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .offsetByPercent(
+                                xPercentage = seekProgress.coerceIn(0f, 1f),
+                                yPercentage = 1 - controlHeight,
+                            ),
+                    previewImageUrl = previewImageUrl,
+                    imageLoaded = imageLoaded,
+                    imageLoader = imageLoader,
+                    duration = player.duration,
+                    seekProgress = seekProgress,
+                    videoWidth = scene.videoWidth,
+                    videoHeight = scene.videoHeight,
+                )
             }
         }
     }
@@ -259,7 +290,7 @@ fun Modifier.offsetByPercent(
                 x =
                     ((constraints.maxWidth * xPercentage).toInt() - placeable.width / 2)
                         .coerceIn(0, constraints.maxWidth - placeable.width),
-                y = (constraints.maxHeight * yPercentage).toInt() - (placeable.height / 1.5).toInt(),
+                y = (constraints.maxHeight * yPercentage).toInt() - (placeable.height / 1.33f).toInt(),
             )
         }
     },
@@ -331,14 +362,13 @@ fun SeekPreviewImage(
 fun SceneMarkerBar(
     server: StashServer,
     uiConfig: ComposeUiConfig,
-    scene: FullSceneData,
+    markers: List<MarkerData>,
     player: Player,
     controllerViewState: ControllerViewState,
     modifier: Modifier = Modifier,
-    markers: List<MarkerData> = scene.scene_markers.map { it.asMarkerData(scene) },
 ) {
     // TODO handle adding markers
-    if (scene.scene_markers.isNotEmpty()) {
+    if (markers.isNotEmpty()) {
         val context = LocalContext.current
         val firstFocus = remember { FocusRequester() }
         Column(

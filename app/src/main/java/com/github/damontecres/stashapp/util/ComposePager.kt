@@ -20,7 +20,7 @@ class ComposePager<T : StashData>(
     private val scope: CoroutineScope,
     private val pageSize: Int = 25,
     cacheSize: Long = 8,
-) {
+) : AbstractList<T?>() {
     private var items by mutableStateOf(ItemList<T>(0, pageSize, mapOf()))
     private var totalCount by mutableIntStateOf(-1)
     private val mutex = Mutex()
@@ -34,15 +34,15 @@ class ComposePager<T : StashData>(
         totalCount = source.getCount()
     }
 
-    operator fun get(position: Int): T? {
-        if (position in 0..<totalCount) {
-            val item = items[position]
+    override operator fun get(index: Int): T? {
+        if (index in 0..<totalCount) {
+            val item = items[index]
             if (item == null) {
-                fetchPage(position)
+                fetchPage(index)
             }
             return item
         } else {
-            throw IndexOutOfBoundsException("$position of $totalCount")
+            throw IndexOutOfBoundsException("$index of $totalCount")
         }
     }
 
@@ -59,7 +59,8 @@ class ComposePager<T : StashData>(
         }
     }
 
-    fun size(): Int = totalCount
+    override val size: Int
+        get() = totalCount
 
     private fun fetchPage(position: Int): Job =
         scope.launchIO {

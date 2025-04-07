@@ -56,7 +56,6 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.ui.AppColors
 import kotlinx.coroutines.delay
@@ -70,12 +69,14 @@ sealed interface PlaybackAction {
     data object ShowDebug : PlaybackAction
 
     data object CreateMarker : PlaybackAction
+
+    data object ShowPlaylist : PlaybackAction
 }
 
 @kotlin.OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlaybackControls(
-    scene: FullSceneData,
+    scene: Scene,
     oCounter: Int,
     player: Player,
     controllerViewState: ControllerViewState,
@@ -94,7 +95,6 @@ fun PlaybackControls(
         }
         controllerViewState.pulseControls()
     }
-    val playbackScene = remember(scene.id) { Scene.fromFullSceneData(scene) }
     LaunchedEffect(controllerViewState.controlsVisible) {
         if (controllerViewState.controlsVisible) {
             initialFocusRequester.requestFocus()
@@ -105,7 +105,7 @@ fun PlaybackControls(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         SeekBar(
-            scene = playbackScene,
+            scene = scene,
             player = player,
             controllerViewState = controllerViewState,
             onSeekProgress = onSeekProgress,
@@ -242,10 +242,12 @@ fun LeftPlaybackButtons(
         )
     }
     if (showMoreOptions) {
+        // TODO options need context about what to display
         val options =
             listOf(
                 if (showDebugInfo) "Hide transcode info" else "Show transcode info",
                 "Create Marker",
+                "Show Playlist",
             )
         BottomDialog(
             choices = options,
@@ -254,6 +256,7 @@ fun LeftPlaybackButtons(
                 when (options.indexOf(it)) {
                     0 -> onPlaybackActionClick.invoke(PlaybackAction.ShowDebug)
                     1 -> onPlaybackActionClick.invoke(PlaybackAction.CreateMarker)
+                    2 -> onPlaybackActionClick.invoke(PlaybackAction.ShowPlaylist)
                     else -> Log.w(TAG, "Unknown more option: $it")
                 }
             },

@@ -6,6 +6,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.util.StashServer
+import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -67,6 +68,19 @@ fun parseTimeToString(ts: Any?): String? =
         }
     } else {
         ts.toString()
+    }
+
+fun formatDate(date: String?) =
+    if (date != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        try {
+            val dateFormatter = DateTimeFormatter.ofPattern("MMMM d, yyyy")
+            val localDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE)
+            localDate.format(dateFormatter)
+        } catch (ex: DateTimeParseException) {
+            date
+        }
+    } else {
+        date
     }
 
 val String.fileNameFromPath

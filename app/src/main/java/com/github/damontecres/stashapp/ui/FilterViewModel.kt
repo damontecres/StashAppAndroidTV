@@ -64,7 +64,7 @@ class FilterViewModel : ViewModel() {
         val jumpPosition =
             if (filter.sortAndDirection.direction == SortDirectionEnum.DESC) {
                 // Reverse if sorting descending
-                pager.value!!.size() - letterPosition - 1
+                pager.value!!.size - letterPosition - 1
             } else {
                 letterPosition
             }

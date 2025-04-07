@@ -211,7 +211,7 @@ class ImageDetailsViewModel :
             Log.v(TAG, "Pager created")
             viewModelScope.launch {
                 pager.init()
-                Log.v(TAG, "Pager size: ${pager.size()}")
+                Log.v(TAG, "Pager size: ${pager.size}")
                 this@ImageDetailsViewModel.pager.value = pager
                 this@ImageDetailsViewModel._slideshow.value = slideshow
                 updatePosition(startPosition)
@@ -226,7 +226,7 @@ class ImageDetailsViewModel :
     }
 
     fun nextImage(): Boolean {
-        val size = pager.value?.size()
+        val size = pager.value?.size
         val newPosition = position + 1
         return if (size != null && newPosition < size) {
             updatePosition(newPosition)

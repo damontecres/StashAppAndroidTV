@@ -77,6 +77,7 @@ import com.github.damontecres.stashapp.ui.pages.ImagePage
 import com.github.damontecres.stashapp.ui.pages.MainPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
 import com.github.damontecres.stashapp.ui.pages.PlaybackPage
+import com.github.damontecres.stashapp.ui.pages.PlaylistPlaybackPage
 import com.github.damontecres.stashapp.ui.pages.SceneDetailsPage
 import com.github.damontecres.stashapp.ui.pages.SearchPage
 import com.github.damontecres.stashapp.ui.pages.StudioPage
@@ -87,6 +88,8 @@ import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class NavDrawerFragment : Fragment(R.layout.compose_frame) {
     private val serverViewModel: ServerViewModel by activityViewModels()
@@ -249,6 +252,17 @@ fun FragmentContent(
                         startPosition = destination.position,
                         playbackMode = destination.mode,
                         uiConfig = composeUiConfig,
+                    )
+                }
+
+                is Destination.Playlist -> {
+                    PlaylistPlaybackPage(
+                        server = server,
+                        uiConfig = composeUiConfig,
+                        filterArgs = destination.filterArgs,
+                        startIndex = destination.position,
+                        clipDuration = destination.duration?.milliseconds ?: 30.seconds,
+                        modifier = Modifier,
                     )
                 }
 
