@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -25,6 +26,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewModelScope
@@ -39,6 +41,7 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.PlaybackMode
@@ -63,12 +66,17 @@ class PlaybackViewModel : ViewModel() {
     private lateinit var server: StashServer
     private lateinit var scene: FullSceneData
 
+    val markers = MutableLiveData<List<MarkerData>>(listOf())
+    val oCount = MutableLiveData(0)
+
     fun init(
         server: StashServer,
         scene: FullSceneData,
     ) {
         this.server = server
         this.scene = scene
+        markers.value = scene.scene_markers.map { it.asMarkerData(scene) }
+        oCount.value = scene.o_counter ?: 0
     }
 
     fun addMarker(
@@ -77,7 +85,19 @@ class PlaybackViewModel : ViewModel() {
     ) {
         viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
             val mutationEngine = MutationEngine(server)
-            mutationEngine.createMarker(scene.id, position, tagId)
+            val newMarker = mutationEngine.createMarker(scene.id, position, tagId)
+            newMarker?.let {
+                val list = markers.value!!.toMutableList()
+                list.add(it.asMarkerData(scene))
+                markers.value = list.sortedBy { m -> m.seconds }
+            }
+        }
+    }
+
+    fun incrementOCount(sceneId: String) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            val mutationEngine = MutationEngine(server)
+            oCount.value = mutationEngine.incrementOCounter(sceneId).count
         }
     }
 }
@@ -114,6 +134,8 @@ fun PlaybackPageContent(
         viewModel.init(server, scene)
     }
     val playbackScene = remember { Scene.fromFullSceneData(scene) }
+    val markers by viewModel.markers.observeAsState(listOf())
+    val oCount by viewModel.oCount.observeAsState(0)
 
     var showControls by remember { mutableStateOf(true) }
     var currentContentScaleIndex by remember { mutableIntStateOf(0) }
@@ -252,9 +274,9 @@ fun PlaybackPageContent(
             uiConfig = uiConfig,
             server = server,
             scene = playbackScene,
-            markers = scene.scene_markers.map { it.asMarkerData(scene) },
+            markers = markers,
             streamDecision = streamDecision,
-            oCounter = scene.o_counter ?: 0,
+            oCounter = oCount,
             player = player,
             onPlaybackActionClick = {
                 when (it) {
@@ -265,6 +287,7 @@ fun PlaybackPageContent(
                     }
 
                     PlaybackAction.OCount -> {
+                        viewModel.incrementOCount(scene.id)
                     }
 
                     PlaybackAction.ShowDebug -> {

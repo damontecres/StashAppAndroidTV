@@ -53,6 +53,7 @@ import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
@@ -104,7 +105,10 @@ class MainPageViewModel(
             server.serverPreferences.uiConfiguration?.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
         if (frontPageContent != null) {
             Log.d(TAG, "${frontPageContent.size} front page rows")
-            val pageSize = 25 // TODO
+            val pageSize =
+                PreferenceManager
+                    .getDefaultSharedPreferences(StashApplication.getApplication())
+                    .getInt("maxSearchResults", 25)
             val frontPageParser =
                 FrontPageParser(
                     StashApplication.getApplication(),

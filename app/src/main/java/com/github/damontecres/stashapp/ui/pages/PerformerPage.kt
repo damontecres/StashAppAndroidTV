@@ -117,36 +117,7 @@ class PerformerDetailsViewModel(
             try {
                 val performer = queryEngine.getPerformer(performerId)
                 if (performer != null) {
-                    rating100.value = performer.rating100 ?: 0
-                    favorite.value = performer.favorite
-                    this@PerformerDetailsViewModel.performer = performer
-
-                    loadingState.value = PerformerLoadingState.Success(performer)
-                    if (performer.tags.isNotEmpty()) {
-                        tags.value =
-                            queryEngine.getTags(performer.tags.map { it.slimTagData.id })
-                        Log.v(TAG, "Got ${tags.value?.size} tags")
-                    }
-                    studios.value =
-                        queryEngine.findStudios(
-                            studioFilter =
-                                StudioFilterType(
-                                    scenes_filter =
-                                        Optional.present(
-                                            SceneFilterType(
-                                                performers =
-                                                    Optional.present(
-                                                        MultiCriterionInput(
-                                                            value = Optional.present(listOf(performerId)),
-                                                            modifier = CriterionModifier.INCLUDES_ALL,
-                                                            excludes = Optional.absent(),
-                                                        ),
-                                                    ),
-                                            ),
-                                        ),
-                                ),
-                        )
-                    Log.v(TAG, "Got ${studios.value?.size} studios")
+                    refresh(performer)
                 } else {
                     loadingState.value = PerformerLoadingState.Error
                 }
@@ -155,6 +126,39 @@ class PerformerDetailsViewModel(
             }
         }
         return this
+    }
+
+    private suspend fun refresh(performer: PerformerData) {
+        rating100.value = performer.rating100 ?: 0
+        favorite.value = performer.favorite
+        this@PerformerDetailsViewModel.performer = performer
+
+        loadingState.value = PerformerLoadingState.Success(performer)
+        if (performer.tags.isNotEmpty()) {
+            tags.value =
+                queryEngine.getTags(performer.tags.map { it.slimTagData.id })
+            Log.v(TAG, "Got ${tags.value?.size} tags")
+        }
+        studios.value =
+            queryEngine.findStudios(
+                studioFilter =
+                    StudioFilterType(
+                        scenes_filter =
+                            Optional.present(
+                                SceneFilterType(
+                                    performers =
+                                        Optional.present(
+                                            MultiCriterionInput(
+                                                value = Optional.present(listOf(performerId)),
+                                                modifier = CriterionModifier.INCLUDES_ALL,
+                                                excludes = Optional.absent(),
+                                            ),
+                                        ),
+                                ),
+                            ),
+                    ),
+            )
+        Log.v(TAG, "Got ${studios.value?.size} studios")
     }
 
     fun addTag(id: String) = mutateTags { add(id) }
@@ -167,7 +171,10 @@ class PerformerDetailsViewModel(
             val mutable = it.toMutableList()
             mutator.invoke(mutable)
             viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                TODO()
+                val newPerformer = mutationEngine.updatePerformer(performerId, tagIds = mutable)
+                if (newPerformer != null) {
+                    refresh(newPerformer)
+                }
             }
         }
     }

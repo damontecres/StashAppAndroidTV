@@ -234,7 +234,7 @@ fun RootCard(
     imageContent: @Composable (BoxScope.() -> Unit)? = null,
     videoUrl: String? = null,
     imageOverlay: @Composable AnimatedVisibilityScope.() -> Unit = {},
-    subtitle: @Composable () -> Unit = {},
+    subtitle: @Composable (focused: Boolean) -> Unit = {},
     description: @Composable BoxScope.(focused: Boolean) -> Unit = {},
     shape: CardShape = CardDefaults.shape(),
     colors: CardColors = CardDefaults.colors(),
@@ -289,7 +289,7 @@ fun RootCard(
     imageContent: @Composable (BoxScope.() -> Unit)? = null,
     videoUrl: String? = null,
     imageOverlay: @Composable AnimatedVisibilityScope.() -> Unit = {},
-    subtitle: @Composable () -> Unit = {},
+    subtitle: @Composable (focused: Boolean) -> Unit = {},
     description: @Composable BoxScope.(focused: Boolean) -> Unit = {},
     shape: CardShape = CardDefaults.shape(),
     colors: CardColors = CardDefaults.colors(),
@@ -300,8 +300,6 @@ fun RootCard(
     interactionSource: MutableInteractionSource? = null,
 ) {
     val context = LocalContext.current
-
-    // TODO
     val videoDelay =
         remember {
             PreferenceManager
@@ -455,7 +453,7 @@ fun RootCard(
             }
             // Subtitle
             ProvideTextStyle(MaterialTheme.typography.bodySmall) {
-                Box(Modifier.graphicsLayer { alpha = 0.6f }) { subtitle.invoke() }
+                Box(Modifier.graphicsLayer { alpha = 0.6f }) { subtitle.invoke(focusedAfterDelay) }
             }
             // Description
             ProvideTextStyle(MaterialTheme.typography.bodySmall) {

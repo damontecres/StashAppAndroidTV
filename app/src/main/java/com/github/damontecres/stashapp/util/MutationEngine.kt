@@ -381,12 +381,14 @@ class MutationEngine(
         performerId: String,
         favorite: Boolean? = null,
         rating100: Int? = null,
+        tagIds: List<String>? = null,
     ): PerformerData? {
         val input =
             PerformerUpdateInput(
                 id = performerId,
                 favorite = Optional.presentIfNotNull(favorite),
                 rating100 = Optional.presentIfNotNull(rating100),
+                tag_ids = Optional.presentIfNotNull(tagIds),
             )
         return updatePerformer(input)
     }

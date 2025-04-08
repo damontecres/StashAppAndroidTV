@@ -69,6 +69,7 @@ class PlaylistViewModel : ViewModel() {
 
     val mediaItemTag = EqualityMutableLiveData<PlaylistFragment.MediaItemTag>()
     val markers = MutableLiveData<List<MarkerData>>(listOf())
+    val oCount = MutableLiveData(0)
 
     fun init(
         server: StashServer,
@@ -81,6 +82,10 @@ class PlaylistViewModel : ViewModel() {
     fun changeScene(tag: PlaylistFragment.MediaItemTag) {
         this.mediaItemTag.value = tag
         this.markers.value = listOf()
+        viewModelScope.launch {
+            val queryEngine = QueryEngine(server)
+            oCount.value = queryEngine.getScene(tag.item.id)?.o_counter ?: 0
+        }
         if (markersEnabled) {
             viewModelScope.launch {
                 val queryEngine = QueryEngine(server)
@@ -109,11 +114,17 @@ class PlaylistViewModel : ViewModel() {
         mediaItemTag.value?.let {
             viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 val mutationEngine = MutationEngine(server)
-                val newMarker = mutationEngine.createMarker(it.item.id, position, tagId)
-                // TODO use newMarker instead of querying again?
+                mutationEngine.createMarker(it.item.id, position, tagId)
                 // Refresh markers
                 changeScene(it)
             }
+        }
+    }
+
+    fun incrementOCount(sceneId: String) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            val mutationEngine = MutationEngine(server)
+            oCount.value = mutationEngine.incrementOCounter(sceneId).count
         }
     }
 }
@@ -136,6 +147,7 @@ fun PlaylistPlaybackPageContent(
     val context = LocalContext.current
     val currentScene by viewModel.mediaItemTag.observeAsState(playlist[0].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
     val markers by viewModel.markers.observeAsState(listOf())
+    val oCount by viewModel.oCount.observeAsState(0)
     var trackActivityListener = remember<TrackActivityPlaybackListener?>(server) { null }
     val player =
         remember {
@@ -296,7 +308,7 @@ fun PlaylistPlaybackPageContent(
                 scene = currentScene.item,
                 markers = markers,
                 streamDecision = currentScene.streamDecision,
-                oCounter = 0, // TODO
+                oCounter = oCount,
                 player = player,
                 onPlaybackActionClick = {
                     when (it) {
@@ -309,6 +321,7 @@ fun PlaylistPlaybackPageContent(
                         }
 
                         PlaybackAction.OCount -> {
+                            viewModel.incrementOCount(currentScene.item.id)
                         }
 
                         PlaybackAction.ShowDebug -> {

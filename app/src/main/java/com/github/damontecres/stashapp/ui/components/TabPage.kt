@@ -32,9 +32,11 @@ import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashServer
 
@@ -53,14 +55,14 @@ fun TabPage(
     Column(
         modifier = modifier.fillMaxSize(),
     ) {
-        ProvideTextStyle(MaterialTheme.typography.headlineLarge) {
-            Text(
-                text = name,
-                modifier =
-                    Modifier
-                        .align(Alignment.CenterHorizontally),
-            )
-        }
+        Text(
+            text = name,
+            color = MaterialTheme.colorScheme.onBackground,
+            style = MaterialTheme.typography.headlineLarge,
+            modifier =
+                Modifier
+                    .align(Alignment.CenterHorizontally),
+        )
         if (showTabRow) {
             LaunchedEffect(Unit) {
                 tabRowFocusRequester.requestFocus()
@@ -153,6 +155,7 @@ fun StashGridTab(
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
     subToggleLabel: String? = null,
 ) {
+    val navigationManager = LocalGlobalContext.current.navigationManager
     val viewModel = viewModel<FilterViewModel>(key = name)
     LaunchedEffect(server, initialFilter) {
         viewModel.setFilter(server, initialFilter)
@@ -166,7 +169,12 @@ fun StashGridTab(
             longClicker = longClicker,
             filterUiMode = FilterUiMode.CREATE_FILTER,
             createFilter = {
-                TODO()
+                navigationManager.navigate(
+                    Destination.CreateFilter(
+                        dataType = newPager.filter.dataType,
+                        startingFilter = newPager.filter,
+                    ),
+                )
             },
             modifier = modifier,
             positionCallback = positionCallback,

@@ -367,7 +367,6 @@ fun SceneMarkerBar(
     controllerViewState: ControllerViewState,
     modifier: Modifier = Modifier,
 ) {
-    // TODO handle adding markers
     if (markers.isNotEmpty()) {
         val context = LocalContext.current
         val firstFocus = remember { FocusRequester() }

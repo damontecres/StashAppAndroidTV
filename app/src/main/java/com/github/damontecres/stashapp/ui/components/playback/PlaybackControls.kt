@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
@@ -127,6 +128,7 @@ fun PlaybackControls(
                 onControllerInteraction = onControllerInteraction,
                 onPlaybackActionClick = onPlaybackActionClick,
                 showDebugInfo = showDebugInfo,
+                oCount = oCounter,
                 modifier = Modifier,
             )
             PlaybackButtons(
@@ -219,6 +221,7 @@ fun LeftPlaybackButtons(
     onControllerInteraction: () -> Unit,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
     showDebugInfo: Boolean,
+    oCount: Int,
     modifier: Modifier = Modifier,
 ) {
     var showMoreOptions by remember { mutableStateOf(false) }
@@ -234,12 +237,22 @@ fun LeftPlaybackButtons(
             onControllerInteraction = onControllerInteraction,
         )
         // OCount
-        PlaybackButton(
-            iconRes = R.drawable.sweat_drops,
-            onClick = { onPlaybackActionClick.invoke(PlaybackAction.OCount) },
-            enabled = true,
-            onControllerInteraction = onControllerInteraction,
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PlaybackButton(
+                iconRes = R.drawable.sweat_drops,
+                onClick = { onPlaybackActionClick.invoke(PlaybackAction.OCount) },
+                enabled = true,
+                onControllerInteraction = onControllerInteraction,
+            )
+            Text(
+                text = oCount.toString(),
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 16.sp,
+            )
+        }
     }
     if (showMoreOptions) {
         // TODO options need context about what to display
