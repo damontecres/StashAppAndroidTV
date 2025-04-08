@@ -80,7 +80,7 @@ fun FindFilterType.merge(other: FindFilterType?): FindFilterType =
             page = page.merge(other.page),
             per_page = per_page.merge(other.per_page),
             sort = sort.merge(other.sort),
-            direction = direction.merge(direction),
+            direction = direction.merge(other.direction),
         )
     } else {
         this

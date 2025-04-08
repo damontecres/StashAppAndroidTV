@@ -15,6 +15,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.tv.material3.Button
+import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
@@ -63,6 +64,7 @@ fun SortByButton(
             )
         }
         Material3MainTheme {
+            // TODO switch to dialog?
             DropdownMenu(
                 expanded = sortByDropDown,
                 onDismissRequest = { sortByDropDown = false },
@@ -76,17 +78,24 @@ fun SortByButton(
                                     if (currentDirection == SortDirectionEnum.ASC) {
                                         Text(
                                             text = stringResource(R.string.fa_caret_up),
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
                                             fontFamily = FontAwesome,
                                         )
                                     } else {
                                         Text(
                                             text = stringResource(R.string.fa_caret_down),
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
                                             fontFamily = FontAwesome,
                                         )
                                     }
                                 }
                             },
-                            text = { Text(sortOption.getString(context)) },
+                            text = {
+                                Text(
+                                    text = sortOption.getString(context),
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                )
+                            },
                             onClick = {
                                 sortByDropDown = false
                                 val newDirection =

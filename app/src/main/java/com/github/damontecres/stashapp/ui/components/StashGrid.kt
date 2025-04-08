@@ -73,6 +73,7 @@ import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "StashGrid"
 
@@ -147,7 +148,9 @@ fun StashGridControls(
                         modifier = Modifier.focusProperties { down = gridFocusRequester },
                         dataType = dataType,
                         current = filterArgs.sortAndDirection,
-                        onSortChange = { updateFilter(filterArgs.with(it)) },
+                        onSortChange = {
+                            updateFilter(filterArgs.with(it).withResolvedRandom())
+                        },
                     )
                     if (dataType.supportsPlaylists || dataType == DataType.IMAGE) {
                         Button(
@@ -156,7 +159,11 @@ fun StashGridControls(
                                     if (dataType == DataType.IMAGE) {
                                         Destination.Slideshow(filterArgs, 0, true)
                                     } else {
-                                        Destination.Playlist(filterArgs, 0)
+                                        Destination.Playlist(
+                                            filterArgs,
+                                            0,
+                                            30.seconds.inWholeMilliseconds,
+                                        )
                                     }
                                 navManager.navigate(destination)
                             },
