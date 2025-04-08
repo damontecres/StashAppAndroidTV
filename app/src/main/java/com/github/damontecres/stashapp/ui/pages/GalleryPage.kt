@@ -70,7 +70,6 @@ fun GalleryPage(
             itemOnClick,
             longClicker,
             uiConfig,
-            null,
         )
 
     gallery?.let { gallery ->

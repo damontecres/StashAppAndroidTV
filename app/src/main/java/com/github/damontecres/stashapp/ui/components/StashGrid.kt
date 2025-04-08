@@ -108,6 +108,7 @@ fun StashGridControls(
     itemOnLongClick: ((Any) -> Unit)? = null,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
     subToggleLabel: String? = null,
+    onSubToggleCheck: ((Boolean) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -115,7 +116,7 @@ fun StashGridControls(
     val dataType = filterArgs.dataType
     var showTopRowRaw by rememberSaveable { mutableStateOf(true) }
     val showTopRow by remember { derivedStateOf { showTopRowRaw } }
-    var checked by rememberSaveable { mutableStateOf(false) }
+    var checked by rememberSaveable(filterArgs) { mutableStateOf(false) }
     var searchQuery by rememberSaveable(filterArgs) {
         mutableStateOf(
             filterArgs.findFilter?.q ?: "",
@@ -212,6 +213,7 @@ fun StashGridControls(
                             state = checked,
                             onStateChange = { isChecked ->
                                 checked = isChecked
+                                onSubToggleCheck?.invoke(isChecked)
                             },
                         )
                     }

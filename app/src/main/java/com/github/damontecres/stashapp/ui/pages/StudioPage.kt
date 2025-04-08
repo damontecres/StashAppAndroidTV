@@ -37,8 +37,8 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridTab
 import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
+import com.github.damontecres.stashapp.ui.components.TabWithSubItems
 import com.github.damontecres.stashapp.ui.components.TableRow
-import com.github.damontecres.stashapp.ui.components.createTabFunc
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
@@ -76,15 +76,9 @@ fun StudioPage(
     val scope = rememberCoroutineScope()
 
     studio?.let { studio ->
-        val createTab =
-            createTabFunc(
-                server,
-                itemOnClick,
-                longClicker,
-                uiConfig,
-                if (studio.child_studios.isNotEmpty()) stringResource(R.string.stashapp_include_sub_studio_content) else null,
-            )
-        val studios =
+        val subToggleLabel =
+            if (studio.child_studios.isNotEmpty()) stringResource(R.string.stashapp_include_sub_studio_content) else null
+        val studiosFunc = { includeSubStudios: Boolean ->
             Optional.present(
                 HierarchicalMultiCriterionInput(
                     value = Optional.present(listOf(studio.id)),
@@ -92,6 +86,8 @@ fun StudioPage(
                     depth = Optional.present(if (includeSubStudios) -1 else 0),
                 ),
             )
+        }
+
         val uiTabs = getUiTabs(context, DataType.STUDIO)
         val tabs =
             listOf(
@@ -143,47 +139,83 @@ fun StudioPage(
                         },
                     )
                 },
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.SCENE,
-                        findFilter = tabFindFilter(server, PageFilterKey.STUDIO_SCENES),
-                        objectFilter = SceneFilterType(studios = studios),
-                    ),
+                TabWithSubItems<SceneFilterType>(
+                    DataType.SCENE,
+                    tabFindFilter(server, PageFilterKey.STUDIO_SCENES),
+                    { subTags, filter -> filter.copy(studios = studiosFunc(subTags)) },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubStudios,
                 ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.GALLERY,
-                        findFilter = tabFindFilter(server, PageFilterKey.STUDIO_GALLERIES),
-                        objectFilter = GalleryFilterType(studios = studios),
-                    ),
+                TabWithSubItems<GalleryFilterType>(
+                    DataType.GALLERY,
+                    tabFindFilter(server, PageFilterKey.STUDIO_GALLERIES),
+                    { subTags, filter -> filter.copy(studios = studiosFunc(subTags)) },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubStudios,
                 ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.IMAGE,
-                        findFilter = tabFindFilter(server, PageFilterKey.STUDIO_IMAGES),
-                        objectFilter = ImageFilterType(studios = studios),
-                    ),
+                TabWithSubItems<ImageFilterType>(
+                    DataType.IMAGE,
+                    tabFindFilter(server, PageFilterKey.STUDIO_IMAGES),
+                    { subTags, filter -> filter.copy(studios = studiosFunc(subTags)) },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubStudios,
                 ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.PERFORMER,
-                        findFilter = tabFindFilter(server, PageFilterKey.STUDIO_PERFORMERS),
-                        objectFilter = PerformerFilterType(studios = studios),
-                    ),
+                TabWithSubItems<PerformerFilterType>(
+                    DataType.PERFORMER,
+                    tabFindFilter(server, PageFilterKey.STUDIO_PERFORMERS),
+                    { subTags, filter -> filter.copy(studios = studiosFunc(subTags)) },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubStudios,
                 ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.GROUP,
-                        findFilter = tabFindFilter(server, PageFilterKey.STUDIO_GROUPS),
-                        objectFilter = GroupFilterType(studios = studios),
-                    ),
+                TabWithSubItems<GroupFilterType>(
+                    DataType.GROUP,
+                    tabFindFilter(server, PageFilterKey.STUDIO_GROUPS),
+                    { subTags, filter -> filter.copy(studios = studiosFunc(subTags)) },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubStudios,
                 ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.TAG,
-                        override = DataSupplierOverride.StudioTags(studio.id),
-                    ),
-                ),
+                TabProvider(stringResource(DataType.TAG.pluralStringId)) { positionCallback ->
+                    StashGridTab(
+                        name = stringResource(DataType.TAG.pluralStringId),
+                        server = server,
+                        initialFilter =
+                            FilterArgs(
+                                dataType = DataType.TAG,
+                                override = DataSupplierOverride.StudioTags(studio.id),
+                            ),
+                        itemOnClick = itemOnClick,
+                        longClicker = longClicker,
+                        modifier = Modifier,
+                        positionCallback = positionCallback,
+                        composeUiConfig = uiConfig,
+                        subToggleLabel = null,
+                    )
+                },
                 TabProvider(stringResource(R.string.stashapp_subsidiary_studios)) { positionCallback ->
                     StashGridTab(
                         name = stringResource(R.string.stashapp_subsidiary_studios),
@@ -218,17 +250,24 @@ fun StudioPage(
                             },
                     )
                 },
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.MARKER,
-                        objectFilter =
-                            SceneMarkerFilterType(
-                                scene_filter =
-                                    Optional.present(
-                                        SceneFilterType(studios = studios),
-                                    ),
-                            ),
-                    ),
+                TabWithSubItems<SceneMarkerFilterType>(
+                    DataType.MARKER,
+                    null,
+                    { subTags, filter ->
+                        filter.copy(
+                            scene_filter =
+                                Optional.present(
+                                    SceneFilterType(studios = studiosFunc(subTags)),
+                                ),
+                        )
+                    },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubStudios,
                 ),
             ).filter { it.name in uiTabs }
         val title = AnnotatedString(studio.name)

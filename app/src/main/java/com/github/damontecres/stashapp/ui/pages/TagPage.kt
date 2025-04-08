@@ -34,8 +34,8 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridTab
 import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
+import com.github.damontecres.stashapp.ui.components.TabWithSubItems
 import com.github.damontecres.stashapp.ui.components.TableRow
-import com.github.damontecres.stashapp.ui.components.createTabFunc
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
@@ -70,15 +70,12 @@ fun TagPage(
     val scope = rememberCoroutineScope()
 
     tag?.let { tag ->
-        val createTab =
-            createTabFunc(
-                server,
-                itemOnClick,
-                longClicker,
-                uiConfig,
-                if (tag.child_count > 0) stringResource(R.string.stashapp_include_sub_tag_content) else null,
-            )
-        val tags =
+        val subToggleLabel =
+            if (tag.child_count > 0) stringResource(R.string.stashapp_include_sub_tag_content) else null
+
+        val uiTabs = getUiTabs(context, DataType.TAG)
+
+        val tagsFunc = { includeSubTags: Boolean ->
             Optional.present(
                 HierarchicalMultiCriterionInput(
                     value = Optional.present(listOf(tag.id)),
@@ -86,7 +83,8 @@ fun TagPage(
                     depth = Optional.present(if (includeSubTags) -1 else 0),
                 ),
             )
-        val uiTabs = getUiTabs(context, DataType.TAG)
+        }
+
         val tabs =
             listOf(
                 TabProvider(stringResource(R.string.stashapp_details)) {
@@ -118,47 +116,77 @@ fun TagPage(
                         },
                     )
                 },
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.SCENE,
-                        findFilter = tabFindFilter(server, PageFilterKey.TAG_SCENES),
-                        objectFilter = SceneFilterType(tags = tags),
-                    ),
+                TabWithSubItems<SceneFilterType>(
+                    DataType.SCENE,
+                    tabFindFilter(server, PageFilterKey.TAG_SCENES),
+                    { subTags, filter -> filter.copy(tags = tagsFunc(subTags)) },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubTags,
                 ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.GALLERY,
-                        findFilter = tabFindFilter(server, PageFilterKey.TAG_GALLERIES),
-                        objectFilter = GalleryFilterType(tags = tags),
-                    ),
+                TabWithSubItems<GalleryFilterType>(
+                    DataType.GALLERY,
+                    tabFindFilter(server, PageFilterKey.TAG_GALLERIES),
+                    { subTags, filter -> filter.copy(tags = tagsFunc(subTags)) },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubTags,
                 ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.IMAGE,
-                        findFilter = tabFindFilter(server, PageFilterKey.TAG_IMAGES),
-                        objectFilter = ImageFilterType(tags = tags),
-                    ),
+                TabWithSubItems<ImageFilterType>(
+                    DataType.IMAGE,
+                    tabFindFilter(server, PageFilterKey.TAG_IMAGES),
+                    { subTags, filter -> filter.copy(tags = tagsFunc(subTags)) },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubTags,
                 ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.MARKER,
-                        findFilter = tabFindFilter(server, PageFilterKey.TAG_MARKERS),
-                        objectFilter = SceneMarkerFilterType(tags = tags),
-                    ),
+                TabWithSubItems<SceneMarkerFilterType>(
+                    DataType.MARKER,
+                    tabFindFilter(server, PageFilterKey.TAG_MARKERS),
+                    { subTags, filter -> filter.copy(tags = tagsFunc(subTags)) },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubTags,
                 ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.PERFORMER,
-                        findFilter = tabFindFilter(server, PageFilterKey.TAG_PERFORMERS),
-                        objectFilter = PerformerFilterType(tags = tags),
-                    ),
+                TabWithSubItems<PerformerFilterType>(
+                    DataType.PERFORMER,
+                    tabFindFilter(server, PageFilterKey.TAG_PERFORMERS),
+                    { subTags, filter -> filter.copy(tags = tagsFunc(subTags)) },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubTags,
                 ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.STUDIO,
-                        findFilter = null,
-                        objectFilter = StudioFilterType(tags = tags),
-                    ),
+                TabWithSubItems<StudioFilterType>(
+                    DataType.STUDIO,
+                    null,
+                    { subTags, filter -> filter.copy(tags = tagsFunc(subTags)) },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubTags,
                 ),
                 TabProvider
                     (stringResource(R.string.stashapp_sub_tags)) { positionCallback ->
@@ -168,14 +196,14 @@ fun TagPage(
                             initialFilter =
                                 FilterArgs(
                                     dataType = DataType.TAG,
-                                    objectFilter = TagFilterType(parents = tags),
+                                    objectFilter = TagFilterType(parents = tagsFunc(false)),
                                 ),
                             itemOnClick = itemOnClick,
                             longClicker = longClicker,
                             modifier = Modifier,
                             positionCallback = positionCallback,
                             composeUiConfig = uiConfig,
-                            subToggleLabel = if (tag.child_count > 0) stringResource(R.string.stashapp_include_sub_tag_content) else null,
+                            subToggleLabel = null,
                         )
                     },
             ).filter { it.name in uiTabs }

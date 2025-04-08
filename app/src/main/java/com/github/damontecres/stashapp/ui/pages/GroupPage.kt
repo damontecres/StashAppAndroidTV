@@ -43,9 +43,9 @@ import com.github.damontecres.stashapp.ui.components.StarRating
 import com.github.damontecres.stashapp.ui.components.StashGridTab
 import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
+import com.github.damontecres.stashapp.ui.components.TabWithSubItems
 import com.github.damontecres.stashapp.ui.components.TableRow
 import com.github.damontecres.stashapp.ui.components.TableRowComposable
-import com.github.damontecres.stashapp.ui.components.createTabFunc
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
@@ -82,15 +82,9 @@ fun GroupPage(
     val scope = rememberCoroutineScope()
 
     group?.let { group ->
-        val createTab =
-            createTabFunc(
-                server,
-                itemOnClick,
-                longClicker,
-                uiConfig,
-                if (group.sub_group_count > 0) stringResource(R.string.stashapp_include_sub_group_content) else null,
-            )
-        val groups =
+        val subToggleLabel =
+            if (group.sub_group_count > 0) stringResource(R.string.stashapp_include_sub_group_content) else null
+        val groupsFunc = { includeSubGroups: Boolean ->
             Optional.present(
                 HierarchicalMultiCriterionInput(
                     value = Optional.present(listOf(group.id)),
@@ -98,7 +92,8 @@ fun GroupPage(
                     depth = Optional.present(if (includeSubGroups) -1 else 0),
                 ),
             )
-        val uiTabs = getUiTabs(context, DataType.GALLERY)
+        }
+        val uiTabs = getUiTabs(context, DataType.GROUP)
         val tabs =
             listOf(
                 TabProvider(stringResource(R.string.stashapp_details)) {
@@ -127,33 +122,57 @@ fun GroupPage(
                         },
                     )
                 },
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.SCENE,
-                        findFilter = tabFindFilter(server, PageFilterKey.GROUP_SCENES),
-                        objectFilter = SceneFilterType(groups = groups),
-                    ),
+                TabWithSubItems<SceneFilterType>(
+                    DataType.SCENE,
+                    tabFindFilter(server, PageFilterKey.GROUP_SCENES),
+                    { subGroups, filter -> filter.copy(studios = groupsFunc(subGroups)) },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubGroups,
                 ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.MARKER,
-                        objectFilter =
-                            SceneMarkerFilterType(
-                                scene_filter =
-                                    Optional.present(
-                                        SceneFilterType(
-                                            groups = groups,
-                                        ),
+                TabWithSubItems<SceneMarkerFilterType>(
+                    DataType.MARKER,
+                    null,
+                    { subGroups, filter ->
+                        filter.copy(
+                            scene_filter =
+                                Optional.present(
+                                    SceneFilterType(
+                                        groups = groupsFunc(subGroups),
                                     ),
-                            ),
-                    ),
+                                ),
+                        )
+                    },
+                ).toTabProvider(
+                    server,
+                    uiConfig,
+                    itemOnClick,
+                    longClicker,
+                    subToggleLabel,
+                    includeSubGroups,
                 ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.TAG,
-                        override = DataSupplierOverride.GroupTags(group.id),
-                    ),
-                ),
+                TabProvider
+                    (stringResource(DataType.TAG.pluralStringId)) { positionCallback ->
+                        StashGridTab(
+                            name = stringResource(DataType.TAG.pluralStringId),
+                            server = server,
+                            initialFilter =
+                                FilterArgs(
+                                    dataType = DataType.TAG,
+                                    override = DataSupplierOverride.GroupTags(group.id),
+                                ),
+                            itemOnClick = itemOnClick,
+                            longClicker = longClicker,
+                            modifier = Modifier,
+                            positionCallback = positionCallback,
+                            composeUiConfig = uiConfig,
+                            subToggleLabel = null,
+                        )
+                    },
                 TabProvider
                     (stringResource(R.string.stashapp_containing_groups)) { positionCallback ->
                         StashGridTab(

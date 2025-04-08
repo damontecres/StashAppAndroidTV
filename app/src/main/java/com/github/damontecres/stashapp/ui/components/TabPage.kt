@@ -31,6 +31,8 @@ import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.type.StashDataFilter
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -39,6 +41,7 @@ import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashServer
+import kotlin.reflect.full.createInstance
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -123,7 +126,6 @@ fun createTabFunc(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     composeUiConfig: ComposeUiConfig,
-    subToggleLabel: String? = null,
 ): (initialFilter: FilterArgs) -> TabProvider =
     { initialFilter ->
         val name =
@@ -137,11 +139,56 @@ fun createTabFunc(
                 longClicker = longClicker,
                 modifier = Modifier,
                 positionCallback = positionCallback,
-                subToggleLabel = subToggleLabel,
                 composeUiConfig = composeUiConfig,
             )
         }
     }
+
+data class TabWithSubItems<T : StashDataFilter>(
+    val dataType: DataType,
+    val findFilter: StashFindFilter?,
+    val filterBuilder: (includeSubTags: Boolean, objectFilter: T) -> T,
+) {
+    fun toTabProvider(
+        server: StashServer,
+        composeUiConfig: ComposeUiConfig,
+        itemOnClick: ItemOnClicker<Any>,
+        longClicker: LongClicker<Any>,
+        subToggleLabel: String?,
+        includeSubTags: Boolean,
+    ): TabProvider {
+        val objectFilter =
+            filterBuilder.invoke(includeSubTags, dataType.filterType.createInstance() as T)
+        val initialFilter =
+            FilterArgs(
+                dataType = dataType,
+                findFilter = findFilter,
+                objectFilter = objectFilter,
+            )
+        val name =
+            StashApplication.getApplication().getString(dataType.pluralStringId)
+        return TabProvider(name) { positionCallback ->
+            var filterArgs by remember(this@TabWithSubItems) { mutableStateOf(initialFilter) }
+            StashGridTab(
+                name = name,
+                server = server,
+                initialFilter = filterArgs,
+                itemOnClick = itemOnClick,
+                longClicker = longClicker,
+                modifier = Modifier,
+                positionCallback = positionCallback,
+                subToggleLabel = subToggleLabel,
+                onSubToggleCheck = {
+                    filterArgs =
+                        filterArgs.copy(
+                            objectFilter = filterBuilder.invoke(it, filterArgs.objectFilter as T),
+                        )
+                },
+                composeUiConfig = composeUiConfig,
+            )
+        }
+    }
+}
 
 @Composable
 fun StashGridTab(
@@ -154,6 +201,7 @@ fun StashGridTab(
     modifier: Modifier = Modifier,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
     subToggleLabel: String? = null,
+    onSubToggleCheck: ((Boolean) -> Unit)? = null,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
     val viewModel = viewModel<FilterViewModel>(key = name)
@@ -182,6 +230,7 @@ fun StashGridTab(
             updateFilter = { viewModel.setFilter(server, it) },
             letterPosition = viewModel::findLetterPosition,
             subToggleLabel = subToggleLabel,
+            onSubToggleCheck = onSubToggleCheck,
             requestFocus = false,
         )
     }
