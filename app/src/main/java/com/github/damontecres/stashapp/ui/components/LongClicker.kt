@@ -67,7 +67,7 @@ class DefaultLongClicker(
                             Icons.Default.Info,
                         ) {
                             nav.navigate(
-                                Destination.MarkerDetails(item.id, item.scene.minimalSceneData.id),
+                                Destination.MarkerDetails(item.id),
                             )
                         },
                     )

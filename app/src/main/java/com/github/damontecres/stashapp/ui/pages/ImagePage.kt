@@ -149,9 +149,7 @@ import kotlin.properties.Delegates
 
 private const val TAG = "ImagePage"
 
-class ImageDetailsViewModel :
-    ViewModel(),
-    SlideshowControls {
+class ImageDetailsViewModel : ViewModel() {
     private var server: StashServer? = null
 
     private val _slideshow = MutableLiveData(false)
@@ -362,7 +360,7 @@ class ImageDetailsViewModel :
 
     private var slideshowJob: Job? = null
 
-    override fun startSlideshow() {
+    fun startSlideshow() {
         _slideshow.value = true
         _slideshowPaused.value = false
         if (_image.value?.isImageClip == false) {
@@ -370,27 +368,27 @@ class ImageDetailsViewModel :
         }
     }
 
-    override fun stopSlideshow() {
+    fun stopSlideshow() {
         slideshowJob?.cancel()
         _slideshow.value = false
     }
 
-    override fun pauseSlideshow() {
+    fun pauseSlideshow() {
         if (_slideshow.value == true) {
             _slideshowPaused.value = true
             slideshowJob?.cancel()
         }
     }
 
-    override fun unpauseSlideshow() {
+    fun unpauseSlideshow() {
         if (_slideshow.value == true) {
             _slideshowPaused.value = false
         }
     }
 
-    override fun pulseSlideshow() = pulseSlideshow(slideshowDelay)
+    fun pulseSlideshow() = pulseSlideshow(slideshowDelay)
 
-    override fun pulseSlideshow(milliseconds: Long) {
+    fun pulseSlideshow(milliseconds: Long) {
         Log.v(TAG, "pulseSlideshow")
         slideshowJob?.cancel()
         if (slideshow.value!!) {
@@ -428,14 +426,6 @@ interface SlideshowControls {
     fun startSlideshow()
 
     fun stopSlideshow()
-
-    fun pauseSlideshow()
-
-    fun unpauseSlideshow()
-
-    fun pulseSlideshow()
-
-    fun pulseSlideshow(milliseconds: Long)
 }
 
 sealed class ImageLoadingState {
@@ -472,7 +462,6 @@ fun ImagePage(
 
         viewModel.init(server, filter, startPosition, startSlideshow, slideshowDelay)
     }
-    val slideshowControls: SlideshowControls = viewModel
 
     val imageState by viewModel.image.observeAsState()
     val tags by viewModel.tags.observeAsState(listOf())
@@ -485,6 +474,18 @@ fun ImagePage(
     var showOverlay by rememberSaveable { mutableStateOf(false) }
     var panX by rememberSaveable { mutableFloatStateOf(0f) }
     var panY by rememberSaveable { mutableFloatStateOf(0f) }
+
+    val slideshowControls =
+        object : SlideshowControls {
+            override fun startSlideshow() {
+                showOverlay = false
+                viewModel.startSlideshow()
+            }
+
+            override fun stopSlideshow() {
+                viewModel.stopSlideshow()
+            }
+        }
 
     val rotateAnimation: Float by animateFloatAsState(
         targetValue = rotation.toFloat(),
@@ -794,9 +795,9 @@ fun ImageOverlay(
                 Text(
                     text =
                         if (slideshowEnabled) {
-                            stringResource(R.string.play_slideshow)
-                        } else {
                             stringResource(R.string.stop_slideshow)
+                        } else {
+                            stringResource(R.string.play_slideshow)
                         },
                 )
             },

@@ -65,8 +65,7 @@ sealed class Destination(
 
     @Serializable
     data class MarkerDetails(
-        val id: String,
-        val sceneId: String,
+        val markerId: String,
     ) : Destination()
 
     @Serializable
@@ -114,7 +113,6 @@ sealed class Destination(
     @Serializable
     data class UpdateMarker(
         val markerId: String,
-        val sceneId: String,
     ) : Destination(true)
 
     @Serializable

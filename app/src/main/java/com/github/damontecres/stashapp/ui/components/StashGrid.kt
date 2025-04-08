@@ -10,11 +10,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -371,41 +368,16 @@ fun StashGrid(
                             }
                         }.focusRequester(gridFocusRequester),
             ) {
-                if (pager.size < 0) {
-                    item {
-                        Text(
-                            text = "Waiting for items to load from the backend",
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .wrapContentWidth(Alignment.CenterHorizontally)
-                                    .wrapContentHeight(Alignment.CenterVertically),
-                        )
-                    }
-                } else if (pager.size == 0) {
-                    item {
-                        Text(
-                            text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .wrapContentWidth(Alignment.CenterHorizontally)
-                                    .wrapContentHeight(Alignment.CenterVertically),
-                        )
-                    }
-                } else {
-                    items(pager.size) { index ->
-                        val mod =
-                            if (index == focusedIndex) {
-                                Modifier.focusRequester(firstFocus)
-                            } else {
-                                Modifier
-                            }
-                        val item = pager[index]
-                        if (item == null) {
-                            CircularProgress()
+                items(pager.size) { index ->
+                    val mod =
+                        if (index == focusedIndex) {
+                            Modifier.focusRequester(firstFocus)
+                        } else {
+                            Modifier
+                        }
+                    val item = pager[index]
+                    if (item == null) {
+                        CircularProgress()
 //                            Text(
 //                                text = "Loading...",
 //                                color = MaterialTheme.colorScheme.onBackground,
@@ -414,33 +386,42 @@ fun StashGrid(
 //                                        .fillMaxWidth()
 //                                        .wrapContentWidth(Alignment.CenterHorizontally),
 //                            )
-                        } else {
-                            StashCard(
-                                modifier =
-                                    mod.onFocusChanged { focusState ->
-                                        if (focusState.isFocused) {
-                                            focusOn(index)
-                                            positionCallback?.invoke(columns, index)
-                                        }
-                                    },
-                                uiConfig = uiConfig,
-                                item = item,
-                                itemOnClick = {
-                                    itemOnClick.onClick(
-                                        it,
-                                        FilterAndPosition(filterArgs, index),
-                                    )
+                    } else {
+                        StashCard(
+                            modifier =
+                                mod.onFocusChanged { focusState ->
+                                    if (focusState.isFocused) {
+                                        focusOn(index)
+                                        positionCallback?.invoke(columns, index)
+                                    }
                                 },
-                                longClicker = longClicker,
-                                getFilterAndPosition = {
-                                    FilterAndPosition(
-                                        filterArgs,
-                                        index,
-                                    )
-                                },
-                            )
-                        }
+                            uiConfig = uiConfig,
+                            item = item,
+                            itemOnClick = {
+                                itemOnClick.onClick(
+                                    it,
+                                    FilterAndPosition(filterArgs, index),
+                                )
+                            },
+                            longClicker = longClicker,
+                            getFilterAndPosition = {
+                                FilterAndPosition(
+                                    filterArgs,
+                                    index,
+                                )
+                            },
+                        )
                     }
+                }
+            }
+            if (pager.size == 0) {
+                focusedIndex = -1
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.align(Alignment.Center),
+                    )
                 }
             }
             // Footer

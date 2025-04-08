@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,9 +59,11 @@ import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.filter.extractTitle
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -77,6 +80,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.fakeMarker
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.toLongMilliseconds
@@ -388,6 +392,7 @@ fun SceneDetails(
     showRatingBar: Boolean = true,
 ) {
     val context = LocalContext.current
+    val navigationManager = LocalGlobalContext.current.navigationManager
 
     var showDialog by remember { mutableStateOf<DialogParams?>(null) }
     var searchForDataType by remember { mutableStateOf<SearchForParams?>(null) }
@@ -440,7 +445,17 @@ fun SceneDetails(
                                     )
                                 },
                             )
-                            if (item !is GalleryData) {
+                            if (Destination.getDataType(item) == DataType.MARKER) {
+                                add(
+                                    DialogItem(
+                                        context.getString(R.string.stashapp_details),
+                                        Icons.Default.Info,
+                                    ) {
+                                        navigationManager.navigate(Destination.MarkerDetails(item.id))
+                                    },
+                                )
+                            }
+                            if (item !is GalleryData && readOnlyModeDisabled()) {
                                 add(
                                     DialogItem(
                                         onClick = { removeItem(item) },

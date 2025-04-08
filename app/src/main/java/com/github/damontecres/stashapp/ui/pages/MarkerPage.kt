@@ -295,10 +295,7 @@ fun MarkerPageContent(
                     icon = Icons.Filled.Edit,
                     onClick = {
                         navigationManager.navigate(
-                            Destination.UpdateMarker(
-                                marker.id,
-                                marker.scene.videoSceneData.id,
-                            ),
+                            Destination.UpdateMarker(marker.id),
                         )
                     },
                     modifier = Modifier,

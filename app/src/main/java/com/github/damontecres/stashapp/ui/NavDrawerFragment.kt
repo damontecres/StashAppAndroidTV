@@ -514,12 +514,12 @@ fun NavDrawerContent(
             MarkerPage(
                 server = server,
                 uiConfig = composeUiConfig,
-                markerId = destination.id,
+                markerId = destination.markerId,
                 itemOnClick = itemOnClick,
                 playOnClick = { position, mode ->
                     navManager.navigate(
                         Destination.Playback(
-                            destination.id,
+                            destination.markerId,
                             position,
                             mode,
                         ),

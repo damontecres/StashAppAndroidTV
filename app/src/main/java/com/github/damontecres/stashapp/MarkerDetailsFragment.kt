@@ -154,11 +154,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                     )
                 } else if (action == StashAction.SHIFT_MARKERS) {
                     serverViewModel.navigationManager.navigate(
-                        Destination.UpdateMarker(
-                            viewModel.item.value!!.id,
-                            viewModel.item.value!!
-                                .scene.videoSceneData.id,
-                        ),
+                        Destination.UpdateMarker(viewModel.item.value!!.id),
                     )
                 }
             }
@@ -228,7 +224,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
     override fun onResume() {
         super.onResume()
         val markerDetailsDest = requireArguments().getDestination<Destination.MarkerDetails>()
-        viewModel.init(serverViewModel.requireServer(), markerDetailsDest.id)
+        viewModel.init(serverViewModel.requireServer(), markerDetailsDest.markerId)
     }
 
     override fun onViewCreated(

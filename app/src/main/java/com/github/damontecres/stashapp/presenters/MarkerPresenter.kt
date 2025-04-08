@@ -62,10 +62,7 @@ class MarkerPresenter(
             PopUpItem(2L, R.string.stashapp_details) to
                 PopUpAction { _, item ->
                     StashApplication.navigationManager.navigate(
-                        Destination.MarkerDetails(
-                            item.id,
-                            item.scene.minimalSceneData.id,
-                        ),
+                        Destination.MarkerDetails(item.id),
                     )
                 },
         ).addAction(
@@ -73,10 +70,7 @@ class MarkerPresenter(
             { readOnlyModeDisabled() },
             { _, item ->
                 StashApplication.navigationManager.navigate(
-                    Destination.UpdateMarker(
-                        item.id,
-                        item.scene.minimalSceneData.id,
-                    ),
+                    Destination.UpdateMarker(item.id),
                 )
             },
         )
