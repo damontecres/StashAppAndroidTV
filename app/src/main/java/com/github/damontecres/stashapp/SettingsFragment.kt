@@ -24,6 +24,7 @@ import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
+import coil3.imageLoader
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
 import com.github.damontecres.stashapp.api.fragment.StashJob
@@ -45,10 +46,12 @@ import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.composeEnabled
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
+import com.github.damontecres.stashapp.views.formatBytes
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -610,6 +613,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<Preference>("clearCache")!!.setOnPreferenceClickListener {
                 cache.evictAll()
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    requireContext().imageLoader.memoryCache?.clear()
+                    requireContext().imageLoader.diskCache?.clear()
                     withContext(Dispatchers.IO) {
                         Glide.get(requireContext()).clearDiskCache()
                     }
@@ -714,7 +719,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             cacheSizePref: Preference,
             cache: Cache,
         ) {
-            val cacheSize = cache.size() / 1024.0 / 1024
             val glideCacheSize =
                 File(
                     requireContext().cacheDir,
@@ -722,12 +726,27 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 ).walkTopDown()
                     .filter { it.isFile }
                     .map { it.length() }
-                    .sum() / 1024.0 / 1024.0
-            val cacheSizeFormatted = String.format("%.2f", cacheSize)
-            val glideCacheSizeFormatted = String.format("%.2f", glideCacheSize)
+                    .sum()
+            val cacheSizeFormatted = formatBytes(cache.size())
+            val glideCacheSizeFormatted = formatBytes(glideCacheSize)
+
+            val useCompose =
+                PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
+                    .getBoolean(getString(R.string.pref_key_use_compose_ui), false)
+            val composeCacheUsed =
+                if (useCompose) {
+                    val diskUsed =
+                        "D:" + formatBytes(requireContext().imageLoader.diskCache?.size ?: 0L)
+                    val memoryUsed =
+                        "M:" + formatBytes(requireContext().imageLoader.memoryCache?.size ?: 0L)
+                    " (Compose: " + listOf(diskUsed, memoryUsed).joinNotNullOrBlank(" / ") + ")"
+                } else {
+                    ""
+                }
 
             cacheSizePref.summary =
-                "Using $cacheSizeFormatted MB (Images $glideCacheSizeFormatted MB)"
+                "Using $cacheSizeFormatted (Images $glideCacheSizeFormatted)$composeCacheUsed"
         }
     }
 

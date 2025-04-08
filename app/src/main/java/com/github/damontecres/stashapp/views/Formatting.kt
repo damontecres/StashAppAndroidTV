@@ -122,7 +122,7 @@ fun abbreviateCounter(counter: Int): String {
     return String.format(Locale.getDefault(), "%.1f%s", count, abbrevSuffixes[unit])
 }
 
-val byteSuffixes = listOf("", "KB", "MB", "GB", "TB")
+val byteSuffixes = listOf("B", "KB", "MB", "GB", "TB")
 val byteRateSuffixes = listOf("bps", "kbps", "mbps", "gbps", "tbps")
 
 /**
@@ -130,6 +130,11 @@ val byteRateSuffixes = listOf("bps", "kbps", "mbps", "gbps", "tbps")
  */
 fun formatBytes(
     bytes: Int,
+    suffixes: List<String> = byteSuffixes,
+) = formatBytes(bytes.toLong(), suffixes)
+
+fun formatBytes(
+    bytes: Long,
     suffixes: List<String> = byteSuffixes,
 ): String {
     var unit = 0

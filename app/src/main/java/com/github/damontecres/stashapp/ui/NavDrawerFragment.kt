@@ -89,6 +89,7 @@ import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
+import okhttp3.Call
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -125,6 +126,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                             ) {
                                 FragmentContent(
                                     server = server ?: StashServer("http://0.0.0.0", null),
+                                    serverViewModel = serverViewModel,
                                     navigationManager = navManager,
                                 )
                             }
@@ -145,6 +147,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
 fun FragmentContent(
     server: StashServer,
     navigationManager: NavigationManagerCompose,
+    serverViewModel: ServerViewModel,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -199,11 +202,15 @@ fun FragmentContent(
         ImageLoader
             .Builder(context)
             .crossfade(true)
+//            .logger(DebugLogger())
             .components {
                 add(
                     OkHttpNetworkFetcherFactory(
                         callFactory = {
-                            server.okHttpClient
+                            Call.Factory { request ->
+                                // TODO this seems hacky?
+                                serverViewModel.requireServer().okHttpClient.newCall(request)
+                            }
                         },
                     ),
                 )
