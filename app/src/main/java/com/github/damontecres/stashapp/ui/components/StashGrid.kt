@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -64,6 +66,7 @@ import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.SwitchWithLabel
 import com.github.damontecres.stashapp.ui.cards.StashCard
+import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.StashServer
@@ -87,6 +90,7 @@ enum class CreateFilter {
     NEW_FILTER,
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun StashGridControls(
     server: StashServer,
@@ -124,6 +128,13 @@ fun StashGridControls(
 //    }
 
     val navManager = LocalGlobalContext.current.navigationManager
+    val rowFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        if (requestFocus) {
+            rowFocusRequester.requestFocus()
+        }
+    }
 
     Column(modifier = modifier) {
         if (showTopRow) {
@@ -131,13 +142,19 @@ fun StashGridControls(
                 modifier =
                     Modifier
                         .padding(8.dp)
-                        .focusGroup(),
+                        .focusGroup()
+                        .onFocusChanged {
+                            if (it.isFocused) rowFocusRequester.requestFocus()
+                        }.focusable(true),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 ProvideTextStyle(MaterialTheme.typography.titleMedium) {
                     if (filterUiMode == FilterUiMode.SAVED_FILTERS) {
                         SavedFiltersButton(
-                            modifier = Modifier.focusProperties { down = gridFocusRequester },
+                            modifier =
+                                Modifier
+                                    .focusProperties { down = gridFocusRequester }
+                                    .focusRequester(rowFocusRequester),
                             dataType = dataType,
                             onFilterChange = { updateFilter(it) },
                             onCreateFilter = { createFilter.invoke(CreateFilter.NEW_FILTER) },
@@ -145,7 +162,13 @@ fun StashGridControls(
                         )
                     }
                     SortByButton(
-                        modifier = Modifier.focusProperties { down = gridFocusRequester },
+                        modifier =
+                            Modifier
+                                .focusProperties { down = gridFocusRequester }
+                                .ifElse(
+                                    filterUiMode != FilterUiMode.SAVED_FILTERS,
+                                    { Modifier.focusRequester(rowFocusRequester) },
+                                ),
                         dataType = dataType,
                         current = filterArgs.sortAndDirection,
                         onSortChange = {
@@ -221,6 +244,7 @@ fun StashGridControls(
                         if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
                             updateFilter(filterArgs.withQuery(searchQuery))
                         }
+                        gridFocusRequester.requestFocus()
                     },
                 )
             }
@@ -238,7 +262,18 @@ fun StashGridControls(
                 positionCallback?.invoke(columns, position)
             },
             gridFocusRequester = gridFocusRequester,
-            modifier = Modifier.fillMaxSize(),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .focusProperties {
+                        exit = {
+                            if (it == FocusDirection.Up) {
+                                rowFocusRequester
+                            } else {
+                                FocusRequester.Default
+                            }
+                        }
+                    },
         )
     }
 }

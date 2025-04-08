@@ -66,6 +66,7 @@ fun SavedFiltersButton(
 
     Button(
         onClick = { showDialog = true },
+        modifier = modifier,
     ) {
         Text(text = stringResource(R.string.stashapp_search_filter_saved_filters))
     }
@@ -77,46 +78,4 @@ fun SavedFiltersButton(
         onDismissRequest = { showDialog = false },
         waitToLoad = false,
     )
-
-//    Box(modifier = modifier) {
-//        Button(
-//            onClick = { expanded = true },
-//            onLongClick = {
-//                // TODO?
-//            },
-//        ) {
-//            Text(text = stringResource(R.string.stashapp_search_filter_saved_filters))
-//        }
-//        Material3MainTheme {
-//            DropdownMenu(
-//                expanded = expanded,
-//                onDismissRequest = { expanded = false },
-//            ) {
-//                DropdownMenuItem(
-//                    text = { Text("Create filter") },
-//                    onClick = {
-//                        expanded = false
-//                        onUpdateFilter.invoke()
-//                    },
-//                )
-//                DropdownMenuItem(
-//                    text = { Text("Create filter from current") },
-//                    onClick = {
-//                        expanded = false
-//                        onUpdateFilter.invoke()
-//                    },
-//                )
-//                HorizontalDivider()
-//                savedFilters.sortedBy { it.name }.forEach { savedFilter ->
-//                    DropdownMenuItem(
-//                        text = { Text(savedFilter.name) },
-//                        onClick = {
-//                            expanded = false
-//                            onFilterChange(savedFilter.toFilterArgs(filterParser))
-//                        },
-//                    )
-//                }
-//            }
-//        }
-//    }
 }
