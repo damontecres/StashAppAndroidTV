@@ -23,6 +23,7 @@ import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
+import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.CreateFilter
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -70,12 +71,12 @@ fun FilterPage(
                 color = MaterialTheme.colorScheme.onBackground,
             )
         }
-        pager?.let {
+        if (pager != null) {
             StashGridControls(
                 modifier = Modifier.padding(16.dp),
                 uiConfig = uiConfig,
                 server = server,
-                pager = it,
+                pager = pager!!,
                 filterUiMode = FilterUiMode.SAVED_FILTERS,
                 createFilter = {
                     val dataType = initialFilter.dataType
@@ -107,6 +108,8 @@ fun FilterPage(
                 letterPosition = viewModel::findLetterPosition,
                 requestFocus = true,
             )
+        } else {
+            CircularProgress()
         }
     }
 }

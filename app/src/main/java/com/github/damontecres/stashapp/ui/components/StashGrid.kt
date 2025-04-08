@@ -405,14 +405,15 @@ fun StashGrid(
                             }
                         val item = pager[index]
                         if (item == null) {
-                            Text(
-                                text = "Loading...",
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier =
-                                    mod
-                                        .fillMaxWidth()
-                                        .wrapContentWidth(Alignment.CenterHorizontally),
-                            )
+                            CircularProgress()
+//                            Text(
+//                                text = "Loading...",
+//                                color = MaterialTheme.colorScheme.onBackground,
+//                                modifier =
+//                                    mod
+//                                        .fillMaxWidth()
+//                                        .wrapContentWidth(Alignment.CenterHorizontally),
+//                            )
                         } else {
                             StashCard(
                                 modifier =

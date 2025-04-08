@@ -61,6 +61,7 @@ import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
+import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.FocusPair
@@ -298,12 +299,9 @@ fun SceneDetailsPage(
                 style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
-        SceneLoadingState.Loading ->
-            Text(
-                "Loading...",
-                style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
+
+        SceneLoadingState.Loading -> CircularProgress()
+
         is SceneLoadingState.Success ->
             SceneDetails(
                 server = server,

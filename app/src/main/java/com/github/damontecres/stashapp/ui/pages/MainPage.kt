@@ -76,6 +76,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.cards.ViewAllCard
+import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.main.MainPagePerformerDetails
@@ -172,6 +173,9 @@ fun MainPage(
         itemOnClick = itemOnClick,
         longClicker = longClicker,
     )
+    if (frontPageRows.isEmpty()) {
+        CircularProgress()
+    }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)

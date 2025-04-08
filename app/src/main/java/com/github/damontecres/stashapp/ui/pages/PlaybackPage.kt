@@ -32,6 +32,7 @@ import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
+import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageContent
 import com.github.damontecres.stashapp.ui.components.playback.PlaylistPlaybackPageContent
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
@@ -177,5 +178,7 @@ fun PlaylistPlaybackPage(
             playlistPager = playlistPager,
             modifier = modifier,
         )
+    } else {
+        CircularProgress()
     }
 }
