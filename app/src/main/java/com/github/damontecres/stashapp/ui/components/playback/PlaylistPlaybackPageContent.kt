@@ -144,6 +144,7 @@ fun PlaylistPlaybackPageContent(
                 playWhenReady = true
             }
         }
+    AmbientPlayerListener(player)
 
     LifecycleStartEffect(Unit) {
         onStopOrDispose {

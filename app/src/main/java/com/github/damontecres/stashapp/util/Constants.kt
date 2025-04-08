@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.util
 
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
@@ -1081,11 +1082,15 @@ fun Any.toReadableString() =
     }
 
 fun Fragment.keepScreenOn(keep: Boolean) {
+    requireActivity().keepScreenOn(keep)
+}
+
+fun Activity.keepScreenOn(keep: Boolean) {
     Log.v("keepScreenOn", "Keep screen on: $keep")
     if (keep) {
-        requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     } else {
-        requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 }
 
@@ -1134,4 +1139,16 @@ fun calculatePageSize(
     } else {
         number + (numberOfColumns - remainder)
     }
+}
+
+fun Context.findActivity(): Activity? {
+    if (this is Activity) {
+        return this
+    }
+    var context = this
+    while (context is ContextWrapper) {
+        if (context is Activity) return context
+        context = context.baseContext
+    }
+    return null
 }

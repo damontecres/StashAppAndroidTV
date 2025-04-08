@@ -102,6 +102,7 @@ fun PlaybackPageContent(
                 playWhenReady = true
             }
         }
+    AmbientPlayerListener(player)
     var trackActivityListener = remember<TrackActivityPlaybackListener?>(server, scene) { null }
     LifecycleStartEffect(Unit) {
         onStopOrDispose {
