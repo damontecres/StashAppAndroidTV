@@ -695,7 +695,7 @@ fun SceneDetails(
         dismissOnClick = false,
         uiConfig = uiConfig,
     )
-    LaunchedEffect(true) {
+    LaunchedEffect(Unit) {
         if (focusPosition != null) {
             Log.v("SceneDetails", "Focusing on $focusPosition")
             focusPositionRequester.requestFocus()
