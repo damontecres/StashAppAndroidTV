@@ -60,6 +60,7 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.TitleValueText
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
@@ -167,7 +168,7 @@ fun MarkerPageContent(
     var searchForPrimary by remember { mutableStateOf<Boolean?>(null) }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        focusRequester.tryRequestFocus()
     }
     Box(
         modifier = modifier,

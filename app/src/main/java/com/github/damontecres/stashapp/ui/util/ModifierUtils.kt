@@ -32,6 +32,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.onPlaced
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 
 /**
  * Handles horizontal (Left & Right) D-Pad Keys and consumes the event(s) so that the focus doesn't
@@ -128,8 +129,7 @@ fun Modifier.focusOnInitialVisibility(isVisible: MutableState<Boolean>): Modifie
     return focusRequester(focusRequester)
         .onPlaced {
             if (!isVisible.value) {
-                focusRequester.requestFocus()
-                isVisible.value = true
+                isVisible.value = focusRequester.tryRequestFocus()
             }
         }
 }

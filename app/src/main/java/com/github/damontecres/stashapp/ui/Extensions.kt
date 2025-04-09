@@ -1,32 +1,24 @@
 package com.github.damontecres.stashapp.ui
 
 import android.content.Context
-import androidx.compose.foundation.ExperimentalFoundationApi
+import android.util.Log
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
@@ -35,7 +27,6 @@ import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.StashExoPlayer
-import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.util.StashServer
 
@@ -104,34 +95,14 @@ fun SwitchWithLabel(
     }
 }
 
-val Destination.supportsCompose: Boolean
-    get() = this in setOf(Destination.Main)
-
 /**
- * Makes the current dialog a focus group with a [FocusRequester] and restricts the focus from
- * exiting its bounds while it's visible.
+ * Try to call [FocusRequester.requestFocus], but catch & log the exception if something is not configured properly
  */
-@ExperimentalComposeUiApi
-@ExperimentalFoundationApi
-fun Modifier.dialogFocusable() =
-    composed {
-        val focusRequester = remember { FocusRequester() }
-        val focusManager = LocalFocusManager.current
-
-        LaunchedEffect(Unit) {
-            focusRequester.requestFocus()
-            focusManager.moveFocus(FocusDirection.Enter)
-        }
-        this.then(
-            Modifier
-                .focusRequester(focusRequester)
-                .focusProperties { exit = { FocusRequester.Cancel } }
-                .focusGroup(),
-        )
+fun FocusRequester.tryRequestFocus(): Boolean =
+    try {
+        requestFocus()
+        true
+    } catch (ex: IllegalStateException) {
+        Log.w("tryRequestFocus", "Failed to request focus", ex)
+        false
     }
-
-fun Modifier.ifElse(
-    condition: Boolean,
-    ifTrueModifier: Modifier,
-    ifFalseModifier: Modifier = Modifier,
-): Modifier = then(if (condition) ifTrueModifier else ifFalseModifier)

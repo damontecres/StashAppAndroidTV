@@ -53,6 +53,7 @@ import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -209,7 +210,7 @@ fun PlaybackPageContent(
         }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        focusRequester.tryRequestFocus()
     }
     Box(
         modifier

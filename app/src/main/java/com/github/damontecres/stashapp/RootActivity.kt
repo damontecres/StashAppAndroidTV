@@ -25,6 +25,7 @@ import com.github.damontecres.stashapp.navigation.NavigationManagerLeanback
 import com.github.damontecres.stashapp.util.KeyEventDispatcher
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
+import com.github.damontecres.stashapp.util.composeEnabled
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.maybeGetDestination
 import com.github.damontecres.stashapp.util.putDestination
@@ -49,10 +50,7 @@ class RootActivity :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        useCompose =
-            PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .getBoolean(getString(R.string.pref_key_use_compose_ui), false)
+        useCompose = composeEnabled(this)
         if (useCompose) {
             setContentView(R.layout.activity_root_compose)
         } else {

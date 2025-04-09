@@ -83,6 +83,7 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.main.MainPagePerformerDetails
 import com.github.damontecres.stashapp.ui.components.main.MainPageSceneDetails
 import com.github.damontecres.stashapp.ui.enableMarquee
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -166,12 +167,10 @@ fun MainPage(
 
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(server, frontPageRows) {
-        focusRequester.requestFocus()
+        focusRequester.tryRequestFocus()
     }
     HomePage(
-        modifier =
-            Modifier
-                .focusRequester(focusRequester),
+        modifier = Modifier.focusRequester(focusRequester),
         uiConfig = uiConfig,
         rows = frontPageRows,
         itemOnClick = itemOnClick,
@@ -392,7 +391,7 @@ fun HomePageRow(
                 rowModifier
                     .onFocusChanged {
                         if (it.isFocused) {
-                            firstFocus.requestFocus()
+                            firstFocus.tryRequestFocus()
                         }
                     }.focusGroup()
                     .focusRestorer { firstFocus }

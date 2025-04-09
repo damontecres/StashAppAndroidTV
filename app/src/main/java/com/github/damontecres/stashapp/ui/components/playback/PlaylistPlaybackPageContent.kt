@@ -53,6 +53,7 @@ import com.github.damontecres.stashapp.playback.TrackActivityPlaybackListener
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -241,7 +242,7 @@ fun PlaylistPlaybackPageContent(
         }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        focusRequester.tryRequestFocus()
     }
     Box(
         modifier

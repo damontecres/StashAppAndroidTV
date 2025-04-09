@@ -34,6 +34,7 @@ import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.PlaylistItem
 import com.github.damontecres.stashapp.ui.MainTheme
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
@@ -83,7 +84,7 @@ fun PlaylistList(
     }
     LaunchedEffect(Unit) {
         state.scrollToItem(currentIndex)
-        focusRequester.requestFocus()
+        focusRequester.tryRequestFocus()
     }
 }
 

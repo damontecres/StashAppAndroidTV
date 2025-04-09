@@ -39,6 +39,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashServer
 import kotlin.reflect.full.createInstance
@@ -68,7 +69,7 @@ fun TabPage(
         )
         if (showTabRow) {
             LaunchedEffect(Unit) {
-                tabRowFocusRequester.requestFocus()
+                tabRowFocusRequester.tryRequestFocus()
             }
             TabRow(
                 selectedTabIndex = selectedTabIndex,

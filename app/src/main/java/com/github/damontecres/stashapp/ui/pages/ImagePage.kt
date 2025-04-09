@@ -126,6 +126,7 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StarRating
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.ui.components.playback.isDpad
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -510,7 +511,7 @@ fun ImagePage(
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        focusRequester.tryRequestFocus()
     }
 
     val density = LocalDensity.current
@@ -1142,7 +1143,7 @@ fun ImageControlsOverlay(
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        focusRequester.tryRequestFocus()
     }
     val onFocused = { focusState: FocusState ->
         if (focusState.isFocused && bringIntoViewRequester != null) {

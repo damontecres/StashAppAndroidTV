@@ -74,6 +74,7 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.RowColumn
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeader
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -698,10 +699,10 @@ fun SceneDetails(
     LaunchedEffect(Unit) {
         if (focusPosition != null) {
             Log.v("SceneDetails", "Focusing on $focusPosition")
-            focusPositionRequester.requestFocus()
+            focusPositionRequester.tryRequestFocus()
         } else {
             bringIntoViewRequester.bringIntoView()
-            headerFocusRequester.requestFocus()
+            headerFocusRequester.tryRequestFocus()
         }
     }
 }

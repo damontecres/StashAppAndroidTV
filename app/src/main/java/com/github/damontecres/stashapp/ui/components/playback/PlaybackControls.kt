@@ -59,6 +59,7 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.ui.AppColors
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -98,7 +99,7 @@ fun PlaybackControls(
     }
     LaunchedEffect(controllerViewState.controlsVisible) {
         if (controllerViewState.controlsVisible) {
-            initialFocusRequester.requestFocus()
+            initialFocusRequester.tryRequestFocus()
         }
     }
     Column(

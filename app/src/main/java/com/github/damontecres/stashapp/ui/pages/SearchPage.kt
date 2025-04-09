@@ -47,6 +47,7 @@ import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.SearchEditTextBox
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -175,7 +176,7 @@ fun SearchPage(
 
     LaunchedEffect(server) {
         viewModel.init(server, initialQuery)
-        focusRequester.requestFocus()
+        focusRequester.tryRequestFocus()
     }
 
     LazyColumn(

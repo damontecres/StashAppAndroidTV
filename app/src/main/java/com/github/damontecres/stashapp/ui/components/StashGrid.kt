@@ -66,6 +66,7 @@ import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.SwitchWithLabel
 import com.github.damontecres.stashapp.ui.cards.StashCard
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
@@ -125,15 +126,17 @@ fun StashGridControls(
     var shouldRequestFocus by remember { mutableStateOf(requestFocus) }
     val gridFocusRequester = remember { FocusRequester() }
 //    LaunchedEffect(Unit) {
-//        gridFocusRequester.requestFocus()
+//        gridFocusRequester.tryRequestFocus()
 //    }
 
     val navManager = LocalGlobalContext.current.navigationManager
     val rowFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        if (requestFocus) {
-            rowFocusRequester.requestFocus()
+        if (requestFocus && showTopRowRaw) {
+            rowFocusRequester.tryRequestFocus()
+        } else if (requestFocus) {
+            gridFocusRequester.tryRequestFocus()
         }
     }
 
@@ -145,7 +148,7 @@ fun StashGridControls(
                         .padding(8.dp)
                         .focusGroup()
                         .onFocusChanged {
-                            if (it.isFocused) rowFocusRequester.requestFocus()
+                            if (it.isFocused) rowFocusRequester.tryRequestFocus()
                         }.focusable(true),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -154,8 +157,8 @@ fun StashGridControls(
                         SavedFiltersButton(
                             modifier =
                                 Modifier
-                                    .focusProperties { down = gridFocusRequester }
-                                    .focusRequester(rowFocusRequester),
+                                    .focusRequester(rowFocusRequester)
+                                    .focusProperties { down = gridFocusRequester },
                             dataType = dataType,
                             onFilterChange = { updateFilter(it) },
                             onCreateFilter = { createFilter.invoke(CreateFilter.NEW_FILTER) },
@@ -165,11 +168,10 @@ fun StashGridControls(
                     SortByButton(
                         modifier =
                             Modifier
-                                .focusProperties { down = gridFocusRequester }
                                 .ifElse(
                                     filterUiMode != FilterUiMode.SAVED_FILTERS,
                                     { Modifier.focusRequester(rowFocusRequester) },
-                                ),
+                                ).focusProperties { down = gridFocusRequester },
                         dataType = dataType,
                         current = filterArgs.sortAndDirection,
                         onSortChange = {
@@ -246,7 +248,7 @@ fun StashGridControls(
                         if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
                             updateFilter(filterArgs.withQuery(searchQuery))
                         }
-                        gridFocusRequester.requestFocus()
+                        gridFocusRequester.tryRequestFocus()
                     },
                 )
             }
@@ -315,7 +317,7 @@ fun StashGrid(
         Log.v(TAG, "Scroll to $startPosition")
         LaunchedEffect(Unit) {
             gridState.scrollToItem(startPosition, -columns)
-            firstFocus.requestFocus()
+            firstFocus.tryRequestFocus()
         }
     }
     Row(
@@ -330,14 +332,14 @@ fun StashGrid(
                         focusOn(previouslyFocusedIndex)
                         scope.launch {
                             gridState.scrollToItem(previouslyFocusedIndex, -columns)
-                            firstFocus.requestFocus()
+                            firstFocus.tryRequestFocus()
                         }
                         return@onKeyEvent true
                     } else if (it.key == Key.Back && focusedIndex > 0) {
                         focusOn(0)
                         scope.launch {
                             gridState.scrollToItem(0, -columns)
-                            firstFocus.requestFocus()
+                            firstFocus.tryRequestFocus()
                         }
                         return@onKeyEvent true
                     } else if (it.key == Key.MediaPlay || it.key == Key.MediaPlayPause) {

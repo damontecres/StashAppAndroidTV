@@ -57,7 +57,7 @@ fun PlayButtons(
     ) {
         if (resume > 0) {
             item {
-//                LaunchedEffect(Unit) { firstFocus.requestFocus() }
+//                LaunchedEffect(Unit) { firstFocus.tryRequestFocus() }
                 PlayButton(
                     R.string.resume,
                     resume,
@@ -85,7 +85,7 @@ fun PlayButtons(
             }
         } else {
             item {
-//                LaunchedEffect(Unit) { firstFocus.requestFocus() }
+//                LaunchedEffect(Unit) { firstFocus.tryRequestFocus() }
                 PlayButton(
                     R.string.play_scene,
                     0L,
