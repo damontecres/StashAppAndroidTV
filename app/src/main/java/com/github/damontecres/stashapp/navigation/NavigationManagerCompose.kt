@@ -23,6 +23,8 @@ import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
 import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.navigate
+import dev.olshevski.navigation.reimagined.pop
+import dev.olshevski.navigation.reimagined.popAll
 import dev.olshevski.navigation.reimagined.popUpTo
 
 class NavigationManagerCompose(
@@ -35,7 +37,8 @@ class NavigationManagerCompose(
         if (destination == Destination.Pin) {
             composeNavigate(destination)
         } else if (destination == Destination.Main) {
-            controller.popUpTo { it == Destination.Main }
+            controller.popAll()
+            controller.navigate(destination)
         } else if (destination is Destination.Filter) {
             controller.popUpTo { it == Destination.Main }
             controller.navigate(destination)
@@ -143,7 +146,7 @@ class NavigationManagerCompose(
      * End the current fragment and go to the previous one
      */
     override fun goBack() {
-        fragmentManager.popBackStack()
+        controller.pop()
     }
 
     /**

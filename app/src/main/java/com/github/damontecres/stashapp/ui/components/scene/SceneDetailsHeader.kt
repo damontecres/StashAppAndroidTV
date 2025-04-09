@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components.scene
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -31,9 +32,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
@@ -67,6 +71,7 @@ import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.StarRating
 import com.github.damontecres.stashapp.ui.components.TitleValueText
+import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
@@ -76,7 +81,7 @@ import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.formatBytes
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun SceneDetailsHeader(
     scene: FullSceneData,
@@ -111,6 +116,7 @@ fun SceneDetailsHeader(
                 model = scene.paths.screenshot,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
+                alignment = Alignment.TopEnd,
                 modifier =
                     Modifier
                         .fillMaxSize()
@@ -147,7 +153,6 @@ fun SceneDetailsHeader(
                 // Title
                 Text(
                     text = scene.titleOrFilename ?: "",
-//                        color = MaterialTheme.colorScheme.onBackground,
                     color = Color.LightGray,
                     style =
                         MaterialTheme.typography.displayMedium.copy(
@@ -158,6 +163,8 @@ fun SceneDetailsHeader(
                                     blurRadius = 2f,
                                 ),
                         ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
 
                 Column(
@@ -179,7 +186,7 @@ fun SceneDetailsHeader(
                     // Quick info
                     val file = scene.files.firstOrNull()?.videoFile
                     DotSeparatedRow(
-                        modifier = Modifier.padding(top = 6.dp),
+                        modifier = Modifier.padding(top = 6.dp, start = 8.dp),
                         textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         texts =
                             listOfNotNullOrBlank(
@@ -308,13 +315,13 @@ fun SceneDetailsHeader(
                     Row(
                         modifier =
                             Modifier
-                                .padding(top = 16.dp)
+                                .padding(top = 8.dp, start = 16.dp)
                                 .fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         if (scene.studio != null) {
                             val interactionSource = remember { MutableInteractionSource() }
-                            val isFocused = interactionSource.collectIsFocusedAsState().value
+                            val isFocused by interactionSource.collectIsFocusedAsState()
                             val bgColor =
                                 if (isFocused) {
                                     MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .75f)
@@ -327,22 +334,24 @@ fun SceneDetailsHeader(
                                 scene.studio.studioData.name,
                                 modifier =
                                     Modifier
-                                        .background(bgColor, shape = RoundedCornerShape(8.dp))
-                                        .clickable(enabled = true) {
+                                        .background(bgColor, shape = RoundedCornerShape(4.dp))
+                                        .ifElse(isFocused, Modifier.scale(1.1f))
+                                        .onFocusChanged {
+                                            if (it.isFocused) {
+                                                scope.launch { bringIntoViewRequester.bringIntoView() }
+                                            }
+                                        }.clickable(
+                                            enabled = true,
+                                            interactionSource = interactionSource,
+                                            indication = LocalIndication.current,
+                                        ) {
                                             navigationManager.navigate(
                                                 Destination.Item(
                                                     DataType.STUDIO,
                                                     scene.studio.studioData.id,
                                                 ),
                                             )
-                                        }.onFocusChanged {
-                                            if (it.isFocused) {
-                                                scope.launch { bringIntoViewRequester.bringIntoView() }
-                                            }
-                                        }.focusable(
-                                            enabled = true,
-                                            interactionSource = interactionSource,
-                                        ),
+                                        },
                             )
                         }
                         if (scene.code.isNotNullOrBlank()) {

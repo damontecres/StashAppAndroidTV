@@ -80,6 +80,7 @@ import com.github.damontecres.stashapp.ui.cards.ViewAllCard
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.RowColumn
 import com.github.damontecres.stashapp.ui.components.main.MainPagePerformerDetails
 import com.github.damontecres.stashapp.ui.components.main.MainPageSceneDetails
 import com.github.damontecres.stashapp.ui.enableMarquee
@@ -191,6 +192,9 @@ fun HomePage(
     modifier: Modifier = Modifier,
 ) {
     var focusedItem by remember { mutableStateOf<Any?>(null) }
+    val focusRequester = remember { FocusRequester() }
+    var focusedIndex by rememberSaveable { mutableStateOf(RowColumn(0, 0)) }
+    // TODO back handler?
     Box(
         modifier =
             modifier
@@ -335,8 +339,7 @@ fun HomePage(
                     }
                 }
             }
-            val focusRequester = remember { FocusRequester() }
-            var focusedIndex by rememberSaveable { mutableIntStateOf(0) }
+
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(bottom = 75.dp),
@@ -352,10 +355,10 @@ fun HomePage(
                         itemOnClick,
                         longClicker,
                         onFocus = { idx, item ->
-                            focusedIndex = index
+                            focusedIndex = RowColumn(index, idx)
                             focusedItem = item
                         },
-                        rowFocusRequester = if (index == focusedIndex) focusRequester else null,
+                        rowFocusRequester = if (index == focusedIndex.row) focusRequester else null,
                         modifier = Modifier,
                     )
                 }

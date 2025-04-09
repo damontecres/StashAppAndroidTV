@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -317,9 +318,21 @@ fun FragmentContent(
 
                     else -> null
                 }
+            // TODO
+//            LaunchedEffect(selectedScreen) {
+//                listState.requestScrollToItem(pages.indexOf(selectedScreen))
+//            }
+
+            val drawerFocusRequester = remember { FocusRequester() }
+            BackHandler(enabled = (drawerState.currentValue == DrawerValue.Closed && destination == Destination.Main)) {
+                drawerState.setValue(DrawerValue.Open)
+                drawerFocusRequester.requestFocus()
+            }
+            // TODO should each "root" page have a separate back stack so pressing back on the "root" scene filter page does:
+            // 1. opens drawer (instead of going back to main), 2. back again goes to main
 
             NavigationDrawer(
-                modifier = Modifier,
+                modifier = Modifier.focusRequester(drawerFocusRequester),
                 drawerState = drawerState,
                 drawerContent = {
                     Column(
@@ -516,15 +529,6 @@ fun NavDrawerContent(
                 uiConfig = composeUiConfig,
                 markerId = destination.markerId,
                 itemOnClick = itemOnClick,
-                playOnClick = { position, mode ->
-                    navManager.navigate(
-                        Destination.Playback(
-                            destination.markerId,
-                            position,
-                            mode,
-                        ),
-                    )
-                },
             )
 
         is Destination.Item -> {
@@ -606,15 +610,6 @@ fun NavDrawerContent(
                         uiConfig = composeUiConfig,
                         markerId = destination.id,
                         itemOnClick = itemOnClick,
-                        playOnClick = { position, mode ->
-                            navManager.navigate(
-                                Destination.Playback(
-                                    destination.id,
-                                    position,
-                                    mode,
-                                ),
-                            )
-                        },
                     )
 
                 else -> FragmentView(navManager, destination, modifier)

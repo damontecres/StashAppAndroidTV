@@ -40,6 +40,7 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashServer
 import kotlin.reflect.full.createInstance
@@ -56,6 +57,9 @@ fun TabPage(
     var showTabRowRaw by rememberSaveable { mutableStateOf(true) }
     val showTabRow by remember { derivedStateOf { showTabRowRaw } }
 
+    OneTimeLaunchedEffect {
+        tabRowFocusRequester.tryRequestFocus()
+    }
     Column(
         modifier = modifier.fillMaxSize(),
     ) {
@@ -68,9 +72,6 @@ fun TabPage(
                     .align(Alignment.CenterHorizontally),
         )
         if (showTabRow) {
-            LaunchedEffect(Unit) {
-                tabRowFocusRequester.tryRequestFocus()
-            }
             TabRow(
                 selectedTabIndex = selectedTabIndex,
                 modifier =

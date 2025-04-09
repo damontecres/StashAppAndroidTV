@@ -1,5 +1,8 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,8 +34,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
@@ -44,14 +49,16 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.playback.PlaybackSceneFragment
 import com.github.damontecres.stashapp.playback.StreamDecision
 import com.github.damontecres.stashapp.playback.TrackActivityPlaybackListener
-import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -116,6 +123,7 @@ fun PlaybackPageContent(
     viewModel: PlaybackViewModel = viewModel(),
 ) {
     val context = LocalContext.current
+    val navigationManager = LocalGlobalContext.current.navigationManager
     val player =
         remember {
             StashExoPlayer.getInstance(context, server).apply {
@@ -151,35 +159,55 @@ fun PlaybackPageContent(
     var createMarkerPosition by remember { mutableLongStateOf(-1L) }
     var playingBeforeCreateMarker by remember { mutableStateOf(false) }
 
+    val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+
     var showDebugInfo by remember {
         mutableStateOf(
-            PreferenceManager
-                .getDefaultSharedPreferences(
-                    context,
-                ).getBoolean(context.getString(R.string.pref_key_show_playback_debug_info), false),
+            prefs.getBoolean(context.getString(R.string.pref_key_show_playback_debug_info), false),
         )
     }
-    var streamDecision by remember {
-        mutableStateOf<StreamDecision>(
-            StreamDecision(
-                sceneId = scene.id,
-                transcodeDecision = TranscodeDecision.DirectPlay,
-                videoSupported = false,
-                audioSupported = false,
-                containerSupported = false,
-            ),
-        )
-    }
+    var streamDecision by remember { mutableStateOf<StreamDecision?>(null) }
+
+    val controllerViewState =
+        remember {
+            ControllerViewState(
+                prefs.getInt(
+                    "controllerShowTimeoutMs",
+                    PlayerControlView.DEFAULT_SHOW_TIMEOUT_MS,
+                ),
+                controlsEnabled,
+            )
+        }.also {
+            LaunchedEffect(it) {
+                it.observe()
+            }
+        }
 
     LaunchedEffect(server, scene, player) {
         trackActivityListener?.apply {
             release()
             StashExoPlayer.removeListener(this)
         }
+        player.setupFinishedBehavior(context, navigationManager) {
+            controllerViewState.showControls()
+        }
+
+        StashExoPlayer.addListener(
+            object : Player.Listener {
+                override fun onPlayerError(error: PlaybackException) {
+                    Log.e(TAG, "PlaybackException on ${scene.id}", error)
+                    Toast
+                        .makeText(
+                            context,
+                            "Play error: ${error.localizedMessage}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                }
+            },
+        )
+
         val appTracking =
-            PreferenceManager
-                .getDefaultSharedPreferences(context)
-                .getBoolean(context.getString(R.string.pref_key_playback_track_activity), true)
+            prefs.getBoolean(context.getString(R.string.pref_key_playback_track_activity), true)
         trackActivityListener =
             if (appTracking && server.serverPreferences.trackActivity) {
                 TrackActivityPlaybackListener(
@@ -195,19 +223,14 @@ fun PlaybackPageContent(
             }
         maybeMuteAudio(context, player)
         val decision = getStreamDecision(context, playbackScene, playbackMode)
-        val media = buildMediaItem(context, streamDecision, playbackScene)
+        Log.d(TAG, "streamDecision=$decision")
+        val media = buildMediaItem(context, decision, playbackScene)
         player.setMediaItem(media, startPosition.coerceAtLeast(0L))
         player.prepare()
         streamDecision = decision
         trackActivityListener?.let { StashExoPlayer.addListener(it) }
     }
 
-    val controllerViewState =
-        remember { ControllerViewState(3, controlsEnabled) }.also {
-            LaunchedEffect(it) {
-                it.observe()
-            }
-        }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         focusRequester.tryRequestFocus()
@@ -236,8 +259,16 @@ fun PlaybackPageContent(
                 } else if (isMedia(it)) {
                     when (it.key) {
                         Key.MediaPlay -> player.play()
-                        Key.MediaPause -> player.pause()
-                        Key.MediaPlayPause -> if (player.isPlaying) player.pause() else player.play()
+                        Key.MediaPause -> {
+                            player.pause()
+                            controllerViewState.showControls()
+                        }
+
+                        Key.MediaPlayPause -> {
+                            if (player.isPlaying) player.pause() else player.play()
+                            controllerViewState.showControls()
+                        }
+
                         Key.MediaFastForward, Key.MediaSkipForward -> player.seekForward()
                         Key.MediaRewind, Key.MediaSkipBackward -> player.seekBack()
                         Key.MediaNext -> player.seekToNext()
@@ -322,4 +353,54 @@ fun PlaybackPageContent(
         dialogTitle = "Create marker at ${createMarkerPosition.milliseconds}?",
         dismissOnClick = false,
     )
+}
+
+fun Player.setupFinishedBehavior(
+    context: Context,
+    navigationManager: NavigationManager,
+    showController: () -> Unit,
+) {
+    val finishedBehavior =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getString(
+                "playbackFinishedBehavior",
+                context.getString(R.string.playback_finished_do_nothing),
+            )
+    when (finishedBehavior) {
+        context.getString(R.string.playback_finished_repeat) -> {
+            repeatMode = Player.REPEAT_MODE_ONE
+        }
+
+        context.getString(R.string.playback_finished_return) ->
+            StashExoPlayer.addListener(
+                object :
+                    Player.Listener {
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        if (playbackState == Player.STATE_ENDED) {
+                            navigationManager.goBack()
+                        }
+                    }
+                },
+            )
+
+        context.getString(R.string.playback_finished_do_nothing) -> {
+            StashExoPlayer.addListener(
+                object :
+                    Player.Listener {
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        if (playbackState == Player.STATE_ENDED) {
+                            showController()
+                        }
+                    }
+                },
+            )
+        }
+
+        else ->
+            Log.w(
+                PlaybackSceneFragment.TAG,
+                "Unknown playbackFinishedBehavior: $finishedBehavior",
+            )
+    }
 }

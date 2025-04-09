@@ -72,7 +72,6 @@ fun MarkerPage(
     server: StashServer,
     markerId: String,
     itemOnClick: ItemOnClicker<Any>,
-    playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
     viewModel: MarkerDetailsViewModel = viewModel(),
@@ -130,7 +129,6 @@ fun MarkerPage(
             tags = tags,
             itemOnClick = itemOnClick,
             longClicker = removeLongClicker,
-            playOnClick = playOnClick,
             uiConfig = uiConfig,
             setPrimaryTag = viewModel::setPrimaryTag,
             addTag = viewModel::addTag,
@@ -157,7 +155,6 @@ fun MarkerPageContent(
     tags: List<TagData>,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
-    playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     setPrimaryTag: (String) -> Unit,
     addTag: (String) -> Unit,
     removeTag: (String) -> Unit,
@@ -268,9 +265,12 @@ fun MarkerPageContent(
                     title = stringResource(R.string.play),
                     icon = Icons.Filled.PlayArrow,
                     onClick = {
-                        playOnClick.invoke(
-                            marker.seconds.seconds.inWholeMilliseconds,
-                            PlaybackMode.Choose,
+                        navigationManager.navigate(
+                            Destination.Playback(
+                                marker.scene.videoSceneData.id,
+                                marker.seconds.seconds.inWholeMilliseconds,
+                                PlaybackMode.Choose,
+                            ),
                         )
                     },
                     modifier = Modifier.focusRequester(focusRequester),

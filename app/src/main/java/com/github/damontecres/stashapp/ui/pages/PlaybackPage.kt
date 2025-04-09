@@ -59,7 +59,7 @@ fun PlaybackPage(
             Log.w("PlaybackPage", "Scene $sceneId not found")
         }
     }
-    Log.i("PlaybackPage", "scene=$scene")
+    Log.d("PlaybackPage", "scene=${scene?.id}")
     scene?.let {
         PlaybackPageContent(
             server = server,
