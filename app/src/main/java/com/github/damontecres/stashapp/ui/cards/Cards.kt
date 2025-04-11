@@ -55,7 +55,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.PlayerSurface
-import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
+import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.preference.PreferenceManager
@@ -404,7 +404,7 @@ fun RootCard(
 
                 PlayerSurface(
                     player = player,
-                    surfaceType = SURFACE_TYPE_SURFACE_VIEW,
+                    surfaceType = SURFACE_TYPE_TEXTURE_VIEW, // TODO more investigation needed for why this works
                     modifier = scaledModifier,
                 )
                 if (!focusedAfterDelay || presentationState.coverSurface) {
