@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,17 +20,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -192,6 +196,14 @@ fun PlaybackPageContent(
                 it.observe()
             }
         }
+    var skipIndicatorDuration by remember { mutableLongStateOf(0L) }
+    val updateSkipIndicator = { delta: Long ->
+        if (skipIndicatorDuration > 0 && delta < 0 || skipIndicatorDuration < 0 && delta > 0) {
+            skipIndicatorDuration = 0
+        }
+        skipIndicatorDuration += delta
+    }
+
     val scope = rememberCoroutineScope()
     val playPauseState = rememberPlayPauseButtonState(player)
     val previousState = rememberPreviousButtonState(player)
@@ -250,54 +262,20 @@ fun PlaybackPageContent(
     LaunchedEffect(Unit) {
         focusRequester.tryRequestFocus()
     }
+    val playbackKeyHandler =
+        remember {
+            PlaybackKeyHandler(
+                player,
+                controlsEnabled,
+                controllerViewState,
+                updateSkipIndicator,
+            )
+        }
     Box(
         modifier
             .background(Color.Black)
-            .onKeyEvent {
-                var result = true
-                if (!controlsEnabled) {
-                    result = false
-                } else if (it.type != KeyEventType.KeyUp) {
-                    result = false
-                } else if (isDpad(it)) {
-                    if (!controllerViewState.controlsVisible) {
-                        if (it.key == Key.DirectionLeft) {
-                            player.seekBack()
-                        } else if (it.key == Key.DirectionRight) {
-                            player.seekForward()
-                        } else {
-                            controllerViewState.showControls()
-                        }
-                    } else {
-                        // When controller is visible, its buttons will handle pulsing
-                    }
-                } else if (isMedia(it)) {
-                    when (it.key) {
-                        Key.MediaPlay -> player.play()
-                        Key.MediaPause -> {
-                            player.pause()
-                            controllerViewState.showControls()
-                        }
-
-                        Key.MediaPlayPause -> {
-                            if (player.isPlaying) player.pause() else player.play()
-                            controllerViewState.showControls()
-                        }
-
-                        Key.MediaFastForward, Key.MediaSkipForward -> player.seekForward()
-                        Key.MediaRewind, Key.MediaSkipBackward -> player.seekBack()
-                        Key.MediaNext -> player.seekToNext()
-                        Key.MediaPrevious -> player.seekToPrevious()
-                        else -> result = false
-                    }
-                } else if (it.key == Key.Back && controllerViewState.controlsVisible) {
-                    controllerViewState.hideControls()
-                } else {
-                    controllerViewState.pulseControls()
-                    result = false
-                }
-                result
-            }.focusRequester(focusRequester)
+            .onKeyEvent(playbackKeyHandler::onKeyEvent)
+            .focusRequester(focusRequester)
             .focusable(),
     ) {
         PlayerSurface(
@@ -310,6 +288,19 @@ fun PlaybackPageContent(
                 Modifier
                     .matchParentSize()
                     .background(Color.Black),
+            )
+        }
+
+        if (!controllerViewState.controlsVisible && skipIndicatorDuration != 0L) {
+            SkipIndicator(
+                durationMs = skipIndicatorDuration,
+                onFinish = {
+                    skipIndicatorDuration = 0L
+                },
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 70.dp),
             )
         }
 
@@ -421,5 +412,68 @@ fun Player.setupFinishedBehavior(
                 PlaybackSceneFragment.TAG,
                 "Unknown playbackFinishedBehavior: $finishedBehavior",
             )
+    }
+}
+
+class PlaybackKeyHandler(
+    private val player: Player,
+    private val controlsEnabled: Boolean,
+    private val controllerViewState: ControllerViewState,
+    private val updateSkipIndicator: (Long) -> Unit,
+) {
+    fun onKeyEvent(it: KeyEvent): Boolean {
+        var result = true
+        if (!controlsEnabled) {
+            result = false
+        } else if (it.type != KeyEventType.KeyUp) {
+            result = false
+        } else if (isDpad(it)) {
+            if (!controllerViewState.controlsVisible) {
+                if (it.key == Key.DirectionLeft) {
+                    updateSkipIndicator(-player.seekBackIncrement)
+                    player.seekBack()
+                } else if (it.key == Key.DirectionRight) {
+                    player.seekForward()
+                    updateSkipIndicator(player.seekForwardIncrement)
+                } else {
+                    controllerViewState.showControls()
+                }
+            } else {
+                // When controller is visible, its buttons will handle pulsing
+            }
+        } else if (isMedia(it)) {
+            when (it.key) {
+                Key.MediaPlay -> player.play()
+                Key.MediaPause -> {
+                    player.pause()
+                    controllerViewState.showControls()
+                }
+
+                Key.MediaPlayPause -> {
+                    if (player.isPlaying) player.pause() else player.play()
+                    controllerViewState.showControls()
+                }
+
+                Key.MediaFastForward, Key.MediaSkipForward -> {
+                    updateSkipIndicator(player.seekForwardIncrement)
+                    player.seekForward()
+                }
+
+                Key.MediaRewind, Key.MediaSkipBackward -> {
+                    updateSkipIndicator(-player.seekBackIncrement)
+                    player.seekBack()
+                }
+
+                Key.MediaNext -> player.seekToNext()
+                Key.MediaPrevious -> player.seekToPrevious()
+                else -> result = false
+            }
+        } else if (it.key == Key.Back && controllerViewState.controlsVisible) {
+            controllerViewState.hideControls()
+        } else {
+            controllerViewState.pulseControls()
+            result = false
+        }
+        return result
     }
 }
