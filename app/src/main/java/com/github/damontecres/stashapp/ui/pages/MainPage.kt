@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -194,6 +195,14 @@ fun HomePage(
     var focusedItem by remember { mutableStateOf<Any?>(null) }
     val focusRequester = remember { FocusRequester() }
     var focusedIndex by rememberSaveable { mutableStateOf(RowColumn(0, 0)) }
+    var focusedRow by rememberSaveable { mutableIntStateOf(0) }
+
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(focusedIndex) {
+        listState.animateScrollToItem(focusedRow)
+    }
+
     // TODO back handler?
     Box(
         modifier =
@@ -341,6 +350,7 @@ fun HomePage(
             }
 
             LazyColumn(
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(bottom = 75.dp),
                 modifier =
@@ -357,6 +367,7 @@ fun HomePage(
                         onFocus = { idx, item ->
                             focusedIndex = RowColumn(index, idx)
                             focusedItem = item
+                            focusedRow = index
                         },
                         rowFocusRequester = if (index == focusedIndex.row) focusRequester else null,
                         modifier = Modifier,
