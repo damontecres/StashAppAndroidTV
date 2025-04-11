@@ -234,7 +234,7 @@
             app:defaultValue="false" />
         <SwitchPreference
             app:key="@string/pref_key_use_compose_ui"
-            app:title="Use compose UI"
+            app:title="Use new Compose-based UI"
             app:summaryOn="Enabled"
             app:summaryOff="Disabled"
             app:defaultValue="false" />
