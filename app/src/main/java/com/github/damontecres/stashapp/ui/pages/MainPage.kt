@@ -27,6 +27,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -89,7 +90,9 @@ import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.launch
@@ -170,6 +173,19 @@ fun MainPage(
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(server, frontPageRows) {
         focusRequester.tryRequestFocus()
+    }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(Unit) {
+        scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            val checkForUpdates =
+                PreferenceManager
+                    .getDefaultSharedPreferences(context)
+                    .getBoolean("autoCheckForUpdates", true)
+            if (checkForUpdates) {
+                UpdateChecker.checkForUpdate(context, false)
+            }
+        }
     }
     HomePage(
         modifier = Modifier.focusRequester(focusRequester),
