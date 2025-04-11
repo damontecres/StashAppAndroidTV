@@ -37,8 +37,7 @@ class NavigationManagerCompose(
         if (destination == Destination.Pin) {
             composeNavigate(destination)
         } else if (destination == Destination.Main) {
-            controller.popAll()
-            controller.navigate(destination)
+            controller.popUpTo { it == Destination.Main }
         } else if (destination is Destination.Filter) {
             controller.popUpTo { it == Destination.Main }
             controller.navigate(destination)
@@ -150,11 +149,12 @@ class NavigationManagerCompose(
     }
 
     /**
-     * Drop all of the back stack and go back to the main page
+     * Drop all of the back stack and go to the main page, reloading it
      */
     override fun goToMain() {
         fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        navigate(Destination.Main)
+        controller.popAll()
+        controller.navigate(Destination.Main)
     }
 
     /**

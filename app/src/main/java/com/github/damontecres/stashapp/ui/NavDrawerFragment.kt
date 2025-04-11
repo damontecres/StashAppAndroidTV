@@ -403,6 +403,8 @@ fun FragmentContent(
                                             ),
                                     selected = selectedScreen == page,
                                     onClick = {
+                                        val refreshMain =
+                                            selectedScreen == DrawerPage.HOME_PAGE && page == DrawerPage.HOME_PAGE
                                         currentScreen = page
                                         selectedScreen = page
                                         drawerState.setValue(DrawerValue.Closed)
@@ -410,9 +412,13 @@ fun FragmentContent(
                                             TAG,
                                             "Navigating to ${page.destination}",
                                         )
-                                        navigationManager.navigate(
-                                            page.destination,
-                                        )
+                                        if (refreshMain) {
+                                            navigationManager.goToMain()
+                                        } else {
+                                            navigationManager.navigate(
+                                                page.destination,
+                                            )
+                                        }
                                     },
                                     leadingContent = {
                                         if (page != DrawerPage.SETTINGS_PAGE) {
