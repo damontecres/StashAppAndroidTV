@@ -64,6 +64,7 @@ fragment VideoSceneData on Scene {
     ...VideoFile
   }
   paths {
+    caption
     screenshot
     preview
     stream

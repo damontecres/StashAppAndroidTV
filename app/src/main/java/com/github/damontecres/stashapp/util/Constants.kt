@@ -491,7 +491,13 @@ val FullSceneData.asVideoSceneData: VideoSceneData
             created_at,
             updated_at,
             files.map { VideoSceneData.File("", it.videoFile) },
-            VideoSceneData.Paths(paths.screenshot, paths.preview, paths.stream, paths.sprite),
+            VideoSceneData.Paths(
+                paths.caption,
+                paths.screenshot,
+                paths.preview,
+                paths.stream,
+                paths.sprite,
+            ),
             sceneStreams.map { VideoSceneData.SceneStream(it.url, it.mime_type, it.label) },
             captions?.map { VideoSceneData.Caption("", it.caption) },
         )
