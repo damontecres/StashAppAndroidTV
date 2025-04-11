@@ -99,19 +99,6 @@ open class ServerViewModel : ViewModel() {
                 server!! to item
             }.asLiveData()
 
-    /**
-     * Basic UI settings that affect the cards
-     */
-    data class CardUiSettings(
-        val maxSearchResults: Int,
-        val playVideoPreviews: Boolean,
-        val videoPreviewAudio: Boolean,
-        val columns: Int,
-        val showRatings: Boolean,
-        val imageCrop: Boolean,
-        val videoDelay: Int,
-    )
-
     sealed interface ServerConnection {
         data object Pending : ServerConnection
 

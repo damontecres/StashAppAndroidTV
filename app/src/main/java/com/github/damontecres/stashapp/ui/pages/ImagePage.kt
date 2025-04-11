@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.pages
 
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
@@ -589,8 +590,27 @@ fun ImagePage(
                         result = true
                     } else if (!showOverlay && (it.key == Key.DirectionLeft || it.key == Key.DirectionRight)) {
                         when (it.key) {
-                            Key.DirectionLeft -> viewModel.previousImage()
-                            Key.DirectionRight -> viewModel.nextImage()
+                            Key.DirectionLeft, Key.DirectionUpLeft, Key.DirectionDownLeft -> {
+                                if (!viewModel.previousImage()) {
+                                    Toast
+                                        .makeText(
+                                            context,
+                                            R.string.slideshow_at_beginning,
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                }
+                            }
+
+                            Key.DirectionRight, Key.DirectionUpRight, Key.DirectionDownRight -> {
+                                if (!viewModel.nextImage()) {
+                                    Toast
+                                        .makeText(
+                                            context,
+                                            R.string.no_more_images,
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                }
+                            }
                         }
                     } else if (showOverlay && it.key == Key.Back) {
                         showOverlay = false

@@ -104,5 +104,7 @@
     <string name="play">Play</string>
     <string name="change_primary_tag">Change primary tag</string>
     <string name="timestamps">Timestamps</string>
+    <string name="slideshow_at_beginning">At beginning</string>
+    <string name="no_more_images">No more images</string>
 
 </resources>

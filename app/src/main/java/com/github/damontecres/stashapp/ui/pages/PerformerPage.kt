@@ -88,7 +88,7 @@ import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.showSetRatingToast
-import com.github.damontecres.stashapp.views.models.ServerViewModel
+import com.github.damontecres.stashapp.views.models.CardUiSettings
 import kotlinx.coroutines.launch
 import kotlin.math.floor
 import kotlin.math.round
@@ -607,7 +607,7 @@ private fun PerformerDetailsPreview() {
                     showStudioAsText = true,
                     debugTextEnabled = true,
                     cardSettings =
-                        ServerViewModel.CardUiSettings(
+                        CardUiSettings(
                             maxSearchResults = 25,
                             playVideoPreviews = true,
                             videoPreviewAudio = false,

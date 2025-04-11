@@ -6,6 +6,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.views.models.CardUiSettings
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 data class ComposeUiConfig(
@@ -13,7 +14,7 @@ data class ComposeUiConfig(
     val starPrecision: StarRatingPrecision,
     val showStudioAsText: Boolean,
     val debugTextEnabled: Boolean,
-    val cardSettings: ServerViewModel.CardUiSettings,
+    val cardSettings: CardUiSettings,
 ) {
     companion object {
         fun fromStashServer(

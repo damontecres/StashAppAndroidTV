@@ -125,7 +125,7 @@ fun GroupPage(
                 TabWithSubItems<SceneFilterType>(
                     DataType.SCENE,
                     tabFindFilter(server, PageFilterKey.GROUP_SCENES),
-                    { subGroups, filter -> filter.copy(studios = groupsFunc(subGroups)) },
+                    { subGroups, filter -> filter.copy(groups = groupsFunc(subGroups)) },
                 ).toTabProvider(
                     server,
                     uiConfig,
