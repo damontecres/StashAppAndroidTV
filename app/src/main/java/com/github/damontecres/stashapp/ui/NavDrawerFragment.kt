@@ -20,11 +20,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -243,6 +245,7 @@ fun FragmentContent(
 
             add(DrawerPage.SETTINGS_PAGE)
         }
+    val visiblePages = remember { mutableMapOf<DrawerPage, Boolean>() }
 
     val initialFocus = remember { FocusRequester() }
     val listState = rememberLazyListState()
@@ -250,6 +253,7 @@ fun FragmentContent(
     var currentScreen by remember { mutableStateOf(defaultSelection) }
     var selectedScreen by remember { mutableStateOf<DrawerPage?>(defaultSelection) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
     NavHost(navigationManager.controller, modifier = modifier) { destination ->
         if (destination.fullScreen) {
@@ -318,10 +322,13 @@ fun FragmentContent(
 
                     else -> null
                 }
-            // TODO
-//            LaunchedEffect(selectedScreen) {
-//                listState.requestScrollToItem(pages.indexOf(selectedScreen))
-//            }
+
+            // If the page is not currently visible, scroll the list so that it is
+            LaunchedEffect(selectedScreen) {
+                if (visiblePages[selectedScreen] == false) {
+                    listState.animateScrollToItem(pages.indexOf(selectedScreen))
+                }
+            }
 
             val drawerFocusRequester = remember { FocusRequester() }
             BackHandler(enabled = (drawerState.currentValue == DrawerValue.Closed && destination == Destination.Main)) {
@@ -400,13 +407,14 @@ fun FragmentContent(
                                                 currentScreen == page,
                                                 Modifier
                                                     .focusRequester(initialFocus),
-                                            ),
+                                            ).isElementVisible { visiblePages[page] = it },
                                     selected = selectedScreen == page,
                                     onClick = {
                                         val refreshMain =
                                             selectedScreen == DrawerPage.HOME_PAGE && page == DrawerPage.HOME_PAGE
                                         currentScreen = page
                                         selectedScreen = page
+
                                         drawerState.setValue(DrawerValue.Closed)
                                         Log.v(
                                             TAG,

@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
@@ -46,7 +47,12 @@ fun PlaybackDebugInfo(
         modifier = modifier,
     ) {
         items(rows) { row ->
-            TableRowComposable(row)
+            TableRowComposable(
+                row,
+                keyWeight = 1f,
+                valueWeight = 1f,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }

@@ -13,12 +13,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
@@ -105,4 +112,17 @@ fun FocusRequester.tryRequestFocus(): Boolean =
     } catch (ex: IllegalStateException) {
         Log.w("tryRequestFocus", "Failed to request focus", ex)
         false
+    }
+
+fun Modifier.isElementVisible(onVisibilityChanged: (Boolean) -> Unit) =
+    composed {
+        val isVisible by remember { derivedStateOf { mutableStateOf(false) } }
+        LaunchedEffect(isVisible.value) { onVisibilityChanged.invoke(isVisible.value) }
+        this.onGloballyPositioned { layoutCoordinates ->
+            isVisible.value = layoutCoordinates.parentLayoutCoordinates?.let {
+                val parentBounds = it.boundsInWindow()
+                val childBounds = layoutCoordinates.boundsInWindow()
+                parentBounds.overlaps(childBounds)
+            } ?: false
+        }
     }

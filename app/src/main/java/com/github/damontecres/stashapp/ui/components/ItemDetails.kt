@@ -101,16 +101,19 @@ fun ItemDetails(
 @Composable
 fun TableRowComposable(
     row: TableRow,
-    modifier: Modifier = Modifier.fillMaxWidth(),
+    modifier: Modifier = Modifier,
+    keyWeight: Float = .3f,
+    valueWeight: Float = .7f,
+    focusable: Boolean = true,
 ) {
     Row(modifier) {
         val keyModifier =
             Modifier
-                .weight(.3f)
-                .focusable() // TODO, this allows scrolling, but is difficult to see
+                .weight(keyWeight)
+                .focusable(enabled = focusable) // TODO, this allows scrolling, but is difficult to see
         val valueModifier =
             Modifier
-                .weight(.7f)
+                .weight(valueWeight)
         ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground)) {
             Box(modifier = keyModifier) {
                 row.key.invoke(this, Modifier.padding(4.dp))
