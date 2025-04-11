@@ -486,6 +486,7 @@ val FullSceneData.asVideoSceneData: VideoSceneData
             title,
             urls,
             date,
+            resume_time,
             rating100,
             o_counter,
             created_at,
