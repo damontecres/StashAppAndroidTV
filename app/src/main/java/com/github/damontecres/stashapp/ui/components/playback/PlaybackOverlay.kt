@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
-import android.util.Log
 import androidx.annotation.IntRange
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
@@ -13,7 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,12 +20,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -36,15 +37,17 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.ImageLoader
@@ -60,20 +63,24 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.StreamDecision
-import com.github.damontecres.stashapp.presenters.MarkerPresenter
+import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.MainTheme
 import com.github.damontecres.stashapp.ui.cards.RootCard
+import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
 import com.github.damontecres.stashapp.ui.util.CoilPreviewTransformation
-import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.defaultCardHeight
+import com.github.damontecres.stashapp.util.defaultCardWidth
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.toLongMilliseconds
 import com.github.damontecres.stashapp.views.formatDate
+import com.github.damontecres.stashapp.views.models.CardUiSettings
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -115,24 +122,30 @@ class ControllerViewState internal constructor(
     }
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun PlaybackOverlay(
-    server: StashServer,
     uiConfig: ComposeUiConfig,
     scene: Scene,
-    markers: List<MarkerData>,
+    markers: List<BasicMarker>,
     streamDecision: StreamDecision?,
     oCounter: Int,
-    player: Player,
+    playerControls: PlayerControls,
     controllerViewState: ControllerViewState,
+    showPlay: Boolean,
+    previousEnabled: Boolean,
+    nextEnabled: Boolean,
+    seekEnabled: Boolean,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
+    onSeekBarChange: (Float) -> Unit,
     showDebugInfo: Boolean,
     modifier: Modifier = Modifier,
+    seekPreviewPlaceholder: Painter? = null,
+    seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     val context = LocalContext.current
-
+    val scope = rememberCoroutineScope()
     var seekProgress by remember { mutableFloatStateOf(-1f) }
-    val seekBarInteractionSource = remember { MutableInteractionSource() }
     val seekBarFocused by seekBarInteractionSource.collectIsFocusedAsState()
 
     val previewImageUrl = scene.spriteUrl
@@ -175,12 +188,19 @@ fun PlaybackOverlay(
                 )
             }
             val controlHeight = .4f
+            val listState = rememberLazyListState()
+            var height = 208.dp
+            if (scene.title.isNullOrBlank()) height -= 24.dp
+            if (scene.date.isNullOrBlank()) height -= 32.dp
+            if (markers.isEmpty()) height -= 16.dp
             LazyColumn(
+                state = listState,
                 modifier =
                     Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .fillMaxHeight(controlHeight),
+                        .height(height),
+//                        .fillMaxHeight(controlHeight),
 //                contentPadding = PaddingValues(top = 420.dp),
             ) {
                 item {
@@ -222,13 +242,18 @@ fun PlaybackOverlay(
                         modifier = Modifier.fillMaxWidth(),
                         scene = scene,
                         oCounter = oCounter,
-                        player = player,
+                        playerControls = playerControls,
                         onPlaybackActionClick = onPlaybackActionClick,
                         controllerViewState = controllerViewState,
                         showDebugInfo = showDebugInfo,
                         onSeekProgress = {
                             seekProgress = it
+                            onSeekBarChange(it)
                         },
+                        showPlay = showPlay,
+                        previousEnabled = previousEnabled,
+                        nextEnabled = nextEnabled,
+                        seekEnabled = seekEnabled,
                         seekBarInteractionSource = seekBarInteractionSource,
                     )
                 }
@@ -246,33 +271,42 @@ fun PlaybackOverlay(
                         SceneMarkerBar(
                             modifier =
                                 Modifier
-                                    .padding(start = 8.dp, top = 48.dp, bottom = 64.dp)
-                                    .fillMaxWidth(),
-                            server = server,
+                                    .padding(start = 8.dp, top = 64.dp, bottom = 64.dp)
+                                    .fillMaxWidth()
+                                    .height(height),
                             markers = markers,
-                            player = player,
+                            player = playerControls,
                             controllerViewState = controllerViewState,
                             uiConfig = uiConfig,
+                            onCardFocus = {
+//                                scope.launch {
+//                                    listState.scrollToItem(2)
+//                                }
+                            },
                         )
                     }
                 }
             }
             AnimatedVisibility(seekBarFocused && seekProgress >= 0) {
+                val yOffsetDp = height + (if (imageLoaded) (160.dp) else 16.dp) - 16.dp
+                val heightPx = with(LocalDensity.current) { yOffsetDp.toPx().toInt() }
                 SeekPreviewImage(
                     modifier =
                         Modifier
                             .align(Alignment.TopStart)
                             .offsetByPercent(
                                 xPercentage = seekProgress.coerceIn(0f, 1f),
-                                yPercentage = 1 - controlHeight,
+                                yOffset = heightPx,
+//                                yPercentage = 1 - controlHeight,
                             ),
                     previewImageUrl = previewImageUrl,
                     imageLoaded = imageLoaded,
                     imageLoader = imageLoader,
-                    duration = player.duration,
+                    duration = playerControls.duration,
                     seekProgress = seekProgress,
                     videoWidth = scene.videoWidth,
                     videoHeight = scene.videoHeight,
+                    placeHolder = seekPreviewPlaceholder,
                 )
             }
         }
@@ -281,7 +315,7 @@ fun PlaybackOverlay(
 
 fun Modifier.offsetByPercent(
     xPercentage: Float,
-    yPercentage: Float,
+    yOffset: Int,
 ) = this.then(
     Modifier.layout { measurable, constraints ->
         val placeable = measurable.measure(constraints)
@@ -290,7 +324,7 @@ fun Modifier.offsetByPercent(
                 x =
                     ((constraints.maxWidth * xPercentage).toInt() - placeable.width / 2)
                         .coerceIn(0, constraints.maxWidth - placeable.width),
-                y = (constraints.maxHeight * yPercentage).toInt() - (placeable.height / 1.33f).toInt(),
+                y = constraints.maxHeight - yOffset, // (constraints.maxHeight * yPercentage).toInt() - (placeable.height / 1.33f).toInt(),
             )
         }
     },
@@ -306,6 +340,7 @@ fun SeekPreviewImage(
     videoWidth: Int?,
     videoHeight: Int?,
     modifier: Modifier = Modifier,
+    placeHolder: Painter? = null,
 ) {
     val context = LocalContext.current
 
@@ -347,6 +382,7 @@ fun SeekPreviewImage(
                 contentScale = ContentScale.None,
                 imageLoader = imageLoader,
                 contentDescription = null,
+                placeholder = placeHolder,
             )
         }
         Text(
@@ -360,91 +396,176 @@ fun SeekPreviewImage(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SceneMarkerBar(
-    server: StashServer,
     uiConfig: ComposeUiConfig,
-    markers: List<MarkerData>,
-    player: Player,
+    markers: List<BasicMarker>,
+    player: PlayerControls,
     controllerViewState: ControllerViewState,
+    onCardFocus: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (markers.isNotEmpty()) {
-        val context = LocalContext.current
         val firstFocus = remember { FocusRequester() }
-        Column(
-            modifier = modifier,
+        LazyRow(
+            modifier =
+                modifier
+                    .focusRestorer { firstFocus },
+            contentPadding = PaddingValues(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            LazyRow(
-                modifier =
-                    Modifier
-                        .padding(top = 8.dp)
-                        .focusRestorer { firstFocus },
-                contentPadding = PaddingValues(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                itemsIndexed(markers, key = { _, item -> item.id }) { index, item ->
-                    val cardModifier =
-                        if (index == 0) {
-                            Modifier.focusRequester(firstFocus)
-                        } else {
-                            Modifier
-                        }
-                    BasicMarkerCard(
-                        marker = item,
-                        onClick = {
-                            player.seekTo(item.seconds.toLongMilliseconds)
-                            controllerViewState.hideControls()
-                        },
-                        uiConfig = uiConfig,
-                        modifier =
-                            cardModifier
-                                .onFocusChanged {
-                                    Log.i(TAG, "Marker ${item.id} focused: ${it.isFocused}")
-                                    if (it.isFocused) {
-                                        controllerViewState.pulseControls(Int.MAX_VALUE)
-                                    } else {
-                                        controllerViewState.pulseControls()
-                                    }
-                                },
-                    )
-                }
+            itemsIndexed(markers, key = { _, item -> item.id }) { index, item ->
+                val cardModifier =
+                    if (index == 0) {
+                        Modifier.focusRequester(firstFocus)
+                    } else {
+                        Modifier
+                    }
+                BasicMarkerCard(
+                    marker = item,
+                    onClick = {
+                        player.seekTo(item.seconds.inWholeMilliseconds)
+                        controllerViewState.hideControls()
+                    },
+                    uiConfig = uiConfig,
+                    modifier =
+                        cardModifier
+                            .onFocusChanged {
+//                                    Log.i(TAG, "Marker ${item.id} focused: ${it.isFocused}")
+                                if (it.isFocused) {
+                                    controllerViewState.pulseControls(Int.MAX_VALUE)
+                                    onCardFocus.invoke()
+                                } else {
+                                    controllerViewState.pulseControls()
+                                }
+                            },
+                )
             }
         }
     }
 }
 
+data class BasicMarker(
+    val id: String,
+    val title: String,
+    val seconds: Duration,
+    val imageUrl: String,
+    val videoUrl: String?,
+) {
+    constructor(marker: MarkerData) : this(
+        id = marker.id,
+        title =
+            marker.title.ifBlank {
+                marker.primary_tag.slimTagData.name
+            } + " - ${marker.seconds.toInt().toDuration(DurationUnit.SECONDS)}",
+        seconds = marker.seconds.seconds,
+        imageUrl = marker.screenshot,
+        videoUrl = marker.stream,
+    )
+}
+
 @Composable
 fun BasicMarkerCard(
-    marker: MarkerData,
+    marker: BasicMarker,
     onClick: () -> Unit,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
-    val title =
-        marker.title.ifBlank {
-            marker.primary_tag.slimTagData.name
-        } + " - ${marker.seconds.toInt().toDuration(DurationUnit.SECONDS)}"
-
-    val imageUrl = marker.screenshot
-    val videoUrl = null // marker.stream
-
     RootCard(
         item = marker,
         modifier =
             modifier
                 .padding(0.dp)
-                .width(MarkerPresenter.CARD_WIDTH.dp / 2),
+                .width(DataType.MARKER.defaultCardWidth.dp / 2),
         onClick = onClick,
         longClicker = { _, _ -> },
         getFilterAndPosition = null,
         uiConfig = uiConfig,
-        imageWidth = MarkerPresenter.CARD_WIDTH.dp / 2,
-        imageHeight = MarkerPresenter.CARD_HEIGHT.dp / 2,
-        imageUrl = imageUrl,
+        imageWidth = DataType.MARKER.defaultCardWidth.dp / 2,
+        imageHeight = DataType.MARKER.defaultCardHeight.dp / 2,
+        imageUrl = marker.imageUrl,
         defaultImageDrawableRes = R.drawable.default_scene,
-        videoUrl = videoUrl,
-        title = title,
+        videoUrl = null,
+        title = marker.title,
         subtitle = {},
         description = {},
         imageOverlay = {},
     )
+}
+
+@Preview(device = "spec:parent=tv_1080p", backgroundColor = 0xFF383535)
+@Composable
+private fun PlaybackOverlayPreview() {
+    MainTheme {
+        val controllerViewState = ControllerViewState(3000, true)
+        controllerViewState.showControls(Int.MAX_VALUE)
+        PlaybackOverlay(
+            uiConfig =
+                ComposeUiConfig(
+                    ratingAsStars = true,
+                    starPrecision = StarRatingPrecision.FULL,
+                    showStudioAsText = true,
+                    debugTextEnabled = true,
+                    cardSettings =
+                        CardUiSettings(
+                            maxSearchResults = 25,
+                            playVideoPreviews = true,
+                            videoPreviewAudio = false,
+                            columns = 5,
+                            showRatings = true,
+                            imageCrop = true,
+                            videoDelay = 3000,
+                        ),
+                ),
+            scene =
+                Scene(
+                    id = "id",
+                    title = null, // "title",
+                    date = null, // "2025-01-01",
+                    streamUrl = "",
+                    screenshotUrl = "",
+                    streams = mapOf(),
+                    spriteUrl = "",
+                    duration = 600.2,
+                    resumeTime = 0.0,
+                    videoCodec = "h264",
+                    videoWidth = 1920,
+                    videoHeight = 1080,
+                    audioCodec = "aac",
+                    format = "mkv",
+                    oCounter = 1,
+                    captionUrl = "",
+                    captions = listOf(),
+                ),
+            markers =
+                List(1) {
+                    BasicMarker(
+                        id = "123",
+                        title = "Title - 3m2s",
+                        seconds = 182.seconds,
+                        imageUrl = "",
+                        videoUrl = null,
+                    )
+                },
+            streamDecision =
+                StreamDecision(
+                    sceneId = "id",
+                    transcodeDecision = TranscodeDecision.DirectPlay,
+                    videoSupported = true,
+                    audioSupported = true,
+                    containerSupported = true,
+                ),
+            oCounter = 1,
+            playerControls = FakePlayerControls,
+            controllerViewState = controllerViewState,
+            onPlaybackActionClick = {},
+            onSeekBarChange = {},
+            showDebugInfo = true,
+            showPlay = true,
+            previousEnabled = true,
+            nextEnabled = true,
+            seekEnabled = true,
+            modifier =
+                Modifier
+                    .fillMaxSize(),
+        )
+    }
 }

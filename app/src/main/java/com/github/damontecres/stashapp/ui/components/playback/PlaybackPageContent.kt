@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -41,12 +42,15 @@ import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
+import androidx.media3.ui.compose.state.rememberNextButtonState
+import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
+import androidx.media3.ui.compose.state.rememberPreviousButtonState
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
-import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.navigation.NavigationManager
@@ -74,7 +78,7 @@ class PlaybackViewModel : ViewModel() {
     private lateinit var server: StashServer
     private lateinit var scene: FullSceneData
 
-    val markers = MutableLiveData<List<MarkerData>>(listOf())
+    val markers = MutableLiveData<List<BasicMarker>>(listOf())
     val oCount = MutableLiveData(0)
 
     fun init(
@@ -83,7 +87,7 @@ class PlaybackViewModel : ViewModel() {
     ) {
         this.server = server
         this.scene = scene
-        markers.value = scene.scene_markers.map { it.asMarkerData(scene) }
+        markers.value = scene.scene_markers.map { BasicMarker(it.asMarkerData(scene)) }
         oCount.value = scene.o_counter ?: 0
     }
 
@@ -96,8 +100,14 @@ class PlaybackViewModel : ViewModel() {
             val newMarker = mutationEngine.createMarker(scene.id, position, tagId)
             newMarker?.let {
                 val list = markers.value!!.toMutableList()
-                list.add(it.asMarkerData(scene))
+                list.add(BasicMarker(it.asMarkerData(scene)))
                 markers.value = list.sortedBy { m -> m.seconds }
+                Toast
+                    .makeText(
+                        StashApplication.getApplication(),
+                        "Created marker at ${position.milliseconds}",
+                        Toast.LENGTH_SHORT,
+                    ).show()
             }
         }
     }
@@ -182,6 +192,11 @@ fun PlaybackPageContent(
                 it.observe()
             }
         }
+    val scope = rememberCoroutineScope()
+    val playPauseState = rememberPlayPauseButtonState(player)
+    val previousState = rememberPreviousButtonState(player)
+    val nextState = rememberNextButtonState(player)
+    val seekBarState = rememberSeekBarState(player, scope)
 
     LaunchedEffect(server, scene, player) {
         trackActivityListener?.apply {
@@ -304,12 +319,11 @@ fun PlaybackPageContent(
                     .fillMaxSize()
                     .background(Color.Transparent),
             uiConfig = uiConfig,
-            server = server,
             scene = playbackScene,
             markers = markers,
             streamDecision = streamDecision,
             oCounter = oCount,
-            player = player,
+            playerControls = PlayerControlsImpl(player),
             onPlaybackActionClick = {
                 when (it) {
                     PlaybackAction.CreateMarker -> {
@@ -331,7 +345,12 @@ fun PlaybackPageContent(
                     }
                 }
             },
+            onSeekBarChange = seekBarState::onValueChange,
             controllerViewState = controllerViewState,
+            showPlay = playPauseState.showPlay,
+            previousEnabled = previousState.isEnabled,
+            nextEnabled = nextState.isEnabled,
+            seekEnabled = seekBarState.isEnabled,
             showDebugInfo = showDebugInfo,
         )
     }

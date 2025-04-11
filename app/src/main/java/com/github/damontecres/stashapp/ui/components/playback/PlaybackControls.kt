@@ -40,16 +40,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.ui.compose.state.rememberNextButtonState
-import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
-import androidx.media3.ui.compose.state.rememberPreviousButtonState
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
@@ -59,6 +56,7 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.ui.AppColors
+import com.github.damontecres.stashapp.ui.MainTheme
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -75,21 +73,27 @@ sealed interface PlaybackAction {
     data object ShowPlaylist : PlaybackAction
 }
 
+@OptIn(UnstableApi::class)
 @kotlin.OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlaybackControls(
     scene: Scene,
     oCounter: Int,
-    player: Player,
+    playerControls: PlayerControls,
     controllerViewState: ControllerViewState,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
     showDebugInfo: Boolean,
     onSeekProgress: (Float) -> Unit,
+    showPlay: Boolean,
+    previousEnabled: Boolean,
+    nextEnabled: Boolean,
+    seekEnabled: Boolean,
     modifier: Modifier = Modifier,
     initialFocusRequester: FocusRequester = remember { FocusRequester() },
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     val scope = rememberCoroutineScope()
+
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val onControllerInteraction = {
         scope.launch {
@@ -108,10 +112,11 @@ fun PlaybackControls(
     ) {
         SeekBar(
             scene = scene,
-            player = player,
+            player = playerControls,
             controllerViewState = controllerViewState,
             onSeekProgress = onSeekProgress,
             interactionSource = seekBarInteractionSource,
+            isEnabled = seekEnabled,
             modifier =
                 Modifier
                     .padding(vertical = 8.dp)
@@ -133,9 +138,12 @@ fun PlaybackControls(
                 modifier = Modifier,
             )
             PlaybackButtons(
-                player,
-                initialFocusRequester,
+                player = playerControls,
+                initialFocusRequester = initialFocusRequester,
                 onControllerInteraction = onControllerInteraction,
+                showPlay = showPlay,
+                previousEnabled = previousEnabled,
+                nextEnabled = nextEnabled,
                 modifier = Modifier,
             )
             RightPlaybackButtons(
@@ -151,14 +159,13 @@ fun PlaybackControls(
 @Composable
 fun SeekBar(
     scene: Scene,
-    player: Player,
+    player: PlayerControls,
+    isEnabled: Boolean,
     controllerViewState: ControllerViewState,
     onSeekProgress: (Float) -> Unit,
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    val scope = rememberCoroutineScope()
-    val state = rememberSeekBarState(player, scope)
     var bufferedProgress by remember(player) { mutableFloatStateOf(player.bufferedPosition.toFloat() / player.duration) }
     var position by remember(player) { mutableLongStateOf(player.currentPosition) }
     var progress by remember(player) { mutableFloatStateOf(player.currentPosition.toFloat() / player.duration) }
@@ -182,7 +189,6 @@ fun SeekBar(
             duration = player.duration,
             onSeek = {
                 onSeekProgress(it)
-                state.onValueChange(it)
             },
             controllerViewState = controllerViewState,
             intervals = 15,
@@ -233,7 +239,10 @@ fun LeftPlaybackButtons(
         // More options
         PlaybackButton(
             iconRes = R.drawable.vector_settings,
-            onClick = { showMoreOptions = true },
+            onClick = {
+                onControllerInteraction.invoke()
+                showMoreOptions = true
+            },
             enabled = true,
             onControllerInteraction = onControllerInteraction,
         )
@@ -244,7 +253,10 @@ fun LeftPlaybackButtons(
         ) {
             PlaybackButton(
                 iconRes = R.drawable.sweat_drops,
-                onClick = { onPlaybackActionClick.invoke(PlaybackAction.OCount) },
+                onClick = {
+                    onControllerInteraction.invoke()
+                    onPlaybackActionClick.invoke(PlaybackAction.OCount)
+                },
                 enabled = true,
                 onControllerInteraction = onControllerInteraction,
             )
@@ -292,14 +304,20 @@ fun RightPlaybackButtons(
         // Captions
         PlaybackButton(
             iconRes = R.drawable.baseline_more_vert_96,
-            onClick = { },
+            onClick = {
+                // TODO
+                onControllerInteraction.invoke()
+            },
             enabled = true,
             onControllerInteraction = onControllerInteraction,
         )
         // Playback speed, etc
         PlaybackButton(
             iconRes = R.drawable.vector_settings,
-            onClick = {},
+            onClick = {
+                // TODO
+                onControllerInteraction.invoke()
+            },
             enabled = true,
             onControllerInteraction = onControllerInteraction,
         )
@@ -309,45 +327,59 @@ fun RightPlaybackButtons(
 @OptIn(UnstableApi::class)
 @Composable
 fun PlaybackButtons(
-    player: Player,
+    player: PlayerControls,
     initialFocusRequester: FocusRequester,
     onControllerInteraction: () -> Unit,
+    showPlay: Boolean,
+    previousEnabled: Boolean,
+    nextEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val playPauseState = rememberPlayPauseButtonState(player)
-    val previousState = rememberPreviousButtonState(player)
-    val nextState = rememberNextButtonState(player)
-
     Row(
         modifier = modifier.focusGroup(),
         horizontalArrangement = Arrangement.spacedBy(buttonSpacing),
     ) {
         PlaybackButton(
             iconRes = R.drawable.baseline_skip_previous_24,
-            onClick = previousState::onClick,
-            enabled = previousState.isEnabled,
+            onClick = {
+                onControllerInteraction.invoke()
+                player.seekToPrevious()
+            },
+            enabled = previousEnabled,
             onControllerInteraction = onControllerInteraction,
         )
         PlaybackButton(
             iconRes = R.drawable.baseline_fast_rewind_24,
-            onClick = { player.seekBack() },
+            onClick = {
+                onControllerInteraction.invoke()
+                player.seekBack()
+            },
             onControllerInteraction = onControllerInteraction,
         )
         PlaybackButton(
             modifier = Modifier.focusRequester(initialFocusRequester),
-            iconRes = if (playPauseState.showPlay) R.drawable.baseline_play_arrow_24 else R.drawable.baseline_pause_24,
-            onClick = playPauseState::onClick,
+            iconRes = if (showPlay) R.drawable.baseline_play_arrow_24 else R.drawable.baseline_pause_24,
+            onClick = {
+                onControllerInteraction.invoke()
+                player.playOrPause()
+            },
             onControllerInteraction = onControllerInteraction,
         )
         PlaybackButton(
             iconRes = R.drawable.baseline_fast_forward_24,
-            onClick = { player.seekForward() },
+            onClick = {
+                onControllerInteraction.invoke()
+                player.seekForward()
+            },
             onControllerInteraction = onControllerInteraction,
         )
         PlaybackButton(
             iconRes = R.drawable.baseline_skip_next_24,
-            onClick = nextState::onClick,
-            enabled = nextState.isEnabled && player.hasNextMediaItem(),
+            onClick = {
+                onControllerInteraction.invoke()
+                player.seekToNext()
+            },
+            enabled = nextEnabled,
             onControllerInteraction = onControllerInteraction,
         )
     }
@@ -440,5 +472,20 @@ private fun BottomDialog(
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PlaybackButtonsPreview() {
+    MainTheme {
+        PlaybackButtons(
+            player = FakePlayerControls,
+            initialFocusRequester = FocusRequester(),
+            onControllerInteraction = {},
+            showPlay = true,
+            previousEnabled = true,
+            nextEnabled = true,
+        )
     }
 }

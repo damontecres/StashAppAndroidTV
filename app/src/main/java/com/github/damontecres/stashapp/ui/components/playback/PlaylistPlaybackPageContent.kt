@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +15,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -37,12 +39,15 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
+import androidx.media3.ui.compose.state.rememberNextButtonState
+import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
+import androidx.media3.ui.compose.state.rememberPreviousButtonState
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
-import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
@@ -69,7 +74,7 @@ class PlaylistViewModel : ViewModel() {
     private var markersEnabled by Delegates.notNull<Boolean>()
 
     val mediaItemTag = EqualityMutableLiveData<PlaylistFragment.MediaItemTag>()
-    val markers = MutableLiveData<List<MarkerData>>(listOf())
+    val markers = MutableLiveData<List<BasicMarker>>(listOf())
     val oCount = MutableLiveData(0)
 
     fun init(
@@ -104,6 +109,7 @@ class PlaylistViewModel : ViewModel() {
                                         ),
                                 ),
                         ).sortedBy { it.seconds }
+                        .map(::BasicMarker)
             }
         }
     }
@@ -115,9 +121,17 @@ class PlaylistViewModel : ViewModel() {
         mediaItemTag.value?.let {
             viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 val mutationEngine = MutationEngine(server)
-                mutationEngine.createMarker(it.item.id, position, tagId)
-                // Refresh markers
-                changeScene(it)
+                val newMarker = mutationEngine.createMarker(it.item.id, position, tagId)
+                if (newMarker != null) {
+                    // Refresh markers
+                    changeScene(it)
+                    Toast
+                        .makeText(
+                            StashApplication.getApplication(),
+                            "Created marker at ${position.milliseconds}",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                }
             }
         }
     }
@@ -240,6 +254,12 @@ fun PlaylistPlaybackPageContent(
                 it.observe()
             }
         }
+    val scope = rememberCoroutineScope()
+    val playPauseState = rememberPlayPauseButtonState(player)
+    val previousState = rememberPreviousButtonState(player)
+    val nextState = rememberNextButtonState(player)
+    val seekBarState = rememberSeekBarState(player, scope)
+
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         focusRequester.tryRequestFocus()
@@ -305,12 +325,11 @@ fun PlaylistPlaybackPageContent(
                         .fillMaxSize()
                         .background(Color.Transparent),
                 uiConfig = uiConfig,
-                server = server,
                 scene = currentScene.item,
                 markers = markers,
                 streamDecision = currentScene.streamDecision,
                 oCounter = oCount,
-                player = player,
+                playerControls = PlayerControlsImpl(player),
                 onPlaybackActionClick = {
                     when (it) {
                         PlaybackAction.CreateMarker -> {
@@ -334,7 +353,12 @@ fun PlaylistPlaybackPageContent(
                         }
                     }
                 },
+                onSeekBarChange = seekBarState::onValueChange,
                 controllerViewState = controllerViewState,
+                showPlay = playPauseState.showPlay,
+                previousEnabled = previousState.isEnabled,
+                nextEnabled = nextState.isEnabled,
+                seekEnabled = seekBarState.isEnabled,
                 showDebugInfo = showDebugInfo,
             )
         }
