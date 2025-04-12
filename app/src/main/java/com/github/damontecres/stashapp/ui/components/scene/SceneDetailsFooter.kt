@@ -13,6 +13,7 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.util.bitRateString
+import com.github.damontecres.stashapp.views.formatBytes
 
 @Composable
 fun SceneDetailsFooter(
@@ -55,6 +56,13 @@ fun SceneDetailsFooter(
             TitleValueText(
                 stringResource(R.string.stashapp_bitrate),
                 file.bitRateString().toString(),
+            )
+            TitleValueText(
+                stringResource(R.string.stashapp_filesize),
+                file.size
+                    .toString()
+                    .toIntOrNull()
+                    ?.let { bytes -> formatBytes(bytes) } ?: file.size.toString(),
             )
         }
         if (!scene.captions.isNullOrEmpty()) {

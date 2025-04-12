@@ -7,6 +7,7 @@ import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.getRandomSort
+import com.github.damontecres.stashapp.util.toReadableString
 import kotlinx.serialization.Serializable
 
 /**
@@ -56,6 +57,9 @@ data class FilterArgs(
                 this.findFilter?.copy(q = query)
                     ?: StashFindFilter(q = query),
         )
+
+    override fun toString(): String =
+        "FilterArgs(dataType=$dataType, name=$name, override=$override, findFilter=$findFilter, objectFilter=${objectFilter?.toReadableString()})"
 }
 
 fun SavedFilter.toFilterArgs(filterParser: FilterParser): FilterArgs {

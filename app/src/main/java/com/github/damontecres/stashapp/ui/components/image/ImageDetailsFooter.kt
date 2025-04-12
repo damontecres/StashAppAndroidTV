@@ -23,7 +23,6 @@ fun ImageDetailsFooter(
                 .fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        TitleValueText(stringResource(R.string.id), image.id)
         if (image.created_at.toString().length >= 10) {
             TitleValueText(
                 stringResource(R.string.stashapp_created_at),
@@ -36,18 +35,10 @@ fun ImageDetailsFooter(
                 image.updated_at.toString().substring(0..<10),
             )
         }
+        TitleValueText(stringResource(R.string.id), image.id)
         val baseFile = image.visual_files.firstOrNull()?.onBaseFile
 //        val imageFile = image.visual_files.firstOrNull()?.onImageFile
         val videoFile = image.visual_files.firstOrNull()?.onVideoFile
-        baseFile?.let {
-            TitleValueText(
-                stringResource(R.string.stashapp_filesize),
-                it.size
-                    .toString()
-                    .toIntOrNull()
-                    ?.let { bytes -> formatBytes(bytes) } ?: it.size.toString(),
-            )
-        }
         videoFile?.let {
             TitleValueText(
                 stringResource(R.string.stashapp_video_codec),
@@ -60,6 +51,15 @@ fun ImageDetailsFooter(
             TitleValueText(
                 stringResource(R.string.format),
                 it.format,
+            )
+        }
+        baseFile?.let {
+            TitleValueText(
+                stringResource(R.string.stashapp_filesize),
+                it.size
+                    .toString()
+                    .toIntOrNull()
+                    ?.let { bytes -> formatBytes(bytes) } ?: it.size.toString(),
             )
         }
     }

@@ -154,7 +154,7 @@ fun FragmentContent(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val composeUiConfig by remember {
+    var composeUiConfig by remember {
         mutableStateOf(
             ComposeUiConfig.fromStashServer(
                 context,
@@ -256,6 +256,8 @@ fun FragmentContent(
     val scope = rememberCoroutineScope()
 
     NavHost(navigationManager.controller, modifier = modifier) { destination ->
+        composeUiConfig = ComposeUiConfig.fromStashServer(context, server)
+
         if (destination.fullScreen) {
             when (destination) {
                 is Destination.Playback -> {

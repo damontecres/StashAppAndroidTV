@@ -46,8 +46,10 @@ import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TagCreateInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.data.room.RecentSearchItem
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.Material3MainTheme
@@ -320,6 +322,15 @@ fun SearchForPage(
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClickWrapper,
                     longClicker = { _, _ -> },
+                    filterArgs =
+                        FilterArgs(
+                            dataType = dataType,
+                            findFilter =
+                                StashFindFilter(
+                                    q = searchQuery,
+                                    sortAndDirection = dataType.defaultSort,
+                                ),
+                        ),
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
             }

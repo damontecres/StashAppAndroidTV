@@ -561,9 +561,8 @@ fun PerformerDetailsFooter(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.Start),
     ) {
-        TitleValueText(stringResource(R.string.id), id)
         if (createdAt.length >= 10) {
             TitleValueText(
                 stringResource(R.string.stashapp_created_at),
@@ -576,6 +575,7 @@ fun PerformerDetailsFooter(
                 updatedAt.substring(0..<10),
             )
         }
+        TitleValueText(stringResource(R.string.id), id)
     }
 }
 

@@ -203,6 +203,10 @@ fun PlaybackPageContent(
         }
         skipIndicatorDuration += delta
     }
+    if (controllerViewState.controlsVisible) {
+        // If controls become visible, cancel the skip indicator
+        skipIndicatorDuration = 0L
+    }
 
     val scope = rememberCoroutineScope()
     val playPauseState = rememberPlayPauseButtonState(player)

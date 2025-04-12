@@ -149,7 +149,7 @@ fun MainPagePerformerDetails(
                     color = MaterialTheme.colorScheme.onBackground,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    modifier = Modifier.padding(vertical = 4.dp),
                 )
             }
             // Key-Values

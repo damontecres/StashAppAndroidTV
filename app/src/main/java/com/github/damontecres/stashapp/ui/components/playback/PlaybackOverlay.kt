@@ -288,7 +288,7 @@ fun PlaybackOverlay(
                 }
             }
             AnimatedVisibility(seekBarFocused && seekProgress >= 0) {
-                val yOffsetDp = height + (if (imageLoaded) (160.dp) else 16.dp) - 16.dp
+                val yOffsetDp = height + (if (imageLoaded) (160.dp) else 24.dp) - 16.dp
                 val heightPx = with(LocalDensity.current) { yOffsetDp.toPx().toInt() }
                 SeekPreviewImage(
                     modifier =

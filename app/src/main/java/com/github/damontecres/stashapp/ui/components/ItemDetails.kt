@@ -61,7 +61,7 @@ fun ItemDetails(
                         .crossfade(true)
                         .build(),
                 contentDescription = null,
-                contentScale = ContentScale.FillHeight,
+                contentScale = ContentScale.Fit,
             )
         }
         LazyColumn(modifier = Modifier.padding(12.dp)) {

@@ -34,12 +34,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.toStashFindFilter
+import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.SortOption
+import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -96,16 +98,24 @@ class SearchViewModel : ViewModel() {
                 PreferenceManager
                     .getDefaultSharedPreferences(StashApplication.getApplication())
                     .getInt("maxSearchResults", 25)
-            val filter =
-                FindFilterType(
-                    q = Optional.present(query),
-                    per_page = Optional.present(perPage),
-                    page = Optional.present(1),
-                )
-
             DataType.entries.forEach {
                 val data = mapping[it]!!
                 data.value = listOf()
+
+                val stashFindFilter =
+                    StashFindFilter(
+                        q = query,
+                        sortAndDirection =
+                            SortAndDirection(
+                                SortOption.sortByName(it),
+                                SortDirectionEnum.ASC,
+                            ),
+                    )
+                val findFilter =
+                    stashFindFilter.toFindFilterType(
+                        perPage = perPage,
+                        page = 1,
+                    )
 
                 viewModelScope.launch(
                     StashCoroutineExceptionHandler { ex ->
@@ -116,7 +126,7 @@ class SearchViewModel : ViewModel() {
                         )
                     },
                 ) {
-                    val results = queryEngine.find(it, filter)
+                    val results = queryEngine.find(it, findFilter)
                     if (results.isNotEmpty()) {
                         data.value =
                             buildList {
@@ -124,7 +134,7 @@ class SearchViewModel : ViewModel() {
                                 add(
                                     FilterArgs(
                                         dataType = it,
-                                        findFilter = filter.toStashFindFilter(),
+                                        findFilter = stashFindFilter,
                                     ),
                                 )
                             }
@@ -219,6 +229,7 @@ fun SearchPage(
                         uiConfig = uiConfig,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
+                        filterArgs = data.last() as FilterArgs,
                     )
                 }
             }
@@ -234,6 +245,7 @@ fun SearchItemsRow(
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    filterArgs: FilterArgs,
     modifier: Modifier = Modifier,
 ) {
     val firstFocus = remember { FocusRequester() }
@@ -263,7 +275,12 @@ fun SearchItemsRow(
                 StashCard(
                     uiConfig = uiConfig,
                     item = item,
-                    itemOnClick = { itemOnClick.onClick(item, null) },
+                    itemOnClick = {
+                        itemOnClick.onClick(
+                            item,
+                            FilterAndPosition(filterArgs, index),
+                        )
+                    },
                     longClicker = longClicker,
                     getFilterAndPosition = null,
                     modifier = cardModifier,

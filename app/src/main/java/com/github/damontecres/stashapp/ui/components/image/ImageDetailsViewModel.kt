@@ -88,7 +88,7 @@ class ImageDetailsViewModel : ViewModel() {
             val pagingSource =
                 StashPagingSource(QueryEngine(server), dataSupplier) { _, _, item -> item }
             val pager = ComposePager(filterArgs, pagingSource, viewModelScope)
-            Log.v(TAG, "Pager created")
+            Log.v(TAG, "Pager created: filterArgs=$filterArgs")
             viewModelScope.launch {
                 pager.init()
                 Log.v(TAG, "Pager size: ${pager.size}")
