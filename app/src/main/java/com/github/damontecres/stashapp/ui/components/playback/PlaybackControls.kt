@@ -56,7 +56,7 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.ui.AppColors
-import com.github.damontecres.stashapp.ui.MainTheme
+import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -478,7 +478,7 @@ private fun BottomDialog(
 @Preview
 @Composable
 private fun PlaybackButtonsPreview() {
-    MainTheme {
+    AppTheme {
         PlaybackButtons(
             player = FakePlayerControls,
             initialFocusRequester = FocusRequester(),

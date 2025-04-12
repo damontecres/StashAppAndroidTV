@@ -17,7 +17,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.PlaylistItem
 import com.github.damontecres.stashapp.data.toPlayListItem
-import com.github.damontecres.stashapp.ui.Material3MainTheme
+import com.github.damontecres.stashapp.ui.Material3AppTheme
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.MappedList
 
@@ -30,7 +30,7 @@ fun PlaylistListDialog(
     modifier: Modifier = Modifier,
 ) {
     if (show && pager != null) {
-        Material3MainTheme {
+        Material3AppTheme {
             Dialog(
                 onDismissRequest = onDismiss,
                 properties = DialogProperties(usePlatformDefaultWidth = false),

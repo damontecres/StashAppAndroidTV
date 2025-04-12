@@ -62,9 +62,9 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
-import com.github.damontecres.stashapp.ui.MainTheme
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -590,7 +590,7 @@ private fun PerformerDetailsPreview() {
         LongClicker<Any> { item, filterAndPosition ->
         }
 
-    MainTheme {
+    AppTheme {
         PerformerDetails(
             perf = performer,
             tags = listOf(tagPreview, tagPreview.copy(id = "723")),

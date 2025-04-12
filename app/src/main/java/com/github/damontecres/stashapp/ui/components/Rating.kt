@@ -28,7 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
-import com.github.damontecres.stashapp.ui.MainTheme
+import com.github.damontecres.stashapp.ui.AppTheme
 import kotlin.math.abs
 
 enum class StarRatingPrecision {
@@ -156,7 +156,7 @@ fun StarRating(
 @Preview
 @Composable
 private fun StarRatingPreview() {
-    MainTheme {
+    AppTheme {
         Column {
             var rating by remember { mutableIntStateOf(50) }
             StarRating(

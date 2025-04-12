@@ -23,7 +23,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.flip
 import com.github.damontecres.stashapp.ui.FontAwesome
-import com.github.damontecres.stashapp.ui.Material3MainTheme
+import com.github.damontecres.stashapp.ui.Material3AppTheme
 
 @Composable
 fun SortByButton(
@@ -63,7 +63,7 @@ fun SortByButton(
                     },
             )
         }
-        Material3MainTheme {
+        Material3AppTheme {
             // TODO switch to dialog?
             DropdownMenu(
                 expanded = sortByDropDown,

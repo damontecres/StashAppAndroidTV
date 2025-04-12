@@ -33,7 +33,7 @@ import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.PlaylistItem
-import com.github.damontecres.stashapp.ui.MainTheme
+import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -175,7 +175,7 @@ fun PlaylistItemCompose(
 @Preview(widthDp = 600)
 @Composable
 private fun PlaylistItemPreview() {
-    MainTheme {
+    AppTheme {
         PlaylistList(
             mediaItemCount = 10,
             mediaItemCountOffset = 0,

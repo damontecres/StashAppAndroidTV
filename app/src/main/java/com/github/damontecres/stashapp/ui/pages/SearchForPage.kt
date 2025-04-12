@@ -52,7 +52,7 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
-import com.github.damontecres.stashapp.ui.Material3MainTheme
+import com.github.damontecres.stashapp.ui.Material3AppTheme
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.SearchEditTextBox
 import com.github.damontecres.stashapp.util.CreateNew
@@ -80,7 +80,7 @@ fun SearchForDialog(
     dismissOnClick: Boolean = true,
 ) {
     if (show) {
-        Material3MainTheme {
+        Material3AppTheme {
             val server = LocalGlobalContext.current.server
             Dialog(
                 onDismissRequest = onDismissRequest,

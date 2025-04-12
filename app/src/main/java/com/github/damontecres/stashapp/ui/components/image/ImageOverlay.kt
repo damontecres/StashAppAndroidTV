@@ -40,7 +40,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.Material3MainTheme
+import com.github.damontecres.stashapp.ui.Material3AppTheme
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -253,7 +253,7 @@ fun ImageOverlay(
         )
     }
     searchForDataType?.let { params ->
-        Material3MainTheme {
+        Material3AppTheme {
             Dialog(
                 onDismissRequest = { searchForDataType = null },
                 properties =

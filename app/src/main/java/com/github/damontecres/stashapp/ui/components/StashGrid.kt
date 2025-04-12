@@ -35,7 +35,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -61,6 +60,7 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
@@ -475,14 +475,7 @@ fun StashGrid(
                 modifier =
                     Modifier
                         .align(Alignment.BottomCenter)
-                        .background(
-                            Color(
-                                LocalContext.current.resources.getColor(
-                                    R.color.transparent_black_50,
-                                    null,
-                                ),
-                            ),
-                        ),
+                        .background(AppColors.TransparentBlack50),
             ) {
                 Text(
                     modifier = Modifier.padding(4.dp),

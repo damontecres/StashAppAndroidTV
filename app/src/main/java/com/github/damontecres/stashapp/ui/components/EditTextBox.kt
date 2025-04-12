@@ -35,8 +35,8 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.ui.MainTheme
-import com.github.damontecres.stashapp.ui.Material3MainTheme
+import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.Material3AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,7 +52,7 @@ fun EditTextBox(
     height: Dp = 40.dp,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    Material3MainTheme {
+    Material3AppTheme {
         val colors =
             TextFieldDefaults.colors(
                 unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -170,7 +170,7 @@ fun SearchEditTextBox(
 @Preview
 @Composable
 private fun EditTextBoxPreview() {
-    MainTheme {
+    AppTheme {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.background(Color.LightGray).padding(4.dp),

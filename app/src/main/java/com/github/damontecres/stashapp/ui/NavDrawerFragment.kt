@@ -109,7 +109,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
             // Dispose of the Composition when the view's LifecycleOwner is destroyed
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
-                MainTheme {
+                AppTheme {
                     val server by serverViewModel.currentServer.observeAsState()
                     val currDestination by serverViewModel.destination.observeAsState()
                     key(server) {
@@ -131,6 +131,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                     server = server ?: StashServer("http://0.0.0.0", null),
                                     serverViewModel = serverViewModel,
                                     navigationManager = navManager,
+                                    modifier = Modifier.background(MaterialTheme.colorScheme.background),
                                 )
                             }
                         }
@@ -347,7 +348,7 @@ fun FragmentContent(
                     Column(
                         Modifier
                             .fillMaxHeight()
-                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                            .background(MaterialTheme.colorScheme.background),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
@@ -470,7 +471,10 @@ fun FragmentContent(
                         composeUiConfig = composeUiConfig,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.background),
                     )
                     LifecycleStartEffect(Unit) {
                         onStopOrDispose {
