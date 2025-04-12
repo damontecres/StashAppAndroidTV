@@ -115,7 +115,6 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                 val isSystemInDarkTheme = isSystemInDarkTheme()
                 var colorScheme by
                     remember { mutableStateOf(getTheme(requireContext(), false, isSystemInDarkTheme)) }
-                Log.i(TAG, "colorScheme.primary=${colorScheme.primary}")
                 MaterialTheme(colorScheme = colorScheme.tvColorScheme) {
                     val server by serverViewModel.currentServer.observeAsState()
                     val currDestination by serverViewModel.destination.observeAsState()

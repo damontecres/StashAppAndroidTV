@@ -14,9 +14,12 @@ import androidx.preference.PreferenceManager
 import androidx.tv.material3.ColorScheme
 import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.ui.theme.inversePrimaryDark
+import com.github.damontecres.stashapp.ui.theme.inversePrimaryLight
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
@@ -27,8 +30,17 @@ val defaultColorSchemeSet =
     ColorSchemeSet(
         description = "default",
         seed = com.github.damontecres.stashapp.ui.theme.seed,
-        light = com.github.damontecres.stashapp.ui.theme.lightScheme,
-        dark = com.github.damontecres.stashapp.ui.theme.darkScheme,
+        border = inversePrimaryDark,
+        light =
+            AppColorScheme(
+                com.github.damontecres.stashapp.ui.theme.lightScheme,
+                inversePrimaryLight,
+            ),
+        dark =
+            AppColorScheme(
+                com.github.damontecres.stashapp.ui.theme.darkScheme,
+                inversePrimaryDark,
+            ),
     )
 
 private var currentColorSchemeSet: ColorSchemeSet? = null
@@ -37,7 +49,7 @@ fun chooseColorScheme(
     context: Context,
     isSystemInDark: Boolean,
     colorSchemeSet: ColorSchemeSet,
-): androidx.compose.material3.ColorScheme {
+): AppColorScheme {
     val themeChoice =
         PreferenceManager
             .getDefaultSharedPreferences(context)
@@ -62,7 +74,7 @@ fun getTheme(
     context: Context,
     forceDark: Boolean = false,
     isSystemInDarkTheme: Boolean = false,
-): androidx.compose.material3.ColorScheme {
+): AppColorScheme {
     val themeFileName =
         PreferenceManager
             .getDefaultSharedPreferences(context)
@@ -134,7 +146,10 @@ fun Material3AppTheme(content: @Composable () -> Unit) {
             }
         }
 
-    androidx.compose.material3.MaterialTheme(colorScheme = colorScheme, content = content)
+    androidx.compose.material3.MaterialTheme(
+        colorScheme = colorScheme.colorScheme,
+        content = content,
+    )
 }
 
 sealed class AppColors private constructor() {
@@ -160,14 +175,32 @@ fun parseThemeJson(jsonString: String): ColorSchemeSet {
     val seed = json["seed"]?.color
 //    val corePrimary = json["coreColors"]!!.jsonObject["primary"]!!.color
 
+    val borderColor =
+        if ("extendedColors" in json) {
+            json["extendedColors"]!!
+                .jsonArray
+                .firstOrNull {
+                    it is JsonObject &&
+                        it.jsonObject["name"]
+                            ?.jsonPrimitive
+                            ?.content
+                            ?.lowercase() == "border"
+                }?.jsonObject
+                ?.get("color")
+                ?.color
+        } else {
+            null
+        }
+
     val schemes = json["schemes"]!!.jsonObject
     val lightScheme = parseScheme(schemes["light"]!!.jsonObject)
     val darkScheme = parseScheme(schemes["dark"]!!.jsonObject)
     return ColorSchemeSet(
         description = description,
         seed = seed,
-        light = lightScheme,
-        dark = darkScheme,
+        border = borderColor,
+        light = AppColorScheme(lightScheme, borderColor),
+        dark = AppColorScheme(darkScheme, borderColor),
     )
 }
 
@@ -220,44 +253,50 @@ val JsonElement.color: Color
         return Color(colorStr.toLong(16))
     }
 
-val androidx.compose.material3.ColorScheme.tvColorScheme: ColorScheme
-    get() {
-        return ColorScheme(
-            primary = primary,
-            onPrimary = onPrimary,
-            primaryContainer = primaryContainer,
-            onPrimaryContainer = onPrimaryContainer,
-            inversePrimary = inversePrimary,
-            secondary = secondary,
-            onSecondary = onSecondary,
-            secondaryContainer = secondaryContainer,
-            onSecondaryContainer = onSecondaryContainer,
-            tertiary = tertiary,
-            onTertiary = onTertiary,
-            tertiaryContainer = tertiaryContainer,
-            onTertiaryContainer = onTertiaryContainer,
-            background = background,
-            onBackground = onBackground,
-            surface = surface,
-            onSurface = onSurface,
-            surfaceVariant = surfaceVariant,
-            onSurfaceVariant = onSurfaceVariant,
-            surfaceTint = surfaceTint,
-            inverseSurface = inverseSurface,
-            inverseOnSurface = inverseOnSurface,
-            error = error,
-            onError = onError,
-            errorContainer = errorContainer,
-            onErrorContainer = onErrorContainer,
-            scrim = scrim,
-            border = inversePrimary, // TODO
-            borderVariant = onPrimary, // TODO
-        )
-    }
+fun androidx.compose.material3.ColorScheme.tvColorScheme(border: Color?): ColorScheme =
+    ColorScheme(
+        primary = primary,
+        onPrimary = onPrimary,
+        primaryContainer = primaryContainer,
+        onPrimaryContainer = onPrimaryContainer,
+        inversePrimary = inversePrimary,
+        secondary = secondary,
+        onSecondary = onSecondary,
+        secondaryContainer = secondaryContainer,
+        onSecondaryContainer = onSecondaryContainer,
+        tertiary = tertiary,
+        onTertiary = onTertiary,
+        tertiaryContainer = tertiaryContainer,
+        onTertiaryContainer = onTertiaryContainer,
+        background = background,
+        onBackground = onBackground,
+        surface = surface,
+        onSurface = onSurface,
+        surfaceVariant = surfaceVariant,
+        onSurfaceVariant = onSurfaceVariant,
+        surfaceTint = surfaceTint,
+        inverseSurface = inverseSurface,
+        inverseOnSurface = inverseOnSurface,
+        error = error,
+        onError = onError,
+        errorContainer = errorContainer,
+        onErrorContainer = onErrorContainer,
+        scrim = scrim,
+        border = border ?: inversePrimary,
+        borderVariant = onPrimary, // TODO
+    )
 
 data class ColorSchemeSet(
     val description: String?,
     val seed: Color?,
-    val light: androidx.compose.material3.ColorScheme,
-    val dark: androidx.compose.material3.ColorScheme,
+    val border: Color?,
+    val light: AppColorScheme,
+    val dark: AppColorScheme,
 )
+
+data class AppColorScheme(
+    val colorScheme: androidx.compose.material3.ColorScheme,
+    val border: Color?,
+) {
+    val tvColorScheme = colorScheme.tvColorScheme(border)
+}

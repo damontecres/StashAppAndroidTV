@@ -50,7 +50,6 @@ import com.github.damontecres.stashapp.ui.defaultColorSchemeSet
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.ui.parseThemeJson
 import com.github.damontecres.stashapp.ui.readThemeJson
-import com.github.damontecres.stashapp.ui.tvColorScheme
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.durationToString
@@ -91,7 +90,10 @@ fun ChooseThemePage(
         item {
             MaterialTheme(colorScheme = colorScheme) {
                 Box(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
@@ -211,7 +213,9 @@ fun ChooseThemePage(
                     Button(
                         onClick = {
                             name = it
-                            colorScheme = chooseColorScheme(context, isSystemInDark, readThemeJson(context, it)).tvColorScheme
+                            val theme = readThemeJson(context, it)
+                            colorScheme =
+                                chooseColorScheme(context, isSystemInDark, theme).tvColorScheme
                         },
                         onLongClick = {
                             if (deleteJson(context, it)) {
