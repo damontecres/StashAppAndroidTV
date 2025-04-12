@@ -81,6 +81,12 @@
 
     <PreferenceCategory app:title="Compose UI">
         <SwitchPreference
+            app:key="@string/pref_key_use_compose_ui"
+            app:title="Use new Compose-based UI"
+            app:summaryOn="Enabled"
+            app:summaryOff="Disabled"
+            app:defaultValue="false" />
+        <SwitchPreference
             app:key="@string/pref_key_ui_grid_jump_controls"
             app:title="Show grid jump buttons"
             app:summaryOn="Enabled"
@@ -92,9 +98,9 @@
             app:defaultValue="default" />
         <ListPreference
             app:key="@string/pref_key_ui_theme_dark_appearance"
-            app:title="Theme"
+            app:title="Theme coloring (Light/Dark)"
             app:summary="%s"
-            app:defaultValue="@string/ui_theme_dark_appearance_choice_default"
+            app:defaultValue="@string/ui_theme_dark_appearance_choice_dark"
             app:entries="@array/ui_theme_dark_appearance_choices"
             app:entryValues="@array/ui_theme_dark_appearance_choices" />
     </PreferenceCategory>

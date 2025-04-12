@@ -696,29 +696,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     Runtime.getRuntime().availableProcessors(),
                 )
             imageThreads.summary = "Requires restart, default is $cpus"
-
-            val composeEnabledPref =
-                findPreference<SwitchPreference>(getString(R.string.pref_key_use_compose_ui))!!
-            composeEnabledPref.setOnPreferenceChangeListener { preference, newValue ->
-                if (newValue == true) {
-                    ConfirmationDialogFragment.show(
-                        childFragmentManager,
-                        "The new UI is still experimental! Do you want to try it?\n\nNote: the app will restart.",
-                    ) {
-                        composeEnabledPref.isChecked = true
-                        requireActivity().finish()
-                    }
-                } else if (newValue == false) {
-                    ConfirmationDialogFragment.show(
-                        childFragmentManager,
-                        "Please report any issues you encountered with the new UI!\n\nDo you want switch back?\n\nNote: the app will restart.",
-                    ) {
-                        composeEnabledPref.isChecked = false
-                        requireActivity().finish()
-                    }
-                }
-                false
-            }
         }
 
         override fun onViewCreated(

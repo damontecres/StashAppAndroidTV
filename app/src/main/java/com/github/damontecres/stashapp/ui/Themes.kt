@@ -43,7 +43,7 @@ fun chooseColorScheme(
             .getDefaultSharedPreferences(context)
             .getString(
                 context.getString(R.string.pref_key_ui_theme_dark_appearance),
-                context.getString(R.string.ui_theme_dark_appearance_choice_default),
+                context.getString(R.string.ui_theme_dark_appearance_choice_dark),
             )
     return when (themeChoice) {
         context.getString(R.string.ui_theme_dark_appearance_choice_light) -> colorSchemeSet.light
@@ -117,7 +117,7 @@ fun Material3AppTheme(content: @Composable () -> Unit) {
             .getDefaultSharedPreferences(context)
             .getString(
                 stringResource(R.string.pref_key_ui_theme_dark_appearance),
-                stringResource(R.string.ui_theme_dark_appearance_choice_default),
+                stringResource(R.string.ui_theme_dark_appearance_choice_dark),
             )
 
     val colorSchemeSet = currentColorSchemeSet ?: defaultColorSchemeSet

@@ -6,8 +6,10 @@ import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
 import androidx.preference.Preference
 import androidx.preference.PreferenceManager
 import androidx.preference.SeekBarPreference
+import androidx.preference.SwitchPreference
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.composeEnabled
+import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
 import java.util.Locale
 
 class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
@@ -45,6 +47,29 @@ class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
             true
         }
 
+        val composeEnabledPref =
+            findPreference<SwitchPreference>(getString(R.string.pref_key_use_compose_ui))!!
+        composeEnabledPref.setOnPreferenceChangeListener { preference, newValue ->
+            if (newValue == true) {
+                ConfirmationDialogFragment.show(
+                    childFragmentManager,
+                    "The new UI is still in beta! Do you want to try it?\n\nNote: the app will restart.",
+                ) {
+                    composeEnabledPref.isChecked = true
+                    requireActivity().finish()
+                }
+            } else if (newValue == false) {
+                ConfirmationDialogFragment.show(
+                    childFragmentManager,
+                    "Please report any issues you encountered with the new UI!\n\nDo you want switch back to the old UI?\n\nNote: the app will restart.",
+                ) {
+                    composeEnabledPref.isChecked = false
+                    requireActivity().finish()
+                }
+            }
+            false
+        }
+
         val chooseThemePref =
             findPreference<Preference>(getString(R.string.pref_key_ui_theme_file))
         chooseThemePref?.summary =
@@ -58,12 +83,15 @@ class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
                 true
             }
         } else {
-            Toast
-                .makeText(
-                    requireContext(),
-                    "Must enable compose to change this",
-                    Toast.LENGTH_SHORT,
-                ).show()
+            chooseThemePref?.setOnPreferenceClickListener {
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "Must enable compose to change this",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                true
+            }
         }
     }
 
