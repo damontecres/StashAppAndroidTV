@@ -19,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -97,8 +96,9 @@ fun SearchForDialog(
                         .graphicsLayer {
                             this.clip = true
                             this.shape = RoundedCornerShape(28.0.dp)
-                        }.drawBehind { drawRect(color = color) }
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                        }
+                        // .drawBehind { drawRect(color = color) }
+                        .background(elevatedContainerColor)
                         .padding(PaddingValues(12.dp)),
                     propagateMinConstraints = true,
                 ) {
@@ -282,7 +282,7 @@ fun SearchForPage(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
         }
@@ -306,13 +306,13 @@ fun SearchForPage(
                     Text(
                         text = stringResource(R.string.waiting_for_query),
                         style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 } else {
                     Text(
                         text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
                         style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
             } else {

@@ -78,4 +78,20 @@
             app:entryValues="@array/tag_tabs"
             />
     </PreferenceCategory>
+
+    <PreferenceCategory app:title="Compose UI">
+        <SwitchPreference
+            app:key="@string/pref_key_ui_grid_jump_controls"
+            app:title="Show grid jump buttons"
+            app:summaryOn="Enabled"
+            app:summaryOff="Disabled"
+            app:defaultValue="true" />
+        <ListPreference
+            app:key="@string/pref_key_ui_theme_dark_appearance"
+            app:title="Theme"
+            app:summary="%s"
+            app:defaultValue="@string/ui_theme_dark_appearance_choice_default"
+            app:entries="@array/ui_theme_dark_appearance_choices"
+            app:entryValues="@array/ui_theme_dark_appearance_choices" />
+    </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

@@ -30,6 +30,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import androidx.tv.material3.surfaceColorAtElevation
 import com.github.damontecres.stashapp.ui.FontAwesome
 import kotlinx.coroutines.delay
 
@@ -135,7 +136,7 @@ fun DialogPopup(
             onDismissRequest = onDismissRequest,
             properties = properties,
         ) {
-            val elevatedContainerColor = MaterialTheme.colorScheme.secondaryContainer
+            val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
             LazyColumn(
                 modifier =
                     Modifier
@@ -165,7 +166,7 @@ fun DialogPopup(
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
                 items(dialogItems) {

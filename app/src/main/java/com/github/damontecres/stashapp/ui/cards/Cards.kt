@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -197,9 +198,10 @@ fun IconRowText(
                     Placeholder(fontSize, fontSize, PlaceholderVerticalAlign.TextCenter),
                 ) {
                     Image(
-                        painterResource(id = R.drawable.sweat_drops),
+                        painter = painterResource(id = R.drawable.sweat_drops),
                         modifier = Modifier.fillMaxSize(),
                         contentDescription = "",
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSecondaryContainer),
                     )
                 },
         )
@@ -207,6 +209,7 @@ fun IconRowText(
         annotatedString,
         inlineContent = inlineContentMap,
         textAlign = TextAlign.Center,
+        color = MaterialTheme.colorScheme.onSecondaryContainer,
         maxLines = 1,
         modifier =
             modifier
@@ -237,7 +240,7 @@ fun RootCard(
     subtitle: @Composable (focused: Boolean) -> Unit = {},
     description: @Composable BoxScope.(focused: Boolean) -> Unit = {},
     shape: CardShape = CardDefaults.shape(),
-    colors: CardColors = CardDefaults.colors(),
+    colors: CardColors = CardDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
     scale: CardScale = CardDefaults.scale(),
     border: CardBorder = CardDefaults.border(),
     glow: CardGlow = CardDefaults.glow(),
@@ -292,7 +295,7 @@ fun RootCard(
     subtitle: @Composable (focused: Boolean) -> Unit = {},
     description: @Composable BoxScope.(focused: Boolean) -> Unit = {},
     shape: CardShape = CardDefaults.shape(),
-    colors: CardColors = CardDefaults.colors(),
+    colors: CardColors = CardDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
     scale: CardScale = CardDefaults.scale(),
     border: CardBorder = CardDefaults.border(),
     glow: CardGlow = CardDefaults.glow(),
@@ -444,7 +447,8 @@ fun RootCard(
             // Title
             ProvideTextStyle(MaterialTheme.typography.titleMedium) {
                 Text(
-                    title,
+                    text = title,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                     maxLines = 1,
                     modifier =
                         Modifier
@@ -452,11 +456,18 @@ fun RootCard(
                 )
             }
             // Subtitle
-            ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+            ProvideTextStyle(
+                MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                ),
+            ) {
                 Box(Modifier.graphicsLayer { alpha = 0.6f }) { subtitle.invoke(focusedAfterDelay) }
             }
             // Description
-            ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+            ProvideTextStyle(
+                MaterialTheme.typography.bodySmall
+                    .copy(color = MaterialTheme.colorScheme.onSecondaryContainer),
+            ) {
                 Box(
                     Modifier
                         .graphicsLayer {

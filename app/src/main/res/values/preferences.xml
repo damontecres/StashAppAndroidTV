@@ -69,4 +69,6 @@
         <item>@string/ui_theme_dark_appearance_choice_dark</item>
     </string-array>
 
+    <string name="pref_key_ui_grid_jump_controls" translatable="false">ui.grid.jumpControls</string>
+
 </resources>

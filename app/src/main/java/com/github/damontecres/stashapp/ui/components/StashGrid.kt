@@ -72,6 +72,7 @@ import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.defaultCardWidth
+import com.github.damontecres.stashapp.util.getPreference
 import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.Job
@@ -308,6 +309,10 @@ fun StashGrid(
     var previouslyFocusedIndex by rememberSaveable(pager) { mutableIntStateOf(0) }
     var focusedIndex by rememberSaveable(pager) { mutableIntStateOf(startPosition) }
 
+    val context = LocalContext.current
+    val showJumpButtons =
+        remember { getPreference(context, R.string.pref_key_ui_grid_jump_controls, true) }
+
     val focusOn = { index: Int ->
         previouslyFocusedIndex = focusedIndex
         focusedIndex = index
@@ -382,19 +387,21 @@ fun StashGrid(
                     }
                 },
     ) {
-        JumpButtons(
-            itemCount = pager.size,
-            columns = columns,
-            jumpClick = { jump ->
-                scope.launch {
-                    val newPosition =
-                        (focusedIndex + jump).coerceIn(0..<pager.size)
-                    focusOn(newPosition)
-                    gridState.scrollToItem(newPosition, -columns)
-                }
-            },
-            modifier = Modifier.align(Alignment.CenterVertically),
-        )
+        if (showJumpButtons) {
+            JumpButtons(
+                itemCount = pager.size,
+                columns = columns,
+                jumpClick = { jump ->
+                    scope.launch {
+                        val newPosition =
+                            (focusedIndex + jump).coerceIn(0..<pager.size)
+                        focusOn(newPosition)
+                        gridState.scrollToItem(newPosition, -columns)
+                    }
+                },
+                modifier = Modifier.align(Alignment.CenterVertically),
+            )
+        }
         Box(
             modifier = Modifier,
         ) {

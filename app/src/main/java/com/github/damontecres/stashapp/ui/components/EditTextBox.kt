@@ -53,14 +53,15 @@ fun EditTextBox(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     Material3AppTheme {
+        // From ButtonDefaults
         val colors =
             TextFieldDefaults.colors(
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                focusedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                unfocusedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .5f),
-                errorContainerColor = MaterialTheme.colorScheme.errorContainer,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                focusedTextColor = MaterialTheme.colorScheme.inverseOnSurface,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                errorContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
                 focusedIndicatorColor = MaterialTheme.colorScheme.border,
                 unfocusedLabelColor = Color.Unspecified,
             )
@@ -170,10 +171,13 @@ fun SearchEditTextBox(
 @Preview
 @Composable
 private fun EditTextBoxPreview() {
-    AppTheme {
+    AppTheme(true) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.background(Color.LightGray).padding(4.dp),
+            modifier =
+                Modifier
+                    .background(Color.LightGray)
+                    .padding(4.dp),
         ) {
             Button(onClick = {}) { Text(text = "Create Filter") }
             EditTextBox(

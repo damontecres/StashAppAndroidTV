@@ -201,7 +201,7 @@ fun SceneDetailsHeader(
                         val isFocused = interactionSource.collectIsFocusedAsState().value
                         val bgColor =
                             if (isFocused) {
-                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .75f)
+                                MaterialTheme.colorScheme.onPrimary.copy(alpha = .75f)
                             } else {
                                 Color.Unspecified
                             }
@@ -223,7 +223,7 @@ fun SceneDetailsHeader(
                             Text(
                                 text = scene.details,
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onBackground,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 maxLines = 3,
                                 overflow = TextOverflow.Ellipsis,
                                 onTextLayout = { textLayoutResult ->
@@ -258,7 +258,7 @@ fun SceneDetailsHeader(
                                             .height(380.dp)
                                             .focusable()
                                             .background(
-                                                MaterialTheme.colorScheme.secondaryContainer,
+                                                MaterialTheme.colorScheme.surface,
                                                 shape = RoundedCornerShape(8.dp),
                                             ).onKeyEvent {
                                                 if (it.type == KeyEventType.KeyUp) {
@@ -279,7 +279,7 @@ fun SceneDetailsHeader(
                                         Text(
                                             text = scene.details,
                                             style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onBackground,
+                                            color = MaterialTheme.colorScheme.onSurface,
                                             modifier =
                                                 Modifier
                                                     .fillMaxWidth(),
@@ -324,7 +324,7 @@ fun SceneDetailsHeader(
                             val isFocused by interactionSource.collectIsFocusedAsState()
                             val bgColor =
                                 if (isFocused) {
-                                    MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .75f)
+                                    MaterialTheme.colorScheme.onPrimary.copy(alpha = .75f)
                                 } else {
                                     Color.Unspecified
                                 }

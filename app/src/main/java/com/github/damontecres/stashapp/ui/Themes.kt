@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui
 
+import android.util.Log
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -31,7 +32,10 @@ private var currentColorSchemeSet: ColorSchemeSet? = null
 
 @Suppress("ktlint:standard:function-naming")
 @Composable
-fun AppTheme(content: @Composable () -> Unit) {
+fun AppTheme(
+    forceDark: Boolean = false,
+    content: @Composable () -> Unit,
+) {
     val context = LocalContext.current
     val themeChoice =
         PreferenceManager
@@ -45,9 +49,16 @@ fun AppTheme(content: @Composable () -> Unit) {
         PreferenceManager
             .getDefaultSharedPreferences(context)
             .getString(
-                stringResource(R.string.pref_key_ui_theme_dark_appearance),
+                stringResource(R.string.pref_key_ui_theme_file),
                 null,
             )
+
+    val useDark = forceDark || isSystemInDarkTheme()
+
+    Log.i(
+        "AppTheme",
+        "AppTheme: themeChoice=$themeChoice, themeFileName=$themeFileName, useDark=$useDark",
+    )
 
     val colorSchemeSet =
         if (themeFileName != null) {
@@ -62,7 +73,7 @@ fun AppTheme(content: @Composable () -> Unit) {
             stringResource(id = R.string.ui_theme_dark_appearance_choice_light) -> colorSchemeSet.light
             stringResource(id = R.string.ui_theme_dark_appearance_choice_dark) -> colorSchemeSet.dark
             else -> {
-                if (isSystemInDarkTheme()) {
+                if (useDark) {
                     colorSchemeSet.dark
                 } else {
                     colorSchemeSet.light
