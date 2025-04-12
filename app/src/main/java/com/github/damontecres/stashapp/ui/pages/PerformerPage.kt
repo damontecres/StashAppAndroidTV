@@ -197,7 +197,6 @@ class PerformerDetailsViewModel(
                         favorite = !favorite.value!!,
                     )?.favorite
             this@PerformerDetailsViewModel.favorite.value = newFavorite
-            // TODO show toast
         }
     }
 

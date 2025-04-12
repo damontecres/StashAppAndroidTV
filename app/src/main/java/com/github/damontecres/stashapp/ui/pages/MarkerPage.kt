@@ -182,7 +182,6 @@ fun MarkerPageContent(
                     .drawWithContent {
                         drawContent()
 
-                        // TODO better gradient?
                         drawRect(
                             Brush.verticalGradient(
                                 colors = listOf(Color.Transparent, gradientColor),

@@ -6,13 +6,11 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -208,7 +206,7 @@ fun SearchForPage(
                 }
         } else {
             Log.v(TAG, "Query is empty")
-            results = listOf(CreateNew(dataType, query))
+            results = listOf()
         }
     }
 
@@ -273,79 +271,84 @@ fun SearchForPage(
         }
     }
 
-    val scrollState = rememberScrollState()
-
-    Column(
-        modifier =
-            modifier
-                .verticalScroll(scrollState),
+    LazyColumn(
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (title != null) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-        SearchEditTextBox(
-            value = searchQuery,
-            onValueChange = { newQuery ->
-                searchQuery = newQuery
-                search(newQuery)
-            },
-            onSearchClick = { search(searchQuery) },
-        )
-
-        val startPadding = 8.dp
-        val bottomPadding = 8.dp
-
-        if (results.isEmpty()) {
-            if (searchQuery.isBlank()) {
+            item {
                 Text(
-                    text = stringResource(R.string.waiting_for_query),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-            } else {
-                // TODO handle create
-                Text(
-                    text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
+                    text = title,
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
             }
-        } else {
-            SearchItemsRow(
-                title = stringResource(R.string.results),
-                items = results,
-                uiConfig = uiConfig,
-                itemOnClick = itemOnClickWrapper,
-                longClicker = { _, _ -> },
-                modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
+        }
+        item {
+            SearchEditTextBox(
+                value = searchQuery,
+                onValueChange = { newQuery ->
+                    searchQuery = newQuery
+                    search(newQuery)
+                },
+                onSearchClick = { search(searchQuery) },
             )
+        }
+
+        val startPadding = 8.dp
+        val bottomPadding = 8.dp
+
+        item {
+            if (results.isEmpty()) {
+                if (searchQuery.isBlank()) {
+                    Text(
+                        text = stringResource(R.string.waiting_for_query),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
+            } else {
+                SearchItemsRow(
+                    title = stringResource(R.string.results),
+                    items = results,
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClickWrapper,
+                    longClicker = { _, _ -> },
+                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
+                )
+            }
         }
         if (suggestions.isNotEmpty()) {
-            ItemsRow(
-                title = stringResource(R.string.suggestions),
-                items = suggestions,
-                uiConfig = uiConfig,
-                itemOnClick = itemOnClickWrapper,
-                modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
-            )
+            item {
+                ItemsRow(
+                    title = stringResource(R.string.suggestions),
+                    items = suggestions,
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClickWrapper,
+                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
+                )
+            }
         }
         if (recent.isNotEmpty()) {
-            ItemsRow(
-                title =
-                    stringResource(
-                        R.string.format_recently_used,
-                        context.getString(dataType.pluralStringId).lowercase(),
-                    ),
-                items = recent,
-                uiConfig = uiConfig,
-                itemOnClick = itemOnClickWrapper,
-                modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
-            )
+            item {
+                ItemsRow(
+                    title =
+                        stringResource(
+                            R.string.format_recently_used,
+                            context.getString(dataType.pluralStringId).lowercase(),
+                        ),
+                    items = recent,
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClickWrapper,
+                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
+                )
+            }
         }
     }
 }

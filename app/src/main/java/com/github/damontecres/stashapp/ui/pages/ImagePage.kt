@@ -232,7 +232,6 @@ class ImageDetailsViewModel : ViewModel() {
             updatePosition(newPosition)
             true
         } else {
-            // TODO
             false
         }
     }
@@ -243,7 +242,6 @@ class ImageDetailsViewModel : ViewModel() {
             updatePosition(newPosition)
             true
         } else {
-            // TODO
             false
         }
     }
