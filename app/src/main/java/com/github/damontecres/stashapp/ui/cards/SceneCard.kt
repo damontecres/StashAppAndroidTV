@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -103,7 +102,7 @@ fun SceneCard(
                                 Modifier
                                     .align(Alignment.BottomStart)
                                     .background(
-                                        Color.White,
+                                        MaterialTheme.colorScheme.tertiary, // TODO?
                                     ).clip(RectangleShape)
                                     .height(4.dp)
                                     .width((ScenePresenter.CARD_WIDTH * percentWatched).dp / 2),

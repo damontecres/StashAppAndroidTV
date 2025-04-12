@@ -187,6 +187,8 @@ class NavigationManagerLeanback(
                         destination.className,
                     )
                 }
+
+                Destination.ChooseTheme -> throw IllegalArgumentException("ChooseTheme not supported unless using Compose")
             }
 
         fragment.arguments = Bundle().putDestination(destination)

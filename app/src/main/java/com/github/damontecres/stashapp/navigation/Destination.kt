@@ -141,6 +141,9 @@ sealed class Destination(
         override fun toString(): String = "CreateFilter(destId=$destId, dataType=$dataType)"
     }
 
+    @Serializable
+    data object ChooseTheme : Destination(true)
+
     /**
      * An arbitrary fragment that requires no arguments
      */

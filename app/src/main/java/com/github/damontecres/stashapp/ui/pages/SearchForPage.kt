@@ -77,6 +77,10 @@ fun SearchForDialog(
     uiConfig: ComposeUiConfig,
     dialogTitle: String? = null,
     dismissOnClick: Boolean = true,
+    showSuggestions: Boolean = true,
+    showRecent: Boolean = true,
+    allowCreate: Boolean = true,
+    startingSearchQuery: String = "",
 ) {
     if (show) {
         Material3AppTheme {
@@ -115,6 +119,10 @@ fun SearchForDialog(
                         },
                         uiConfig = uiConfig,
                         modifier = Modifier.fillMaxSize(),
+                        showSuggestions = showSuggestions,
+                        showRecent = showRecent,
+                        allowCreate = allowCreate,
+                        startingSearchQuery = startingSearchQuery,
                     )
                 }
             }
@@ -131,6 +139,10 @@ fun SearchForPage(
     itemOnClick: (Long, StashData) -> Unit,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
+    showSuggestions: Boolean = true,
+    showRecent: Boolean = true,
+    allowCreate: Boolean = true,
+    startingSearchQuery: String = "",
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -146,7 +158,7 @@ fun SearchForPage(
             .getDefaultSharedPreferences(context)
             .getInt("maxSearchResults", 25)
 
-    var searchQuery by remember { mutableStateOf("") }
+    var searchQuery by remember { mutableStateOf(startingSearchQuery) }
 
     var results by remember { mutableStateOf<List<Any>>(listOf()) }
     var suggestions by remember { mutableStateOf<List<StashData>>(listOf()) }
@@ -198,7 +210,7 @@ fun SearchForPage(
                             ),
                         )
                     results =
-                        if (SearchForFragment.allowCreate(dataType, query, items)) {
+                        if (allowCreate && SearchForFragment.allowCreate(dataType, query, items)) {
                             val mutableItems = (items as List<Any>).toMutableList()
                             mutableItems.add(CreateNew(dataType, query))
                             mutableItems
@@ -212,31 +224,33 @@ fun SearchForPage(
         }
     }
 
-    LaunchedEffect(Unit) {
-        scope.launch(StashCoroutineExceptionHandler() + Dispatchers.IO) {
-            val mostRecentIds =
-                StashApplication
-                    .getDatabase()
-                    .recentSearchItemsDao()
-                    .getMostRecent(perPage, server.url, dataType)
-                    .map { it.id }
-            if (mostRecentIds.isNotEmpty()) {
-                recent =
-                    when (dataType) {
-                        DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
-                        DataType.TAG -> queryEngine.getTags(mostRecentIds)
-                        DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
-                        DataType.GALLERY -> queryEngine.findGalleries(galleryIds = mostRecentIds)
-                        DataType.GROUP -> queryEngine.findGroups(groupIds = mostRecentIds)
-                        else -> {
-                            listOf()
+    if (showRecent) {
+        LaunchedEffect(Unit) {
+            scope.launch(StashCoroutineExceptionHandler() + Dispatchers.IO) {
+                val mostRecentIds =
+                    StashApplication
+                        .getDatabase()
+                        .recentSearchItemsDao()
+                        .getMostRecent(perPage, server.url, dataType)
+                        .map { it.id }
+                if (mostRecentIds.isNotEmpty()) {
+                    recent =
+                        when (dataType) {
+                            DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
+                            DataType.TAG -> queryEngine.getTags(mostRecentIds)
+                            DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
+                            DataType.GALLERY -> queryEngine.findGalleries(galleryIds = mostRecentIds)
+                            DataType.GROUP -> queryEngine.findGroups(groupIds = mostRecentIds)
+                            else -> {
+                                listOf()
+                            }
                         }
-                    }
+                }
             }
         }
     }
 
-    if (dataType in SearchForFragment.DATA_TYPE_SUGGESTIONS) {
+    if (showSuggestions && dataType in DATA_TYPE_SUGGESTIONS) {
         LaunchedEffect(Unit) {
             val sortBy =
                 when (dataType) {
@@ -271,6 +285,10 @@ fun SearchForPage(
                     }
             }
         }
+    }
+
+    LaunchedEffect(startingSearchQuery) {
+        search(startingSearchQuery)
     }
 
     LazyColumn(

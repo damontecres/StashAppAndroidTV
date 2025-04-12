@@ -1,6 +1,8 @@
 package com.github.damontecres.stashapp.ui
 
+import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -17,6 +19,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.File
 
 val FontAwesome = FontFamily(Font(resId = R.font.fa_solid_900))
 
@@ -30,56 +33,74 @@ val defaultColorSchemeSet =
 
 private var currentColorSchemeSet: ColorSchemeSet? = null
 
+fun chooseColorScheme(
+    context: Context,
+    isSystemInDark: Boolean,
+    colorSchemeSet: ColorSchemeSet,
+): androidx.compose.material3.ColorScheme {
+    val themeChoice =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getString(
+                context.getString(R.string.pref_key_ui_theme_dark_appearance),
+                context.getString(R.string.ui_theme_dark_appearance_choice_default),
+            )
+    return when (themeChoice) {
+        context.getString(R.string.ui_theme_dark_appearance_choice_light) -> colorSchemeSet.light
+        context.getString(R.string.ui_theme_dark_appearance_choice_dark) -> colorSchemeSet.dark
+        else -> {
+            if (isSystemInDark) {
+                colorSchemeSet.dark
+            } else {
+                colorSchemeSet.light
+            }
+        }
+    }
+}
+
+fun getTheme(
+    context: Context,
+    forceDark: Boolean = false,
+    isSystemInDarkTheme: Boolean = false,
+): androidx.compose.material3.ColorScheme {
+    val themeFileName =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getString(
+                context.getString(R.string.pref_key_ui_theme_file),
+                null,
+            )
+
+    val useDark = forceDark || isSystemInDarkTheme
+    val colorSchemeSet =
+        if (themeFileName != null && themeFileName != "default") {
+            try {
+                readThemeJson(context, themeFileName)
+            } catch (ex: Exception) {
+                Log.e("Themes", "Error reading json $themeFileName", ex)
+                Toast
+                    .makeText(
+                        context,
+                        "Error reading theme '$themeFileName': ${ex.localizedMessage}",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                defaultColorSchemeSet
+            }
+        } else {
+            defaultColorSchemeSet
+        }
+    currentColorSchemeSet = colorSchemeSet
+
+    return chooseColorScheme(context, useDark, colorSchemeSet)
+}
+
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun AppTheme(
     forceDark: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val context = LocalContext.current
-    val themeChoice =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getString(
-                stringResource(R.string.pref_key_ui_theme_dark_appearance),
-                stringResource(R.string.ui_theme_dark_appearance_choice_default),
-            )
-
-    val themeFileName =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getString(
-                stringResource(R.string.pref_key_ui_theme_file),
-                null,
-            )
-
-    val useDark = forceDark || isSystemInDarkTheme()
-
-    Log.i(
-        "AppTheme",
-        "AppTheme: themeChoice=$themeChoice, themeFileName=$themeFileName, useDark=$useDark",
-    )
-
-    val colorSchemeSet =
-        if (themeFileName != null) {
-            TODO()
-        } else {
-            defaultColorSchemeSet
-        }
-    currentColorSchemeSet = colorSchemeSet
-
-    val colorScheme =
-        when (themeChoice) {
-            stringResource(id = R.string.ui_theme_dark_appearance_choice_light) -> colorSchemeSet.light
-            stringResource(id = R.string.ui_theme_dark_appearance_choice_dark) -> colorSchemeSet.dark
-            else -> {
-                if (useDark) {
-                    colorSchemeSet.dark
-                } else {
-                    colorSchemeSet.light
-                }
-            }
-        }
+    val colorScheme = getTheme(LocalContext.current, forceDark, isSystemInDarkTheme())
     MaterialTheme(colorScheme = colorScheme.tvColorScheme, content = content)
 }
 
@@ -122,6 +143,15 @@ sealed class AppColors private constructor() {
         val TransparentBlack50 = Color(0x80000000)
         val TransparentBlack75 = Color(0xBF000000)
     }
+}
+
+fun readThemeJson(
+    context: Context,
+    name: String,
+): ColorSchemeSet {
+    val dir = context.getDir("themes", Context.MODE_PRIVATE)
+    val jsonString = File(dir, "$name.json").readText()
+    return parseThemeJson(jsonString)
 }
 
 fun parseThemeJson(jsonString: String): ColorSchemeSet {

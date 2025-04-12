@@ -1,8 +1,13 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
+import androidx.preference.Preference
+import androidx.preference.PreferenceManager
 import androidx.preference.SeekBarPreference
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.util.composeEnabled
 import java.util.Locale
 
 class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
@@ -38,6 +43,27 @@ class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
         imageClipDelayPref.setOnPreferenceChangeListener { _, newValue ->
             setVideoDelaySummary(imageClipDelayPref, newValue, 2)
             true
+        }
+
+        val chooseThemePref =
+            findPreference<Preference>(getString(R.string.pref_key_ui_theme_file))
+        chooseThemePref?.summary =
+            PreferenceManager.getDefaultSharedPreferences(requireContext()).getString(
+                getString(R.string.pref_key_ui_theme_file),
+                "default",
+            )
+        if (composeEnabled(requireContext())) {
+            chooseThemePref?.setOnPreferenceClickListener {
+                StashApplication.navigationManager.navigate(Destination.ChooseTheme)
+                true
+            }
+        } else {
+            Toast
+                .makeText(
+                    requireContext(),
+                    "Must enable compose to change this",
+                    Toast.LENGTH_SHORT,
+                ).show()
         }
     }
 

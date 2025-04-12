@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -72,6 +74,7 @@ import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.pages.ChooseThemePage
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.FilterPage
 import com.github.damontecres.stashapp.ui.pages.GalleryPage
@@ -109,7 +112,11 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
             // Dispose of the Composition when the view's LifecycleOwner is destroyed
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
-                AppTheme {
+                val isSystemInDarkTheme = isSystemInDarkTheme()
+                var colorScheme by
+                    remember { mutableStateOf(getTheme(requireContext(), false, isSystemInDarkTheme)) }
+                Log.i(TAG, "colorScheme.primary=${colorScheme.primary}")
+                MaterialTheme(colorScheme = colorScheme.tvColorScheme) {
                     val server by serverViewModel.currentServer.observeAsState()
                     val currDestination by serverViewModel.destination.observeAsState()
                     key(server) {
@@ -131,6 +138,29 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                     server = server ?: StashServer("http://0.0.0.0", null),
                                     serverViewModel = serverViewModel,
                                     navigationManager = navManager,
+                                    onChangeTheme = { name ->
+                                        try {
+                                            colorScheme =
+                                                chooseColorScheme(
+                                                    requireContext(),
+                                                    isSystemInDarkTheme,
+                                                    if (name.isNullOrBlank() || name == "default") {
+                                                        defaultColorSchemeSet
+                                                    } else {
+                                                        readThemeJson(requireContext(), name)
+                                                    },
+                                                )
+                                            Log.i(TAG, "Updated theme")
+                                        } catch (ex: Exception) {
+                                            Log.e(TAG, "Exception changing theme", ex)
+                                            Toast
+                                                .makeText(
+                                                    requireContext(),
+                                                    "Error changing theme: ${ex.localizedMessage}",
+                                                    Toast.LENGTH_LONG,
+                                                ).show()
+                                        }
+                                    },
                                     modifier = Modifier.background(MaterialTheme.colorScheme.background),
                                 )
                             }
@@ -152,6 +182,7 @@ fun FragmentContent(
     server: StashServer,
     navigationManager: NavigationManagerCompose,
     serverViewModel: ServerViewModel,
+    onChangeTheme: (String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -295,6 +326,15 @@ fun FragmentContent(
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
+
+                Destination.ChooseTheme ->
+                    ChooseThemePage(
+                        server = server,
+                        navigationManager = navigationManager,
+                        uiConfig = composeUiConfig,
+                        onChooseTheme = onChangeTheme,
+                        modifier = Modifier.fillMaxSize(),
+                    )
 
                 else -> FragmentView(navigationManager, destination)
             }

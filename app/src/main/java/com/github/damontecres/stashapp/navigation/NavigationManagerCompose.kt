@@ -107,6 +107,8 @@ class NavigationManagerCompose(
                         destination.className,
                     )
                 }
+
+                Destination.ChooseTheme -> null
             }
 
         fragment?.arguments = Bundle().putDestination(destination)
