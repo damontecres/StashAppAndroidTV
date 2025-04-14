@@ -35,18 +35,20 @@ import java.util.EnumMap
 @Composable
 fun SceneCard(
     uiConfig: ComposeUiConfig,
-    item: SlimSceneData,
+    item: SlimSceneData?,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-    dataTypeMap[DataType.TAG] = item.tags.size
-    dataTypeMap[DataType.PERFORMER] = item.performers.size
-    dataTypeMap[DataType.GROUP] = item.groups.size
-    dataTypeMap[DataType.MARKER] = item.scene_markers.size
-    dataTypeMap[DataType.GALLERY] = item.galleries.size
+    item?.let {
+        dataTypeMap[DataType.TAG] = item.tags.size
+        dataTypeMap[DataType.PERFORMER] = item.performers.size
+        dataTypeMap[DataType.GROUP] = item.groups.size
+        dataTypeMap[DataType.MARKER] = item.scene_markers.size
+        dataTypeMap[DataType.GALLERY] = item.galleries.size
+    }
 
     RootCard(
         item = item,
@@ -60,23 +62,23 @@ fun SceneCard(
         uiConfig = uiConfig,
         imageWidth = ScenePresenter.CARD_WIDTH.dp / 2,
         imageHeight = ScenePresenter.CARD_HEIGHT.dp / 2,
-        imageUrl = item.paths.screenshot,
+        imageUrl = item?.paths?.screenshot,
         defaultImageDrawableRes = R.drawable.default_scene,
-        videoUrl = item.paths.preview,
-        title = item.titleOrFilename ?: "",
-        subtitle = { Text(item.date ?: "") },
+        videoUrl = item?.paths?.preview,
+        title = item?.titleOrFilename ?: "",
+        subtitle = { Text(item?.date ?: "") },
         description = {
             IconRowText(
                 dataTypeMap,
-                item.o_counter ?: -1,
+                item?.o_counter ?: -1,
                 Modifier
                     .enableMarquee(it)
                     .align(Alignment.Center),
             )
         },
         imageOverlay = {
-            ImageOverlay(uiConfig.ratingAsStars, rating100 = item.rating100) {
-                val videoFile = item.files.firstOrNull()?.videoFile
+            ImageOverlay(uiConfig.ratingAsStars, rating100 = item?.rating100) {
+                val videoFile = item?.files?.firstOrNull()?.videoFile
                 if (videoFile != null) {
                     val duration = durationToString(videoFile.duration)
                     Text(
@@ -109,7 +111,7 @@ fun SceneCard(
                         )
                     }
                 }
-                if (item.studio != null) {
+                if (item?.studio != null) {
                     val imageUrl = item.studio.image_path
                     if (!uiConfig.showStudioAsText &&
                         imageUrl.isNotNullOrBlank() &&

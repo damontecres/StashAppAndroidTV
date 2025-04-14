@@ -94,6 +94,7 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.LocalPlayerContext
+import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.CreateNew
@@ -223,7 +224,7 @@ fun IconRowText(
 @OptIn(UnstableApi::class)
 @Composable
 fun RootCard(
-    item: Any,
+    item: Any?,
     onClick: () -> Unit,
     title: String,
     uiConfig: ComposeUiConfig,
@@ -278,7 +279,7 @@ fun RootCard(
 @OptIn(UnstableApi::class)
 @Composable
 fun RootCard(
-    item: Any,
+    item: Any?,
     onClick: () -> Unit,
     title: AnnotatedString,
     uiConfig: ComposeUiConfig,
@@ -339,7 +340,14 @@ fun RootCard(
 
     Card(
         onClick = onClick,
-        onLongClick = { longClicker.longClick(item, getFilterAndPosition?.invoke(item)) },
+        onLongClick = {
+            item?.let {
+                longClicker.longClick(
+                    item,
+                    getFilterAndPosition?.invoke(item),
+                )
+            }
+        },
         modifier =
             modifier
                 .onFocusChanged { focusState ->
@@ -662,6 +670,30 @@ fun StashCard(
                 modifier = modifier,
             )
         }
+
         else -> throw UnsupportedOperationException("Item with class ${item.javaClass} not supported.")
     }
+}
+
+@Composable
+fun LoadingCard(
+    dataType: DataType,
+    uiConfig: ComposeUiConfig,
+    modifier: Modifier = Modifier,
+) {
+    RootCard(
+        item = null,
+        title = "Loading...",
+        subtitle = {},
+        uiConfig = uiConfig,
+        imageWidth = dataTypeImageWidth(dataType).dp / 2,
+        imageHeight = dataTypeImageHeight(dataType).dp / 2,
+        imageContent = {
+            CircularProgress(modifier = Modifier.fillMaxSize(.8f))
+        },
+        onClick = {},
+        longClicker = { _, _ -> },
+        getFilterAndPosition = null,
+        modifier = modifier,
+    )
 }

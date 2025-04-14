@@ -31,17 +31,15 @@ import kotlinx.parcelize.Parcelize
 @Composable
 fun <T : StashData> ItemsRow(
     @StringRes title: Int,
-    rowNum: Int,
     items: List<T>,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
-    cardOnFocus: (isFocused: Boolean, row: Int, column: Int) -> Unit,
+    cardOnFocus: (isFocused: Boolean, index: Int) -> Unit,
     modifier: Modifier = Modifier,
     focusPair: FocusPair? = null,
 ) = ItemsRow(
     title = stringResource(title),
-    rowNum = rowNum,
     items = items,
     uiConfig = uiConfig,
     itemOnClick = itemOnClick,
@@ -61,12 +59,11 @@ fun <T : StashData> ItemsRow(
     longClicker: LongClicker<Any>? = null,
 ) = ItemsRow(
     title = title,
-    rowNum = 0,
     items = items,
     uiConfig = uiConfig,
     itemOnClick = itemOnClick,
     longClicker = longClicker ?: LongClicker { _, _ -> },
-    cardOnFocus = { _, _, _ -> },
+    cardOnFocus = { _, _ -> },
     modifier = modifier,
     focusPair = null,
 )
@@ -75,15 +72,18 @@ fun <T : StashData> ItemsRow(
 @Composable
 fun <T : StashData> ItemsRow(
     title: String,
-    rowNum: Int,
     items: List<T>,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
-    cardOnFocus: (isFocused: Boolean, row: Int, column: Int) -> Unit,
+    cardOnFocus: (isFocused: Boolean, index: Int) -> Unit,
     modifier: Modifier = Modifier,
     focusPair: FocusPair? = null,
 ) {
+    Log.v(
+        "SceneDetails",
+        "$title: focusPair?.focusRequester=${focusPair?.focusRequester}",
+    )
     val firstFocus = remember { FocusRequester() }
     val state = rememberLazyListState()
     Column(
@@ -99,10 +99,6 @@ fun <T : StashData> ItemsRow(
                 Modifier
                     .padding(top = 8.dp)
                     .focusRestorer {
-                        Log.v(
-                            "SceneDetails",
-                            "focusPair?.focusRequester=${focusPair?.focusRequester}",
-                        )
                         focusPair?.focusRequester ?: firstFocus
                     },
             state = state,
@@ -117,10 +113,10 @@ fun <T : StashData> ItemsRow(
                     } else {
                         Modifier
                     }.ifElse(
-                        focusPair != null && focusPair.row == rowNum && focusPair.column == index,
+                        focusPair != null && focusPair.column == index,
                         { Modifier.focusRequester(focusPair!!.focusRequester) },
                     ).onFocusChanged {
-                        cardOnFocus.invoke(it.isFocused, rowNum, index)
+                        cardOnFocus.invoke(it.isFocused, index)
                     }
 
                 StashCard(

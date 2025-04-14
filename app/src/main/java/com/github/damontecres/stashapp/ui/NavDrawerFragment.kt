@@ -450,7 +450,7 @@ fun FragmentContent(
                                                 Modifier
                                                     .focusRequester(initialFocus),
                                             ).isElementVisible { visiblePages[page] = it },
-                                    selected = selectedScreen == page,
+                                    selected = selectedScreen == page && drawerState.currentValue == DrawerValue.Open,
                                     onClick = {
                                         val refreshMain =
                                             selectedScreen == DrawerPage.HOME_PAGE && page == DrawerPage.HOME_PAGE

@@ -6,6 +6,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
@@ -400,6 +402,7 @@ fun SceneDetails(
 
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     var focusPosition by rememberSaveable { mutableStateOf<RowColumn?>(null) }
+    var savedFocusPosition by rememberSaveable { mutableStateOf<RowColumn?>(null) }
     val focusPositionRequester = remember { FocusRequester() }
     val headerFocusRequester = remember { FocusRequester() }
     /* How focus restoring works (such as entering or coming back to this page):
@@ -407,6 +410,7 @@ fun SceneDetails(
        Each card gets an onFocus modifier to callback its row & column, which is saved in focusPosition
        When restoring focus, if focusPosition is set, then pass the focusPositionRequester into that ItemRow
        That ItemRow must assign that FocusRequester to the right card
+       When this page leaves composition, save the currently focused position
        Finally, on recomposing, the FocusRequester is called. If focusPosition is null, instead
        SceneHeaderDetails will be brought into view and headerFocusRequester will be called
      */
@@ -424,9 +428,18 @@ fun SceneDetails(
             }
         }
     }
+    LifecycleStartEffect(Unit) {
+        onStopOrDispose {
+            savedFocusPosition = focusPosition
+        }
+    }
 
     val cardOnFocus = { isFocused: Boolean, row: Int, column: Int ->
-        focusPosition = if (isFocused) RowColumn(row, column) else null
+        if (isFocused) {
+            focusPosition = RowColumn(row, column)
+        } else if (focusPosition?.let { it.row == row && it.column == column } == true) {
+            focusPosition = null
+        }
     }
 
     val removeLongClicker =
@@ -477,7 +490,9 @@ fun SceneDetails(
                 )
         }
 
+    val listState = rememberLazyListState()
     LazyColumn(
+        state = listState,
         contentPadding = PaddingValues(bottom = 135.dp),
         modifier = modifier,
     ) {
@@ -589,13 +604,14 @@ fun SceneDetails(
         if (markers.isNotEmpty()) {
             item {
                 ItemsRow(
-                    rowNum = 0,
                     title = R.string.stashapp_markers,
                     items = markers,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = removeLongClicker,
-                    cardOnFocus = cardOnFocus,
+                    cardOnFocus = { isFocused, index ->
+                        cardOnFocus.invoke(isFocused, 0, index)
+                    },
                     focusPair = createFocusPair(0),
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
@@ -604,13 +620,14 @@ fun SceneDetails(
         if (groups.isNotEmpty()) {
             item {
                 ItemsRow(
-                    rowNum = 1,
                     title = R.string.stashapp_groups,
                     items = groups,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = removeLongClicker,
-                    cardOnFocus = cardOnFocus,
+                    cardOnFocus = { isFocused, index ->
+                        cardOnFocus.invoke(isFocused, 1, index)
+                    },
                     focusPair = createFocusPair(1),
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
@@ -619,14 +636,15 @@ fun SceneDetails(
         if (performers.isNotEmpty()) {
             item {
                 ItemsRow(
-                    rowNum = 2,
                     title = R.string.stashapp_performers,
                     items = performers,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = removeLongClicker,
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
-                    cardOnFocus = cardOnFocus,
+                    cardOnFocus = { isFocused, index ->
+                        cardOnFocus.invoke(isFocused, 2, index)
+                    },
                     focusPair = createFocusPair(2),
                 )
             }
@@ -634,13 +652,14 @@ fun SceneDetails(
         if (tags.isNotEmpty()) {
             item {
                 ItemsRow(
-                    rowNum = 3,
                     title = R.string.stashapp_tags,
                     items = tags,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = removeLongClicker,
-                    cardOnFocus = cardOnFocus,
+                    cardOnFocus = { isFocused, index ->
+                        cardOnFocus.invoke(isFocused, 3, index)
+                    },
                     focusPair = createFocusPair(3),
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
@@ -649,13 +668,14 @@ fun SceneDetails(
         if (galleries.isNotEmpty()) {
             item {
                 ItemsRow(
-                    rowNum = 4,
                     title = R.string.stashapp_galleries,
                     items = galleries,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = removeLongClicker,
-                    cardOnFocus = cardOnFocus,
+                    cardOnFocus = { isFocused, index ->
+                        cardOnFocus.invoke(isFocused, 4, index)
+                    },
                     focusPair = createFocusPair(4),
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
@@ -697,11 +717,12 @@ fun SceneDetails(
         uiConfig = uiConfig,
     )
     LaunchedEffect(Unit) {
-        if (focusPosition != null) {
+        if (savedFocusPosition != null) {
             Log.v("SceneDetails", "Focusing on $focusPosition")
             focusPositionRequester.tryRequestFocus()
         } else {
             bringIntoViewRequester.bringIntoView()
+            listState.animateScrollToItem(0)
             headerFocusRequester.tryRequestFocus()
         }
     }
