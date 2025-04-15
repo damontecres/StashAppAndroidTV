@@ -14,6 +14,7 @@ data class ComposeUiConfig(
     val starPrecision: StarRatingPrecision,
     val showStudioAsText: Boolean,
     val debugTextEnabled: Boolean,
+    val showTitleDuringPlayback: Boolean,
     val cardSettings: CardUiSettings,
 ) {
     companion object {
@@ -38,6 +39,7 @@ data class ComposeUiConfig(
                         false,
                     ),
                 cardSettings = ServerViewModel.createUiSettings(context),
+                showTitleDuringPlayback = prefs.getBoolean("exoShowTitle", true),
             )
         }
     }

@@ -68,6 +68,8 @@ import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.SwitchWithLabel
 import com.github.damontecres.stashapp.ui.cards.LoadingCard
 import com.github.damontecres.stashapp.ui.cards.StashCard
+import com.github.damontecres.stashapp.ui.components.playback.isBackwardButton
+import com.github.damontecres.stashapp.ui.components.playback.isForwardButton
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
@@ -368,6 +370,44 @@ fun StashGrid(
         }
     }
 
+    val prefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
+
+    val useBackToJump =
+        remember { prefs.getBoolean(context.getString(R.string.pref_key_back_button_scroll), true) }
+    val showFooter =
+        remember { prefs.getBoolean(context.getString(R.string.pref_key_show_grid_footer), true) }
+    val useJumpRemoteButtons =
+        remember {
+            prefs.getBoolean(
+                context.getString(R.string.pref_key_remote_page_buttons),
+                true,
+            )
+        }
+    val jump2 =
+        remember {
+            if (pager.size >= 25_000) {
+                columns * 2000
+            } else if (pager.size >= 7_000) {
+                columns * 200
+            } else if (pager.size >= 2_000) {
+                columns * 50
+            } else {
+                columns * 20
+            }
+        }
+    val jump1 =
+        remember {
+            if (pager.size >= 25_000) {
+                columns * 500
+            } else if (pager.size >= 7_000) {
+                columns * 50
+            } else if (pager.size >= 2_000) {
+                columns * 15
+            } else {
+                columns * 6
+            }
+        }
+
     Row(
         modifier =
             modifier
@@ -375,7 +415,7 @@ fun StashGrid(
                 .onKeyEvent {
                     if (it.type != KeyEventType.KeyUp) {
                         return@onKeyEvent false
-                    } else if (it.key == Key.Back && it.nativeKeyEvent.isLongPress) {
+                    } else if (useBackToJump && it.key == Key.Back && it.nativeKeyEvent.isLongPress) {
                         // TODO doesn't work?
                         focusOn(previouslyFocusedIndex)
                         scope.launch {
@@ -383,7 +423,7 @@ fun StashGrid(
                             firstFocus.tryRequestFocus()
                         }
                         return@onKeyEvent true
-                    } else if (it.key == Key.Back && focusedIndex > 0) {
+                    } else if (useBackToJump && it.key == Key.Back && focusedIndex > 0) {
                         focusOn(0)
                         scope.launch {
                             gridState.scrollToItem(0, -columns)
@@ -425,6 +465,24 @@ fun StashGrid(
                             return@onKeyEvent true
                         }
                         return@onKeyEvent false
+                    } else if (useJumpRemoteButtons && isForwardButton(it)) {
+                        scope.launch {
+                            // TODO
+                            val newPosition =
+                                (focusedIndex + jump1).coerceIn(0..<pager.size)
+                            focusOn(newPosition)
+                            gridState.scrollToItem(newPosition, -columns)
+                        }
+                        return@onKeyEvent true
+                    } else if (useJumpRemoteButtons && isBackwardButton(it)) {
+                        scope.launch {
+                            // TODO
+                            val newPosition =
+                                (focusedIndex - jump1).coerceIn(0..<pager.size)
+                            focusOn(newPosition)
+                            gridState.scrollToItem(newPosition, -columns)
+                        }
+                        return@onKeyEvent true
                     } else {
                         return@onKeyEvent false
                     }
@@ -432,8 +490,8 @@ fun StashGrid(
     ) {
         if (showJumpButtons) {
             JumpButtons(
-                itemCount = pager.size,
-                columns = columns,
+                jump1 = jump1,
+                jump2 = jump2,
                 jumpClick = { jump ->
                     scope.launch {
                         // TODO
@@ -543,18 +601,20 @@ fun StashGrid(
                     )
                 }
             }
-            // Footer
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .background(AppColors.TransparentBlack50),
-            ) {
-                Text(
-                    modifier = Modifier.padding(4.dp),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    text = "${focusedIndex + 1} / ${pager.size}",
-                )
+            if (showFooter) {
+                // Footer
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .background(AppColors.TransparentBlack50),
+                ) {
+                    Text(
+                        modifier = Modifier.padding(4.dp),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        text = "${focusedIndex + 1} / ${pager.size}",
+                    )
+                }
             }
         }
         // Letters
@@ -579,35 +639,11 @@ fun StashGrid(
 
 @Composable
 fun JumpButtons(
-    itemCount: Int,
-    columns: Int,
+    jump1: Int,
+    jump2: Int,
     jumpClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val jump2 =
-        remember {
-            if (itemCount >= 25_000) {
-                columns * 2000
-            } else if (itemCount >= 7_000) {
-                columns * 200
-            } else if (itemCount >= 2_000) {
-                columns * 50
-            } else {
-                columns * 20
-            }
-        }
-    val jump1 =
-        remember {
-            if (itemCount >= 25_000) {
-                columns * 500
-            } else if (itemCount >= 7_000) {
-                columns * 50
-            } else if (itemCount >= 2_000) {
-                columns * 15
-            } else {
-                columns * 6
-            }
-        }
     Column(
         modifier = modifier,
     ) {

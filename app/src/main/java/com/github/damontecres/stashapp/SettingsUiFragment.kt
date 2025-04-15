@@ -3,13 +3,16 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import android.widget.Toast
 import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceManager
 import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.composeEnabled
 import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
@@ -55,16 +58,22 @@ class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
                     childFragmentManager,
                     "The new UI is still in beta! Do you want to try it?\n\nNote: the app will restart.",
                 ) {
-                    composeEnabledPref.isChecked = true
-                    requireActivity().finish()
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        SettingsFragment.clearCaches(requireContext())
+                        composeEnabledPref.isChecked = true
+                        requireActivity().finish()
+                    }
                 }
             } else if (newValue == false) {
                 ConfirmationDialogFragment.show(
                     childFragmentManager,
                     "Please report any issues you encountered with the new UI!\n\nDo you want switch back to the old UI?\n\nNote: the app will restart.",
                 ) {
-                    composeEnabledPref.isChecked = false
-                    requireActivity().finish()
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        SettingsFragment.clearCaches(requireContext())
+                        composeEnabledPref.isChecked = false
+                        requireActivity().finish()
+                    }
                 }
             }
             false

@@ -24,3 +24,17 @@ fun isMedia(event: KeyEvent): Boolean =
         event.key == Key.MediaSkipBackward ||
         event.key == Key.MediaNext ||
         event.key == Key.MediaPrevious
+
+fun isBackwardButton(event: KeyEvent): Boolean =
+    event.key == Key.PageUp ||
+        event.key == Key.ChannelUp ||
+        event.key == Key.MediaPrevious ||
+        event.key == Key.MediaRewind ||
+        event.key == Key.MediaSkipBackward
+
+fun isForwardButton(event: KeyEvent): Boolean =
+    event.key == Key.PageDown ||
+        event.key == Key.ChannelDown ||
+        event.key == Key.MediaNext ||
+        event.key == Key.MediaFastForward ||
+        event.key == Key.MediaSkipForward

@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import android.text.InputType
@@ -611,14 +612,11 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             setUsedCachedSummary(cacheSizePref, cache)
 
             findPreference<Preference>("clearCache")!!.setOnPreferenceClickListener {
-                cache.evictAll()
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    requireContext().imageLoader.memoryCache?.clear()
-                    requireContext().imageLoader.diskCache?.clear()
-                    withContext(Dispatchers.IO) {
-                        Glide.get(requireContext()).clearDiskCache()
+                    clearCaches(requireContext())
+                    withContext(Dispatchers.Main) {
+                        setUsedCachedSummary(cacheSizePref, cache)
                     }
-                    setUsedCachedSummary(cacheSizePref, cache)
                 }
                 true
             }
@@ -774,5 +772,16 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
     companion object {
         const val PREF_STASH_URL = "stashUrl"
         const val PREF_STASH_API_KEY = "stashApiKey"
+
+        suspend fun clearCaches(context: Context) =
+            withContext(Dispatchers.IO) {
+                withContext(Dispatchers.Main) {
+                    Constants.getNetworkCache(context).evictAll()
+                    Glide.get(context).clearMemory()
+                }
+                Glide.get(context).clearDiskCache()
+                context.imageLoader.memoryCache?.clear()
+                context.imageLoader.diskCache?.clear()
+            }
     }
 }

@@ -180,6 +180,7 @@ fun PlaybackPageContent(
             prefs.getBoolean(context.getString(R.string.pref_key_show_playback_debug_info), false),
         )
     }
+    val skipWithLeftRight = remember { prefs.getBoolean("skipWithDpad", true) }
     var streamDecision by remember { mutableStateOf<StreamDecision?>(null) }
 
     val controllerViewState =
@@ -269,10 +270,11 @@ fun PlaybackPageContent(
     val playbackKeyHandler =
         remember {
             PlaybackKeyHandler(
-                player,
-                controlsEnabled,
-                controllerViewState,
-                updateSkipIndicator,
+                player = player,
+                controlsEnabled = controlsEnabled,
+                skipWithLeftRight = skipWithLeftRight,
+                controllerViewState = controllerViewState,
+                updateSkipIndicator = updateSkipIndicator,
             )
         }
     Box(
@@ -422,6 +424,7 @@ fun Player.setupFinishedBehavior(
 class PlaybackKeyHandler(
     private val player: Player,
     private val controlsEnabled: Boolean,
+    private val skipWithLeftRight: Boolean,
     private val controllerViewState: ControllerViewState,
     private val updateSkipIndicator: (Long) -> Unit,
 ) {
@@ -433,10 +436,10 @@ class PlaybackKeyHandler(
             result = false
         } else if (isDpad(it)) {
             if (!controllerViewState.controlsVisible) {
-                if (it.key == Key.DirectionLeft) {
+                if (skipWithLeftRight && it.key == Key.DirectionLeft) {
                     updateSkipIndicator(-player.seekBackIncrement)
                     player.seekBack()
-                } else if (it.key == Key.DirectionRight) {
+                } else if (skipWithLeftRight && it.key == Key.DirectionRight) {
                     player.seekForward()
                     updateSkipIndicator(player.seekForwardIncrement)
                 } else {

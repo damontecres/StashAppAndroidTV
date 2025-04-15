@@ -212,14 +212,13 @@ fun PlaylistPlaybackPageContent(
     var createMarkerPosition by remember { mutableLongStateOf(-1L) }
     var playingBeforeCreateMarker by remember { mutableStateOf(false) }
 
+    val prefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
     var showDebugInfo by remember {
         mutableStateOf(
-            PreferenceManager
-                .getDefaultSharedPreferences(
-                    context,
-                ).getBoolean(context.getString(R.string.pref_key_show_playback_debug_info), false),
+            prefs.getBoolean(context.getString(R.string.pref_key_show_playback_debug_info), false),
         )
     }
+    val skipWithLeftRight = remember { prefs.getBoolean("skipWithDpad", true) }
 
     LaunchedEffect(server, currentScene, player) {
         trackActivityListener?.apply {
@@ -248,7 +247,6 @@ fun PlaylistPlaybackPageContent(
         }
     }
 
-    val prefs = PreferenceManager.getDefaultSharedPreferences(context)
     val controllerViewState =
         remember {
             ControllerViewState(
@@ -283,10 +281,11 @@ fun PlaylistPlaybackPageContent(
     val playbackKeyHandler =
         remember {
             PlaybackKeyHandler(
-                player,
-                controlsEnabled,
-                controllerViewState,
-                updateSkipIndicator,
+                player = player,
+                controlsEnabled = controlsEnabled,
+                skipWithLeftRight = skipWithLeftRight,
+                controllerViewState = controllerViewState,
+                updateSkipIndicator = updateSkipIndicator,
             )
         }
     Box(

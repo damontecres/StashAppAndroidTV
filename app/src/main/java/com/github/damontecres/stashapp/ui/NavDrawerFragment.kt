@@ -49,6 +49,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.preference.PreferenceManager
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
@@ -58,6 +59,8 @@ import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
+import coil3.disk.DiskCache
+import coil3.disk.directory
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.PreferenceScreenOption
@@ -194,6 +197,11 @@ fun FragmentContent(
         )
     }
 
+    val scrollToNextPage =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getBoolean("scrollToNextResult", true)
+
     val itemOnClick =
         ItemOnClicker { item: Any, filterAndPosition ->
             when (item) {
@@ -201,7 +209,7 @@ fun FragmentContent(
                     navigationManager.navigate(
                         Destination.Filter(
                             item,
-                            true,
+                            scrollToNextPage,
                         ),
                     )
                 }
@@ -232,10 +240,21 @@ fun FragmentContent(
         remember {
             DefaultLongClicker(navigationManager, itemOnClick) { dialogParams = it }
         }
-    setSingletonImageLoaderFactory { context ->
+    setSingletonImageLoaderFactory { ctx ->
+        val diskCacheSize =
+            PreferenceManager
+                .getDefaultSharedPreferences(ctx)
+                .getInt(context.getString(R.string.pref_key_image_cache_size), 100)
+                .coerceAtLeast(10)
         ImageLoader
             .Builder(context)
-            .crossfade(true)
+            .diskCache(
+                DiskCache
+                    .Builder()
+                    .directory(context.cacheDir.resolve("coil3_image_cache"))
+                    .maxSizeBytes(diskCacheSize * 1024 * 1024L)
+                    .build(),
+            ).crossfade(true)
 //            .logger(DebugLogger())
             .components {
                 add(

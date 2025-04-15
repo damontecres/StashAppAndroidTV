@@ -190,8 +190,8 @@ fun PlaybackOverlay(
             val controlHeight = .4f
             val listState = rememberLazyListState()
             var height = 208.dp
-            if (scene.title.isNullOrBlank()) height -= 24.dp
-            if (scene.date.isNullOrBlank()) height -= 32.dp
+            if (!uiConfig.showTitleDuringPlayback || scene.title.isNullOrBlank()) height -= 24.dp
+            if (!uiConfig.showTitleDuringPlayback || scene.date.isNullOrBlank()) height -= 32.dp
             if (markers.isEmpty()) height -= 16.dp
             LazyColumn(
                 state = listState,
@@ -203,37 +203,39 @@ fun PlaybackOverlay(
 //                        .fillMaxHeight(controlHeight),
 //                contentPadding = PaddingValues(top = 420.dp),
             ) {
-                item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier =
-                            Modifier
-                                .padding(start = 8.dp)
-                                .fillMaxWidth(.7f),
-                    ) {
-                        if (scene.title.isNotNullOrBlank()) {
-                            Text(
-                                text = scene.title,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                style =
-                                    MaterialTheme.typography.titleLarge.copy(
-                                        fontSize = 24.sp,
-                                    ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                        if (scene.date.isNotNullOrBlank()) {
-                            Text(
-                                text = formatDate(scene.date)!!,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                style =
-                                    MaterialTheme.typography.titleMedium.copy(
-                                        fontSize = 16.sp,
-                                    ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                if (uiConfig.showTitleDuringPlayback) {
+                    item {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier =
+                                Modifier
+                                    .padding(start = 8.dp)
+                                    .fillMaxWidth(.7f),
+                        ) {
+                            if (scene.title.isNotNullOrBlank()) {
+                                Text(
+                                    text = scene.title,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    style =
+                                        MaterialTheme.typography.titleLarge.copy(
+                                            fontSize = 24.sp,
+                                        ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            if (scene.date.isNotNullOrBlank()) {
+                                Text(
+                                    text = formatDate(scene.date)!!,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    style =
+                                        MaterialTheme.typography.titleMedium.copy(
+                                            fontSize = 16.sp,
+                                        ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
                 }
@@ -504,6 +506,7 @@ private fun PlaybackOverlayPreview() {
                     starPrecision = StarRatingPrecision.FULL,
                     showStudioAsText = true,
                     debugTextEnabled = true,
+                    showTitleDuringPlayback = true,
                     cardSettings =
                         CardUiSettings(
                             maxSearchResults = 25,
@@ -518,8 +521,8 @@ private fun PlaybackOverlayPreview() {
             scene =
                 Scene(
                     id = "id",
-                    title = null, // "title",
-                    date = null, // "2025-01-01",
+                    title = "The scene title",
+                    date = "2025-01-01",
                     streamUrl = "",
                     screenshotUrl = "",
                     streams = mapOf(),

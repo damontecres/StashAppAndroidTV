@@ -605,6 +605,7 @@ private fun PerformerDetailsPreview() {
                     starPrecision = StarRatingPrecision.HALF,
                     showStudioAsText = true,
                     debugTextEnabled = true,
+                    showTitleDuringPlayback = true,
                     cardSettings =
                         CardUiSettings(
                             maxSearchResults = 25,
