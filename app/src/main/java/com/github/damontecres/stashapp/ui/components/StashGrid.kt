@@ -285,7 +285,7 @@ fun StashGridControls(
     }
 }
 
-private val DEBUG = false
+private const val DEBUG = false
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -313,18 +313,20 @@ fun StashGrid(
     var previouslyFocusedIndex by rememberSaveable { mutableIntStateOf(0) }
     var focusedIndex by rememberSaveable { mutableIntStateOf(startPosition) }
 
-    var hasRun by rememberSaveable { mutableStateOf(false) }
+    // Tracks whether the very first requestFocus has run, if the caller isn't requesting focus,
+    // then the first time will never run
+    var hasRequestFocusRun by rememberSaveable { mutableStateOf(!requestFocus) }
     var savedFocusedIndex by rememberSaveable { mutableIntStateOf(-1) }
 
     if (DEBUG) {
         Log.d(
             TAG,
-            "StashGrid: hasRun=$hasRun, requestFocus=$requestFocus, initialPosition=$initialPosition, focusedIndex=$focusedIndex",
+            "StashGrid: hasRun=$hasRequestFocusRun, requestFocus=$requestFocus, initialPosition=$initialPosition, focusedIndex=$focusedIndex",
         )
     }
 
     LaunchedEffect(Unit) {
-        if (!hasRun) {
+        if (!hasRequestFocusRun) {
             // On very first composition, if parent wants to focus on the grid, scroll to the item
             if (requestFocus && initialPosition >= 0) {
                 if (DEBUG) {
@@ -479,7 +481,7 @@ fun StashGrid(
                             modifier = mod,
                         )
                     } else {
-                        if (!hasRun && requestFocus && initialPosition >= 0) {
+                        if (!hasRequestFocusRun && requestFocus && initialPosition >= 0) {
                             // On very first composition, if parent wants to focus on the grid, do so
                             LaunchedEffect(Unit) {
                                 if (DEBUG) {
@@ -491,7 +493,7 @@ fun StashGrid(
                                 // focus on startPosition
                                 gridState.scrollToItem(startPosition, 0)
                                 firstFocus.tryRequestFocus()
-                                hasRun = true
+                                hasRequestFocusRun = true
                             }
                         }
                         StashCard(
