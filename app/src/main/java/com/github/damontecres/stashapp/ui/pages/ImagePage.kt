@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -7,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
@@ -41,8 +44,9 @@ import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.preference.PreferenceManager
+import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
@@ -55,6 +59,7 @@ import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.image.ImageDetailsViewModel
@@ -305,7 +310,7 @@ fun ImagePage(
                         )
                     }
                 } else {
-                    AsyncImage(
+                    SubcomposeAsyncImage(
                         modifier =
                             Modifier
                                 .fillMaxSize()
@@ -323,6 +328,26 @@ fun ImagePage(
                                 .build(),
                         contentDescription = null,
                         contentScale = ContentScale.FillHeight,
+                        onError = {
+                            Log.e(TAG, "Error loading image ${image.id}", it.result.throwable)
+                        },
+                        error = {
+                            Text(
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.Center),
+                                text = "Error loading image",
+                                color = MaterialTheme.colorScheme.onBackground,
+                            )
+                        },
+                        loading = {
+                            CircularProgress(
+                                Modifier
+                                    .size(120.dp)
+                                    .align(Alignment.Center),
+                                false,
+                            )
+                        },
                     )
                 }
             } else {

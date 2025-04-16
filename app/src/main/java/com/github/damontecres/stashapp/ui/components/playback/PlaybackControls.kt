@@ -37,6 +37,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +48,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.media3.common.util.UnstableApi
+import androidx.preference.PreferenceManager
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
@@ -166,6 +168,13 @@ fun SeekBar(
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
+    val context = LocalContext.current
+    val intervals =
+        remember {
+            PreferenceManager
+                .getDefaultSharedPreferences(context)
+                .getInt(context.getString(R.string.pref_key_playback_seek_count), 16)
+        }
     var bufferedProgress by remember(player) { mutableFloatStateOf(player.bufferedPosition.toFloat() / player.duration) }
     var position by remember(player) { mutableLongStateOf(player.currentPosition) }
     var progress by remember(player) { mutableFloatStateOf(player.currentPosition.toFloat() / player.duration) }
@@ -191,7 +200,7 @@ fun SeekBar(
                 onSeekProgress(it)
             },
             controllerViewState = controllerViewState,
-            intervals = 15,
+            intervals = intervals,
             aspectRatio = aspectRatio,
             previewImageUrl = scene.spriteUrl,
             modifier = Modifier.fillMaxWidth(),

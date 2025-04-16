@@ -1,12 +1,9 @@
 package com.github.damontecres.stashapp.ui.components.image
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
@@ -16,21 +13,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.tv.material3.Icon
-import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import androidx.tv.material3.surfaceColorAtElevation
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -40,14 +31,13 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.Material3AppTheme
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.pages.DialogParams
-import com.github.damontecres.stashapp.ui.pages.SearchForPage
+import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.pages.SearchForParams
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashServer
@@ -252,43 +242,16 @@ fun ImageOverlay(
             waitToLoad = params.fromLongClick,
         )
     }
-    searchForDataType?.let { params ->
-        Material3AppTheme {
-            Dialog(
-                onDismissRequest = { searchForDataType = null },
-                properties =
-                    DialogProperties(
-                        usePlatformDefaultWidth = false,
-                    ),
-            ) {
-                val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
-                val color = MaterialTheme.colorScheme.secondaryContainer
-                Box(
-                    Modifier
-                        .fillMaxSize(.9f)
-                        .graphicsLayer {
-                            this.clip = true
-                            this.shape = RoundedCornerShape(28.0.dp)
-                        }.drawBehind { drawRect(color = color) }
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
-                        .padding(PaddingValues(12.dp)),
-                    propagateMinConstraints = true,
-                ) {
-                    SearchForPage(
-                        server = server,
-                        title = "Add " + stringResource(params.dataType.stringId),
-                        searchId = params.id,
-                        dataType = params.dataType,
-                        itemOnClick = { id, item ->
-                            // Close dialog
-                            searchForDataType = null
-                            addItem.invoke(item)
-                        },
-                        uiConfig = uiConfig,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-            }
-        }
-    }
+    SearchForDialog(
+        show = searchForDataType != null,
+        dataType = searchForDataType?.dataType ?: DataType.TAG,
+        onItemClick = { item ->
+            searchForDataType = null
+            addItem.invoke(item)
+        },
+        onDismissRequest = { searchForDataType = null },
+        dialogTitle = searchForDataType?.let { "Add " + stringResource(it.dataType.stringId) },
+        dismissOnClick = false,
+        uiConfig = uiConfig,
+    )
 }
