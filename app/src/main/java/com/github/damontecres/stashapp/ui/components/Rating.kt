@@ -22,14 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.ui.AppTheme
-import kotlin.math.abs
 
 enum class StarRatingPrecision {
     FULL,
@@ -41,7 +39,7 @@ enum class StarRatingPrecision {
         fun fromFloat(value: Float): StarRatingPrecision =
             if (value <= .25f) {
                 QUARTER
-            } else if (value < .5f) {
+            } else if (value <= .5f) {
                 HALF
             } else {
                 FULL
@@ -59,27 +57,35 @@ fun StarRating(
     precision: StarRatingPrecision,
     enabled: Boolean,
     modifier: Modifier = Modifier,
+    bgColor: Color = MaterialTheme.colorScheme.background,
 ) {
+    var tempRating by remember { mutableIntStateOf(rating100) }
+    val percentage = tempRating / 100f
     Row(
         modifier =
             modifier
                 .selectableGroup()
-                .height(IntrinsicSize.Min),
+                .height(IntrinsicSize.Min)
+                .drawWithCache {
+                    onDrawWithContent {
+                        drawContent()
+                        if (percentage in 0f..<1f) {
+                            drawRect(
+                                color = bgColor,
+                                topLeft = Offset(size.width * percentage, 0f),
+                                blendMode = BlendMode.SrcAtop,
+                            )
+                        }
+                    }
+                },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         for (i in 1..5) {
-            val isRated = rating100 >= (i * 20)
+            val isRated = tempRating >= (i * 20)
             val icon = Icons.Filled.Star
-            val percentage =
-                if (rating100 % 20 != 0 && rating100 >= ((i - 1) * 20)) {
-                    abs(rating100 - (i * 20)) / 20f
-                } else {
-                    0f
-                }
             var focused by remember { mutableStateOf(false) }
 
-            // TODO this looks weird
-            // TODO half stars with background fill the rectangle
+            // TODO this still looks weird with fractional star
             val backgroundColor =
                 if (focused) {
                     MaterialTheme.colorScheme.border
@@ -88,20 +94,19 @@ fun StarRating(
                 }
             Icon(
                 imageVector = icon,
-                tint =
-                    if (isRated && percentage >= 0f) {
-                        FilledStarColor
-                    } else if (percentage == 0f) {
-                        EmptyStarColor
-                    } else {
-                        Color.Unspecified
-                    },
+                tint = FilledStarColor,
                 contentDescription = null,
                 modifier =
                     if (enabled) {
                         Modifier
-                            .onFocusChanged { focused = it.isFocused }
-                            .background(backgroundColor)
+                            .onFocusChanged {
+                                focused = it.isFocused
+                                if (it.isFocused) {
+                                    tempRating = i * 20
+                                } else {
+                                    tempRating = rating100
+                                }
+                            }.background(backgroundColor)
                             .selectable(
                                 selected = isRated,
                                 onClick = {
@@ -115,39 +120,28 @@ fun StarRating(
                                                     i * 20 - 10
                                                 } else if (rating100 == i * 20 - 10) {
                                                     (i - 1) * 20
+                                                } else if (i == 1 && rating100 < 20) {
+                                                    0
                                                 } else {
                                                     (i) * 20
                                                 }
                                             }
 
-                                            StarRatingPrecision.QUARTER -> TODO()
+                                            StarRatingPrecision.QUARTER -> {
+                                                // TODO
+                                                null
+                                            }
                                         }
-                                    onRatingChange(newRating100)
+                                    if (newRating100 != null) {
+                                        tempRating = newRating100
+                                        onRatingChange(newRating100)
+                                    }
                                 },
                             )
                     } else {
                         Modifier
                     }.fillMaxHeight()
-                        .aspectRatio(1f)
-                        .drawWithCache {
-                            onDrawWithContent {
-                                drawContent()
-                                if (percentage > 0) {
-                                    drawRect(
-                                        color = FilledStarColor,
-                                        topLeft = Offset(0f, 0f),
-                                        size = Size(size.width * (1 - percentage), size.height),
-                                        blendMode = BlendMode.SrcAtop,
-                                    )
-                                    drawRect(
-                                        color = EmptyStarColor,
-                                        topLeft = Offset(size.width * (1 - percentage), 0f),
-                                        blendMode = BlendMode.SrcAtop,
-                                    )
-//                                    drawRect(brush, blendMode = BlendMode.SrcAtop)
-                                }
-                            }
-                        },
+                        .aspectRatio(1f),
             )
         }
     }
@@ -157,13 +151,15 @@ fun StarRating(
 @Composable
 private fun StarRatingPreview() {
     AppTheme {
-        Column {
+        val bgColor = Color.Black
+        Column(modifier = Modifier.background(bgColor)) {
             var rating by remember { mutableIntStateOf(50) }
             StarRating(
                 rating100 = rating,
                 precision = StarRatingPrecision.HALF,
                 onRatingChange = { rating = it },
                 enabled = true,
+                bgColor = bgColor,
                 modifier = Modifier,
             )
             var rating2 by remember { mutableIntStateOf(60) }
@@ -172,6 +168,7 @@ private fun StarRatingPreview() {
                 precision = StarRatingPrecision.FULL,
                 onRatingChange = { rating2 = it },
                 enabled = true,
+                bgColor = bgColor,
                 modifier = Modifier,
             )
             StarRating(
@@ -179,6 +176,7 @@ private fun StarRatingPreview() {
                 precision = StarRatingPrecision.HALF,
                 onRatingChange = {},
                 enabled = true,
+                bgColor = bgColor,
                 modifier = Modifier,
             )
             StarRating(
@@ -186,6 +184,7 @@ private fun StarRatingPreview() {
                 precision = StarRatingPrecision.HALF,
                 onRatingChange = {},
                 enabled = true,
+                bgColor = bgColor,
                 modifier = Modifier,
             )
         }
