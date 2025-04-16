@@ -57,6 +57,7 @@
     <string name="play_all">Play All</string>
     <string name="sort_by">Sort By</string>
     <string name="enter_pin">Enter PIN</string>
+    <string name="enter_settings_pin">Enter Settings PIN</string>
     <string name="force_direct">Force direct</string>
     <string name="unsupported">unsupported</string>
     <string name="results">Results</string>

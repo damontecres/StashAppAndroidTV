@@ -55,6 +55,8 @@
     <string name="pref_key_slideshow_duration_image_clip" translatable="false">image.clip.slideshow.duration</string>
     <integer name="pref_key_slideshow_duration_default_image_clip">250</integer>
     <string name="pref_key_image_loading_threads">image.loadingThreads</string>
+    <string name="pref_key_update_last_check" translatable="false">update.lastCheck</string>
+    <string name="pref_key_update_last_check_threshold" translatable="false">update.lastCheck.threshold</string>
 
     <!-- Compose -->
     <string name="pref_key_use_compose_ui" translatable="false">useComposeUI</string>

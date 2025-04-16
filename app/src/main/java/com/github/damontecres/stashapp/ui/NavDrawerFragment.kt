@@ -64,6 +64,7 @@ import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
@@ -85,6 +86,7 @@ import com.github.damontecres.stashapp.ui.pages.ImagePage
 import com.github.damontecres.stashapp.ui.pages.MainPage
 import com.github.damontecres.stashapp.ui.pages.MarkerPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
+import com.github.damontecres.stashapp.ui.pages.PinEntryPage
 import com.github.damontecres.stashapp.ui.pages.PlaybackPage
 import com.github.damontecres.stashapp.ui.pages.PlaylistPlaybackPage
 import com.github.damontecres.stashapp.ui.pages.SceneDetailsPage
@@ -97,6 +99,7 @@ import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
 import dev.olshevski.navigation.reimagined.NavHost
+import dev.olshevski.navigation.reimagined.navigate
 import dev.olshevski.navigation.reimagined.rememberNavController
 import okhttp3.Call
 import kotlin.time.Duration.Companion.milliseconds
@@ -104,6 +107,15 @@ import kotlin.time.Duration.Companion.seconds
 
 class NavDrawerFragment : Fragment(R.layout.compose_frame) {
     private val serverViewModel: ServerViewModel by activityViewModels()
+
+//    private var resumed = false
+//
+//    override fun onResume() {
+//        super.onResume()
+//        if ((requireActivity() as RootActivity).appHasPin()) {
+//            resumed = true
+//        }
+//    }
 
     override fun onViewCreated(
         view: View,
@@ -122,50 +134,63 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                     val server by serverViewModel.currentServer.observeAsState()
                     val currDestination by serverViewModel.destination.observeAsState()
                     key(server) {
-                        val navController = rememberNavController<Destination>(Destination.Main)
+                        val navController =
+                            rememberNavController<Destination>(
+                                if ((requireActivity() as RootActivity).appHasPin()) {
+                                    Destination.Pin
+                                } else {
+                                    Destination.Main
+                                },
+                            )
+                        LifecycleStartEffect(Unit) {
+                            onStopOrDispose {
+                                if ((requireActivity() as RootActivity).appHasPin()) {
+                                    navController.navigate(Destination.Pin)
+                                }
+                            }
+                        }
+                        Log.i(TAG, "onViewCreated, set navController")
                         NavBackHandler(navController)
 
                         val navManager =
                             (serverViewModel.navigationManager as NavigationManagerCompose)
                         navManager.controller = navController
-                        if (currDestination != Destination.Pin) {
-                            CompositionLocalProvider(
-                                LocalGlobalContext provides
-                                    GlobalContext(
-                                        server ?: StashServer("http://0.0.0.0", null),
-                                        navManager,
-                                    ),
-                            ) {
-                                FragmentContent(
-                                    server = server ?: StashServer("http://0.0.0.0", null),
-                                    serverProvider = { serverViewModel.requireServer() },
-                                    navigationManager = navManager,
-                                    onChangeTheme = { name ->
-                                        try {
-                                            colorScheme =
-                                                chooseColorScheme(
-                                                    requireContext(),
-                                                    isSystemInDarkTheme,
-                                                    if (name.isNullOrBlank() || name == "default") {
-                                                        defaultColorSchemeSet
-                                                    } else {
-                                                        readThemeJson(requireContext(), name)
-                                                    },
-                                                )
-                                            Log.i(TAG, "Updated theme")
-                                        } catch (ex: Exception) {
-                                            Log.e(TAG, "Exception changing theme", ex)
-                                            Toast
-                                                .makeText(
-                                                    requireContext(),
-                                                    "Error changing theme: ${ex.localizedMessage}",
-                                                    Toast.LENGTH_LONG,
-                                                ).show()
-                                        }
-                                    },
-                                    modifier = Modifier.background(MaterialTheme.colorScheme.background),
-                                )
-                            }
+                        CompositionLocalProvider(
+                            LocalGlobalContext provides
+                                GlobalContext(
+                                    server ?: StashServer("http://0.0.0.0", null),
+                                    navManager,
+                                ),
+                        ) {
+                            FragmentContent(
+                                server = server ?: StashServer("http://0.0.0.0", null),
+                                serverProvider = { serverViewModel.requireServer() },
+                                navigationManager = navManager,
+                                onChangeTheme = { name ->
+                                    try {
+                                        colorScheme =
+                                            chooseColorScheme(
+                                                requireContext(),
+                                                isSystemInDarkTheme,
+                                                if (name.isNullOrBlank() || name == "default") {
+                                                    defaultColorSchemeSet
+                                                } else {
+                                                    readThemeJson(requireContext(), name)
+                                                },
+                                            )
+                                        Log.i(TAG, "Updated theme")
+                                    } catch (ex: Exception) {
+                                        Log.e(TAG, "Exception changing theme", ex)
+                                        Toast
+                                            .makeText(
+                                                requireContext(),
+                                                "Error changing theme: ${ex.localizedMessage}",
+                                                Toast.LENGTH_LONG,
+                                            ).show()
+                                    }
+                                },
+                                modifier = Modifier.background(MaterialTheme.colorScheme.background),
+                            )
                         }
                     }
                 }
@@ -318,6 +343,35 @@ fun FragmentContent(
 
         if (destination.fullScreen) {
             when (destination) {
+                is Destination.Pin ->
+                    PinEntryPage(
+                        pinPreference = R.string.pref_key_pin_code,
+                        title = stringResource(R.string.enter_pin),
+                        onCorrectPin = {
+                            if (navigationManager.controller.backstack.entries.size > 1) {
+                                navigationManager.goBack()
+                            } else {
+                                navigationManager.goToMain()
+                            }
+                        },
+                        preventBack = true,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+
+                is Destination.SettingsPin ->
+                    PinEntryPage(
+                        pinPreference = R.string.pref_key_read_only_mode_pin,
+                        title = stringResource(R.string.enter_settings_pin),
+                        onCorrectPin = {
+                            // Pop Destination.SettingsPin off the stack and go to settings
+                            // This prevents showing the PIN entry again when going back from settings
+                            navigationManager.goBack()
+                            navigationManager.navigate(Destination.Settings(PreferenceScreenOption.BASIC))
+                        },
+                        preventBack = false,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+
                 is Destination.Playback -> {
                     PlaybackPage(
                         server = server,

@@ -26,6 +26,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -50,6 +52,7 @@ fun EditTextBox(
     enabled: Boolean = true,
     readOnly: Boolean = false,
     height: Dp = 40.dp,
+    isInputValid: (String) -> Boolean = { true },
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     Material3AppTheme {
@@ -85,12 +88,27 @@ fun EditTextBox(
                 singleLine = true,
                 maxLines = 1,
                 minLines = 1,
+                visualTransformation =
+                    if (keyboardOptions.keyboardType == KeyboardType.Password ||
+                        keyboardOptions.keyboardType == KeyboardType.NumberPassword
+                    ) {
+                        PasswordVisualTransformation()
+                    } else {
+                        VisualTransformation.None
+                    },
                 decorationBox =
                     @Composable { innerTextField ->
                         // places leading icon, text field with label and placeholder, trailing icon
                         TextFieldDefaults.DecorationBox(
                             value = value,
-                            visualTransformation = VisualTransformation.None,
+                            visualTransformation =
+                                if (keyboardOptions.keyboardType == KeyboardType.Password ||
+                                    keyboardOptions.keyboardType == KeyboardType.NumberPassword
+                                ) {
+                                    PasswordVisualTransformation()
+                                } else {
+                                    VisualTransformation.None
+                                },
                             innerTextField = innerTextField,
                             placeholder = null,
                             label = null,
@@ -113,7 +131,7 @@ fun EditTextBox(
                             container = {
                                 Container(
                                     enabled = enabled,
-                                    isError = false,
+                                    isError = !isInputValid.invoke(value),
                                     interactionSource = interactionSource,
                                     modifier = Modifier,
                                     colors = colors,

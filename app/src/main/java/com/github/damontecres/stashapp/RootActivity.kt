@@ -201,7 +201,7 @@ class RootActivity :
         }
     }
 
-    private fun appHasPin(): Boolean =
+    fun appHasPin(): Boolean =
         PreferenceManager
             .getDefaultSharedPreferences(this)
             .getString("pinCode", "")
