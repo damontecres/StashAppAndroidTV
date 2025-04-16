@@ -72,6 +72,7 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.RowColumn
 import com.github.damontecres.stashapp.ui.components.main.MainPageHeader
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -386,12 +387,16 @@ fun HomePageRow(
                 item {
                     ViewAllCard(
                         modifier =
-                            Modifier.onFocusChanged { focusState ->
-                                if (focusState.isFocused) {
-                                    focusedIndex = row.data.size
-                                    onFocus(row.data.size, row.filter)
-                                }
-                            },
+                            Modifier
+                                .onFocusChanged { focusState ->
+                                    if (focusState.isFocused) {
+                                        focusedIndex = row.data.size
+                                        onFocus(row.data.size, row.filter)
+                                    }
+                                }.ifElse(
+                                    focusedIndex == row.data.size,
+                                    Modifier.focusRequester(firstFocus),
+                                ),
                         filter = row.filter,
                         itemOnClick = {
                             itemOnClick.onClick(

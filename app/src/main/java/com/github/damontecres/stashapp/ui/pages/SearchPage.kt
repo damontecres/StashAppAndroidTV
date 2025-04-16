@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +50,7 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.SearchEditTextBox
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -184,12 +185,15 @@ fun SearchPage(
             DataType.GALLERY to galleries,
         )
 
-    LaunchedEffect(server) {
+    OneTimeLaunchedEffect {
         viewModel.init(server, initialQuery)
         focusRequester.tryRequestFocus()
     }
 
+    val listState = rememberLazyListState()
+
     LazyColumn(
+        state = listState,
         modifier = modifier,
         contentPadding = PaddingValues(16.dp),
     ) {
@@ -209,7 +213,7 @@ fun SearchPage(
                     job =
                         scope.launch {
                             delay(searchDelay)
-                            viewModel.search(newQuery)
+                            viewModel.search(searchQuery)
                         }
                 },
                 onSearchClick = {
@@ -249,6 +253,7 @@ fun SearchItemsRow(
     modifier: Modifier = Modifier,
 ) {
     val firstFocus = remember { FocusRequester() }
+    val listState = rememberLazyListState()
     Column(
         modifier = modifier,
     ) {
@@ -262,6 +267,7 @@ fun SearchItemsRow(
                 Modifier
                     .padding(top = 8.dp)
                     .focusRestorer { firstFocus },
+            state = listState,
             contentPadding = PaddingValues(8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {

@@ -289,7 +289,6 @@ fun StashGridControls(
 
 private const val DEBUG = false
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun StashGrid(
     pager: ComposePager<StashData>,
@@ -312,6 +311,7 @@ fun StashGrid(
     val scope = rememberCoroutineScope()
     val filterArgs = pager.filter
     val firstFocus = remember { FocusRequester() }
+    val zeroFocus = remember { FocusRequester() }
     var previouslyFocusedIndex by rememberSaveable { mutableIntStateOf(0) }
     var focusedIndex by rememberSaveable { mutableIntStateOf(startPosition) }
 
@@ -413,6 +413,7 @@ fun StashGrid(
             modifier
                 .fillMaxSize()
                 .onKeyEvent {
+                    if (DEBUG) Log.d(TAG, "onKeyEvent: ${it.nativeKeyEvent}")
                     if (it.type != KeyEventType.KeyUp) {
                         return@onKeyEvent false
                     } else if (useBackToJump && it.key == Key.Back && it.nativeKeyEvent.isLongPress) {
@@ -424,10 +425,15 @@ fun StashGrid(
                         }
                         return@onKeyEvent true
                     } else if (useBackToJump && it.key == Key.Back && focusedIndex > 0) {
-                        focusOn(0)
                         scope.launch {
-                            gridState.scrollToItem(0, -columns)
-                            firstFocus.tryRequestFocus()
+                            focusOn(0)
+                            if (focusedIndex < (columns * 6)) {
+                                // If close, animate the scroll
+                                gridState.animateScrollToItem(0, 0)
+                            } else {
+                                gridState.scrollToItem(0, 0)
+                            }
+                            zeroFocus.tryRequestFocus()
                         }
                         return@onKeyEvent true
                     } else if (it.key == Key.MediaPlay || it.key == Key.MediaPlayPause) {
@@ -467,20 +473,20 @@ fun StashGrid(
                         return@onKeyEvent false
                     } else if (useJumpRemoteButtons && isForwardButton(it)) {
                         scope.launch {
-                            // TODO
                             val newPosition =
                                 (focusedIndex + jump1).coerceIn(0..<pager.size)
                             focusOn(newPosition)
-                            gridState.scrollToItem(newPosition, -columns)
+                            gridState.scrollToItem(newPosition, 0)
+                            firstFocus.tryRequestFocus()
                         }
                         return@onKeyEvent true
                     } else if (useJumpRemoteButtons && isBackwardButton(it)) {
                         scope.launch {
-                            // TODO
                             val newPosition =
                                 (focusedIndex - jump1).coerceIn(0..<pager.size)
                             focusOn(newPosition)
-                            gridState.scrollToItem(newPosition, -columns)
+                            gridState.scrollToItem(newPosition, 0)
+                            firstFocus.tryRequestFocus()
                         }
                         return@onKeyEvent true
                     } else {
@@ -522,10 +528,10 @@ fun StashGrid(
                 items(pager.size) { index ->
                     val mod =
                         if (index == savedFocusedIndex) {
-                            Log.d(TAG, "Adding firstFocus to itemClickedIndex $index")
+                            if (DEBUG) Log.d(TAG, "Adding firstFocus to itemClickedIndex $index")
                             Modifier.focusRequester(firstFocus)
                         } else if ((index == focusedIndex) or (focusedIndex < 0 && index == 0)) {
-                            Log.d(TAG, "Adding firstFocus to focusedIndex $index")
+                            if (DEBUG) Log.d(TAG, "Adding firstFocus to focusedIndex $index")
                             Modifier.focusRequester(firstFocus)
                         } else {
                             Modifier
@@ -556,22 +562,24 @@ fun StashGrid(
                         }
                         StashCard(
                             modifier =
-                                mod.onFocusChanged { focusState ->
-                                    if (DEBUG) {
-                                        Log.v(
-                                            TAG,
-                                            "$index isFocused=${focusState.isFocused}",
-                                        )
-                                    }
-                                    if (focusState.isFocused) {
-                                        // Focused, so set that up
-                                        focusOn(index)
-                                        positionCallback?.invoke(columns, index)
-                                    } else if (focusedIndex == index) {
-                                        // Was focused on this, so mark unfocused
-                                        focusedIndex = -1
-                                    }
-                                },
+                                mod
+                                    .ifElse(index == 0, Modifier.focusRequester(zeroFocus))
+                                    .onFocusChanged { focusState ->
+                                        if (DEBUG) {
+                                            Log.v(
+                                                TAG,
+                                                "$index isFocused=${focusState.isFocused}",
+                                            )
+                                        }
+                                        if (focusState.isFocused) {
+                                            // Focused, so set that up
+                                            focusOn(index)
+                                            positionCallback?.invoke(columns, index)
+                                        } else if (focusedIndex == index) {
+                                            // Was focused on this, so mark unfocused
+                                            focusedIndex = -1
+                                        }
+                                    },
                             uiConfig = uiConfig,
                             item = item,
                             itemOnClick = {

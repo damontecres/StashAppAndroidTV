@@ -7,7 +7,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -94,6 +93,7 @@ import com.github.damontecres.stashapp.ui.pages.StudioPage
 import com.github.damontecres.stashapp.ui.pages.TagPage
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
 import dev.olshevski.navigation.reimagined.NavHost
@@ -138,7 +138,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                             ) {
                                 FragmentContent(
                                     server = server ?: StashServer("http://0.0.0.0", null),
-                                    serverViewModel = serverViewModel,
+                                    serverProvider = { serverViewModel.requireServer() },
                                     navigationManager = navManager,
                                     onChangeTheme = { name ->
                                         try {
@@ -178,12 +178,12 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun FragmentContent(
     server: StashServer,
+    serverProvider: () -> StashServer,
     navigationManager: NavigationManagerCompose,
-    serverViewModel: ServerViewModel,
     onChangeTheme: (String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -262,13 +262,21 @@ fun FragmentContent(
                         callFactory = {
                             Call.Factory { request ->
                                 // TODO this seems hacky?
-                                serverViewModel.requireServer().okHttpClient.newCall(request)
+                                serverProvider.invoke().okHttpClient.newCall(request)
                             }
                         },
                     ),
                 )
             }.build()
     }
+
+    // TODO this works, but sometimes requires restart when changed and going back from settings is awkward
+    val settingsPage =
+        DrawerPage(
+            if (readOnlyModeDisabled()) Destination.Settings(PreferenceScreenOption.BASIC) else Destination.SettingsPin,
+            R.string.fa_arrow_right_arrow_left, // Ignored
+            R.string.stashapp_settings,
+        )
 
     val pages =
         buildList {
@@ -293,7 +301,7 @@ fun FragmentContent(
                     }.forEach { add(it) }
             }
 
-            add(DrawerPage.SETTINGS_PAGE)
+            add(settingsPage)
         }
     val visiblePages = remember { mutableMapOf<DrawerPage, Boolean>() }
 
@@ -490,7 +498,7 @@ fun FragmentContent(
                                         }
                                     },
                                     leadingContent = {
-                                        if (page != DrawerPage.SETTINGS_PAGE) {
+                                        if (page != settingsPage) {
                                             val color =
                                                 if (selectedScreen == page) {
                                                     MaterialTheme.colorScheme.border
@@ -713,13 +721,6 @@ data class DrawerPage(
                 Destination.Search,
                 R.string.fa_magnifying_glass_plus,
                 R.string.stashapp_actions_search,
-            )
-
-        val SETTINGS_PAGE =
-            DrawerPage(
-                Destination.Settings(PreferenceScreenOption.BASIC),
-                R.string.fa_arrow_right_arrow_left, // Ignored
-                R.string.stashapp_settings,
             )
     }
 }
