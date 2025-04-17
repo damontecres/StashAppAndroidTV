@@ -64,7 +64,6 @@ import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
@@ -99,7 +98,6 @@ import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
 import dev.olshevski.navigation.reimagined.NavHost
-import dev.olshevski.navigation.reimagined.navigate
 import dev.olshevski.navigation.reimagined.rememberNavController
 import okhttp3.Call
 import kotlin.time.Duration.Companion.milliseconds
@@ -136,19 +134,20 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                     key(server) {
                         val navController =
                             rememberNavController<Destination>(
-                                if ((requireActivity() as RootActivity).appHasPin()) {
-                                    Destination.Pin
-                                } else {
-                                    Destination.Main
-                                },
+                                Destination.Main,
+//                                if ((requireActivity() as RootActivity).appHasPin()) {
+//                                    Destination.Pin
+//                                } else {
+//                                    Destination.Main
+//                                },
                             )
-                        LifecycleStartEffect(Unit) {
-                            onStopOrDispose {
-                                if ((requireActivity() as RootActivity).appHasPin()) {
-                                    navController.navigate(Destination.Pin)
-                                }
-                            }
-                        }
+//                        LifecycleStartEffect(Unit) {
+//                            onStopOrDispose {
+//                                if ((requireActivity() as RootActivity).appHasPin()) {
+//                                    navController.navigate(Destination.Pin)
+//                                }
+//                            }
+//                        }
                         Log.i(TAG, "onViewCreated, set navController")
                         NavBackHandler(navController)
 

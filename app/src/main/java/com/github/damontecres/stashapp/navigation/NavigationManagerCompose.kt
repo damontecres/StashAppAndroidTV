@@ -46,6 +46,10 @@ class NavigationManagerCompose(
     }
 
     fun composeNavigate(destination: Destination) {
+        if (destination == Destination.Pin) {
+            // no-op for compose
+            return
+        }
 //        val current = getCurrentFragment()
 //        if (destination == Destination.Pin && current is PinFragment) {
 //            if (DEBUG) Log.v(TAG, "Ignore navigate to ${Destination.Pin}")

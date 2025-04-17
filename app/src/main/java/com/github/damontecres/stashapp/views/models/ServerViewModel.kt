@@ -67,6 +67,12 @@ open class ServerViewModel : ViewModel() {
         _cardUiSettings.value = newHash
     }
 
+    fun init(context: Context) {
+        updateUiSettings()
+        val currentServer = StashServer.findConfiguredStashServer(context)
+        switchServer(currentServer)
+    }
+
     fun init(currentServer: StashServer) {
         updateUiSettings()
         switchServer(currentServer)

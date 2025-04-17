@@ -9,11 +9,13 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentManager
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
@@ -49,14 +51,7 @@ class RootActivity :
     private lateinit var bgLogo: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         useCompose = composeEnabled(this)
-        if (useCompose) {
-            setContentView(R.layout.activity_root_compose)
-        } else {
-            setContentView(R.layout.activity_root)
-        }
-        rootFragmentView = findViewById(R.id.root_fragment)
 
         setUpLifeCycleListeners()
         Log.v(
@@ -67,10 +62,6 @@ class RootActivity :
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE,
         )
-
-        val appHasPin = appHasPin()
-
-        // Ensure everything is initialized
 
         navigationManager =
             if (useCompose) {
@@ -83,63 +74,88 @@ class RootActivity :
 
         serverViewModel.navigationManager = navigationManager
 
+        super.onCreate(savedInstanceState)
+        if (!useCompose) {
+            setContentView(R.layout.activity_root)
+        }
         if (savedInstanceState != null) {
             navigationManager.previousDestination = savedInstanceState.maybeGetDestination()
             Log.d(TAG, "Restoring destination: ${navigationManager.previousDestination}")
         }
 
-        loadingView = findViewById(R.id.loading_progress_bar)
-        bgLogo = findViewById(R.id.background_logo)
+        val appHasPin = appHasPin()
 
-        val currentServer = StashServer.findConfiguredStashServer(StashApplication.getApplication())
-        if (currentServer != null) {
-            Log.i(TAG, "Server configured")
-            StashServer.setCurrentStashServer(StashApplication.getApplication(), currentServer)
-            serverViewModel.init(currentServer)
-
-            serverViewModel.serverConnection.observe(this) { result ->
-                loadingView.hide()
-                when (result) {
-                    is ServerViewModel.ServerConnection.Failure -> {
-                        Log.w(TAG, "Exception connecting to server", result.exception)
-                        Toast
-                            .makeText(
-                                this,
-                                "Error connecting to ${result.server.url}",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                        if (!appHasPin) {
-                            navigationManager.navigate(Destination.ManageServers(true))
-                        }
+        if (useCompose) {
+            if (appHasPin) {
+                val backCallback =
+                    onBackPressedDispatcher.addCallback(this) {
+                        finish()
                     }
-
-                    ServerViewModel.ServerConnection.NotConfigured -> {
-                        Log.i(TAG, "No server, starting setup")
-                        navigationManager.navigate(Destination.Setup)
-                    }
-
-                    ServerViewModel.ServerConnection.Pending -> {}
-                    ServerViewModel.ServerConnection.Success -> {}
+                setContentView(R.layout.activity_root_pin)
+                val pinFragment =
+                    findViewById<FragmentContainerView>(R.id.pin_fragment_view).getFragment<PinFragmentCompose>()
+                pinFragment.onCorrectPin = {
+                    backCallback.isEnabled = false
+                    postPinCompose()
                 }
+            } else {
+                postPinCompose()
             }
+        } else {
+            loadingView = findViewById(R.id.loading_progress_bar)
+            bgLogo = findViewById(R.id.background_logo)
 
-            if (!useCompose) {
-                serverViewModel.currentServer.observe(this) { server ->
-                    if (server != null) {
-                        if (savedInstanceState == null) {
+            val currentServer =
+                StashServer.findConfiguredStashServer(StashApplication.getApplication())
+            if (currentServer != null) {
+                Log.i(TAG, "Server configured")
+                StashServer.setCurrentStashServer(StashApplication.getApplication(), currentServer)
+                serverViewModel.init(currentServer)
+
+                serverViewModel.serverConnection.observe(this) { result ->
+                    loadingView.hide()
+                    when (result) {
+                        is ServerViewModel.ServerConnection.Failure -> {
+                            Log.w(TAG, "Exception connecting to server", result.exception)
+                            Toast
+                                .makeText(
+                                    this,
+                                    "Error connecting to ${result.server.url}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             if (!appHasPin) {
-                                serverViewModel.currentServer.removeObservers(this@RootActivity)
-                                navigationManager.goToMain()
+                                navigationManager.navigate(Destination.ManageServers(true))
+                            }
+                        }
+
+                        ServerViewModel.ServerConnection.NotConfigured -> {
+                            Log.i(TAG, "No server, starting setup")
+                            navigationManager.navigate(Destination.Setup)
+                        }
+
+                        ServerViewModel.ServerConnection.Pending -> {}
+                        ServerViewModel.ServerConnection.Success -> {}
+                    }
+                }
+
+                if (!useCompose) {
+                    serverViewModel.currentServer.observe(this) { server ->
+                        if (server != null) {
+                            if (savedInstanceState == null) {
+                                if (!appHasPin) {
+                                    serverViewModel.currentServer.removeObservers(this@RootActivity)
+                                    navigationManager.goToMain()
+                                }
                             }
                         }
                     }
                 }
+            } else {
+                loadingView.hide()
+                Log.i(TAG, "No server, starting setup")
+                // No server configured
+                navigationManager.navigate(Destination.Setup)
             }
-        } else {
-            loadingView.hide()
-            Log.i(TAG, "No server, starting setup")
-            // No server configured
-            navigationManager.navigate(Destination.Setup)
         }
     }
 
@@ -162,6 +178,44 @@ class RootActivity :
             navigationManager.navigate(Destination.Pin)
         }
         super.onPause()
+    }
+
+    private fun postPinCompose() {
+        setContentView(R.layout.activity_root_compose)
+        rootFragmentView = findViewById(R.id.root_fragment)
+        loadingView = findViewById(R.id.loading_progress_bar)
+        bgLogo = findViewById(R.id.background_logo)
+
+        serverViewModel.init(this)
+        serverViewModel.serverConnection.observe(this) { result ->
+            loadingView.hide()
+            when (result) {
+                is ServerViewModel.ServerConnection.Failure -> {
+                    loadingView.hide()
+                    Log.w(TAG, "Exception connecting to server", result.exception)
+                    Toast
+                        .makeText(
+                            this,
+                            "Error connecting to ${result.server.url}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    navigationManager.navigate(Destination.ManageServers(true))
+                }
+
+                ServerViewModel.ServerConnection.NotConfigured -> {
+                    Log.i(TAG, "No server, starting setup")
+                    loadingView.hide()
+                    navigationManager.navigate(Destination.Setup)
+                }
+
+                ServerViewModel.ServerConnection.Pending -> {}
+                ServerViewModel.ServerConnection.Success -> {
+                    loadingView.hide()
+                    // TODO restore?
+                    navigationManager.goToMain()
+                }
+            }
+        }
     }
 
     @OptIn(UnstableApi::class)
