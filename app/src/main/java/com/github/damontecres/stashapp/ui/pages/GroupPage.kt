@@ -31,13 +31,16 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.GroupRelationshipType
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.ItemDetailsFooter
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -58,6 +61,7 @@ import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun GroupPage(
@@ -231,12 +235,31 @@ fun GroupDetails(
     rating100Click: (rating100: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val navigationManager = LocalGlobalContext.current.navigationManager
+    val context = LocalContext.current
     val rows =
         buildList {
             add(TableRow.from(R.string.stashapp_date, group.date))
-            add(TableRow.from(R.string.stashapp_duration, group.duration?.toString()))
-            add(TableRow.from(R.string.stashapp_studio, group.studio?.name))
-            add(TableRow.from(R.string.stashapp_director, group.director))
+            add(TableRow.from(R.string.stashapp_duration, group.duration?.seconds?.toString()))
+            add(
+                TableRow.from(R.string.stashapp_studio, group.studio?.name) {
+                    navigationManager.navigate(Destination.Item(DataType.STUDIO, group.studio!!.id))
+                },
+            )
+            add(
+                TableRow.from(R.string.stashapp_director, group.director) {
+                    navigationManager.navigate(
+                        Destination.Filter(
+                            filterArgs =
+                                FilterArgs(
+                                    dataType = DataType.GROUP,
+                                    name = context.getString(R.string.stashapp_director) + ": " + group.director,
+                                    objectFilter = GroupFilterType(director = stringCriterion(group.director!!)),
+                                ),
+                        ),
+                    )
+                },
+            )
             add(TableRow.from(R.string.stashapp_synopsis, group.synopsis))
         }.filterNotNull()
     LazyColumn(modifier = modifier) {

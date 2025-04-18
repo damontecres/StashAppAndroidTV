@@ -65,7 +65,6 @@ import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
-import com.github.damontecres.stashapp.ui.SwitchWithLabel
 import com.github.damontecres.stashapp.ui.cards.LoadingCard
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.playback.isBackwardButton
@@ -115,6 +114,7 @@ fun StashGridControls(
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
     subToggleLabel: String? = null,
     onSubToggleCheck: ((Boolean) -> Unit)? = null,
+    subToggleChecked: Boolean = false,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -122,7 +122,7 @@ fun StashGridControls(
     val dataType = filterArgs.dataType
     var showTopRowRaw by rememberSaveable { mutableStateOf(true) }
     val showTopRow by remember { derivedStateOf { showTopRowRaw } }
-    var checked by rememberSaveable(filterArgs) { mutableStateOf(false) }
+    var checked by rememberSaveable(filterArgs) { mutableStateOf(subToggleChecked) }
     var searchQuery by rememberSaveable(filterArgs) {
         mutableStateOf(
             filterArgs.findFilter?.q ?: "",

@@ -372,7 +372,7 @@ fun PerformerDetailsPage(
 
 fun stringCriterion(
     value: String,
-    modifier: CriterionModifier = CriterionModifier.INCLUDES,
+    modifier: CriterionModifier = CriterionModifier.EQUALS,
 ) = Optional.present(
     StringCriterionInput(
         value = value,
@@ -395,13 +395,20 @@ fun PerformerDetails(
     modifier: Modifier = Modifier,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
-    val navigateTo = { perfFilter: PerformerFilterType ->
-        navigationManager.navigate(
-            Destination.Filter(
-                filterArgs = FilterArgs(DataType.PERFORMER, objectFilter = perfFilter),
-            ),
-        )
-    }
+    val context = LocalContext.current
+    val navigateTo =
+        { stringId: Int, value: String, perfFilter: PerformerFilterType ->
+            navigationManager.navigate(
+                Destination.Filter(
+                    filterArgs =
+                        FilterArgs(
+                            DataType.PERFORMER,
+                            name = context.getString(stringId) + ": " + value,
+                            objectFilter = perfFilter,
+                        ),
+                ),
+            )
+        }
 
     val tableRows =
         buildList {
@@ -422,22 +429,38 @@ fun PerformerDetails(
             add(TableRow.from(R.string.stashapp_death_date, perf.death_date))
             add(
                 TableRow.from(R.string.stashapp_country, perf.country) {
-                    navigateTo(PerformerFilterType(country = stringCriterion(perf.country!!)))
+                    navigateTo(
+                        R.string.stashapp_country,
+                        perf.country!!,
+                        PerformerFilterType(country = stringCriterion(perf.country!!)),
+                    )
                 },
             )
             add(
                 TableRow.from(R.string.stashapp_ethnicity, perf.ethnicity) {
-                    navigateTo(PerformerFilterType(ethnicity = stringCriterion(perf.ethnicity!!)))
+                    navigateTo(
+                        R.string.stashapp_ethnicity,
+                        perf.ethnicity!!,
+                        PerformerFilterType(ethnicity = stringCriterion(perf.ethnicity!!)),
+                    )
                 },
             )
             add(
                 TableRow.from(R.string.stashapp_hair_color, perf.hair_color) {
-                    navigateTo(PerformerFilterType(hair_color = stringCriterion(perf.hair_color!!)))
+                    navigateTo(
+                        R.string.stashapp_hair_color,
+                        perf.hair_color!!,
+                        PerformerFilterType(hair_color = stringCriterion(perf.hair_color!!)),
+                    )
                 },
             )
             add(
                 TableRow.from(R.string.stashapp_eye_color, perf.eye_color) {
-                    navigateTo(PerformerFilterType(eye_color = stringCriterion(perf.eye_color!!)))
+                    navigateTo(
+                        R.string.stashapp_eye_color,
+                        perf.eye_color!!,
+                        PerformerFilterType(eye_color = stringCriterion(perf.eye_color!!)),
+                    )
                 },
             )
             if (perf.height_cm != null) {

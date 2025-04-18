@@ -221,6 +221,7 @@ fun TagDetails(
 ) {
     val rows =
         buildList {
+            add(TableRow.from(R.string.stashapp_sort_name, tag.sort_name))
             add(TableRow.from(R.string.stashapp_description, tag.description))
             if (tag.aliases.isNotEmpty()) {
                 add(

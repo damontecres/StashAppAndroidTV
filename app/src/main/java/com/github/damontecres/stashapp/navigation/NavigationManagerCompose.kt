@@ -39,6 +39,22 @@ class NavigationManagerCompose(
         } else if (destination == Destination.Main) {
             controller.popUpTo { it == Destination.Main }
         } else if (destination is Destination.Filter) {
+            controller.navigate(destination)
+        } else {
+            controller.navigate(destination)
+        }
+    }
+
+    /**
+     * Same as [navigate] except if the destination is [Destination.Filter], the backstack will reset to just the main page
+     */
+    fun navigateFromNavDrawer(destination: Destination) {
+        if (DEBUG) Log.v(TAG, "navigate: ${destination.fragmentTag}")
+        if (destination == Destination.Pin) {
+            composeNavigate(destination)
+        } else if (destination == Destination.Main) {
+            controller.popUpTo { it == Destination.Main }
+        } else if (destination is Destination.Filter) {
             controller.popUpTo { it == Destination.Main }
             controller.navigate(destination)
         } else {

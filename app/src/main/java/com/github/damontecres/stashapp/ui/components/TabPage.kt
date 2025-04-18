@@ -171,6 +171,7 @@ data class TabWithSubItems<T : StashDataFilter>(
             StashApplication.getApplication().getString(dataType.pluralStringId)
         return TabProvider(name) { positionCallback ->
             var filterArgs by remember(this@TabWithSubItems) { mutableStateOf(initialFilter) }
+            var checked by rememberSaveable(this@TabWithSubItems) { mutableStateOf(false) }
             StashGridTab(
                 name = name,
                 server = server,
@@ -181,11 +182,13 @@ data class TabWithSubItems<T : StashDataFilter>(
                 positionCallback = positionCallback,
                 subToggleLabel = subToggleLabel,
                 onSubToggleCheck = {
+                    checked = it
                     filterArgs =
                         filterArgs.copy(
                             objectFilter = filterBuilder.invoke(it, filterArgs.objectFilter as T),
                         )
                 },
+                subToggleChecked = checked,
                 composeUiConfig = composeUiConfig,
             )
         }
@@ -204,6 +207,7 @@ fun StashGridTab(
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
     subToggleLabel: String? = null,
     onSubToggleCheck: ((Boolean) -> Unit)? = null,
+    subToggleChecked: Boolean = false,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
     val viewModel = viewModel<FilterViewModel>(key = name)
@@ -233,6 +237,7 @@ fun StashGridTab(
             letterPosition = viewModel::findLetterPosition,
             subToggleLabel = subToggleLabel,
             onSubToggleCheck = onSubToggleCheck,
+            subToggleChecked = subToggleChecked,
             requestFocus = false,
         )
     }

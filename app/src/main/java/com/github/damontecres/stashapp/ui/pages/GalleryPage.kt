@@ -17,13 +17,16 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -147,11 +150,39 @@ fun GalleryDetails(
     rating100Click: (rating100: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val navigationManager = LocalGlobalContext.current.navigationManager
+    val context = LocalContext.current
     val rows =
         buildList {
             add(TableRow.from(R.string.stashapp_date, gallery.date))
+            add(
+                TableRow.from(R.string.stashapp_studio, gallery.studio?.name) {
+                    navigationManager.navigate(
+                        Destination.Item(
+                            DataType.STUDIO,
+                            gallery.studio!!.id,
+                        ),
+                    )
+                },
+            )
             add(TableRow.from(R.string.stashapp_scene_code, gallery.code))
-            add(TableRow.from(R.string.stashapp_photographer, gallery.photographer))
+            add(
+                TableRow.from(R.string.stashapp_photographer, gallery.photographer) {
+                    navigationManager.navigate(
+                        Destination.Filter(
+                            filterArgs =
+                                FilterArgs(
+                                    dataType = DataType.GALLERY,
+                                    name = context.getString(R.string.stashapp_photographer) + ": " + gallery.photographer,
+                                    objectFilter =
+                                        GalleryFilterType(
+                                            photographer = stringCriterion(gallery.photographer!!),
+                                        ),
+                                ),
+                        ),
+                    )
+                },
+            )
             add(TableRow.from(R.string.stashapp_description, gallery.details))
         }.filterNotNull()
     ItemDetails(

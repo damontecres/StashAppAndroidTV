@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.cards
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,7 +15,6 @@ import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
-import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import java.util.EnumMap
 import kotlin.time.DurationUnit
@@ -35,16 +35,21 @@ fun MarkerCard(
     val title =
         item.title.ifBlank {
             item.primary_tag.slimTagData.name
-        } + " - ${item.seconds.toInt().toDuration(DurationUnit.SECONDS)}"
+        }
+    val startTime =
+        item.seconds
+            .toInt()
+            .toDuration(DurationUnit.SECONDS)
+            .toString()
+    val subtitle =
+        if (item.end_seconds != null) {
+            "$startTime - ${item.end_seconds.toInt().toDuration(DurationUnit.SECONDS)}"
+        } else {
+            startTime
+        }
 
     val imageUrl = item.screenshot
     val videoUrl = item.stream
-
-    val details =
-        listOf(
-            if (item.title.isNotBlank()) item.primary_tag.slimTagData.name else null,
-            item.scene.minimalSceneData.titleOrFilename,
-        ).joinNotNullOrBlank(" - ")
 
     RootCard(
         item = item,
@@ -62,11 +67,18 @@ fun MarkerCard(
         videoUrl = videoUrl,
         title = title,
         subtitle = {
-            Text(
-                text = details,
-                maxLines = 1,
-                modifier = Modifier.enableMarquee(it),
-            )
+            Column {
+                Text(
+                    text = subtitle,
+                    maxLines = 1,
+                    modifier = Modifier.enableMarquee(it),
+                )
+                Text(
+                    text = item.scene.minimalSceneData.titleOrFilename ?: "",
+                    maxLines = 1,
+                    modifier = Modifier.enableMarquee(it),
+                )
+            }
         },
         description = {
             IconRowText(

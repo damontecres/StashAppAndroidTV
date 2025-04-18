@@ -529,7 +529,7 @@ fun FragmentContent(
                                         if (refreshMain) {
                                             navigationManager.goToMain()
                                         } else {
-                                            navigationManager.navigate(
+                                            navigationManager.navigateFromNavDrawer(
                                                 page.destination,
                                             )
                                         }
