@@ -106,7 +106,7 @@ fun ImageDetailsHeader(
                 enabled = true,
                 modifier =
                     Modifier
-                        .height(30.dp),
+                        .height(32.dp),
             )
             // Quick info
             val imageFile = image.visual_files.firstOrNull()?.onImageFile

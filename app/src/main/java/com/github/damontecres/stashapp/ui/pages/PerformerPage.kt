@@ -503,7 +503,7 @@ fun PerformerDetails(
                     enabled = true,
                     modifier =
                         Modifier
-                            .height(30.dp)
+                            .height(32.dp)
                             .padding(start = 12.dp),
                 )
             }
