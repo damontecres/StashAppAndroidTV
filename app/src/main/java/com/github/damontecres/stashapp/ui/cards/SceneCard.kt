@@ -104,7 +104,7 @@ fun SceneCard(
                                 Modifier
                                     .align(Alignment.BottomStart)
                                     .background(
-                                        MaterialTheme.colorScheme.tertiary, // TODO?
+                                        MaterialTheme.colorScheme.tertiary,
                                     ).clip(RectangleShape)
                                     .height(4.dp)
                                     .width((ScenePresenter.CARD_WIDTH * percentWatched).dp / 2),

@@ -500,7 +500,6 @@ fun StashGrid(
                 jump2 = jump2,
                 jumpClick = { jump ->
                     scope.launch {
-                        // TODO
                         val newPosition =
                             (focusedIndex + jump).coerceIn(0..<pager.size)
                         focusOn(newPosition)

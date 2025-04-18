@@ -314,7 +314,7 @@ fun RightPlaybackButtons(
         PlaybackButton(
             iconRes = R.drawable.baseline_more_vert_96,
             onClick = {
-                // TODO
+                // TODO captions
                 onControllerInteraction.invoke()
             },
             enabled = true,
@@ -324,7 +324,7 @@ fun RightPlaybackButtons(
         PlaybackButton(
             iconRes = R.drawable.vector_settings,
             onClick = {
-                // TODO
+                // TODO playback settings
                 onControllerInteraction.invoke()
             },
             enabled = true,

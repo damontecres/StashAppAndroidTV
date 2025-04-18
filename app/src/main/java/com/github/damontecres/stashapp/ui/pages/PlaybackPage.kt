@@ -118,7 +118,7 @@ fun PlaylistPlaybackPage(
     playlistViewModel: FilterViewModel = viewModel(key = "playlist"),
 ) {
     val context = LocalContext.current
-    val maxPlaylistSize = 50 // TODO
+    val maxPlaylistSize = 100 // TODO
     LaunchedEffect(server, filterArgs) {
         // TODO switch to single query
         viewModel.setFilter(server, adjustFilter(filterArgs))
