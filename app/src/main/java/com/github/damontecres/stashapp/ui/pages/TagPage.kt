@@ -28,6 +28,7 @@ import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -43,8 +44,6 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getUiTabs
-import com.github.damontecres.stashapp.util.showDebugInfo
-import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 
 @Composable
@@ -222,9 +221,6 @@ fun TagDetails(
 ) {
     val rows =
         buildList {
-            if (showDebugInfo()) {
-                add(TableRow.from(R.string.id, tag.id))
-            }
             add(TableRow.from(R.string.stashapp_description, tag.description))
             if (tag.aliases.isNotEmpty()) {
                 add(
@@ -234,9 +230,6 @@ fun TagDetails(
                     ),
                 )
             }
-
-            add(TableRow.from(R.string.stashapp_created_at, parseTimeToString(tag.created_at)))
-            add(TableRow.from(R.string.stashapp_updated_at, parseTimeToString(tag.updated_at)))
         }.filterNotNull()
     ItemDetails(
         modifier = modifier,
@@ -245,5 +238,6 @@ fun TagDetails(
         tableRows = rows,
         favorite = favorite,
         favoriteClick = favoriteClick,
+        basicItemInfo = BasicItemInfo(tag.id, tag.created_at, tag.updated_at),
     )
 }

@@ -2,9 +2,10 @@ package com.github.damontecres.stashapp.ui.pages
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -37,6 +38,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.components.ItemDetailsFooter
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StarRating
@@ -54,9 +56,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.showDebugInfo
 import com.github.damontecres.stashapp.util.showSetRatingToast
-import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 
 @Composable
@@ -233,61 +233,16 @@ fun GroupDetails(
 ) {
     val rows =
         buildList {
-            if (showDebugInfo()) {
-                add(TableRow.from(R.string.id, group.id))
-            }
             add(TableRow.from(R.string.stashapp_date, group.date))
             add(TableRow.from(R.string.stashapp_duration, group.duration?.toString()))
             add(TableRow.from(R.string.stashapp_studio, group.studio?.name))
             add(TableRow.from(R.string.stashapp_director, group.director))
             add(TableRow.from(R.string.stashapp_synopsis, group.synopsis))
-
-            add(TableRow.from(R.string.stashapp_created_at, parseTimeToString(group.created_at)))
-            add(TableRow.from(R.string.stashapp_updated_at, parseTimeToString(group.updated_at)))
         }.filterNotNull()
     LazyColumn(modifier = modifier) {
         item {
-            Row(horizontalArrangement = Arrangement.SpaceEvenly) {
-                // Images
-                if (group.front_image_path.isNotNullOrBlank()) {
-                    AsyncImage(
-                        modifier =
-                            Modifier
-                                .padding(12.dp)
-                                .weight(1f)
-                                .fillMaxHeight(.66f),
-                        model =
-                            ImageRequest
-                                .Builder(LocalContext.current)
-                                .data(group.front_image_path)
-                                .crossfade(true)
-                                .build(),
-                        contentDescription = null,
-                        contentScale = ContentScale.FillWidth,
-                    )
-                }
-                if (group.back_image_path.isNotNullOrBlank()) {
-                    AsyncImage(
-                        modifier =
-                            Modifier
-                                .padding(12.dp)
-                                .weight(1f)
-                                .fillMaxHeight(.66f),
-                        model =
-                            ImageRequest
-                                .Builder(LocalContext.current)
-                                .data(group.back_image_path)
-                                .crossfade(true)
-                                .build(),
-                        contentDescription = null,
-                        contentScale = ContentScale.FillWidth,
-                    )
-                }
-            }
-        }
-        item {
             StarRating(
-                rating100 = rating100 ?: 0,
+                rating100 = rating100,
                 precision = uiConfig.starPrecision,
                 onRatingChange = rating100Click,
                 enabled = true,
@@ -297,9 +252,62 @@ fun GroupDetails(
                         .padding(start = 12.dp),
             )
         }
+        item {
+            Row(
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.heightIn(max = 368.dp),
+            ) {
+                // Images
+                if (group.front_image_path.isNotNullOrBlank()) {
+                    AsyncImage(
+                        modifier =
+                            Modifier
+                                .padding(12.dp)
+                                .weight(1f)
+                                .fillMaxSize(),
+                        model =
+                            ImageRequest
+                                .Builder(LocalContext.current)
+                                .data(group.front_image_path)
+                                .crossfade(true)
+                                .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                    )
+                }
+                if (group.back_image_path.isNotNullOrBlank()) {
+                    AsyncImage(
+                        modifier =
+                            Modifier
+                                .padding(12.dp)
+                                .weight(1f)
+                                .fillMaxSize(),
+                        model =
+                            ImageRequest
+                                .Builder(LocalContext.current)
+                                .data(group.back_image_path)
+                                .crossfade(true)
+                                .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                    )
+                }
+            }
+        }
 
         items(rows) { row ->
             TableRowComposable(row)
+        }
+        item {
+            ItemDetailsFooter(
+                id = group.id,
+                createdAt = group.created_at.toString(),
+                updatedAt = group.updated_at.toString(),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 32.dp),
+            )
         }
     }
 }

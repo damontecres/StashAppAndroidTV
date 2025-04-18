@@ -4,7 +4,6 @@ import android.content.res.Configuration
 import android.os.Build
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
@@ -58,13 +56,18 @@ import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.components.ItemDetailsFooter
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -74,7 +77,6 @@ import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
 import com.github.damontecres.stashapp.ui.components.TableRowComposable
-import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.ui.components.createTabFunc
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.ui.performerPreview
@@ -368,6 +370,16 @@ fun PerformerDetailsPage(
     TabPage(title, tabs, modifier)
 }
 
+fun stringCriterion(
+    value: String,
+    modifier: CriterionModifier = CriterionModifier.INCLUDES,
+) = Optional.present(
+    StringCriterionInput(
+        value = value,
+        modifier = modifier,
+    ),
+)
+
 @Composable
 fun PerformerDetails(
     perf: PerformerData,
@@ -382,6 +394,15 @@ fun PerformerDetails(
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
+    val navigationManager = LocalGlobalContext.current.navigationManager
+    val navigateTo = { perfFilter: PerformerFilterType ->
+        navigationManager.navigate(
+            Destination.Filter(
+                filterArgs = FilterArgs(DataType.PERFORMER, objectFilter = perfFilter),
+            ),
+        )
+    }
+
     val tableRows =
         buildList {
             if (perf.alias_list.isNotEmpty()) {
@@ -399,10 +420,26 @@ fun PerformerDetails(
                 }
             }
             add(TableRow.from(R.string.stashapp_death_date, perf.death_date))
-            add(TableRow.from(R.string.stashapp_country, perf.country))
-            add(TableRow.from(R.string.stashapp_ethnicity, perf.ethnicity))
-            add(TableRow.from(R.string.stashapp_hair_color, perf.hair_color))
-            add(TableRow.from(R.string.stashapp_eye_color, perf.eye_color))
+            add(
+                TableRow.from(R.string.stashapp_country, perf.country) {
+                    navigateTo(PerformerFilterType(country = stringCriterion(perf.country!!)))
+                },
+            )
+            add(
+                TableRow.from(R.string.stashapp_ethnicity, perf.ethnicity) {
+                    navigateTo(PerformerFilterType(ethnicity = stringCriterion(perf.ethnicity!!)))
+                },
+            )
+            add(
+                TableRow.from(R.string.stashapp_hair_color, perf.hair_color) {
+                    navigateTo(PerformerFilterType(hair_color = stringCriterion(perf.hair_color!!)))
+                },
+            )
+            add(
+                TableRow.from(R.string.stashapp_eye_color, perf.eye_color) {
+                    navigateTo(PerformerFilterType(eye_color = stringCriterion(perf.eye_color!!)))
+                },
+            )
             if (perf.height_cm != null) {
                 val feet = floor(perf.height_cm / 30.48).toInt()
                 val inches = (perf.height_cm / 2.54 - feet * 12).roundToInt()
@@ -538,7 +575,7 @@ fun PerformerDetails(
             }
 
             item {
-                PerformerDetailsFooter(
+                ItemDetailsFooter(
                     id = perf.id,
                     createdAt = perf.created_at.toString(),
                     updatedAt = perf.updated_at.toString(),
@@ -549,33 +586,6 @@ fun PerformerDetails(
                 )
             }
         }
-    }
-}
-
-@Composable
-fun PerformerDetailsFooter(
-    id: String,
-    createdAt: String,
-    updatedAt: String,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.Start),
-    ) {
-        if (createdAt.length >= 10) {
-            TitleValueText(
-                stringResource(R.string.stashapp_created_at),
-                createdAt.substring(0..<10),
-            )
-        }
-        if (updatedAt.length >= 10) {
-            TitleValueText(
-                stringResource(R.string.stashapp_updated_at),
-                updatedAt.substring(0..<10),
-            )
-        }
-        TitleValueText(stringResource(R.string.id), id)
     }
 }
 

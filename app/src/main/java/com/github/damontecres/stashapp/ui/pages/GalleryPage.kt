@@ -24,6 +24,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -38,9 +39,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getUiTabs
-import com.github.damontecres.stashapp.util.showDebugInfo
 import com.github.damontecres.stashapp.util.showSetRatingToast
-import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 
 @Composable
@@ -150,16 +149,10 @@ fun GalleryDetails(
 ) {
     val rows =
         buildList {
-            if (showDebugInfo()) {
-                add(TableRow.from(R.string.id, gallery.id))
-            }
             add(TableRow.from(R.string.stashapp_date, gallery.date))
             add(TableRow.from(R.string.stashapp_scene_code, gallery.code))
             add(TableRow.from(R.string.stashapp_photographer, gallery.photographer))
             add(TableRow.from(R.string.stashapp_description, gallery.details))
-
-            add(TableRow.from(R.string.stashapp_created_at, parseTimeToString(gallery.created_at)))
-            add(TableRow.from(R.string.stashapp_updated_at, parseTimeToString(gallery.updated_at)))
         }.filterNotNull()
     ItemDetails(
         modifier = modifier,
@@ -170,5 +163,6 @@ fun GalleryDetails(
         favoriteClick = null,
         rating100 = rating100,
         rating100Click = rating100Click,
+        basicItemInfo = BasicItemInfo(gallery.id, gallery.created_at, gallery.updated_at),
     )
 }

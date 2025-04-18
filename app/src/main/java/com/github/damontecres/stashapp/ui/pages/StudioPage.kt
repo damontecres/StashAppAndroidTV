@@ -28,9 +28,12 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -46,9 +49,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getUiTabs
-import com.github.damontecres.stashapp.util.showDebugInfo
 import com.github.damontecres.stashapp.util.showSetRatingToast
-import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 
 @Composable
@@ -285,13 +286,20 @@ fun StudioDetails(
     rating100Click: (rating100: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val navigationManager = LocalGlobalContext.current.navigationManager
     val rows =
         buildList {
-            if (showDebugInfo()) {
-                add(TableRow.from(R.string.id, studio.id))
-            }
             add(TableRow.from(R.string.stashapp_description, studio.details))
-            add(TableRow.from(R.string.stashapp_parent_studio, studio.parent_studio?.name))
+            add(
+                TableRow.from(R.string.stashapp_parent_studio, studio.parent_studio?.name) {
+                    navigationManager.navigate(
+                        Destination.Item(
+                            DataType.STUDIO,
+                            studio.parent_studio!!.id,
+                        ),
+                    )
+                },
+            )
             if (studio.aliases.isNotEmpty()) {
                 add(
                     TableRow.from(
@@ -300,9 +308,6 @@ fun StudioDetails(
                     ),
                 )
             }
-
-            add(TableRow.from(R.string.stashapp_created_at, parseTimeToString(studio.created_at)))
-            add(TableRow.from(R.string.stashapp_updated_at, parseTimeToString(studio.updated_at)))
         }.filterNotNull()
     ItemDetails(
         modifier = modifier,
@@ -313,5 +318,6 @@ fun StudioDetails(
         favoriteClick = favoriteClick,
         rating100 = rating100,
         rating100Click = rating100Click,
+        basicItemInfo = BasicItemInfo(studio.id, studio.created_at, studio.updated_at),
     )
 }
