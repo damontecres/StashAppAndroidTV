@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -17,6 +18,7 @@ class PinFragmentCompose : Fragment(R.layout.pin_dialog) {
     var onCorrectPin: () -> Unit = {}
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.i("RootPin", "onCreate")
         super.onCreate(savedInstanceState)
         val pinCode =
             PreferenceManager
@@ -31,6 +33,7 @@ class PinFragmentCompose : Fragment(R.layout.pin_dialog) {
         view: View,
         savedInstanceState: Bundle?,
     ) {
+        Log.i("RootPin", "onViewCreated")
         super.onViewCreated(view, savedInstanceState)
 
         pinEditText = view.findViewById(R.id.pin_edit_text)
@@ -67,13 +70,16 @@ class PinFragmentCompose : Fragment(R.layout.pin_dialog) {
     }
 
     override fun onResume() {
+        Log.i("RootPin", "onResume")
         super.onResume()
+        requireView().visibility = View.VISIBLE
         pinEditText.requestFocus()
         val imm = getSystemService(requireContext(), InputMethodManager::class.java)!!
         imm.showSoftInput(pinEditText, InputMethodManager.SHOW_IMPLICIT)
     }
 
     override fun onStop() {
+        Log.i("RootPin", "onStop")
         super.onStop()
         val imm = getSystemService(requireContext(), InputMethodManager::class.java)!!
         imm.hideSoftInputFromWindow(pinEditText.windowToken, 0)

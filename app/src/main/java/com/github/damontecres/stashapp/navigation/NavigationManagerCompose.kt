@@ -18,6 +18,7 @@ import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
 import com.github.damontecres.stashapp.playback.PlaylistScenesFragment
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.setup.SetupFragment
+import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
 import dev.olshevski.navigation.reimagined.NavController
@@ -46,27 +47,23 @@ class NavigationManagerCompose(
     }
 
     fun composeNavigate(destination: Destination) {
-        if (destination == Destination.Pin) {
-            // no-op for compose
+        val current = getCurrentFragment()
+        if (destination == Destination.Pin && current is PinFragment) {
+            if (DEBUG) Log.v(TAG, "Ignore navigate to ${Destination.Pin}")
             return
         }
-//        val current = getCurrentFragment()
-//        if (destination == Destination.Pin && current is PinFragment) {
-//            if (DEBUG) Log.v(TAG, "Ignore navigate to ${Destination.Pin}")
-//            return
-//        }
-//        if (destination == Destination.Pin) {
-//            activity.rootFragmentView.visibility = View.VISIBLE
-//            // Enable so that backing out of the fragment will close the app
-//            onBackPressedCallback.isEnabled = true
-//        }
+        if (destination == Destination.Pin) {
+            activity.rootFragmentView.visibility = View.VISIBLE
+            // Enable so that backing out of the fragment will close the app
+            onBackPressedCallback.isEnabled = true
+        }
         val fragment =
             when (destination) {
                 Destination.Main -> null // ComposeMainFragment()
                 Destination.Search -> null // StashSearchFragment()
                 is Destination.Settings -> SettingsFragment()
-                Destination.Pin -> null // PinFragment()
-                Destination.SettingsPin -> null // SettingsPinEntryFragment()
+                Destination.Pin -> PinFragment()
+                Destination.SettingsPin -> SettingsPinEntryFragment()
                 Destination.Setup -> SetupFragment()
 
                 is Destination.UpdateApp -> UpdateAppFragment()

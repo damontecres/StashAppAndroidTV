@@ -69,10 +69,9 @@ interface NavigationManager {
 
 abstract class NavigationManagerParent(
     protected val activity: RootActivity,
+    protected val fragmentManager: FragmentManager = activity.supportFragmentManager,
 ) : NavigationManager {
     private val listeners = mutableListOf<NavigationListener>()
-
-    protected val fragmentManager = activity.supportFragmentManager
 
     override var previousDestination: Destination? = null
 
