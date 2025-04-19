@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -36,6 +37,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -57,11 +59,14 @@ import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import coil3.ImageLoader
+import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.disk.DiskCache
 import coil3.disk.directory
+import coil3.network.cachecontrol.CacheControlCacheStrategy
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
+import coil3.util.DebugLogger
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
@@ -186,7 +191,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalCoilApi::class)
 @Composable
 fun FragmentContent(
     server: StashServer,
@@ -249,9 +254,10 @@ fun FragmentContent(
             DefaultLongClicker(navigationManager, itemOnClick) { dialogParams = it }
         }
     setSingletonImageLoaderFactory { ctx ->
+        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        val cacheLogging = prefs.getBoolean("networkCacheLogging", false)
         val diskCacheSize =
-            PreferenceManager
-                .getDefaultSharedPreferences(ctx)
+            prefs
                 .getInt(context.getString(R.string.pref_key_image_cache_size), 100)
                 .coerceAtLeast(10)
         ImageLoader
@@ -263,10 +269,11 @@ fun FragmentContent(
                     .maxSizeBytes(diskCacheSize * 1024 * 1024L)
                     .build(),
             ).crossfade(true)
-//            .logger(DebugLogger())
+            .logger(if (cacheLogging) DebugLogger() else null)
             .components {
                 add(
                     OkHttpNetworkFetcherFactory(
+                        cacheStrategy = { CacheControlCacheStrategy() },
                         callFactory = {
                             Call.Factory { request ->
                                 // TODO this seems hacky?
@@ -496,11 +503,6 @@ fun FragmentContent(
                                     .selectableGroup(),
                             state = listState,
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement =
-                                Arrangement.spacedBy(
-                                    6.dp,
-                                    Alignment.CenterVertically,
-                                ),
                         ) {
                             items(
                                 pages,
@@ -540,13 +542,16 @@ fun FragmentContent(
                                                 if (selectedScreen == page) {
                                                     MaterialTheme.colorScheme.border
                                                 } else {
-                                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                                    Color.Unspecified
                                                 }
                                             Text(
                                                 stringResource(id = page.iconString),
                                                 fontFamily = FontAwesome,
                                                 textAlign = TextAlign.Center,
-                                                modifier = Modifier,
+                                                modifier =
+                                                    Modifier
+                                                        // Centers the icon for some reason
+                                                        .padding(top = 4.dp),
                                                 color = color,
                                             )
                                         } else {

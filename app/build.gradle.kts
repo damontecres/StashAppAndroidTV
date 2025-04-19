@@ -118,6 +118,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
@@ -252,9 +253,11 @@ dependencies {
     implementation(libs.androidsvg.aar)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.network.cachecontrol)
     implementation(libs.coil.svg)
     implementation(libs.coil.gif)
     implementation(libs.navigation.reimagined)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.junit)

@@ -14,6 +14,7 @@ coil-compose = "3.0.4"
 compose-bom = "2025.03.00"
 compose-runtime = "1.7.8"
 constraintlayout = "2.2.1"
+desugar_jdk_libs = "2.1.5"
 markwon-core = "4.6.2"
 core-ktx = "1.15.0"
 glide = "4.16.0"
@@ -83,7 +84,9 @@ auto-service-annotations = { module = "com.google.auto.service:auto-service-anno
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil-compose" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil-compose" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil-compose" }
+coil-network-cachecontrol = { module = "io.coil-kt.coil3:coil-network-cache-control", version.ref = "coil-compose" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil-compose" }
+desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 markwon-core = { module = "io.noties.markwon:core", version.ref = "markwon-core" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 glide-okhttp3-integration = { module = "com.github.bumptech.glide:okhttp3-integration", version.ref = "glide" }
