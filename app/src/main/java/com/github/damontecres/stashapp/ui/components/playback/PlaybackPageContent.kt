@@ -457,8 +457,12 @@ class PlaybackKeyHandler(
                 }
 
                 Key.MediaPlayPause -> {
-                    if (player.isPlaying) player.pause() else player.play()
-                    controllerViewState.showControls()
+                    if (player.isPlaying) {
+                        player.pause()
+                        controllerViewState.showControls()
+                    } else {
+                        player.play()
+                    }
                 }
 
                 Key.MediaFastForward, Key.MediaSkipForward -> {

@@ -150,7 +150,7 @@ sealed class Destination(
     @Serializable
     data class Fragment(
         val className: String,
-    ) : Destination()
+    ) : Destination(true)
 
     override fun describeContents(): Int = 0
 
