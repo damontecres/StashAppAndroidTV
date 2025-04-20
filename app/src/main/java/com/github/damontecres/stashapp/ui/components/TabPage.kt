@@ -159,19 +159,23 @@ data class TabWithSubItems<T : StashDataFilter>(
         subToggleLabel: String?,
         includeSubTags: Boolean,
     ): TabProvider {
-        val objectFilter =
-            filterBuilder.invoke(includeSubTags, dataType.filterType.createInstance() as T)
-        val initialFilter =
-            FilterArgs(
-                dataType = dataType,
-                findFilter = findFilter,
-                objectFilter = objectFilter,
-            )
         val name =
             StashApplication.getApplication().getString(dataType.pluralStringId)
         return TabProvider(name) { positionCallback ->
-            var filterArgs by remember(this@TabWithSubItems) { mutableStateOf(initialFilter) }
-            var checked by rememberSaveable(this@TabWithSubItems) { mutableStateOf(false) }
+            var checked by rememberSaveable(this@TabWithSubItems) { mutableStateOf(includeSubTags) }
+            var filterArgs by remember(this@TabWithSubItems) {
+                mutableStateOf(
+                    FilterArgs(
+                        dataType = dataType,
+                        findFilter = findFilter,
+                        objectFilter =
+                            filterBuilder.invoke(
+                                checked,
+                                dataType.filterType.createInstance() as T,
+                            ),
+                    ),
+                )
+            }
             StashGridTab(
                 name = name,
                 server = server,

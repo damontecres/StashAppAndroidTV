@@ -68,6 +68,18 @@ import kotlinx.coroutines.withContext
 
 private val TAG = "SearchForPage"
 
+sealed interface SearchState {
+    data object NoQuery : SearchState
+
+    data object Pending : SearchState
+
+    data object NoResults : SearchState
+
+    data class Success(
+        val items: List<Any>,
+    ) : SearchState
+}
+
 @Composable
 fun SearchForDialog(
     show: Boolean,
@@ -160,7 +172,7 @@ fun SearchForPage(
 
     var searchQuery by remember { mutableStateOf(startingSearchQuery) }
 
-    var results by remember { mutableStateOf<List<Any>>(listOf()) }
+    var results by remember { mutableStateOf<SearchState>(SearchState.NoQuery) }
     var suggestions by remember { mutableStateOf<List<StashData>>(listOf()) }
     var recent by remember { mutableStateOf<List<StashData>>(listOf()) }
 
@@ -195,11 +207,12 @@ fun SearchForPage(
     var job: Job? = null
 
     fun search(query: String) {
+        job?.cancel()
         if (query.isNotNullOrBlank()) {
-            job?.cancel()
             job =
                 scope.launch {
                     delay(searchDelay)
+                    results = SearchState.Pending
                     Log.v(TAG, "Starting search")
                     val items =
                         queryEngine.find(
@@ -210,17 +223,29 @@ fun SearchForPage(
                             ),
                         )
                     results =
-                        if (allowCreate && SearchForFragment.allowCreate(dataType, query, items)) {
-                            val mutableItems = (items as List<Any>).toMutableList()
-                            mutableItems.add(CreateNew(dataType, query))
-                            mutableItems
+                        if (items.isEmpty()) {
+                            SearchState.NoResults
                         } else {
-                            items
+                            SearchState.Success(
+                                if (allowCreate &&
+                                    SearchForFragment.allowCreate(
+                                        dataType,
+                                        query,
+                                        items,
+                                    )
+                                ) {
+                                    val mutableItems = (items as List<Any>).toMutableList()
+                                    mutableItems.add(CreateNew(dataType, query))
+                                    mutableItems
+                                } else {
+                                    items
+                                },
+                            )
                         }
                 }
         } else {
             Log.v(TAG, "Query is empty")
-            results = listOf()
+            results = SearchState.NoQuery
         }
     }
 
@@ -319,38 +344,46 @@ fun SearchForPage(
         val bottomPadding = 8.dp
 
         item {
-            if (results.isEmpty()) {
-                if (searchQuery.isBlank()) {
+            when (val result = results) {
+                is SearchState.NoQuery ->
                     Text(
                         text = stringResource(R.string.waiting_for_query),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
-                } else {
+
+                SearchState.Pending ->
+                    Text(
+                        text = stringResource(R.string.searching),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+
+                SearchState.NoResults ->
                     Text(
                         text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
-                }
-            } else {
-                SearchItemsRow(
-                    title = stringResource(R.string.results),
-                    items = results,
-                    uiConfig = uiConfig,
-                    itemOnClick = itemOnClickWrapper,
-                    longClicker = { _, _ -> },
-                    filterArgs =
-                        FilterArgs(
-                            dataType = dataType,
-                            findFilter =
-                                StashFindFilter(
-                                    q = searchQuery,
-                                    sortAndDirection = dataType.defaultSort,
-                                ),
-                        ),
-                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
-                )
+
+                is SearchState.Success ->
+                    SearchItemsRow(
+                        title = stringResource(R.string.results),
+                        items = result.items,
+                        uiConfig = uiConfig,
+                        itemOnClick = itemOnClickWrapper,
+                        longClicker = { _, _ -> },
+                        filterArgs =
+                            FilterArgs(
+                                dataType = dataType,
+                                findFilter =
+                                    StashFindFilter(
+                                        q = searchQuery,
+                                        sortAndDirection = dataType.defaultSort,
+                                    ),
+                            ),
+                        modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
+                    )
             }
         }
         if (suggestions.isNotEmpty()) {

@@ -110,6 +110,7 @@ import kotlin.time.Duration.Companion.seconds
 class NavDrawerFragment : Fragment(R.layout.compose_frame) {
     private val serverViewModel: ServerViewModel by activityViewModels()
 
+    @OptIn(ExperimentalCoilApi::class)
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
@@ -120,11 +121,45 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
             // Dispose of the Composition when the view's LifecycleOwner is destroyed
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
+                val server by serverViewModel.currentServer.observeAsState()
+                setSingletonImageLoaderFactory { ctx ->
+                    val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+                    val cacheLogging = prefs.getBoolean("networkCacheLogging", false)
+                    val diskCacheSize =
+                        prefs
+                            .getInt(context.getString(R.string.pref_key_image_cache_size), 100)
+                            .coerceAtLeast(10)
+                    ImageLoader
+                        .Builder(context)
+                        .diskCache(
+                            DiskCache
+                                .Builder()
+                                .directory(context.cacheDir.resolve("coil3_image_cache"))
+                                .maxSizeBytes(diskCacheSize * 1024 * 1024L)
+                                .build(),
+                        ).crossfade(true)
+                        .logger(if (cacheLogging) DebugLogger() else null)
+                        .components {
+                            add(
+                                OkHttpNetworkFetcherFactory(
+                                    cacheStrategy = { CacheControlCacheStrategy() },
+                                    callFactory = {
+                                        Call.Factory { request ->
+                                            // TODO this seems hacky?
+                                            serverViewModel.requireServer().okHttpClient.newCall(
+                                                request,
+                                            )
+                                        }
+                                    },
+                                ),
+                            )
+                        }.build()
+                }
+
                 val isSystemInDarkTheme = isSystemInDarkTheme()
                 var colorScheme by
                     remember { mutableStateOf(getTheme(requireContext(), false, isSystemInDarkTheme)) }
                 MaterialTheme(colorScheme = colorScheme.tvColorScheme) {
-                    val server by serverViewModel.currentServer.observeAsState()
                     val currDestination by serverViewModel.destination.observeAsState()
                     key(server) {
                         val navController =
@@ -151,7 +186,6 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                             ) {
                                 FragmentContent(
                                     server = server ?: StashServer("http://0.0.0.0", null),
-                                    serverProvider = { serverViewModel.requireServer() },
                                     navigationManager = navManager,
                                     onChangeTheme = { name ->
                                         try {
@@ -191,11 +225,10 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalCoilApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun FragmentContent(
     server: StashServer,
-    serverProvider: () -> StashServer,
     navigationManager: NavigationManagerCompose,
     onChangeTheme: (String?) -> Unit,
     modifier: Modifier = Modifier,
@@ -253,37 +286,6 @@ fun FragmentContent(
         remember {
             DefaultLongClicker(navigationManager, itemOnClick) { dialogParams = it }
         }
-    setSingletonImageLoaderFactory { ctx ->
-        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
-        val cacheLogging = prefs.getBoolean("networkCacheLogging", false)
-        val diskCacheSize =
-            prefs
-                .getInt(context.getString(R.string.pref_key_image_cache_size), 100)
-                .coerceAtLeast(10)
-        ImageLoader
-            .Builder(context)
-            .diskCache(
-                DiskCache
-                    .Builder()
-                    .directory(context.cacheDir.resolve("coil3_image_cache"))
-                    .maxSizeBytes(diskCacheSize * 1024 * 1024L)
-                    .build(),
-            ).crossfade(true)
-            .logger(if (cacheLogging) DebugLogger() else null)
-            .components {
-                add(
-                    OkHttpNetworkFetcherFactory(
-                        cacheStrategy = { CacheControlCacheStrategy() },
-                        callFactory = {
-                            Call.Factory { request ->
-                                // TODO this seems hacky?
-                                serverProvider.invoke().okHttpClient.newCall(request)
-                            }
-                        },
-                    ),
-                )
-            }.build()
-    }
 
     // TODO this works, but sometimes requires restart when changed and going back from settings is awkward
     val settingsPage =

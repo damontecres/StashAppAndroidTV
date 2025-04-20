@@ -107,5 +107,6 @@
     <string name="timestamps">Timestamps</string>
     <string name="slideshow_at_beginning">At beginning</string>
     <string name="no_more_images">No more images</string>
+    <string name="searching">Searching...</string>
 
 </resources>
