@@ -76,14 +76,14 @@ data class Scene(
                 streams = streams,
                 spriteUrl = data.paths.sprite,
                 duration = fileData?.duration,
-                resumeTime = null,
+                resumeTime = data.resume_time,
                 videoCodec = fileData?.video_codec,
                 videoWidth = fileData?.width,
                 videoHeight = fileData?.height,
                 audioCodec = fileData?.audio_codec,
                 format = fileData?.format,
                 oCounter = data.o_counter,
-                captionUrl = null,
+                captionUrl = data.paths.caption,
                 captions = data.captions?.map { it.caption }.orEmpty(),
             )
         }
