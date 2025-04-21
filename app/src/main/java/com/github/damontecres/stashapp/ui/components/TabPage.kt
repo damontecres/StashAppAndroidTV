@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -71,7 +72,7 @@ fun TabPage(
                 Modifier
                     .align(Alignment.CenterHorizontally),
         )
-        if (showTabRow) {
+        AnimatedVisibility(showTabRow) {
             TabRow(
                 selectedTabIndex = selectedTabIndex,
                 modifier =
@@ -107,7 +108,7 @@ fun TabPage(
         if (tabs.isNotEmpty()) {
             Log.i("Tabs", "selectedTabIndex=$selectedTabIndex")
             tabs[selectedTabIndex].content(this) { columns, position ->
-                showTabRowRaw = position <= columns
+                showTabRowRaw = position < columns
             }
         }
     }

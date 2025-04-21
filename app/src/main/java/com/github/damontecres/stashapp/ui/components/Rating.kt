@@ -1,9 +1,9 @@
 package com.github.damontecres.stashapp.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -66,7 +66,7 @@ fun StarRating(
     bgColor: Color = AppColors.TransparentBlack75, // MaterialTheme.colorScheme.background,
 ) {
     var tempRating by remember { mutableIntStateOf(rating100) }
-    val percentage = tempRating / 100f
+    val percentage = remember { (if (enabled) tempRating else rating100) / 100f }
     Box(
         modifier =
             modifier
@@ -78,7 +78,6 @@ fun StarRating(
                 Modifier
                     .selectableGroup()
                     .padding(4.dp)
-                    .height(IntrinsicSize.Min)
                     .drawWithCache {
                         onDrawWithContent {
                             drawContent()
@@ -92,9 +91,10 @@ fun StarRating(
                         }
                     },
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
             for (i in 1..5) {
-                val isRated = tempRating >= (i * 20)
+                val isRated = (if (enabled) tempRating else rating100) >= (i * 20)
                 val icon = Icons.Filled.Star
                 var focused by remember { mutableStateOf(false) }
 
@@ -180,7 +180,7 @@ private fun StarRatingPreview() {
                 onRatingChange = { rating = it },
                 enabled = true,
                 bgColor = bgColor,
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(16.dp).height(32.dp),
             )
             var rating2 by remember { mutableIntStateOf(60) }
             StarRating(
@@ -189,7 +189,7 @@ private fun StarRatingPreview() {
                 onRatingChange = { rating2 = it },
                 enabled = true,
                 bgColor = bgColor,
-                modifier = Modifier,
+                modifier = Modifier.height(32.dp),
             )
             StarRating(
                 rating100 = 25,
@@ -197,7 +197,7 @@ private fun StarRatingPreview() {
                 onRatingChange = {},
                 enabled = true,
                 bgColor = bgColor,
-                modifier = Modifier,
+                modifier = Modifier.height(32.dp),
             )
             StarRating(
                 rating100 = 75,
@@ -205,7 +205,7 @@ private fun StarRatingPreview() {
                 onRatingChange = {},
                 enabled = true,
                 bgColor = bgColor,
-                modifier = Modifier,
+                modifier = Modifier.height(32.dp),
             )
         }
     }

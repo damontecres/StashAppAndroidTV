@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -17,8 +18,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -37,7 +38,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -88,7 +88,7 @@ private const val TAG = "MainPage"
 class MainPageViewModel(
     server: StashServer,
 ) : ViewModel() {
-    val frontPageRows = MutableLiveData<List<FrontPageParser.FrontPageRow.Success>>(listOf())
+    val frontPageRows = mutableStateListOf<FrontPageParser.FrontPageRow.Success>()
 
     init {
         val queryEngine = QueryEngine(server)
@@ -110,17 +110,14 @@ class MainPageViewModel(
                 )
             viewModelScope.launch {
                 val jobs = frontPageParser.parse(frontPageContent)
-                val rows =
-                    jobs.mapIndexedNotNull { index, job ->
-                        job.await().let { row ->
-                            if (row is FrontPageParser.FrontPageRow.Success) {
-                                row
-                            } else {
-                                null
-                            }
+
+                jobs.forEach { job ->
+                    job.await().let { row ->
+                        if (row is FrontPageParser.FrontPageRow.Success) {
+                            frontPageRows.add(row)
                         }
                     }
-                frontPageRows.value = rows
+                }
             }
         }
     }
@@ -154,12 +151,9 @@ fun MainPage(
             },
         )[MainPageViewModel::class]
 
-    val frontPageRows by viewModel.frontPageRows.observeAsState(listOf())
+    val frontPageRows = viewModel.frontPageRows // .observeAsState(listOf())
 
     val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(server, frontPageRows) {
-        focusRequester.tryRequestFocus()
-    }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
@@ -173,15 +167,26 @@ fun MainPage(
             }
         }
     }
-    HomePage(
-        modifier = Modifier.focusRequester(focusRequester),
-        uiConfig = uiConfig,
-        rows = frontPageRows,
-        itemOnClick = itemOnClick,
-        longClicker = longClicker,
-    )
     if (frontPageRows.isEmpty()) {
-        CircularProgress()
+        Box(modifier = modifier.fillMaxSize()) {
+            CircularProgress(
+                modifier =
+                    Modifier
+                        .size(160.dp)
+                        .align(Alignment.Center),
+            )
+        }
+    } else {
+        LaunchedEffect(server, frontPageRows) {
+            focusRequester.tryRequestFocus()
+        }
+        HomePage(
+            modifier = modifier.focusRequester(focusRequester),
+            uiConfig = uiConfig,
+            rows = frontPageRows,
+            itemOnClick = itemOnClick,
+            longClicker = longClicker,
+        )
     }
 }
 

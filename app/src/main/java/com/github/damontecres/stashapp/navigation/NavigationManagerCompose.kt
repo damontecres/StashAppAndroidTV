@@ -64,14 +64,14 @@ class NavigationManagerCompose(
 
     fun composeNavigate(destination: Destination) {
         val current = getCurrentFragment()
-        if (destination == Destination.Pin && current is PinFragment) {
-            if (DEBUG) Log.v(TAG, "Ignore navigate to ${Destination.Pin}")
-            return
-        }
         if (destination == Destination.Pin) {
             activity.rootFragmentView.visibility = View.VISIBLE
             // Enable so that backing out of the fragment will close the app
             onBackPressedCallback.isEnabled = true
+        }
+        if (destination == Destination.Pin && current is PinFragment) {
+            if (DEBUG) Log.v(TAG, "Ignore navigate to ${Destination.Pin}")
+            return
         }
         val fragment =
             when (destination) {

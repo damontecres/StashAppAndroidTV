@@ -205,20 +205,19 @@ fun SceneDetailsHeader(
                             } else {
                                 Color.Unspecified
                             }
-                        var textOverflow by remember { mutableStateOf(false) }
                         var showDetailsDialog by remember { mutableStateOf(false) }
                         Box(
                             modifier =
                                 Modifier
                                     .background(bgColor, shape = RoundedCornerShape(8.dp))
                                     .focusable(
-                                        enabled = textOverflow,
+                                        enabled = true,
                                         interactionSource = interactionSource,
                                     ).onFocusChanged {
                                         if (it.isFocused) {
                                             scope.launch { bringIntoViewRequester.bringIntoView() }
                                         }
-                                    }.clickable(enabled = textOverflow) { showDetailsDialog = true },
+                                    }.clickable(enabled = true) { showDetailsDialog = true },
                         ) {
                             Text(
                                 text = scene.details,
@@ -226,9 +225,6 @@ fun SceneDetailsHeader(
                                 color = MaterialTheme.colorScheme.onSurface,
                                 maxLines = 3,
                                 overflow = TextOverflow.Ellipsis,
-                                onTextLayout = { textLayoutResult ->
-                                    textOverflow = textLayoutResult.hasVisualOverflow
-                                },
                                 modifier = Modifier.padding(8.dp),
                             )
                         }

@@ -69,6 +69,10 @@ class RootActivity :
         )
 
         val appHasPin = appHasPin()
+        if (useCompose && !appHasPin) {
+            // Hide pin fragment
+            rootFragmentView.visibility = View.GONE
+        }
 
         // Ensure everything is initialized
 
