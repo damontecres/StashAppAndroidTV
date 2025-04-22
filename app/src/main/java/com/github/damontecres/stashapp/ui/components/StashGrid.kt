@@ -217,7 +217,7 @@ fun StashGridControls(
                         SwitchWithLabel(
                             modifier = Modifier.focusProperties { down = gridFocusRequester },
                             label = subToggleLabel,
-                            state = checked,
+                            checked = checked,
                             onStateChange = { isChecked ->
                                 checked = isChecked
                                 onSubToggleCheck?.invoke(isChecked)

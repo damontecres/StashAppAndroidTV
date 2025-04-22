@@ -309,7 +309,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             Log.v(TAG, "onViewCreated: savedInstanceState==null: ${savedInstanceState == null}")
             super.onViewCreated(view, savedInstanceState)
             setTitle(getString(R.string.stashapp_settings))
-
+            view.requestFocus()
             serverViewModel.currentServer.observe(viewLifecycleOwner) {
                 if (it != null) {
                     refresh(it)
@@ -736,6 +736,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         ) {
             super.onViewCreated(view, savedInstanceState)
             setTitle(getString(R.string.advanced_settings))
+            view.requestFocus()
         }
 
         private fun setCacheDurationSummary(

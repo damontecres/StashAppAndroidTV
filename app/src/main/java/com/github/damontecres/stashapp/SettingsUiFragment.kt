@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
 import androidx.lifecycle.lifecycleScope
@@ -102,6 +103,15 @@ class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
                 true
             }
         }
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        setTitle(getString(R.string.ui_settings))
+        view.requestFocus()
     }
 
     private fun setVideoDelaySummary(

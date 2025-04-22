@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.ui.components
 
 import android.os.Parcelable
-import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -80,10 +79,6 @@ fun <T : StashData> ItemsRow(
     modifier: Modifier = Modifier,
     focusPair: FocusPair? = null,
 ) {
-    Log.v(
-        "SceneDetails",
-        "$title: focusPair?.focusRequester=${focusPair?.focusRequester}",
-    )
     val firstFocus = remember { FocusRequester() }
     val state = rememberLazyListState()
     Column(

@@ -108,5 +108,6 @@
     <string name="slideshow_at_beginning">At beginning</string>
     <string name="no_more_images">No more images</string>
     <string name="searching">Searching...</string>
+    <string name="ui_settings">Advanced UI Settings</string>
 
 </resources>

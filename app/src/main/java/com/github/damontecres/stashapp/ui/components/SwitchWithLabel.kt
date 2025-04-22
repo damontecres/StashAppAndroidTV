@@ -11,9 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,12 +27,11 @@ import com.github.damontecres.stashapp.ui.AppTheme
 @Composable
 fun SwitchWithLabel(
     label: String,
-    state: Boolean,
+    checked: Boolean,
     onStateChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    var checked by remember { mutableStateOf(state) }
-    val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
     Row(
         modifier =
@@ -52,7 +49,7 @@ fun SwitchWithLabel(
                     role = Role.Switch,
                     onClick = {
 //                        checked = !checked
-                        onStateChange(!state)
+                        onStateChange(!checked)
                     },
                 ).padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -65,7 +62,7 @@ fun SwitchWithLabel(
 
         Spacer(modifier = Modifier.padding(start = 8.dp))
         Switch(
-            checked = state,
+            checked = checked,
             onCheckedChange = {
 //                checked=it
 //                onStateChange(it)
@@ -82,7 +79,7 @@ private fun SwitchWithLabelPreview() {
             Button(onClick = {}) { Text(text = "Create Filter") }
             SwitchWithLabel(
                 label = "Toggle sub content",
-                state = false,
+                checked = false,
                 onStateChange = {},
                 modifier = Modifier.padding(16.dp),
             )
