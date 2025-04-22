@@ -2,8 +2,6 @@ package com.github.damontecres.stashapp.ui.components.playback
 
 import androidx.annotation.IntRange
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,7 +20,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,8 +54,8 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.transformations
-import coil3.size.Scale
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
@@ -139,6 +136,7 @@ fun PlaybackOverlay(
     onPlaybackActionClick: (PlaybackAction) -> Unit,
     onSeekBarChange: (Float) -> Unit,
     showDebugInfo: Boolean,
+    spriteImageLoaded: Boolean,
     modifier: Modifier = Modifier,
     seekPreviewPlaceholder: Painter? = null,
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -150,167 +148,146 @@ fun PlaybackOverlay(
 
     val previewImageUrl = scene.spriteUrl
     val imageLoader = SingletonImageLoader.get(LocalPlatformContext.current)
-    var imageLoaded by remember { mutableStateOf(false) }
-    if (previewImageUrl.isNotNullOrBlank()) {
-        LaunchedEffect(previewImageUrl) {
-            val request =
-                ImageRequest
-                    .Builder(context)
-                    .data(previewImageUrl)
-                    .memoryCachePolicy(CachePolicy.ENABLED)
-                    .scale(Scale.FILL)
-                    .build()
-            val result = imageLoader.enqueue(request).job.await()
-            imageLoaded = result.image != null
-        }
-    }
 
-    AnimatedVisibility(
-        controllerViewState.controlsVisible,
-        Modifier,
-        slideInVertically { it },
-        slideOutVertically { it },
+    Box(
+        modifier,
     ) {
-        Box(
-            modifier,
-        ) {
-            if (showDebugInfo && streamDecision != null) {
-                PlaybackDebugInfo(
-                    scene = scene,
-                    streamDecision = streamDecision,
-                    modifier =
-                        Modifier
-                            .padding(8.dp)
-                            .background(AppColors.TransparentBlack50)
-                            .align(Alignment.TopStart)
-                            // TODO the width isn't be used correctly
-                            .width(280.dp),
-                )
-            }
-            val controlHeight = .4f
-            val listState = rememberLazyListState()
-            var height = 208.dp
-            if (!uiConfig.showTitleDuringPlayback || scene.title.isNullOrBlank()) height -= 24.dp
-            if (!uiConfig.showTitleDuringPlayback || scene.date.isNullOrBlank()) height -= 32.dp
-            if (markers.isEmpty()) height -= 16.dp
-            LazyColumn(
-                state = listState,
+        if (showDebugInfo && streamDecision != null) {
+            PlaybackDebugInfo(
+                scene = scene,
+                streamDecision = streamDecision,
                 modifier =
                     Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .height(height),
+                        .padding(8.dp)
+                        .background(AppColors.TransparentBlack50)
+                        .align(Alignment.TopStart)
+                        // TODO the width isn't be used correctly
+                        .width(280.dp),
+            )
+        }
+        val controlHeight = .4f
+        val listState = rememberLazyListState()
+        var height = 208.dp
+        if (!uiConfig.showTitleDuringPlayback || scene.title.isNullOrBlank()) height -= 24.dp
+        if (!uiConfig.showTitleDuringPlayback || scene.date.isNullOrBlank()) height -= 32.dp
+        if (markers.isEmpty()) height -= 16.dp
+        LazyColumn(
+            state = listState,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(height),
 //                        .fillMaxHeight(controlHeight),
 //                contentPadding = PaddingValues(top = 420.dp),
-            ) {
-                if (uiConfig.showTitleDuringPlayback) {
-                    item {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier =
-                                Modifier
-                                    .padding(start = 8.dp)
-                                    .fillMaxWidth(.7f),
-                        ) {
-                            if (scene.title.isNotNullOrBlank()) {
-                                Text(
-                                    text = scene.title,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    style =
-                                        MaterialTheme.typography.titleLarge.copy(
-                                            fontSize = 24.sp,
-                                        ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                            if (scene.date.isNotNullOrBlank()) {
-                                Text(
-                                    text = formatDate(scene.date)!!,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    style =
-                                        MaterialTheme.typography.titleMedium.copy(
-                                            fontSize = 16.sp,
-                                        ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
+        ) {
+            if (uiConfig.showTitleDuringPlayback) {
+                item {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier =
+                            Modifier
+                                .padding(start = 8.dp)
+                                .fillMaxWidth(.7f),
+                    ) {
+                        if (scene.title.isNotNullOrBlank()) {
+                            Text(
+                                text = scene.title,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style =
+                                    MaterialTheme.typography.titleLarge.copy(
+                                        fontSize = 24.sp,
+                                    ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        if (scene.date.isNotNullOrBlank()) {
+                            Text(
+                                text = formatDate(scene.date)!!,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style =
+                                    MaterialTheme.typography.titleMedium.copy(
+                                        fontSize = 16.sp,
+                                    ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
                 }
+            }
+            item {
+                PlaybackControls(
+                    modifier = Modifier.fillMaxWidth(),
+                    scene = scene,
+                    oCounter = oCounter,
+                    playerControls = playerControls,
+                    onPlaybackActionClick = onPlaybackActionClick,
+                    controllerViewState = controllerViewState,
+                    showDebugInfo = showDebugInfo,
+                    onSeekProgress = {
+                        seekProgress = it
+                        onSeekBarChange(it)
+                    },
+                    showPlay = showPlay,
+                    previousEnabled = previousEnabled,
+                    nextEnabled = nextEnabled,
+                    seekEnabled = seekEnabled,
+                    seekBarInteractionSource = seekBarInteractionSource,
+                )
+            }
+            if (markers.isNotEmpty()) {
                 item {
-                    PlaybackControls(
-                        modifier = Modifier.fillMaxWidth(),
-                        scene = scene,
-                        oCounter = oCounter,
-                        playerControls = playerControls,
-                        onPlaybackActionClick = onPlaybackActionClick,
-                        controllerViewState = controllerViewState,
-                        showDebugInfo = showDebugInfo,
-                        onSeekProgress = {
-                            seekProgress = it
-                            onSeekBarChange(it)
-                        },
-                        showPlay = showPlay,
-                        previousEnabled = previousEnabled,
-                        nextEnabled = nextEnabled,
-                        seekEnabled = seekEnabled,
-                        seekBarInteractionSource = seekBarInteractionSource,
+//                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        modifier = Modifier.padding(start = 8.dp),
+                        text = stringResource(DataType.MARKER.pluralStringId),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
                     )
                 }
-                if (markers.isNotEmpty()) {
-                    item {
-//                    Spacer(Modifier.height(12.dp))
-                        Text(
-                            modifier = Modifier.padding(start = 8.dp),
-                            text = stringResource(DataType.MARKER.pluralStringId),
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
-                        )
-                    }
-                    item {
-                        SceneMarkerBar(
-                            modifier =
-                                Modifier
-                                    .padding(start = 8.dp, top = 64.dp, bottom = 64.dp)
-                                    .fillMaxWidth()
-                                    .height(height),
-                            markers = markers,
-                            player = playerControls,
-                            controllerViewState = controllerViewState,
-                            uiConfig = uiConfig,
-                            onCardFocus = {
+                item {
+                    SceneMarkerBar(
+                        modifier =
+                            Modifier
+                                .padding(start = 8.dp, top = 64.dp, bottom = 64.dp)
+                                .fillMaxWidth()
+                                .height(height),
+                        markers = markers,
+                        player = playerControls,
+                        controllerViewState = controllerViewState,
+                        uiConfig = uiConfig,
+                        onCardFocus = {
 //                                scope.launch {
 //                                    listState.scrollToItem(2)
 //                                }
-                            },
-                        )
-                    }
+                        },
+                    )
                 }
             }
-            AnimatedVisibility(seekBarFocused && seekProgress >= 0) {
-                val yOffsetDp = height + (if (imageLoaded) (160.dp) else 24.dp) - 16.dp
-                val heightPx = with(LocalDensity.current) { yOffsetDp.toPx().toInt() }
-                SeekPreviewImage(
-                    modifier =
-                        Modifier
-                            .align(Alignment.TopStart)
-                            .offsetByPercent(
-                                xPercentage = seekProgress.coerceIn(0f, 1f),
-                                yOffset = heightPx,
+        }
+        AnimatedVisibility(seekBarFocused && seekProgress >= 0) {
+            val yOffsetDp = height + (if (spriteImageLoaded) (160.dp) else 24.dp) - 16.dp
+            val heightPx = with(LocalDensity.current) { yOffsetDp.toPx().toInt() }
+            SeekPreviewImage(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .offsetByPercent(
+                            xPercentage = seekProgress.coerceIn(0f, 1f),
+                            yOffset = heightPx,
 //                                yPercentage = 1 - controlHeight,
-                            ),
-                    previewImageUrl = previewImageUrl,
-                    imageLoaded = imageLoaded,
-                    imageLoader = imageLoader,
-                    duration = playerControls.duration,
-                    seekProgress = seekProgress,
-                    videoWidth = scene.videoWidth,
-                    videoHeight = scene.videoHeight,
-                    placeHolder = seekPreviewPlaceholder,
-                )
-            }
+                        ),
+                previewImageUrl = previewImageUrl,
+                imageLoaded = spriteImageLoaded,
+                imageLoader = imageLoader,
+                duration = playerControls.duration,
+                seekProgress = seekProgress,
+                videoWidth = scene.videoWidth,
+                videoHeight = scene.videoHeight,
+                placeHolder = seekPreviewPlaceholder,
+            )
         }
     }
 }
@@ -462,6 +439,16 @@ data class BasicMarker(
         imageUrl = marker.screenshot,
         videoUrl = marker.stream,
     )
+    constructor(marker: FullSceneData.Scene_marker) : this(
+        id = marker.id,
+        title =
+            marker.title.ifBlank {
+                marker.primary_tag.tagData.name
+            } + " - ${marker.seconds.toInt().toDuration(DurationUnit.SECONDS)}",
+        seconds = marker.seconds.seconds,
+        imageUrl = marker.screenshot,
+        videoUrl = marker.stream,
+    )
 }
 
 @Composable
@@ -566,6 +553,7 @@ private fun PlaybackOverlayPreview() {
             previousEnabled = true,
             nextEnabled = true,
             seekEnabled = true,
+            spriteImageLoaded = false,
             modifier =
                 Modifier
                     .fillMaxSize(),

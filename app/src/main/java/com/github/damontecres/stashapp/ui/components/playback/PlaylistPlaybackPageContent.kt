@@ -2,6 +2,9 @@ package com.github.damontecres.stashapp.ui.components.playback
 
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -44,14 +47,14 @@ import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.media3.ui.compose.state.rememberPreviousButtonState
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo.api.Optional
+import coil3.SingletonImageLoader
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.size.Scale
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.StashData
-import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.MultiCriterionInput
-import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.playback.PlaylistFragment
 import com.github.damontecres.stashapp.playback.TrackActivityPlaybackListener
@@ -64,6 +67,7 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.models.EqualityMutableLiveData
 import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
@@ -76,6 +80,7 @@ class PlaylistViewModel : ViewModel() {
     val mediaItemTag = EqualityMutableLiveData<PlaylistFragment.MediaItemTag>()
     val markers = MutableLiveData<List<BasicMarker>>(listOf())
     val oCount = MutableLiveData(0)
+    val spriteImageLoaded = MutableLiveData(false)
 
     fun init(
         server: StashServer,
@@ -87,28 +92,40 @@ class PlaylistViewModel : ViewModel() {
 
     fun changeScene(tag: PlaylistFragment.MediaItemTag) {
         this.mediaItemTag.value = tag
+        this.oCount.value = 0
         this.markers.value = listOf()
-        viewModelScope.launch {
-            val queryEngine = QueryEngine(server)
-            oCount.value = queryEngine.getScene(tag.item.id)?.o_counter ?: 0
+        this.spriteImageLoaded.value = false
+
+        refreshScene(tag.item.id)
+
+        // Fetch preview sprites
+        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+            val context = StashApplication.getApplication()
+            val imageLoader = SingletonImageLoader.get(context)
+            if (tag.item.spriteUrl.isNotNullOrBlank()) {
+                val request =
+                    ImageRequest
+                        .Builder(context)
+                        .data(tag.item.spriteUrl)
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .scale(Scale.FILL)
+                        .build()
+                val result = imageLoader.enqueue(request).job.await()
+                spriteImageLoaded.value = result.image != null
+            }
         }
-        if (markersEnabled) {
-            viewModelScope.launch {
-                val queryEngine = QueryEngine(server)
+    }
+
+    private fun refreshScene(sceneId: String) {
+        // Fetch o count & markers
+        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            val queryEngine = QueryEngine(server)
+            val scene = queryEngine.getScene(sceneId)
+            if (scene != null) {
+                oCount.value = scene.o_counter ?: 0
                 markers.value =
-                    queryEngine
-                        .findMarkers(
-                            markerFilter =
-                                SceneMarkerFilterType(
-                                    scenes =
-                                        Optional.present(
-                                            MultiCriterionInput(
-                                                value = Optional.present(listOf(tag.item.id)),
-                                                modifier = CriterionModifier.INCLUDES,
-                                            ),
-                                        ),
-                                ),
-                        ).sortedBy { it.seconds }
+                    scene.scene_markers
+                        .sortedBy { it.seconds }
                         .map(::BasicMarker)
             }
         }
@@ -124,7 +141,7 @@ class PlaylistViewModel : ViewModel() {
                 val newMarker = mutationEngine.createMarker(it.item.id, position, tagId)
                 if (newMarker != null) {
                     // Refresh markers
-                    changeScene(it)
+                    refreshScene(it.item.id)
                     Toast
                         .makeText(
                             StashApplication.getApplication(),
@@ -163,6 +180,8 @@ fun PlaylistPlaybackPageContent(
     val currentScene by viewModel.mediaItemTag.observeAsState(playlist[0].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
     val markers by viewModel.markers.observeAsState(listOf())
     val oCount by viewModel.oCount.observeAsState(0)
+    val spriteImageLoaded by viewModel.spriteImageLoaded.observeAsState(false)
+
     var trackActivityListener = remember<TrackActivityPlaybackListener?>(server) { null }
     val player =
         remember {
@@ -320,48 +339,56 @@ fun PlaylistPlaybackPageContent(
             )
         }
         currentScene?.let {
-            PlaybackOverlay(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(Color.Transparent),
-                uiConfig = uiConfig,
-                scene = currentScene.item,
-                markers = markers,
-                streamDecision = currentScene.streamDecision,
-                oCounter = oCount,
-                playerControls = PlayerControlsImpl(player),
-                onPlaybackActionClick = {
-                    when (it) {
-                        PlaybackAction.CreateMarker -> {
-                            if (markersEnabled) {
-                                playingBeforeCreateMarker = player.isPlaying
-                                player.pause()
-                                createMarkerPosition = player.currentPosition
+            AnimatedVisibility(
+                controllerViewState.controlsVisible,
+                Modifier,
+                slideInVertically { it },
+                slideOutVertically { it },
+            ) {
+                PlaybackOverlay(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(Color.Transparent),
+                    uiConfig = uiConfig,
+                    scene = currentScene.item,
+                    markers = markers,
+                    streamDecision = currentScene.streamDecision,
+                    oCounter = oCount,
+                    playerControls = PlayerControlsImpl(player),
+                    onPlaybackActionClick = {
+                        when (it) {
+                            PlaybackAction.CreateMarker -> {
+                                if (markersEnabled) {
+                                    playingBeforeCreateMarker = player.isPlaying
+                                    player.pause()
+                                    createMarkerPosition = player.currentPosition
+                                }
+                            }
+
+                            PlaybackAction.OCount -> {
+                                viewModel.incrementOCount(currentScene.item.id)
+                            }
+
+                            PlaybackAction.ShowDebug -> {
+                                showDebugInfo = !showDebugInfo
+                            }
+
+                            PlaybackAction.ShowPlaylist -> {
+                                showPlaylist = true
                             }
                         }
-
-                        PlaybackAction.OCount -> {
-                            viewModel.incrementOCount(currentScene.item.id)
-                        }
-
-                        PlaybackAction.ShowDebug -> {
-                            showDebugInfo = !showDebugInfo
-                        }
-
-                        PlaybackAction.ShowPlaylist -> {
-                            showPlaylist = true
-                        }
-                    }
-                },
-                onSeekBarChange = seekBarState::onValueChange,
-                controllerViewState = controllerViewState,
-                showPlay = playPauseState.showPlay,
-                previousEnabled = previousState.isEnabled,
-                nextEnabled = nextState.isEnabled,
-                seekEnabled = seekBarState.isEnabled,
-                showDebugInfo = showDebugInfo,
-            )
+                    },
+                    onSeekBarChange = seekBarState::onValueChange,
+                    controllerViewState = controllerViewState,
+                    showPlay = playPauseState.showPlay,
+                    previousEnabled = previousState.isEnabled,
+                    nextEnabled = nextState.isEnabled,
+                    seekEnabled = seekBarState.isEnabled,
+                    showDebugInfo = showDebugInfo,
+                    spriteImageLoaded = spriteImageLoaded,
+                )
+            }
         }
         val dismiss = {
             createMarkerPosition = -1

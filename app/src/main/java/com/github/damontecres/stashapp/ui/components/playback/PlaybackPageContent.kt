@@ -4,6 +4,9 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -51,6 +54,10 @@ import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.media3.ui.compose.state.rememberPreviousButtonState
 import androidx.preference.PreferenceManager
+import coil3.SingletonImageLoader
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.size.Scale
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
@@ -73,6 +80,7 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -84,8 +92,10 @@ class PlaybackViewModel : ViewModel() {
 
     val markers = MutableLiveData<List<BasicMarker>>(listOf())
     val oCount = MutableLiveData(0)
+    val previewImageLoader = MutableLiveData(false)
 
     fun init(
+        context: Context,
         server: StashServer,
         scene: FullSceneData,
     ) {
@@ -93,6 +103,20 @@ class PlaybackViewModel : ViewModel() {
         this.scene = scene
         markers.value = scene.scene_markers.map { BasicMarker(it.asMarkerData(scene)) }
         oCount.value = scene.o_counter ?: 0
+        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+            val imageLoader = SingletonImageLoader.get(context)
+            if (scene.paths.sprite.isNotNullOrBlank()) {
+                val request =
+                    ImageRequest
+                        .Builder(context)
+                        .data(scene.paths.sprite)
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .scale(Scale.FILL)
+                        .build()
+                val result = imageLoader.enqueue(request).job.await()
+                previewImageLoader.value = result.image != null
+            }
+        }
     }
 
     fun addMarker(
@@ -154,11 +178,12 @@ fun PlaybackPageContent(
         }
     }
     LaunchedEffect(server, scene.id) {
-        viewModel.init(server, scene)
+        viewModel.init(context, server, scene)
     }
     val playbackScene = remember { Scene.fromFullSceneData(scene) }
     val markers by viewModel.markers.observeAsState(listOf())
     val oCount by viewModel.oCount.observeAsState(0)
+    val imageLoaded by viewModel.previewImageLoader.observeAsState(false)
 
     var showControls by remember { mutableStateOf(true) }
     var currentContentScaleIndex by remember { mutableIntStateOf(0) }
@@ -310,46 +335,54 @@ fun PlaybackPageContent(
             )
         }
 
-        PlaybackOverlay(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .background(Color.Transparent),
-            uiConfig = uiConfig,
-            scene = playbackScene,
-            markers = markers,
-            streamDecision = streamDecision,
-            oCounter = oCount,
-            playerControls = PlayerControlsImpl(player),
-            onPlaybackActionClick = {
-                when (it) {
-                    PlaybackAction.CreateMarker -> {
-                        playingBeforeCreateMarker = player.isPlaying
-                        player.pause()
-                        createMarkerPosition = player.currentPosition
-                    }
+        AnimatedVisibility(
+            controllerViewState.controlsVisible,
+            Modifier,
+            slideInVertically { it },
+            slideOutVertically { it },
+        ) {
+            PlaybackOverlay(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Transparent),
+                uiConfig = uiConfig,
+                scene = playbackScene,
+                markers = markers,
+                streamDecision = streamDecision,
+                oCounter = oCount,
+                playerControls = PlayerControlsImpl(player),
+                onPlaybackActionClick = {
+                    when (it) {
+                        PlaybackAction.CreateMarker -> {
+                            playingBeforeCreateMarker = player.isPlaying
+                            player.pause()
+                            createMarkerPosition = player.currentPosition
+                        }
 
-                    PlaybackAction.OCount -> {
-                        viewModel.incrementOCount(scene.id)
-                    }
+                        PlaybackAction.OCount -> {
+                            viewModel.incrementOCount(scene.id)
+                        }
 
-                    PlaybackAction.ShowDebug -> {
-                        showDebugInfo = !showDebugInfo
-                    }
+                        PlaybackAction.ShowDebug -> {
+                            showDebugInfo = !showDebugInfo
+                        }
 
-                    PlaybackAction.ShowPlaylist -> {
-                        // no-op
+                        PlaybackAction.ShowPlaylist -> {
+                            // no-op
+                        }
                     }
-                }
-            },
-            onSeekBarChange = seekBarState::onValueChange,
-            controllerViewState = controllerViewState,
-            showPlay = playPauseState.showPlay,
-            previousEnabled = previousState.isEnabled,
-            nextEnabled = nextState.isEnabled,
-            seekEnabled = seekBarState.isEnabled,
-            showDebugInfo = showDebugInfo,
-        )
+                },
+                onSeekBarChange = seekBarState::onValueChange,
+                controllerViewState = controllerViewState,
+                showPlay = playPauseState.showPlay,
+                previousEnabled = previousState.isEnabled,
+                nextEnabled = nextState.isEnabled,
+                seekEnabled = seekBarState.isEnabled,
+                showDebugInfo = showDebugInfo,
+                spriteImageLoaded = imageLoaded,
+            )
+        }
     }
     val dismiss = {
         createMarkerPosition = -1

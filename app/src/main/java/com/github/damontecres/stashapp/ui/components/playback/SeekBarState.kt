@@ -43,7 +43,7 @@ class SeekBarState(
         job?.cancel()
         job =
             scope.launchIO {
-                delay(500L)
+                delay(750L)
                 withContext(Dispatchers.Main) {
                     player.seekTo((player.duration * progress).toLong())
                 }
