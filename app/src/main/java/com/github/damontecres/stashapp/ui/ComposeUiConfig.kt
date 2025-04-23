@@ -15,8 +15,11 @@ data class ComposeUiConfig(
     val showStudioAsText: Boolean,
     val debugTextEnabled: Boolean,
     val showTitleDuringPlayback: Boolean,
+    val readOnlyModeEnabled: Boolean,
     val cardSettings: CardUiSettings,
 ) {
+    val readOnlyModeDisabled = !readOnlyModeEnabled
+
     companion object {
         fun fromStashServer(
             context: Context,
@@ -40,6 +43,11 @@ data class ComposeUiConfig(
                     ),
                 cardSettings = ServerViewModel.createUiSettings(context),
                 showTitleDuringPlayback = prefs.getBoolean("exoShowTitle", true),
+                readOnlyModeEnabled =
+                    prefs.getBoolean(
+                        context.getString(R.string.pref_key_read_only_mode),
+                        false,
+                    ),
             )
         }
     }

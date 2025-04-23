@@ -26,7 +26,7 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
-import com.github.damontecres.stashapp.ui.components.StarRating
+import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
@@ -91,9 +91,9 @@ fun MainPagePerformerDetails(
                     color = if (perf.favorite) Color.Red else Color.LightGray,
                     fontFamily = FontAwesome,
                 )
-                StarRating(
+                Rating100(
                     rating100 = perf.rating100 ?: 0,
-                    precision = uiConfig.starPrecision,
+                    uiConfig = uiConfig,
                     onRatingChange = {},
                     enabled = false,
                     modifier =

@@ -494,6 +494,7 @@ private fun PlaybackOverlayPreview() {
                     showStudioAsText = true,
                     debugTextEnabled = true,
                     showTitleDuringPlayback = true,
+                    readOnlyModeEnabled = false,
                     cardSettings =
                         CardUiSettings(
                             maxSearchResults = 25,

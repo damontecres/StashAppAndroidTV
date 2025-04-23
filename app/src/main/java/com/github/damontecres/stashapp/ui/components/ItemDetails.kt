@@ -89,9 +89,9 @@ fun ItemDetails(
             }
             if (rating100Click != null) {
                 item {
-                    StarRating(
+                    Rating100(
                         rating100 = rating100 ?: 0,
-                        precision = uiConfig.starPrecision,
+                        uiConfig = uiConfig,
                         onRatingChange = rating100Click,
                         enabled = true,
                         modifier =

@@ -98,7 +98,6 @@ import com.github.damontecres.stashapp.ui.pages.StudioPage
 import com.github.damontecres.stashapp.ui.pages.TagPage
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
 import dev.olshevski.navigation.reimagined.NavHost
@@ -177,6 +176,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                             (serverViewModel.navigationManager as NavigationManagerCompose)
                         navManager.controller = navController
                         if (currDestination != Destination.Pin) {
+                            // TODO remove creating a dummy server
                             CompositionLocalProvider(
                                 LocalGlobalContext provides
                                     GlobalContext(
@@ -234,7 +234,7 @@ fun FragmentContent(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var composeUiConfig by remember {
+    var composeUiConfig by remember(server) {
         mutableStateOf(
             ComposeUiConfig.fromStashServer(
                 context,
@@ -290,7 +290,7 @@ fun FragmentContent(
     // TODO this works, but sometimes requires restart when changed and going back from settings is awkward
     val settingsPage =
         DrawerPage(
-            if (readOnlyModeDisabled()) Destination.Settings(PreferenceScreenOption.BASIC) else Destination.SettingsPin,
+            if (composeUiConfig.readOnlyModeDisabled) Destination.Settings(PreferenceScreenOption.BASIC) else Destination.SettingsPin,
             R.string.fa_arrow_right_arrow_left, // Ignored
             R.string.stashapp_settings,
         )
@@ -331,7 +331,11 @@ fun FragmentContent(
     val scope = rememberCoroutineScope()
 
     NavHost(navigationManager.controller, modifier = modifier) { destination ->
-        composeUiConfig = ComposeUiConfig.fromStashServer(context, server)
+        LaunchedEffect(Unit) {
+            // Refresh server preferences on each page change
+            server.updateServerPrefs()
+            composeUiConfig = ComposeUiConfig.fromStashServer(context, server)
+        }
 
         if (destination.fullScreen) {
             when (destination) {

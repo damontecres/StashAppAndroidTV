@@ -210,7 +210,6 @@ fun HomePage(
         listState.animateScrollToItem(focusedRow)
     }
 
-    // TODO back handler?
     Box(
         modifier =
             modifier

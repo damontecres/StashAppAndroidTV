@@ -27,7 +27,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
-import com.github.damontecres.stashapp.ui.components.StarRating
+import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -67,9 +67,9 @@ fun MainPageSceneDetails(
             modifier = Modifier.alpha(0.75f),
         ) {
             // Rating
-            StarRating(
+            Rating100(
                 rating100 = scene.rating100 ?: 0,
-                precision = uiConfig.starPrecision,
+                uiConfig = uiConfig,
                 onRatingChange = {},
                 enabled = false,
                 modifier =

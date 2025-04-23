@@ -83,7 +83,6 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.fakeMarker
-import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.toLongMilliseconds
@@ -469,7 +468,7 @@ fun SceneDetails(
                                     },
                                 )
                             }
-                            if (item !is GalleryData && readOnlyModeDisabled()) {
+                            if (item !is GalleryData && uiConfig.readOnlyModeDisabled) {
                                 add(
                                     DialogItem(
                                         onClick = { removeItem(item) },

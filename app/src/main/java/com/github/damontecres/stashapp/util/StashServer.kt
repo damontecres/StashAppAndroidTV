@@ -48,6 +48,24 @@ data class StashServer(
 
     override fun toString(): String = "StashServer(url=$url, apiKey?=${apiKey.isNotNullOrBlank()})"
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as StashServer
+
+        if (url != other.url) return false
+        if (apiKey != other.apiKey) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = url.hashCode()
+        result = 31 * result + (apiKey?.hashCode() ?: 0)
+        return result
+    }
+
     companion object {
         private const val SERVER_PREF_PREFIX = "server_"
         private const val SERVER_APIKEY_PREF_PREFIX = "apikey_"

@@ -44,7 +44,7 @@ import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.ItemDetailsFooter
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
-import com.github.damontecres.stashapp.ui.components.StarRating
+import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.StashGridTab
 import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
@@ -264,9 +264,9 @@ fun GroupDetails(
         }.filterNotNull()
     LazyColumn(modifier = modifier) {
         item {
-            StarRating(
+            Rating100(
                 rating100 = rating100,
-                precision = uiConfig.starPrecision,
+                uiConfig = uiConfig,
                 onRatingChange = rating100Click,
                 enabled = true,
                 modifier =

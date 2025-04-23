@@ -69,7 +69,7 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
-import com.github.damontecres.stashapp.ui.components.StarRating
+import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -172,9 +172,9 @@ fun SceneDetailsHeader(
                 ) {
                     // Rating
                     if (showRatingBar) {
-                        StarRating(
+                        Rating100(
                             rating100 = rating100,
-                            precision = uiConfig.starPrecision,
+                            uiConfig = uiConfig,
                             onRatingChange = onRatingChange,
                             enabled = true,
                             modifier =

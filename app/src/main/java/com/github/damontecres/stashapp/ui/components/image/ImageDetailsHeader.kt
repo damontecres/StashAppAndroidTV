@@ -41,7 +41,7 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
-import com.github.damontecres.stashapp.ui.components.StarRating
+import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -99,9 +99,9 @@ fun ImageDetailsHeader(
             modifier = Modifier.alpha(0.75f),
         ) {
             // Rating
-            StarRating(
+            Rating100(
                 rating100 = rating100,
-                precision = uiConfig.starPrecision,
+                uiConfig = uiConfig,
                 onRatingChange = onRatingChange,
                 enabled = true,
                 modifier =

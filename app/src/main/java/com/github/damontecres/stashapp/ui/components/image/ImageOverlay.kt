@@ -41,7 +41,6 @@ import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.pages.SearchForParams
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
@@ -88,7 +87,7 @@ fun ImageOverlay(
                                     )
                                 },
                             )
-                            if (readOnlyModeDisabled()) {
+                            if (uiConfig.readOnlyModeDisabled) {
                                 add(
                                     DialogItem(
                                         onClick = { removeItem(item) },
@@ -150,7 +149,7 @@ fun ImageOverlay(
                             items =
                                 buildList {
                                     add(startStopSlideshow)
-                                    if (readOnlyModeDisabled()) {
+                                    if (uiConfig.readOnlyModeDisabled) {
                                         add(
                                             DialogItem(
                                                 context.getString(R.string.add_performer),

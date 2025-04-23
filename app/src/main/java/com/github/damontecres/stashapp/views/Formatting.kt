@@ -32,7 +32,15 @@ fun getRatingAsDecimalString(
     if (ratingsAsStars) {
         (rating100 / 20.0).toString()
     } else {
-        (rating100 / 10.0).toString()
+        if (rating100 % 10 == 0) {
+            rating100 / 10
+        } else {
+            String.format(
+                Locale.getDefault(),
+                "%.1f",
+                rating100 / 10.0,
+            )
+        }.toString()
     }
 
 fun getRatingString(

@@ -109,5 +109,6 @@
     <string name="no_more_images">No more images</string>
     <string name="searching">Searching...</string>
     <string name="ui_settings">Advanced UI Settings</string>
+    <string name="set_rating">Set rating:</string>
 
 </resources>
