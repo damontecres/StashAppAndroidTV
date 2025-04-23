@@ -61,7 +61,7 @@ fun PlaylistList(
         stickyHeader {
             Text(
                 text = title,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.titleLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -95,6 +95,7 @@ fun PlaylistItemCompose(
     modifier: Modifier = Modifier,
     imageWidth: Dp = 120.dp,
 ) {
+    val textColor = MaterialTheme.colorScheme.onSurfaceVariant
     Card(
         onClick = onClick,
         modifier = modifier,
@@ -106,7 +107,7 @@ fun PlaylistItemCompose(
         ) {
             Text(
                 text = item.index.toString(),
-                color = MaterialTheme.colorScheme.onSecondary,
+                color = textColor,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(start = 8.dp),
             )
@@ -134,7 +135,7 @@ fun PlaylistItemCompose(
                 if (item.title.isNotNullOrBlank()) {
                     Text(
                         text = item.title.toString(),
-                        color = MaterialTheme.colorScheme.onSecondary,
+                        color = textColor,
                         style = MaterialTheme.typography.bodyLarge,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -143,7 +144,7 @@ fun PlaylistItemCompose(
                 if (item.subtitle.isNotNullOrBlank()) {
                     Text(
                         text = item.subtitle.toString(),
-                        color = MaterialTheme.colorScheme.onSecondary,
+                        color = textColor,
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -152,7 +153,7 @@ fun PlaylistItemCompose(
                 if (item.details1.isNotNullOrBlank()) {
                     Text(
                         text = item.details1.toString(),
-                        color = MaterialTheme.colorScheme.onSecondary,
+                        color = textColor,
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -161,7 +162,7 @@ fun PlaylistItemCompose(
                 if (item.details2.isNotNullOrBlank()) {
                     Text(
                         text = item.details2.toString(),
-                        color = MaterialTheme.colorScheme.onSecondary,
+                        color = textColor,
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

@@ -377,6 +377,8 @@ fun PlaylistPlaybackPageContent(
                             PlaybackAction.ShowPlaylist -> {
                                 showPlaylist = true
                             }
+
+                            is PlaybackAction.ToggleCaptions -> TODO()
                         }
                     },
                     onSeekBarChange = seekBarState::onValueChange,
@@ -387,6 +389,13 @@ fun PlaylistPlaybackPageContent(
                     seekEnabled = seekBarState.isEnabled,
                     showDebugInfo = showDebugInfo,
                     spriteImageLoaded = spriteImageLoaded,
+                    moreButtonOptions =
+                        MoreButtonOptions(
+                            mapOf(
+                                "Create Marker" to PlaybackAction.CreateMarker,
+                                "Show Playlist" to PlaybackAction.ShowPlaylist,
+                            ),
+                        ),
                 )
             }
         }

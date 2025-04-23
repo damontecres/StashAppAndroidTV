@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
-import android.util.Log
 import android.view.Gravity
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
@@ -56,7 +55,9 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.Caption
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.tryRequestFocus
@@ -73,6 +74,10 @@ sealed interface PlaybackAction {
     data object CreateMarker : PlaybackAction
 
     data object ShowPlaylist : PlaybackAction
+
+    data class ToggleCaptions(
+        val index: Int,
+    ) : PlaybackAction
 }
 
 @OptIn(UnstableApi::class)
@@ -90,6 +95,7 @@ fun PlaybackControls(
     previousEnabled: Boolean,
     nextEnabled: Boolean,
     seekEnabled: Boolean,
+    moreButtonOptions: MoreButtonOptions,
     modifier: Modifier = Modifier,
     initialFocusRequester: FocusRequester = remember { FocusRequester() },
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -137,6 +143,7 @@ fun PlaybackControls(
                 onPlaybackActionClick = onPlaybackActionClick,
                 showDebugInfo = showDebugInfo,
                 oCount = oCounter,
+                moreButtonOptions = moreButtonOptions,
                 modifier = Modifier,
             )
             PlaybackButtons(
@@ -149,6 +156,7 @@ fun PlaybackControls(
                 modifier = Modifier,
             )
             RightPlaybackButtons(
+                captions = scene.captions,
                 onControllerInteraction = onControllerInteraction,
                 onPlaybackActionClick = onPlaybackActionClick,
                 modifier = Modifier,
@@ -238,6 +246,7 @@ fun LeftPlaybackButtons(
     onPlaybackActionClick: (PlaybackAction) -> Unit,
     showDebugInfo: Boolean,
     oCount: Int,
+    moreButtonOptions: MoreButtonOptions,
     modifier: Modifier = Modifier,
 ) {
     var showMoreOptions by remember { mutableStateOf(false) }
@@ -279,21 +288,16 @@ fun LeftPlaybackButtons(
     if (showMoreOptions) {
         // TODO options need context about what to display
         val options =
-            listOf(
-                if (showDebugInfo) "Hide transcode info" else "Show transcode info",
-                "Create Marker",
-                "Show Playlist",
-            )
+            buildList {
+                addAll(moreButtonOptions.options.keys)
+                add(if (showDebugInfo) "Hide transcode info" else "Show transcode info")
+            }
         BottomDialog(
             choices = options,
             onDismissRequest = { showMoreOptions = false },
-            onSelectChoice = {
-                when (options.indexOf(it)) {
-                    0 -> onPlaybackActionClick.invoke(PlaybackAction.ShowDebug)
-                    1 -> onPlaybackActionClick.invoke(PlaybackAction.CreateMarker)
-                    2 -> onPlaybackActionClick.invoke(PlaybackAction.ShowPlaylist)
-                    else -> Log.w(TAG, "Unknown more option: $it")
-                }
+            onSelectChoice = { index, choice ->
+                val action = moreButtonOptions.options[choice] ?: PlaybackAction.ShowDebug
+                onPlaybackActionClick.invoke(action)
             },
             gravity = Gravity.START,
         )
@@ -302,22 +306,24 @@ fun LeftPlaybackButtons(
 
 @Composable
 fun RightPlaybackButtons(
+    captions: List<Caption>,
     onControllerInteraction: () -> Unit,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showCaptionDialog by remember { mutableStateOf(false) }
     Row(
         modifier = modifier.focusGroup(),
         horizontalArrangement = Arrangement.spacedBy(buttonSpacing),
     ) {
         // Captions
         PlaybackButton(
-            iconRes = R.drawable.baseline_more_vert_96,
+            enabled = false, // captions.isNotEmpty(), //TODO
+            iconRes = R.drawable.captions_svgrepo_com,
             onClick = {
-                // TODO captions
                 onControllerInteraction.invoke()
+                showCaptionDialog = true
             },
-            enabled = true,
             onControllerInteraction = onControllerInteraction,
         )
         // Playback speed, etc
@@ -327,8 +333,20 @@ fun RightPlaybackButtons(
                 // TODO playback settings
                 onControllerInteraction.invoke()
             },
-            enabled = true,
+            enabled = false,
             onControllerInteraction = onControllerInteraction,
+        )
+    }
+    if (showCaptionDialog) {
+        val context = LocalContext.current
+        val options = captions.map { it.displayString(context) }
+        BottomDialog(
+            choices = options,
+            onDismissRequest = { showCaptionDialog = false },
+            onSelectChoice = { index, _ ->
+                onPlaybackActionClick.invoke(PlaybackAction.ToggleCaptions(index))
+            },
+            gravity = Gravity.END,
         )
     }
 }
@@ -404,6 +422,7 @@ fun PlaybackButton(
 ) {
     val selectedColor = MaterialTheme.colorScheme.border
     Button(
+        enabled = enabled,
         onClick = onClick,
         shape = ButtonDefaults.shape(CircleShape),
         colors =
@@ -431,7 +450,7 @@ fun PlaybackButton(
 private fun BottomDialog(
     choices: List<String>,
     onDismissRequest: () -> Unit,
-    onSelectChoice: (String) -> Unit,
+    onSelectChoice: (Int, String) -> Unit,
     gravity: Int,
     currentChoice: String? = null,
 ) {
@@ -460,12 +479,12 @@ private fun BottomDialog(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                choices.forEach { choice ->
+                choices.forEachIndexed { index, choice ->
                     ListItem(
                         selected = false,
                         onClick = {
                             onDismissRequest()
-                            onSelectChoice(choice)
+                            onSelectChoice(index, choice)
                         },
                         headlineContent = {
                             var fontWeight = FontWeight(400)
@@ -498,3 +517,20 @@ private fun PlaybackButtonsPreview() {
         )
     }
 }
+
+@Preview
+@Composable
+private fun RightPlaybackButtonsPreview() {
+    AppTheme {
+        RightPlaybackButtons(
+            captions = listOf(),
+            onControllerInteraction = {},
+            onPlaybackActionClick = {},
+            modifier = Modifier,
+        )
+    }
+}
+
+data class MoreButtonOptions(
+    val options: Map<String, PlaybackAction>,
+)

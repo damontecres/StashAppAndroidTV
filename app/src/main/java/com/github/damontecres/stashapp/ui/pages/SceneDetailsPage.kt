@@ -327,8 +327,8 @@ fun SceneDetailsPage(
                         is PerformerData, is SlimPerformerData -> viewModel.addPerformer(item.id)
                         is TagData, is SlimTagData -> viewModel.addTag(item.id)
                         is GroupData, is GroupRelationshipData -> viewModel.addGroup(item.id)
-                        is GalleryData -> TODO()
-                        is StudioData -> TODO()
+                        is GalleryData -> {} // TODO
+                        is StudioData -> {} // TODO
                         is MarkerData -> viewModel.addMarker(item)
 
                         is FullMarkerData -> throw UnsupportedOperationException()
@@ -341,8 +341,8 @@ fun SceneDetailsPage(
                         is PerformerData, is SlimPerformerData -> viewModel.removePerformer(item.id)
                         is TagData, is SlimTagData -> viewModel.removeTag(item.id)
                         is GroupData, is GroupRelationshipData -> viewModel.removeGroup(item.id)
-                        is GalleryData -> TODO()
-                        is StudioData -> TODO()
+                        is GalleryData -> {} // TODO
+                        is StudioData -> {} // TODO
                         is MarkerData, is FullMarkerData -> viewModel.removeMarker(item.id)
 
                         is ImageData, is ExtraImageData -> throw UnsupportedOperationException()

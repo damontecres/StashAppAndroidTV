@@ -42,8 +42,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.C.TRACK_TYPE_TEXT
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.compose.PlayerSurface
@@ -371,6 +373,26 @@ fun PlaybackPageContent(
                         PlaybackAction.ShowPlaylist -> {
                             // no-op
                         }
+
+                        is PlaybackAction.ToggleCaptions -> {
+                            val subtitleTracks =
+                                player.currentTracks.groups.filter { it.type == TRACK_TYPE_TEXT }
+                            if (it.index in subtitleTracks.indices) {
+                                Log.v(
+                                    TAG,
+                                    "Activating subtitle ${subtitleTracks[it.index].mediaTrackGroup.id}",
+                                )
+                                player.trackSelectionParameters =
+                                    player.trackSelectionParameters
+                                        .buildUpon()
+                                        .setOverrideForType(
+                                            TrackSelectionOverride(
+                                                subtitleTracks[it.index].mediaTrackGroup,
+                                                0,
+                                            ),
+                                        ).build()
+                            }
+                        }
                     }
                 },
                 onSeekBarChange = seekBarState::onValueChange,
@@ -381,6 +403,10 @@ fun PlaybackPageContent(
                 seekEnabled = seekBarState.isEnabled,
                 showDebugInfo = showDebugInfo,
                 spriteImageLoaded = imageLoaded,
+                moreButtonOptions =
+                    MoreButtonOptions(
+                        mapOf("Create Marker" to PlaybackAction.CreateMarker),
+                    ),
             )
         }
     }

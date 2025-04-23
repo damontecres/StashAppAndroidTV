@@ -174,7 +174,7 @@ data class TabWithSubItems<T : StashDataFilter>(
                                 checked,
                                 dataType.filterType.createInstance() as T,
                             ),
-                    ),
+                    ).withResolvedRandom(),
                 )
             }
             StashGridTab(

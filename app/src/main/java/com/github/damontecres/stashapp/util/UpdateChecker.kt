@@ -59,22 +59,23 @@ class UpdateChecker {
             val lastUpdateCheck =
                 pref.getLong(
                     context.getString(R.string.pref_key_update_last_check),
-                    now.time - lastUpdateCheckThreshold.inWholeMilliseconds,
+                    0,
                 )
             val timeSince = (now.time - lastUpdateCheck).milliseconds
+            Log.v(TAG, "Last update check was $timeSince ago")
+            pref.edit {
+                putLong(context.getString(R.string.pref_key_update_last_check), now.time)
+            }
             if (lastUpdateCheckThreshold >= timeSince) {
                 Log.i(
                     TAG,
-                    "Skipping update check, last check was $timeSince ago",
+                    "Skipping update check, threshold is $lastUpdateCheckThreshold",
                 )
                 return
             }
 
             val installedVersion = getInstalledVersion(context)
             val latestRelease = getLatestRelease(context)
-            pref.edit {
-                putLong(context.getString(R.string.pref_key_update_last_check), now.time)
-            }
             if (latestRelease != null && latestRelease.version.isGreaterThan(installedVersion)) {
                 Log.v(TAG, "Update available $installedVersion => ${latestRelease.version}")
                 Toast
