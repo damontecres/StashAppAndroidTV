@@ -137,8 +137,8 @@ fun StarRating(
     modifier: Modifier = Modifier,
     bgColor: Color = AppColors.TransparentBlack75, // MaterialTheme.colorScheme.background,
 ) {
-    var tempRating by remember { mutableIntStateOf(rating100) }
-    val percentage = remember { (if (enabled) tempRating else rating100) / 100f }
+    var tempRating by remember(rating100) { mutableIntStateOf(rating100) }
+    val percentage = remember(rating100) { (if (enabled) tempRating else rating100) / 100f }
     Box(
         modifier =
             modifier
