@@ -43,7 +43,6 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
@@ -84,6 +83,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "StashGrid"
+private const val DEBUG = false
 
 enum class FilterUiMode {
     SAVED_FILTERS,
@@ -287,8 +287,6 @@ fun StashGridControls(
     }
 }
 
-private const val DEBUG = false
-
 @Composable
 fun StashGrid(
     pager: ComposePager<StashData>,
@@ -361,13 +359,6 @@ fun StashGrid(
     val focusOn = { index: Int ->
         previouslyFocusedIndex = focusedIndex
         focusedIndex = index
-    }
-
-    LifecycleStartEffect(pager) {
-        onStopOrDispose {
-            if (DEBUG) Log.d(TAG, "LifecycleStartEffect, focusedIndex=$focusedIndex")
-            savedFocusedIndex = focusedIndex
-        }
     }
 
     val prefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
@@ -575,6 +566,7 @@ fun StashGrid(
                                             focusOn(index)
                                             positionCallback?.invoke(columns, index)
                                         } else if (focusedIndex == index) {
+                                            savedFocusedIndex = index
                                             // Was focused on this, so mark unfocused
                                             focusedIndex = -1
                                         }

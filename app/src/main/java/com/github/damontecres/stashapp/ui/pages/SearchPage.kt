@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp.ui.pages
 
 import android.widget.Toast
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,14 +12,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -48,9 +49,12 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.RowColumn
 import com.github.damontecres.stashapp.ui.components.SearchEditTextBox
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
+import com.github.damontecres.stashapp.ui.util.ifElse
+import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -129,24 +133,16 @@ class SearchViewModel : ViewModel() {
                 ) {
                     val results = queryEngine.find(it, findFilter)
                     if (results.isNotEmpty()) {
-                        data.value =
-                            buildList {
-                                addAll(results)
-                                add(
-                                    FilterArgs(
-                                        dataType = it,
-                                        findFilter = stashFindFilter,
-                                    ),
-                                )
-                            }
+                        data.value = results
                     }
                 }
             }
+        } else if (query != this.currentQuery) {
+            mapping.values.forEach { it.value = listOf() }
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SearchPage(
     server: StashServer,
@@ -187,14 +183,23 @@ fun SearchPage(
 
     OneTimeLaunchedEffect {
         viewModel.init(server, initialQuery)
+//        focusRequester.tryRequestFocus()
+    }
+
+    LaunchedEffect(Unit) {
         focusRequester.tryRequestFocus()
     }
 
     val listState = rememberLazyListState()
+    var focusedIndex by rememberSaveable { mutableStateOf(RowColumn(0, 0)) }
+    var focusedRow by rememberSaveable { mutableIntStateOf(-1) }
 
     LazyColumn(
         state = listState,
-        modifier = modifier,
+        modifier =
+            modifier
+                .focusGroup()
+                .focusRestorer(focusRequester),
         contentPadding = PaddingValues(16.dp),
     ) {
         stickyHeader {
@@ -205,7 +210,7 @@ fun SearchPage(
                     .getInt(context.getString(R.string.pref_key_search_delay), 500)
                     .toLong()
             SearchEditTextBox(
-                modifier = Modifier.focusRequester(focusRequester),
+                modifier = Modifier.ifElse(focusedRow < 0, Modifier.focusRequester(focusRequester)),
                 value = searchQuery,
                 onValueChange = { newQuery ->
                     searchQuery = newQuery
@@ -223,17 +228,39 @@ fun SearchPage(
             )
         }
 
-        DataType.entries.forEach { dataType ->
+        DataType.entries.forEachIndexed { index, dataType ->
             val data = itemLists[dataType]!!
             if (data.isNotEmpty()) {
                 item {
-                    SearchItemsRow(
-                        title = stringResource(dataType.pluralStringId),
-                        items = data,
+                    HomePageRow(
                         uiConfig = uiConfig,
+                        row =
+                            FrontPageParser.FrontPageRow.Success(
+                                name = stringResource(dataType.pluralStringId),
+                                filter =
+                                    FilterArgs(
+                                        dataType = dataType,
+                                        findFilter =
+                                            StashFindFilter(
+                                                q = searchQuery,
+                                                sortAndDirection =
+                                                    SortAndDirection(
+                                                        SortOption.sortByName(dataType),
+                                                        SortDirectionEnum.ASC,
+                                                    ),
+                                            ),
+                                    ),
+                                data = data,
+                            ),
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
-                        filterArgs = data.last() as FilterArgs,
+                        onFocus = { idx, item ->
+                            focusedIndex = RowColumn(index, idx)
+//                            focusedItem = item
+                            focusedRow = index
+                        },
+                        rowFocusRequester = if (index == focusedIndex.row) focusRequester else null,
+                        modifier = Modifier,
                     )
                 }
             }
@@ -241,7 +268,6 @@ fun SearchPage(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SearchItemsRow(
     title: String,
@@ -266,7 +292,7 @@ fun SearchItemsRow(
             modifier =
                 Modifier
                     .padding(top = 8.dp)
-                    .focusRestorer { firstFocus },
+                    .focusRestorer(firstFocus),
             state = listState,
             contentPadding = PaddingValues(8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -289,7 +315,6 @@ fun SearchItemsRow(
                     },
                     longClicker = longClicker,
                     getFilterAndPosition = null,
-                    modifier = cardModifier,
                 )
             }
         }

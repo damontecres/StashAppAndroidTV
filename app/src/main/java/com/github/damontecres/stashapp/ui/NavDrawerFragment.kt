@@ -49,7 +49,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.DialogProperties
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
@@ -69,7 +68,6 @@ import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
@@ -590,11 +588,6 @@ fun FragmentContent(
                                 .fillMaxSize()
                                 .background(MaterialTheme.colorScheme.background),
                     )
-                    LifecycleStartEffect(Unit) {
-                        onStopOrDispose {
-                            StashExoPlayer.releasePlayer()
-                        }
-                    }
                 }
             }
         }
