@@ -170,8 +170,8 @@ fun PlaybackOverlay(
         val listState = rememberLazyListState()
         var height = 208.dp
         if (!uiConfig.showTitleDuringPlayback || scene.title.isNullOrBlank()) height -= 24.dp
-        if (!uiConfig.showTitleDuringPlayback || scene.date.isNullOrBlank()) height -= 32.dp
-        if (markers.isEmpty()) height -= 16.dp
+        if (!uiConfig.showTitleDuringPlayback || scene.date.isNullOrBlank()) height -= 24.dp
+        if (markers.isEmpty()) height -= 24.dp
         LazyColumn(
             state = listState,
             modifier =
@@ -270,7 +270,10 @@ fun PlaybackOverlay(
             }
         }
         AnimatedVisibility(seekBarFocused && seekProgress >= 0) {
-            val yOffsetDp = height + (if (spriteImageLoaded) (160.dp) else 24.dp) - 16.dp
+            val yOffsetDp =
+                180.dp +
+                    (if (spriteImageLoaded) (160.dp) else 24.dp) +
+                    (if (markers.isEmpty()) (-24).dp else 0.dp)
             val heightPx = with(LocalDensity.current) { yOffsetDp.toPx().toInt() }
             SeekPreviewImage(
                 modifier =
