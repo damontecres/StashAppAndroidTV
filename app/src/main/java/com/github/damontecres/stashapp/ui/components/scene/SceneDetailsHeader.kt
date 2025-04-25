@@ -210,14 +210,15 @@ fun SceneDetailsHeader(
                             modifier =
                                 Modifier
                                     .background(bgColor, shape = RoundedCornerShape(8.dp))
-                                    .focusable(
-                                        enabled = true,
-                                        interactionSource = interactionSource,
-                                    ).onFocusChanged {
+                                    .onFocusChanged {
                                         if (it.isFocused) {
                                             scope.launch { bringIntoViewRequester.bringIntoView() }
                                         }
-                                    }.clickable(enabled = true) { showDetailsDialog = true },
+                                    }.clickable(
+                                        enabled = true,
+                                        interactionSource = interactionSource,
+                                        indication = LocalIndication.current,
+                                    ) { showDetailsDialog = true },
                         ) {
                             Text(
                                 text = scene.details,

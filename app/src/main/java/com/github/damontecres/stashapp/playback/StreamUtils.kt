@@ -361,21 +361,41 @@ fun checkForSupport(tracks: Tracks): List<TrackSupport> =
     }
 
 /**
- * If [R.string.pref_key_playback_start_muted] is true, disable gselection of audio tracks by default on the given [Player]
+ * If [R.string.pref_key_playback_start_muted] is true, disable selection of audio tracks by default on the given [Player]
  */
 fun maybeMuteAudio(
     context: Context,
+    checkPreviewAudioPref: Boolean,
     player: Player?,
 ) {
-    if (getPreference(context, R.string.pref_key_playback_start_muted, false)) {
-        player?.let {
+    player?.let {
+        val playAudioPreview =
+            getPreference(
+                context,
+                R.string.pref_key_video_preview_audio,
+                true,
+            )
+        val startMuted = getPreference(context, R.string.pref_key_playback_start_muted, false)
+        Log.v(
+            TAG,
+            "maybeMuteAudio: playAudioPreview=$playAudioPreview, startMuted=$startMuted, checkPreviewAudioPref=$checkPreviewAudioPref",
+        )
+        if (!playAudioPreview && checkPreviewAudioPref || startMuted) {
             if (C.TRACK_TYPE_AUDIO !in it.trackSelectionParameters.disabledTrackTypes) {
+                Log.v(TAG, "Disabling audio")
                 it.trackSelectionParameters =
                     it.trackSelectionParameters
                         .buildUpon()
                         .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
                         .build()
             }
+        } else if (C.TRACK_TYPE_AUDIO in it.trackSelectionParameters.disabledTrackTypes) {
+            Log.v(TAG, "Enabling audio")
+            it.trackSelectionParameters =
+                it.trackSelectionParameters
+                    .buildUpon()
+                    .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, false)
+                    .build()
         }
     }
 }

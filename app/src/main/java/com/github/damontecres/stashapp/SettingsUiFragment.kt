@@ -9,6 +9,8 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceManager
 import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
+import coil3.SingletonImageLoader
+import coil3.annotation.DelicateCoilApi
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.composeEnabled
@@ -17,6 +19,7 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
+    @OptIn(DelicateCoilApi::class)
     override fun onCreatePreferences(
         savedInstanceState: Bundle?,
         rootKey: String?,
@@ -62,6 +65,8 @@ class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                         SettingsFragment.clearCaches(requireContext())
                         composeEnabledPref.isChecked = true
+                        // Clear coil singleton
+                        SingletonImageLoader.reset()
                         requireActivity().finish()
                     }
                 }
@@ -73,6 +78,8 @@ class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                         SettingsFragment.clearCaches(requireContext())
                         composeEnabledPref.isChecked = false
+                        // Clear coil singleton
+                        SingletonImageLoader.reset()
                         requireActivity().finish()
                     }
                 }

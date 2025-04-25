@@ -280,7 +280,7 @@ fun PlaybackPageContent(
             } else {
                 null
             }
-        maybeMuteAudio(context, player)
+        maybeMuteAudio(context, false, player)
         val decision = getStreamDecision(context, playbackScene, playbackMode)
         Log.d(TAG, "streamDecision=$decision")
         val media = buildMediaItem(context, decision, playbackScene)

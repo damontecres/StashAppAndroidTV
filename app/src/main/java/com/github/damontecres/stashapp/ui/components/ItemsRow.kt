@@ -24,7 +24,6 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
-import com.github.damontecres.stashapp.ui.util.ifElse
 import kotlinx.parcelize.Parcelize
 
 @Composable
@@ -93,25 +92,30 @@ fun <T : StashData> ItemsRow(
             modifier =
                 Modifier
                     .padding(top = 8.dp)
-                    .focusRestorer {
-                        focusPair?.focusRequester ?: firstFocus
-                    },
+                    .focusRestorer(focusPair?.focusRequester ?: firstFocus),
             state = state,
             contentPadding = PaddingValues(8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             itemsIndexed(items, key = { _, item -> item.id }) { index, item ->
                 val cardModifier =
-                    if (index == 0) {
+                    if (index == 0 && focusPair == null) {
                         Modifier
                             .focusRequester(firstFocus)
                     } else {
-                        Modifier
-                    }.ifElse(
-                        focusPair != null && focusPair.column == index,
-                        { Modifier.focusRequester(focusPair!!.focusRequester) },
-                    ).onFocusChanged {
-                        cardOnFocus.invoke(it.isFocused, index)
+                        if (focusPair != null) {
+                            Modifier
+                                .focusRequester(focusPair.focusRequester)
+                        } else {
+                            Modifier
+                        }
+//                        .ifElse(
+//                        focusPair != null && focusPair.column == index,
+//                        { Modifier.focusRequester(focusPair!!.focusRequester) },
+//                    )
+                            .onFocusChanged {
+                                cardOnFocus.invoke(it.isFocused, index)
+                            }
                     }
 
                 StashCard(

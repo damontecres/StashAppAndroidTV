@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="pref_key_video_preview_audio" translatable="false">videoPreviewAudio</string>
     <string name="pref_key_network_cache_size">networkCacheSize</string>
     <string name="pref_key_image_cache_size">iamge.cacheSize</string>
     <string name="pref_key_salt">salt</string>

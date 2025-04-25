@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.ui.cards
 
 import android.os.Build
 import android.util.Log
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,6 +42,7 @@ fun PerformerCard(
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
     ageOnDate: String? = null,
+    interactionSource: MutableInteractionSource? = null,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
     dataTypeMap[DataType.SCENE] = item.scene_count

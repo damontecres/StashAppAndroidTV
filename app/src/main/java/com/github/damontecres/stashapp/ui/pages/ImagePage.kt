@@ -163,6 +163,7 @@ fun ImagePage(
     val player =
         remember {
             StashExoPlayer.getInstance(context, server).apply {
+                maybeMuteAudio(context, false, this)
                 repeatMode = Player.REPEAT_MODE_OFF
                 playWhenReady = true
             }
@@ -184,7 +185,6 @@ fun ImagePage(
         }
     val presentationState = rememberPresentationState(player)
     LaunchedEffect(player) {
-        maybeMuteAudio(context, player)
         StashExoPlayer.addListener(
             object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {

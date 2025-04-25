@@ -157,8 +157,8 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                 var colorScheme by
                     remember { mutableStateOf(getTheme(requireContext(), false, isSystemInDarkTheme)) }
                 MaterialTheme(colorScheme = colorScheme.tvColorScheme) {
-                    val currDestination by serverViewModel.destination.observeAsState()
                     key(server) {
+                        val currDestination by serverViewModel.destination.observeAsState()
                         val navController =
                             rememberNavController<Destination>(
                                 Destination.Main,
@@ -174,42 +174,44 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                             (serverViewModel.navigationManager as NavigationManagerCompose)
                         navManager.controller = navController
                         if (currDestination != Destination.Pin) {
-                            // TODO remove creating a dummy server
-                            CompositionLocalProvider(
-                                LocalGlobalContext provides
-                                    GlobalContext(
-                                        server ?: StashServer("http://0.0.0.0", null),
-                                        navManager,
-                                    ),
-                            ) {
-                                FragmentContent(
-                                    server = server ?: StashServer("http://0.0.0.0", null),
-                                    navigationManager = navManager,
-                                    onChangeTheme = { name ->
-                                        try {
-                                            colorScheme =
-                                                chooseColorScheme(
-                                                    requireContext(),
-                                                    isSystemInDarkTheme,
-                                                    if (name.isNullOrBlank() || name == "default") {
-                                                        defaultColorSchemeSet
-                                                    } else {
-                                                        readThemeJson(requireContext(), name)
-                                                    },
-                                                )
-                                            Log.i(TAG, "Updated theme")
-                                        } catch (ex: Exception) {
-                                            Log.e(TAG, "Exception changing theme", ex)
-                                            Toast
-                                                .makeText(
-                                                    requireContext(),
-                                                    "Error changing theme: ${ex.localizedMessage}",
-                                                    Toast.LENGTH_LONG,
-                                                ).show()
-                                        }
-                                    },
-                                    modifier = Modifier.background(MaterialTheme.colorScheme.background),
-                                )
+                            server?.let { currentServer ->
+                                // TODO remove creating a dummy server
+                                CompositionLocalProvider(
+                                    LocalGlobalContext provides
+                                        GlobalContext(
+                                            currentServer,
+                                            navManager,
+                                        ),
+                                ) {
+                                    FragmentContent(
+                                        server = currentServer,
+                                        navigationManager = navManager,
+                                        onChangeTheme = { name ->
+                                            try {
+                                                colorScheme =
+                                                    chooseColorScheme(
+                                                        requireContext(),
+                                                        isSystemInDarkTheme,
+                                                        if (name.isNullOrBlank() || name == "default") {
+                                                            defaultColorSchemeSet
+                                                        } else {
+                                                            readThemeJson(requireContext(), name)
+                                                        },
+                                                    )
+                                                Log.i(TAG, "Updated theme")
+                                            } catch (ex: Exception) {
+                                                Log.e(TAG, "Exception changing theme", ex)
+                                                Toast
+                                                    .makeText(
+                                                        requireContext(),
+                                                        "Error changing theme: ${ex.localizedMessage}",
+                                                        Toast.LENGTH_LONG,
+                                                    ).show()
+                                            }
+                                        },
+                                        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+                                    )
+                                }
                             }
                         }
                     }

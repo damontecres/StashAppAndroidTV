@@ -200,7 +200,7 @@ fun PlaylistPlaybackPageContent(
     }
     LaunchedEffect(Unit) {
         viewModel.init(server, markersEnabled)
-        maybeMuteAudio(context, player)
+        maybeMuteAudio(context, false, player)
         player.setMediaItems(playlist)
         player.prepare()
         StashExoPlayer.addListener(

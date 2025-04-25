@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.cards
 
-import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -10,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
@@ -50,6 +49,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -88,6 +88,7 @@ import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
+import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.presenters.StashPresenter.Companion.isDefaultUrl
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -246,7 +247,7 @@ fun RootCard(
     border: CardBorder = CardDefaults.border(),
     glow: CardGlow = CardDefaults.glow(),
     contentPadding: PaddingValues = PaddingValues(),
-    interactionSource: MutableInteractionSource? = null,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) = RootCard(
     item,
     onClick,
@@ -301,7 +302,7 @@ fun RootCard(
     border: CardBorder = CardDefaults.border(),
     glow: CardGlow = CardDefaults.glow(),
     contentPadding: PaddingValues = PaddingValues(),
-    interactionSource: MutableInteractionSource? = null,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     val context = LocalContext.current
     val videoDelay =
@@ -314,7 +315,7 @@ fun RootCard(
                 ).toLong()
         }
 
-    var focused by remember { mutableStateOf(false) }
+    var focused = interactionSource.collectIsFocusedAsState().value
     var focusedAfterDelay by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
@@ -328,8 +329,12 @@ fun RootCard(
             delay(videoDelay)
             if (focused) {
                 focusedAfterDelay = true
+            } else {
+                focusedAfterDelay = false
             }
         }
+    } else {
+        focusedAfterDelay = false
     }
 
     val height =
@@ -350,10 +355,7 @@ fun RootCard(
         },
         modifier =
             modifier
-                .onFocusChanged { focusState ->
-                    focused = focusState.isFocused
-                    if (!focusState.isFocused) focusedAfterDelay = false
-                }.padding(0.dp)
+                .padding(0.dp)
                 .width(width),
         interactionSource = interactionSource,
         shape = shape,
@@ -378,24 +380,11 @@ fun RootCard(
                         LocalGlobalContext.current.server,
                     )
                 LaunchedEffect(player) {
-                    val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-                    val videoPreviewAudio =
-                        prefs.getBoolean("videoPreviewAudio", false) &&
-                            !prefs.getBoolean(
-                                context.getString(R.string.pref_key_playback_start_muted),
-                                false,
-                            )
-                    if (!videoPreviewAudio && C.TRACK_TYPE_AUDIO !in player.trackSelectionParameters.disabledTrackTypes) {
-                        player.trackSelectionParameters =
-                            player.trackSelectionParameters
-                                .buildUpon()
-                                .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
-                                .build()
-                    }
+                    maybeMuteAudio(context, true, player)
                     val mediaItem =
                         MediaItem
                             .Builder()
-                            .setUri(Uri.parse(videoUrl))
+                            .setUri(videoUrl.toUri())
                             .setMimeType(MimeTypes.VIDEO_MP4)
                             .build()
 

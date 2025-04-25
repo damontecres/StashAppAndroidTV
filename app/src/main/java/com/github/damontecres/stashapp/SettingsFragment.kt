@@ -26,6 +26,8 @@ import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
+import coil3.SingletonImageLoader
+import coil3.annotation.DelicateCoilApi
 import coil3.imageLoader
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
@@ -302,6 +304,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
         }
 
+        @OptIn(DelicateCoilApi::class)
         override fun onViewCreated(
             view: View,
             savedInstanceState: Bundle?,
@@ -342,6 +345,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         PreferenceManager.getDefaultSharedPreferences(requireContext()).edit(true) {
                             putBoolean(getString(R.string.pref_key_use_compose_ui), true)
                         }
+                        // Clear coil singleton
+                        SingletonImageLoader.reset()
                         requireActivity().finish()
                     }
                 }
