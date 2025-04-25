@@ -109,7 +109,7 @@ class SceneDetailsViewModel(
     val oCount = MutableLiveData(0)
 
     fun init(): SceneDetailsViewModel {
-        viewModelScope.launch {
+        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
             try {
                 val scene = queryEngine.getScene(sceneId)
                 if (scene != null) {

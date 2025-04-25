@@ -115,7 +115,7 @@ class PerformerDetailsViewModel(
     val rating100 = MutableLiveData(0)
 
     fun init(): PerformerDetailsViewModel {
-        viewModelScope.launch {
+        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
             try {
                 val performer = queryEngine.getPerformer(performerId)
                 if (performer != null) {

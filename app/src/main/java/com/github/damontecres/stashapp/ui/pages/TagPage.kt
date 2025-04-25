@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -46,6 +47,8 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getUiTabs
 import kotlinx.coroutines.launch
 
+private const val TAG = "TagPage"
+
 @Composable
 fun TagPage(
     server: StashServer,
@@ -56,16 +59,22 @@ fun TagPage(
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     var tag by remember { mutableStateOf<TagData?>(null) }
     // Remember separately so we don't have refresh the whole page
     var favorite by remember { mutableStateOf(false) }
     LaunchedEffect(id) {
-        tag = QueryEngine(server).getTag(id)
-        tag?.let {
-            favorite = it.favorite
+        try {
+            tag = QueryEngine(server).getTag(id)
+            tag?.let {
+                favorite = it.favorite
+            }
+        } catch (ex: QueryEngine.QueryException) {
+            Log.e(TAG, "No tag found with ID $id", ex)
+            Toast.makeText(context, "No tag found with ID $id", Toast.LENGTH_LONG).show()
         }
     }
-    val context = LocalContext.current
+
     val scope = rememberCoroutineScope()
 
     tag?.let { tag ->

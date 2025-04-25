@@ -72,6 +72,7 @@ import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.defaultCardWidth
 import com.github.damontecres.stashapp.util.getPreference
@@ -410,13 +411,13 @@ fun StashGrid(
                     } else if (useBackToJump && it.key == Key.Back && it.nativeKeyEvent.isLongPress) {
                         // TODO doesn't work?
                         focusOn(previouslyFocusedIndex)
-                        scope.launch {
+                        scope.launch(StashCoroutineExceptionHandler()) {
                             gridState.scrollToItem(previouslyFocusedIndex, -columns)
                             firstFocus.tryRequestFocus()
                         }
                         return@onKeyEvent true
                     } else if (useBackToJump && it.key == Key.Back && focusedIndex > 0) {
-                        scope.launch {
+                        scope.launch(StashCoroutineExceptionHandler()) {
                             focusOn(0)
                             if (focusedIndex < (columns * 6)) {
                                 // If close, animate the scroll
@@ -463,7 +464,7 @@ fun StashGrid(
                         }
                         return@onKeyEvent false
                     } else if (useJumpRemoteButtons && isForwardButton(it)) {
-                        scope.launch {
+                        scope.launch(StashCoroutineExceptionHandler()) {
                             val newPosition =
                                 (focusedIndex + jump1).coerceIn(0..<pager.size)
                             focusOn(newPosition)
@@ -472,7 +473,7 @@ fun StashGrid(
                         }
                         return@onKeyEvent true
                     } else if (useJumpRemoteButtons && isBackwardButton(it)) {
-                        scope.launch {
+                        scope.launch(StashCoroutineExceptionHandler()) {
                             val newPosition =
                                 (focusedIndex - jump1).coerceIn(0..<pager.size)
                             focusOn(newPosition)
@@ -490,7 +491,7 @@ fun StashGrid(
                 jump1 = jump1,
                 jump2 = jump2,
                 jumpClick = { jump ->
-                    scope.launch {
+                    scope.launch(StashCoroutineExceptionHandler()) {
                         val newPosition =
                             (focusedIndex + jump).coerceIn(0..<pager.size)
                         focusOn(newPosition)
@@ -626,7 +627,7 @@ fun StashGrid(
             AlphabetButtons(
                 modifier = Modifier.align(Alignment.CenterVertically),
                 letterClicked = { letter ->
-                    scope.launch {
+                    scope.launch(StashCoroutineExceptionHandler()) {
                         val jumpPosition = letterPosition.invoke(letter)
                         gridState.scrollToItem(jumpPosition)
                     }

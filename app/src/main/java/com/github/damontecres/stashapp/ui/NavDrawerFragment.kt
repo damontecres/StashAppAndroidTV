@@ -95,11 +95,13 @@ import com.github.damontecres.stashapp.ui.pages.SearchPage
 import com.github.damontecres.stashapp.ui.pages.StudioPage
 import com.github.damontecres.stashapp.ui.pages.TagPage
 import com.github.damontecres.stashapp.ui.util.ifElse
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
+import kotlinx.coroutines.launch
 import okhttp3.Call
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -332,9 +334,11 @@ fun FragmentContent(
 
     NavHost(navigationManager.controller, modifier = modifier) { destination ->
         LaunchedEffect(Unit) {
-            // Refresh server preferences on each page change
-            server.updateServerPrefs()
-            composeUiConfig = ComposeUiConfig.fromStashServer(context, server)
+            scope.launch(StashCoroutineExceptionHandler()) {
+                // Refresh server preferences on each page change
+                server.updateServerPrefs()
+                composeUiConfig = ComposeUiConfig.fromStashServer(context, server)
+            }
         }
 
         if (destination.fullScreen) {

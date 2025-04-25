@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -52,6 +53,8 @@ import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import kotlinx.coroutines.launch
 
+private const val TAG = "StudioPage"
+
 @Composable
 fun StudioPage(
     server: StashServer,
@@ -62,18 +65,24 @@ fun StudioPage(
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     var studio by remember { mutableStateOf<StudioData?>(null) }
     // Remember separately so we don't have refresh the whole page
     var favorite by remember { mutableStateOf(false) }
     var rating100 by remember { mutableIntStateOf(0) }
     LaunchedEffect(id) {
-        studio = QueryEngine(server).getStudio(id)
-        studio?.let {
-            favorite = it.favorite
-            rating100 = it.rating100 ?: 0
+        try {
+            studio = QueryEngine(server).getStudio(id)
+            studio?.let {
+                favorite = it.favorite
+                rating100 = it.rating100 ?: 0
+            }
+        } catch (ex: QueryEngine.QueryException) {
+            Log.e(TAG, "No studio found with ID $id", ex)
+            Toast.makeText(context, "No studio found with ID $id", Toast.LENGTH_LONG).show()
         }
     }
-    val context = LocalContext.current
+
     val scope = rememberCoroutineScope()
 
     studio?.let { studio ->

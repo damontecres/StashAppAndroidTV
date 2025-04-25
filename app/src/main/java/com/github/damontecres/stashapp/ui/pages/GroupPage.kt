@@ -1,5 +1,7 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,6 +65,8 @@ import com.github.damontecres.stashapp.util.showSetRatingToast
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
+private const val TAG = "GroupPage"
+
 @Composable
 fun GroupPage(
     server: StashServer,
@@ -76,13 +80,18 @@ fun GroupPage(
     var group by remember { mutableStateOf<GroupData?>(null) }
     // Remember separately so we don't have refresh the whole page
     var rating100 by remember { mutableIntStateOf(0) }
+    val context = LocalContext.current
     LaunchedEffect(id) {
-        group = QueryEngine(server).getGroup(id)
-        group?.let {
-            rating100 = it.rating100 ?: 0
+        try {
+            group = QueryEngine(server).getGroup(id)
+            group?.let {
+                rating100 = it.rating100 ?: 0
+            }
+        } catch (ex: QueryEngine.QueryException) {
+            Log.e(TAG, "No group found with ID $id", ex)
+            Toast.makeText(context, "No group found with ID $id", Toast.LENGTH_LONG).show()
         }
     }
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     group?.let { group ->

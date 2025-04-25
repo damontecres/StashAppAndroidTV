@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -42,7 +43,7 @@ class FilterViewModel : ViewModel() {
                 StashPagingSource(QueryEngine(server), dataSupplier) { _, _, item -> item }
             val pager = ComposePager(filterArgs, pagingSource, viewModelScope)
             job =
-                viewModelScope.launch {
+                viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                     pager.init()
                     this@FilterViewModel.pager.value = pager
                 }

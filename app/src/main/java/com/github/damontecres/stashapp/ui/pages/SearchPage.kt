@@ -216,7 +216,7 @@ fun SearchPage(
                     searchQuery = newQuery
                     job?.cancel()
                     job =
-                        scope.launch {
+                        scope.launch(StashCoroutineExceptionHandler()) {
                             delay(searchDelay)
                             viewModel.search(searchQuery)
                         }

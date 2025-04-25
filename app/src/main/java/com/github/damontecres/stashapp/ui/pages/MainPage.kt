@@ -108,7 +108,7 @@ class MainPageViewModel(
                     filterParser,
                     pageSize,
                 )
-            viewModelScope.launch {
+            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 val jobs = frontPageParser.parse(frontPageContent)
 
                 jobs.forEach { job ->

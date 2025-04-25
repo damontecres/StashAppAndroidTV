@@ -43,6 +43,7 @@ import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.TitleValueText
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
@@ -146,7 +147,7 @@ fun ImageDetailsHeader(
                                 interactionSource = interactionSource,
                             ).onFocusChanged {
                                 if (it.isFocused) {
-                                    scope.launch { bringIntoViewRequester.bringIntoView() }
+                                    scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
                                 }
                             }.clickable(enabled = textOverflow) { showDetailsDialog = true },
                 ) {

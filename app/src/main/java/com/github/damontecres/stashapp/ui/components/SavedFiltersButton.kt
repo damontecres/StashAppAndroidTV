@@ -1,12 +1,15 @@
 package com.github.damontecres.stashapp.ui.components
 
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.Button
 import androidx.tv.material3.Text
@@ -17,7 +20,9 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import kotlinx.coroutines.launch
 
 @Composable
 fun SavedFiltersButton(
@@ -40,8 +45,20 @@ fun SavedFiltersButton(
     var savedFilters by remember { mutableStateOf(listOf<SavedFilter>()) }
     val filterParser = FilterParser(StashServer.requireCurrentServer().version)
 
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     LaunchedEffect(dataType) {
-        savedFilters = QueryEngine(StashServer.requireCurrentServer()).getSavedFilters(dataType)
+        scope.launch(
+            StashCoroutineExceptionHandler(makeToast = {
+                Toast.makeText(
+                    context,
+                    "Failed to get saved filters: ${it.localizedMessage}",
+                    Toast.LENGTH_LONG,
+                )
+            }),
+        ) {
+            savedFilters = QueryEngine(StashServer.requireCurrentServer()).getSavedFilters(dataType)
+        }
     }
 
     val dialogItems = mutableListOf<DialogItemEntry>()

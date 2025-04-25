@@ -61,6 +61,7 @@ import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -104,7 +105,7 @@ fun PlaybackControls(
 
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val onControllerInteraction = {
-        scope.launch {
+        scope.launch(StashCoroutineExceptionHandler()) {
             bringIntoViewRequester.bringIntoView()
         }
         controllerViewState.pulseControls()

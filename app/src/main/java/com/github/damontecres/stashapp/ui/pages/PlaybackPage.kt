@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.pages
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -9,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,7 +39,9 @@ import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageConten
 import com.github.damontecres.stashapp.ui.components.playback.PlaylistPlaybackPageContent
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import kotlinx.coroutines.launch
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -51,12 +55,17 @@ fun PlaybackPage(
     modifier: Modifier = Modifier,
 ) {
     var scene by remember { mutableStateOf<FullSceneData?>(null) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     LaunchedEffect(server, sceneId) {
-        val fullScene = QueryEngine(server).getScene(sceneId)
-        if (fullScene != null) {
-            scene = fullScene
-        } else {
-            Log.w("PlaybackPage", "Scene $sceneId not found")
+        scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            val fullScene = QueryEngine(server).getScene(sceneId)
+            if (fullScene != null) {
+                scene = fullScene
+            } else {
+                Log.w("PlaybackPage", "Scene $sceneId not found")
+                Toast.makeText(context, "Scene $sceneId not found", Toast.LENGTH_LONG).show()
+            }
         }
     }
     Log.d("PlaybackPage", "scene=${scene?.id}")

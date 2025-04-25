@@ -72,6 +72,7 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.ui.util.ifElse
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
@@ -212,7 +213,7 @@ fun SceneDetailsHeader(
                                     .background(bgColor, shape = RoundedCornerShape(8.dp))
                                     .onFocusChanged {
                                         if (it.isFocused) {
-                                            scope.launch { bringIntoViewRequester.bringIntoView() }
+                                            scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
                                         }
                                     }.clickable(
                                         enabled = true,
@@ -234,7 +235,7 @@ fun SceneDetailsHeader(
                             val columnState = rememberLazyListState()
 
                             fun scroll(reverse: Boolean = false) {
-                                scope.launch {
+                                scope.launch(StashCoroutineExceptionHandler()) {
                                     columnState.scrollBy(if (reverse) -scrollAmount else scrollAmount)
                                 }
                             }
@@ -335,7 +336,7 @@ fun SceneDetailsHeader(
                                         .ifElse(isFocused, Modifier.scale(1.1f))
                                         .onFocusChanged {
                                             if (it.isFocused) {
-                                                scope.launch { bringIntoViewRequester.bringIntoView() }
+                                                scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
                                             }
                                         }.clickable(
                                             enabled = true,
@@ -383,7 +384,7 @@ fun SceneDetailsHeader(
                         focusRequester = focusRequester,
                         buttonOnFocusChanged = {
                             if (it.isFocused) {
-                                scope.launch { bringIntoViewRequester.bringIntoView() }
+                                scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
                             }
                         },
                     )

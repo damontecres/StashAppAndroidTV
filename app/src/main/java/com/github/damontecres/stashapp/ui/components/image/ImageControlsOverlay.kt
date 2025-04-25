@@ -37,6 +37,7 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import kotlinx.coroutines.launch
 
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -63,7 +64,7 @@ fun ImageControlsOverlay(
     }
     val onFocused = { focusState: FocusState ->
         if (focusState.isFocused && bringIntoViewRequester != null) {
-            scope.launch { bringIntoViewRequester.bringIntoView() }
+            scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
         }
     }
     val playPauseState = rememberPlayPauseButtonState(player)

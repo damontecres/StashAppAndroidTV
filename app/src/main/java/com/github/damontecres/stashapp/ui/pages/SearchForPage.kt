@@ -210,7 +210,7 @@ fun SearchForPage(
         job?.cancel()
         if (query.isNotNullOrBlank()) {
             job =
-                scope.launch {
+                scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                     delay(searchDelay)
                     results = SearchState.Pending
                     Log.v(TAG, "Starting search")

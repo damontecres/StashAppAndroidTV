@@ -89,7 +89,7 @@ class ImageDetailsViewModel : ViewModel() {
                 StashPagingSource(QueryEngine(server), dataSupplier) { _, _, item -> item }
             val pager = ComposePager(filterArgs, pagingSource, viewModelScope)
             Log.v(TAG, "Pager created: filterArgs=$filterArgs")
-            viewModelScope.launch {
+            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 pager.init()
                 Log.v(TAG, "Pager size: ${pager.size}")
                 this@ImageDetailsViewModel.pager.value = pager
@@ -128,7 +128,7 @@ class ImageDetailsViewModel : ViewModel() {
 
     fun updatePosition(position: Int) {
         pager.value?.let { pager ->
-            viewModelScope.launch {
+            viewModelScope.launch(StashCoroutineExceptionHandler()) {
                 try {
                     val image = pager.getBlocking(position)
                     Log.v(TAG, "Got image for $position: ${image != null}")

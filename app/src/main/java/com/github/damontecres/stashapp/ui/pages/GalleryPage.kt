@@ -1,5 +1,7 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +47,8 @@ import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import kotlinx.coroutines.launch
 
+private const val TAG = "GalleryPage"
+
 @Composable
 fun GalleryPage(
     server: StashServer,
@@ -54,16 +58,22 @@ fun GalleryPage(
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     var gallery by remember { mutableStateOf<GalleryData?>(null) }
     // Remember separately so we don't have refresh the whole page
     var rating100 by remember { mutableIntStateOf(0) }
     LaunchedEffect(id) {
-        gallery = QueryEngine(server).getGallery(id)
-        gallery?.let {
-            rating100 = it.rating100 ?: 0
+        try {
+            gallery = QueryEngine(server).getGallery(id)
+            gallery?.let {
+                rating100 = it.rating100 ?: 0
+            }
+        } catch (ex: QueryEngine.QueryException) {
+            Log.e(TAG, "No gallery found with ID $id", ex)
+            Toast.makeText(context, "No gallery found with ID $id", Toast.LENGTH_LONG).show()
         }
     }
-    val context = LocalContext.current
+
     val scope = rememberCoroutineScope()
 
     val createTab =
