@@ -123,7 +123,7 @@ class NavigationManagerCompose(
                         R.animator.fade_out,
                     )
                 }
-                replace(R.id.root_fragment, fragment, destination.fragmentTag)
+                replace(R.id.root_fragment, fragment, fragment.tag ?: destination.fragmentTag)
             }
         }
     }
