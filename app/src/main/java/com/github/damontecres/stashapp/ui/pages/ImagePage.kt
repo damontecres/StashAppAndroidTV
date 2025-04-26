@@ -328,9 +328,6 @@ fun ImagePage(
                                 .build(),
                         contentDescription = null,
                         contentScale = ContentScale.FillHeight,
-                        onError = {
-                            Log.e(TAG, "Error loading image ${image.id}", it.result.throwable)
-                        },
                         error = {
                             Text(
                                 modifier =
@@ -347,6 +344,23 @@ fun ImagePage(
                                     .align(Alignment.Center),
                                 false,
                             )
+                        },
+                        // Ensure that if an image takes a long time to load, it won't be skipped
+                        onLoading = {
+                            viewModel.pulseSlideshow(Long.MAX_VALUE)
+                        },
+                        onSuccess = {
+                            viewModel.pulseSlideshow()
+                        },
+                        onError = {
+                            Log.e(TAG, "Error loading image ${image.id}", it.result.throwable)
+                            Toast
+                                .makeText(
+                                    context,
+                                    "Error loading image: ${it.result.throwable.localizedMessage}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            viewModel.pulseSlideshow()
                         },
                     )
                 }
