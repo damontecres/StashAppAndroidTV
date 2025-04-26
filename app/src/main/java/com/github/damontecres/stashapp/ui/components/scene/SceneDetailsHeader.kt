@@ -4,24 +4,18 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,26 +31,18 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
@@ -70,8 +56,8 @@ import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
+import com.github.damontecres.stashapp.ui.components.ScrollableDialog
 import com.github.damontecres.stashapp.ui.components.TitleValueText
-import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
@@ -231,80 +217,41 @@ fun SceneDetailsHeader(
                             )
                         }
                         if (showDetailsDialog) {
-                            val scrollAmount = 100f
-                            val columnState = rememberLazyListState()
-
-                            fun scroll(reverse: Boolean = false) {
-                                scope.launch(StashCoroutineExceptionHandler()) {
-                                    columnState.scrollBy(if (reverse) -scrollAmount else scrollAmount)
-                                }
-                            }
-                            Dialog(
+                            ScrollableDialog(
                                 onDismissRequest = { showDetailsDialog = false },
-                                properties =
-                                    DialogProperties(
-                                        usePlatformDefaultWidth = false,
-                                    ),
+                                modifier = Modifier,
                             ) {
-                                LazyColumn(
-                                    state = columnState,
-                                    contentPadding = PaddingValues(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier =
-                                        Modifier
-                                            .width(600.dp)
-                                            .height(380.dp)
-                                            .focusable()
-                                            .background(
-                                                MaterialTheme.colorScheme.surface,
-                                                shape = RoundedCornerShape(8.dp),
-                                            ).onKeyEvent {
-                                                if (it.type == KeyEventType.KeyUp) {
-                                                    return@onKeyEvent false
-                                                }
-                                                if (it.key == Key.DirectionDown) {
-                                                    scroll(false)
-                                                    return@onKeyEvent true
-                                                }
-                                                if (it.key == Key.DirectionUp) {
-                                                    scroll(true)
-                                                    return@onKeyEvent true
-                                                }
-                                                return@onKeyEvent false
-                                            },
-                                ) {
+                                item {
+                                    Text(
+                                        text = scene.details,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth(),
+                                    )
+                                }
+                                if (scene.files.isNotEmpty()) {
                                     item {
+                                        HorizontalDivider()
                                         Text(
-                                            text = scene.details,
+                                            stringResource(R.string.stashapp_files) + ":",
                                             style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            modifier =
-                                                Modifier
-                                                    .fillMaxWidth(),
-                                        )
-                                    }
-                                    if (scene.files.isNotEmpty()) {
-                                        item {
-                                            HorizontalDivider()
-                                            Text(
-                                                stringResource(R.string.stashapp_files) + ":",
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = MaterialTheme.colorScheme.onBackground,
-                                            )
-                                        }
-                                    }
-                                    items(scene.files.map { it.videoFile }) {
-                                        val size =
-                                            it.size
-                                                .toString()
-                                                .toIntOrNull()
-                                                ?.let(::formatBytes)
-                                        Text(
-                                            text = listOf(it.path, size).joinNotNullOrBlank(" - "),
-                                            style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onBackground,
                                         )
                                     }
+                                }
+                                items(scene.files.map { it.videoFile }) {
+                                    val size =
+                                        it.size
+                                            .toString()
+                                            .toIntOrNull()
+                                            ?.let(::formatBytes)
+                                    Text(
+                                        text = listOf(it.path, size).joinNotNullOrBlank(" - "),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                    )
                                 }
                             }
                         }
@@ -318,38 +265,24 @@ fun SceneDetailsHeader(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         if (scene.studio != null) {
-                            val interactionSource = remember { MutableInteractionSource() }
-                            val isFocused by interactionSource.collectIsFocusedAsState()
-                            val bgColor =
-                                if (isFocused) {
-                                    MaterialTheme.colorScheme.onPrimary.copy(alpha = .75f)
-                                } else {
-                                    Color.Unspecified
-                                }
                             val navigationManager = LocalGlobalContext.current.navigationManager
                             TitleValueText(
                                 stringResource(R.string.stashapp_studio),
                                 scene.studio.studioData.name,
                                 modifier =
-                                    Modifier
-                                        .background(bgColor, shape = RoundedCornerShape(4.dp))
-                                        .ifElse(isFocused, Modifier.scale(1.1f))
-                                        .onFocusChanged {
-                                            if (it.isFocused) {
-                                                scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
-                                            }
-                                        }.clickable(
-                                            enabled = true,
-                                            interactionSource = interactionSource,
-                                            indication = LocalIndication.current,
-                                        ) {
-                                            navigationManager.navigate(
-                                                Destination.Item(
-                                                    DataType.STUDIO,
-                                                    scene.studio.studioData.id,
-                                                ),
-                                            )
-                                        },
+                                    Modifier.onFocusChanged {
+                                        if (it.isFocused) {
+                                            scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
+                                        }
+                                    },
+                                onClick = {
+                                    navigationManager.navigate(
+                                        Destination.Item(
+                                            DataType.STUDIO,
+                                            scene.studio.studioData.id,
+                                        ),
+                                    )
+                                },
                             )
                         }
                         if (scene.code.isNotNullOrBlank()) {

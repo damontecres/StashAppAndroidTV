@@ -16,21 +16,38 @@
 
 package com.github.damontecres.stashapp.ui.components
 
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.ui.util.ifElse
 
 @Composable
 fun TitleValueText(
     title: String,
     value: String,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
-    Column(modifier = modifier) {
+    MaybeClickColumn(
+        onClick = onClick,
+        modifier = modifier,
+    ) {
         Text(
             modifier = Modifier.alpha(0.8f),
             text = title,
@@ -43,5 +60,38 @@ fun TitleValueText(
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
         )
+    }
+}
+
+@Composable
+private fun MaybeClickColumn(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    if (onClick != null) {
+        val interactionSource = remember { MutableInteractionSource() }
+        val isFocused by interactionSource.collectIsFocusedAsState()
+        val bgColor =
+            if (isFocused) {
+                MaterialTheme.colorScheme.onPrimary.copy(alpha = .75f)
+            } else {
+                Color.Unspecified
+            }
+        Column(
+            content = content,
+            modifier =
+                modifier
+                    .background(bgColor, shape = RoundedCornerShape(4.dp))
+                    .ifElse(isFocused, Modifier.scale(1.1f))
+                    .clickable(
+                        enabled = true,
+                        interactionSource = interactionSource,
+                        indication = LocalIndication.current,
+                        onClick = onClick,
+                    ),
+        )
+    } else {
+        Column(content = content, modifier = modifier)
     }
 }

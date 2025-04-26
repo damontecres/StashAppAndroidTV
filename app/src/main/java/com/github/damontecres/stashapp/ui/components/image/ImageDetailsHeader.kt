@@ -1,9 +1,9 @@
 package com.github.damontecres.stashapp.ui.components.image
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -36,12 +36,21 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.ImageFilterType
+import com.github.damontecres.stashapp.api.type.StringCriterionInput
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
+import com.github.damontecres.stashapp.ui.components.ScrollableDialog
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.isImageClip
@@ -132,24 +141,24 @@ fun ImageDetailsHeader(
                 val isFocused = interactionSource.collectIsFocusedAsState().value
                 val bgColor =
                     if (isFocused) {
-                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .75f)
+                        MaterialTheme.colorScheme.onPrimary.copy(alpha = .75f)
                     } else {
                         Color.Unspecified
                     }
-                var textOverflow by remember { mutableStateOf(false) }
                 var showDetailsDialog by remember { mutableStateOf(false) }
                 Box(
                     modifier =
                         Modifier
                             .background(bgColor, shape = RoundedCornerShape(8.dp))
-                            .focusable(
-                                enabled = textOverflow,
-                                interactionSource = interactionSource,
-                            ).onFocusChanged {
+                            .onFocusChanged {
                                 if (it.isFocused) {
                                     scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
                                 }
-                            }.clickable(enabled = textOverflow) { showDetailsDialog = true },
+                            }.clickable(
+                                enabled = true,
+                                interactionSource = interactionSource,
+                                indication = LocalIndication.current,
+                            ) { showDetailsDialog = true },
                 ) {
                     Text(
                         text = image.details,
@@ -157,11 +166,25 @@ fun ImageDetailsHeader(
                         color = MaterialTheme.colorScheme.onBackground,
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
-                        onTextLayout = { textLayoutResult ->
-                            textOverflow = textLayoutResult.hasVisualOverflow
-                        },
                         modifier = Modifier.padding(8.dp),
                     )
+                }
+                if (showDetailsDialog) {
+                    ScrollableDialog(
+                        onDismissRequest = { showDetailsDialog = false },
+                        modifier = Modifier,
+                    ) {
+                        item {
+                            Text(
+                                text = image.details,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth(),
+                            )
+                        }
+                    }
                 }
             }
             // Key-Values
@@ -172,10 +195,25 @@ fun ImageDetailsHeader(
                         .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
+                val navigationManager = LocalGlobalContext.current.navigationManager
                 if (image.studio != null) {
                     TitleValueText(
                         stringResource(R.string.stashapp_studio),
                         image.studio.name,
+                        modifier =
+                            Modifier.onFocusChanged {
+                                if (it.isFocused) {
+                                    scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
+                                }
+                            },
+                        onClick = {
+                            navigationManager.navigate(
+                                Destination.Item(
+                                    DataType.STUDIO,
+                                    image.studio.id,
+                                ),
+                            )
+                        },
                     )
                 }
                 if (image.code.isNotNullOrBlank()) {
@@ -186,8 +224,33 @@ fun ImageDetailsHeader(
                 }
                 if (image.photographer.isNotNullOrBlank()) {
                     TitleValueText(
-                        stringResource(R.string.stashapp_director),
+                        stringResource(R.string.stashapp_photographer),
                         image.photographer,
+                        modifier =
+                            Modifier.onFocusChanged {
+                                if (it.isFocused) {
+                                    scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
+                                }
+                            },
+                        onClick = {
+                            navigationManager.navigate(
+                                Destination.Filter(
+                                    FilterArgs(
+                                        DataType.IMAGE,
+                                        objectFilter =
+                                            ImageFilterType(
+                                                photographer =
+                                                    Optional.present(
+                                                        StringCriterionInput(
+                                                            value = image.photographer,
+                                                            modifier = CriterionModifier.EQUALS,
+                                                        ),
+                                                    ),
+                                            ),
+                                    ),
+                                ),
+                            )
+                        },
                     )
                 }
             }

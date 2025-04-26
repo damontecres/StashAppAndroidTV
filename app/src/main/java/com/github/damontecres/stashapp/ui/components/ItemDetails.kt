@@ -1,14 +1,6 @@
 package com.github.damontecres.stashapp.ui.components
 
-import androidx.annotation.StringRes
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,8 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,7 +27,6 @@ import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
-import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
 @Composable
@@ -118,72 +107,6 @@ fun ItemDetails(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun TableRowComposable(
-    row: TableRow,
-    modifier: Modifier = Modifier,
-    keyWeight: Float = .3f,
-    valueWeight: Float = .7f,
-    focusable: Boolean = true,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isFocused by interactionSource.collectIsFocusedAsState()
-    var background =
-        if (isFocused) MaterialTheme.colorScheme.border.copy(alpha = .5f) else Color.Unspecified
-    Row(modifier) {
-        val keyModifier =
-            Modifier
-                .weight(keyWeight)
-        val valueModifier =
-            Modifier
-                .weight(valueWeight)
-                .focusable(
-                    enabled = focusable || row.onClick != null, // TODO, this allows scrolling, but is difficult to see
-                    interactionSource = interactionSource,
-                ).ifElse(
-                    row.onClick != null,
-                    Modifier
-                        .clickable(onClick = { row.onClick?.invoke() })
-//                        .onFocusChanged { focused = it.isFocused }
-                        .background(background),
-                )
-        ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground)) {
-            Box(modifier = keyModifier) {
-                row.key.invoke(this, Modifier.padding(4.dp))
-            }
-            Box(modifier = valueModifier) {
-                row.value.invoke(this, Modifier.padding(4.dp))
-            }
-        }
-    }
-}
-
-data class TableRow(
-    val key: @Composable BoxScope.(modifier: Modifier) -> Unit,
-    val value: @Composable BoxScope.(modifier: Modifier) -> Unit,
-    val onClick: (() -> Unit)? = null,
-) {
-    constructor(key: String, value: String, onClick: (() -> Unit)? = null) : this(
-        { modifier: Modifier -> Text(text = "$key:", modifier = modifier) },
-        { modifier: Modifier -> Text(text = value, modifier = modifier) },
-        onClick,
-    )
-
-    companion object {
-        @Composable
-        fun from(
-            @StringRes keyStringId: Int,
-            value: String?,
-            onClick: (() -> Unit)? = null,
-        ): TableRow? =
-            if (value.isNotNullOrBlank()) {
-                TableRow(stringResource(keyStringId), value, onClick)
-            } else {
-                null
-            }
     }
 }
 
