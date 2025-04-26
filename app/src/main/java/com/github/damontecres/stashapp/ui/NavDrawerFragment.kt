@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui
 
 import android.os.Bundle
+import android.os.Parcelable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -29,9 +30,9 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -99,15 +100,21 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
+import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.NavHost
+import dev.olshevski.navigation.reimagined.navigate
+import dev.olshevski.navigation.reimagined.popUpTo
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
 import okhttp3.Call
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class NavDrawerFragment : Fragment(R.layout.compose_frame) {
     private val serverViewModel: ServerViewModel by activityViewModels()
+
+    lateinit var navController: NavController<Destination>
 
     @OptIn(ExperimentalCoilApi::class)
     override fun onViewCreated(
@@ -160,60 +167,60 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                     remember { mutableStateOf(getTheme(requireContext(), false, isSystemInDarkTheme)) }
                 MaterialTheme(colorScheme = colorScheme.tvColorScheme) {
                     key(server) {
-                        val currDestination by serverViewModel.destination.observeAsState()
-                        val navController =
-                            rememberNavController<Destination>(
-                                Destination.Main,
-//                                if ((requireActivity() as RootActivity).appHasPin()) {
-//                                    Destination.Pin
-//                                } else {
-//                                    Destination.Main
-//                                },
-                            )
+                        navController = rememberNavController<Destination>(Destination.Main)
                         NavBackHandler(navController)
-
                         val navManager =
                             (serverViewModel.navigationManager as NavigationManagerCompose)
                         navManager.controller = navController
-                        if (currDestination != Destination.Pin) {
-                            server?.let { currentServer ->
-                                // TODO remove creating a dummy server
-                                CompositionLocalProvider(
-                                    LocalGlobalContext provides
-                                        GlobalContext(
-                                            currentServer,
-                                            navManager,
-                                        ),
-                                ) {
-                                    FragmentContent(
-                                        server = currentServer,
-                                        navigationManager = navManager,
-                                        onChangeTheme = { name ->
-                                            try {
-                                                colorScheme =
-                                                    chooseColorScheme(
-                                                        requireContext(),
-                                                        isSystemInDarkTheme,
-                                                        if (name.isNullOrBlank() || name == "default") {
-                                                            defaultColorSchemeSet
-                                                        } else {
-                                                            readThemeJson(requireContext(), name)
-                                                        },
-                                                    )
-                                                Log.i(TAG, "Updated theme")
-                                            } catch (ex: Exception) {
-                                                Log.e(TAG, "Exception changing theme", ex)
-                                                Toast
-                                                    .makeText(
-                                                        requireContext(),
-                                                        "Error changing theme: ${ex.localizedMessage}",
-                                                        Toast.LENGTH_LONG,
-                                                    ).show()
-                                            }
-                                        },
-                                        modifier = Modifier.background(MaterialTheme.colorScheme.background),
-                                    )
+
+                        val navCommand by serverViewModel.command.observeAsState()
+                        LaunchedEffect(navCommand) {
+                            navCommand?.let { cmd ->
+                                Log.v(TAG, "cmd=$cmd, server=$server")
+                                if (cmd.popUpToMain) {
+                                    navController.popUpTo { it == Destination.Main }
                                 }
+                                navController.navigate(cmd.destination)
+                            }
+                        }
+                        server?.let { currentServer ->
+                            Log.v(TAG, "currentServer=$currentServer")
+                            CompositionLocalProvider(
+                                LocalGlobalContext provides
+                                    GlobalContext(
+                                        currentServer,
+                                        navManager,
+                                    ),
+                            ) {
+                                FragmentContent(
+                                    server = currentServer,
+                                    navigationManager = navManager,
+                                    navController = navController,
+                                    onChangeTheme = { name ->
+                                        try {
+                                            colorScheme =
+                                                chooseColorScheme(
+                                                    requireContext(),
+                                                    isSystemInDarkTheme,
+                                                    if (name.isNullOrBlank() || name == "default") {
+                                                        defaultColorSchemeSet
+                                                    } else {
+                                                        readThemeJson(requireContext(), name)
+                                                    },
+                                                )
+                                            Log.i(TAG, "Updated theme")
+                                        } catch (ex: Exception) {
+                                            Log.e(TAG, "Exception changing theme", ex)
+                                            Toast
+                                                .makeText(
+                                                    requireContext(),
+                                                    "Error changing theme: ${ex.localizedMessage}",
+                                                    Toast.LENGTH_LONG,
+                                                ).show()
+                                        }
+                                    },
+                                    modifier = Modifier.background(MaterialTheme.colorScheme.background),
+                                )
                             }
                         }
                     }
@@ -227,11 +234,11 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun FragmentContent(
     server: StashServer,
     navigationManager: NavigationManagerCompose,
+    navController: NavController<Destination>,
     onChangeTheme: (String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -327,12 +334,12 @@ fun FragmentContent(
     val initialFocus = remember { FocusRequester() }
     val listState = rememberLazyListState()
     val defaultSelection: DrawerPage = DrawerPage.HOME_PAGE
-    var currentScreen by remember { mutableStateOf(defaultSelection) }
-    var selectedScreen by remember { mutableStateOf<DrawerPage?>(defaultSelection) }
+    var currentScreen by rememberSaveable { mutableStateOf(defaultSelection) }
+    var selectedScreen by rememberSaveable { mutableStateOf<DrawerPage?>(defaultSelection) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    NavHost(navigationManager.controller, modifier = modifier) { destination ->
+    NavHost(navController, modifier = modifier) { destination ->
         LaunchedEffect(Unit) {
             scope.launch(StashCoroutineExceptionHandler()) {
                 // Refresh server preferences on each page change
@@ -509,7 +516,7 @@ fun FragmentContent(
                             modifier =
                                 Modifier
                                     .focusGroup()
-                                    .focusRestorer { initialFocus }
+                                    .focusRestorer(initialFocus)
                                     .selectableGroup(),
                             state = listState,
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -755,11 +762,12 @@ fun NavDrawerContent(
     }
 }
 
+@Parcelize
 data class DrawerPage(
     val destination: Destination,
     @StringRes val iconString: Int,
     @StringRes val name: Int,
-) {
+) : Parcelable {
     companion object {
         val HOME_PAGE = DrawerPage(Destination.Main, R.string.fa_house, R.string.home)
 
@@ -789,7 +797,7 @@ fun FragmentView(
                 )
         },
         update = { view ->
-            navManager.composeNavigate(destination)
+            navManager.navigate(destination)
         },
     )
 }

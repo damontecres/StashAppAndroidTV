@@ -81,34 +81,18 @@ enum class PreferenceScreenOption {
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
     override fun onPreferenceStartInitialScreen() {
         val destination = requireArguments().getDestination<Destination.Settings>()
-        val compose = composeEnabled(requireContext())
-        if (compose) {
-            val prefFragment =
-                when (destination.screenOption) {
-                    PreferenceScreenOption.BASIC ->
-                        PreferencesFragment(
-                            ::startPreferenceFragment,
-                            ::startImmersiveFragment,
-                        )
-
-                    PreferenceScreenOption.ADVANCED -> AdvancedPreferencesFragment()
-                    PreferenceScreenOption.USER_INTERFACE -> SettingsUiFragment()
-                }
-            startPreferenceFragment(prefFragment)
-        } else {
-            // PREFERENCE_FRAGMENT_TAG is private, so hardcoded here
-            val prevFragment =
-                childFragmentManager
-                    .findFragmentByTag("androidx.leanback.preference.LeanbackSettingsFragment.PREFERENCE_FRAGMENT")
-            // If the previous fragment was not a preference, then the current one should be, so do not start a new one
-            if (prevFragment !is LeanbackPreferenceFragmentCompat) {
-                startPreferenceFragment(
-                    PreferencesFragment(
-                        ::startPreferenceFragment,
-                        ::startImmersiveFragment,
-                    ),
-                )
-            }
+        // PREFERENCE_FRAGMENT_TAG is private, so hardcoded here
+        val prevFragment =
+            childFragmentManager
+                .findFragmentByTag("androidx.leanback.preference.LeanbackSettingsFragment.PREFERENCE_FRAGMENT")
+        // If the previous fragment was not a preference, then the current one should be, so do not start a new one
+        if (prevFragment !is LeanbackPreferenceFragmentCompat) {
+            startPreferenceFragment(
+                PreferencesFragment(
+                    ::startPreferenceFragment,
+                    ::startImmersiveFragment,
+                ),
+            )
         }
     }
 
@@ -278,28 +262,12 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             val advancedPreferences = findPreference<Preference>("advancedPreferences")!!
             advancedPreferences.setOnPreferenceClickListener {
-                if (composeEnabled()) {
-                    serverViewModel.navigationManager.navigate(
-                        Destination.Settings(
-                            PreferenceScreenOption.ADVANCED,
-                        ),
-                    )
-                } else {
-                    startPreferenceFragmentFunc(AdvancedPreferencesFragment())
-                }
+                startPreferenceFragmentFunc(AdvancedPreferencesFragment())
                 true
             }
             val advancedUiPreferences = findPreference<Preference>("advancedUiPreferences")!!
             advancedUiPreferences.setOnPreferenceClickListener {
-                if (composeEnabled()) {
-                    serverViewModel.navigationManager.navigate(
-                        Destination.Settings(
-                            PreferenceScreenOption.USER_INTERFACE,
-                        ),
-                    )
-                } else {
-                    startPreferenceFragmentFunc(SettingsUiFragment())
-                }
+                startPreferenceFragmentFunc(SettingsUiFragment())
                 true
             }
         }

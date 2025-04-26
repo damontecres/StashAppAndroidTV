@@ -18,6 +18,7 @@ import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getInt
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 
 /**
  * Tracks the current server
@@ -51,6 +52,7 @@ open class ServerViewModel : ViewModel() {
                     StashServer.setCurrentStashServer(StashApplication.getApplication(), newServer)
                     _currentServer.value = newServer
                     _serverConnection.value = ServerConnection.Success
+                    submit(Destination.Main, true)
                 } catch (ex: Exception) {
                     _currentServer.setValueNoCheck(null)
                     _serverConnection.value = ServerConnection.Failure(newServer, ex)
@@ -145,4 +147,20 @@ open class ServerViewModel : ViewModel() {
             )
         }
     }
+
+    // For compose navigation
+    val command = MutableLiveData<NavigationCommand?>(null)
+
+    fun submit(
+        destination: Destination,
+        popUpToMain: Boolean = false,
+    ) {
+        command.value = NavigationCommand(destination, popUpToMain)
+    }
 }
+
+@Serializable
+data class NavigationCommand(
+    val destination: Destination,
+    val popUpToMain: Boolean,
+)

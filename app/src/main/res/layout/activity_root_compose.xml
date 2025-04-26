@@ -7,11 +7,11 @@
     tools:ignore="MergeRootFrame"
     android:theme="@style/Widget.Theme.StashAppAndroidTV.MyView">
 
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/nav_drawer_fragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:name="com.github.damontecres.stashapp.ui.NavDrawerFragment" />
+    <!--    <androidx.fragment.app.FragmentContainerView-->
+    <!--        android:id="@+id/nav_drawer_fragment"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:name="com.github.damontecres.stashapp.ui.NavDrawerFragment" />-->
 
     <FrameLayout
         android:id="@+id/root_fragment"

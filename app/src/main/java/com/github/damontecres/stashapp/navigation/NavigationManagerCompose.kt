@@ -2,9 +2,7 @@ package com.github.damontecres.stashapp.navigation
 
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.leanback.app.GuidedStepSupportFragment
 import com.github.damontecres.stashapp.PinFragment
@@ -12,15 +10,14 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.UpdateAppFragment
-import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterFragment
-import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
-import com.github.damontecres.stashapp.playback.PlaylistScenesFragment
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.setup.SetupFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
+import com.github.damontecres.stashapp.ui.NavDrawerFragment
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.navigate
 import dev.olshevski.navigation.reimagined.pop
@@ -29,54 +26,43 @@ import dev.olshevski.navigation.reimagined.popUpTo
 
 class NavigationManagerCompose(
     activity: RootActivity,
+    private val serverViewModel: ServerViewModel,
 ) : NavigationManagerParent(activity) {
-    lateinit var controller: NavController<Destination>
+    var controller: NavController<Destination>? = null
+
+    private val navDrawerFragment: NavDrawerFragment
+
+    init {
+        val current = getCurrentFragment()
+        if (current is NavDrawerFragment) {
+            navDrawerFragment = current
+            controller = current.navController
+        } else {
+            navDrawerFragment = NavDrawerFragment()
+        }
+    }
+
+    private fun navigate(
+        destination: Destination,
+        popUpToMain: Boolean,
+    ) {
+        if (controller != null) {
+            serverViewModel.command.value = null
+            if (popUpToMain) {
+                controller!!.popUpTo { it == Destination.Main }
+            }
+            if (destination != Destination.Main) {
+                controller!!.navigate(destination)
+            }
+        } else {
+            serverViewModel.submit(destination, popUpToMain)
+        }
+    }
 
     override fun navigate(destination: Destination) {
         if (DEBUG) Log.v(TAG, "navigate: ${destination.fragmentTag}")
-        if (destination == Destination.Pin) {
-            composeNavigate(destination)
-        } else if (destination == Destination.Main) {
-            controller.popUpTo { it == Destination.Main }
-        } else if (destination is Destination.Filter) {
-            controller.navigate(destination)
-        } else {
-            controller.navigate(destination)
-        }
-    }
-
-    /**
-     * Same as [navigate] except if the destination is [Destination.Filter], the backstack will reset to just the main page
-     */
-    fun navigateFromNavDrawer(destination: Destination) {
-        if (DEBUG) Log.v(TAG, "navigate: ${destination.fragmentTag}")
-        if (destination == Destination.Pin) {
-            composeNavigate(destination)
-        } else if (destination == Destination.Main) {
-            controller.popUpTo { it == Destination.Main }
-        } else if (destination is Destination.Filter) {
-            controller.popUpTo { it == Destination.Main }
-            controller.navigate(destination)
-        } else {
-            controller.navigate(destination)
-        }
-    }
-
-    fun composeNavigate(destination: Destination) {
-        val current = getCurrentFragment()
-        if (destination == Destination.Pin) {
-            activity.rootFragmentView.visibility = View.VISIBLE
-            // Enable so that backing out of the fragment will close the app
-            onBackPressedCallback.isEnabled = true
-        }
-        if (destination == Destination.Pin && current is PinFragment) {
-            if (DEBUG) Log.v(TAG, "Ignore navigate to ${Destination.Pin}")
-            return
-        }
         val fragment =
             when (destination) {
-                Destination.Main -> null // ComposeMainFragment()
-                Destination.Search -> null // StashSearchFragment()
                 is Destination.Settings -> SettingsFragment()
                 Destination.Pin -> PinFragment()
                 Destination.SettingsPin -> SettingsPinEntryFragment()
@@ -85,38 +71,7 @@ class NavigationManagerCompose(
                 is Destination.UpdateApp -> UpdateAppFragment()
                 is Destination.ManageServers -> ManageServersFragment()
                 is Destination.CreateFilter -> CreateFilterFragment()
-
-                is Destination.Item -> {
-                    when (destination.dataType) {
-                        DataType.SCENE -> null
-                        DataType.TAG -> null
-                        DataType.GROUP -> null
-                        DataType.PERFORMER -> null
-                        DataType.STUDIO -> null
-                        DataType.GALLERY -> null
-                        DataType.MARKER -> null
-                        DataType.IMAGE -> throw IllegalArgumentException("Image not supported here")
-                    }
-                }
-
-                is Destination.MarkerDetails -> null // MarkerDetailsFragment()
-
-                is Destination.Slideshow -> null // ImageFragment()
-
-                is Destination.Filter -> null
-
-                is Destination.SearchFor -> null
                 is Destination.UpdateMarker -> MarkerPickerFragment()
-
-                is Destination.Playback -> null // PlaybackSceneFragment()
-                is Destination.Playlist -> {
-                    when (destination.filterArgs.dataType) {
-                        DataType.SCENE -> PlaylistScenesFragment()
-                        DataType.MARKER -> PlaylistMarkersFragment()
-                        else -> throw IllegalArgumentException("Playlist for ${destination.filterArgs.dataType} not supported")
-                    }
-                }
-
                 is Destination.Fragment -> {
                     fragmentManager.fragmentFactory.instantiate(
                         activity.classLoader,
@@ -124,15 +79,31 @@ class NavigationManagerCompose(
                     )
                 }
 
-                Destination.ChooseTheme -> null
+                else -> {
+                    if (getCurrentFragment() != navDrawerFragment) {
+                        Log.v(TAG, "getCurrentFragment() != navDrawerFragment")
+                        setFragment(destination, navDrawerFragment)
+                    }
+                    when (destination) {
+                        Destination.Main -> navigate(Destination.Main, true)
+//                        is Destination.Filter -> controller.navigate(destination)
+                        else -> navigate(destination, false)
+                    }
+                    return
+                }
             }
+        setFragment(destination, fragment)
+    }
 
-        fragment?.arguments = Bundle().putDestination(destination)
-
+    private fun setFragment(
+        destination: Destination,
+        fragment: Fragment,
+    ) {
+        Log.v(TAG, "setFragment: destination=$destination")
+        fragment.arguments = Bundle().putDestination(destination)
         if (fragment is GuidedStepSupportFragment) {
             GuidedStepSupportFragment.add(fragmentManager, fragment, R.id.root_fragment)
-        } else if (fragment != null) {
-            if (DEBUG) Log.v(TAG, "Setting ${destination.fragmentTag}: $fragment")
+        } else {
             fragmentManager.commit {
                 if (destination != Destination.Main) {
                     addToBackStack(destination.fragmentTag)
@@ -155,24 +126,62 @@ class NavigationManagerCompose(
                 replace(R.id.root_fragment, fragment, destination.fragmentTag)
             }
         }
-        notifyListeners(previousDestination, destination, fragment)
-        previousDestination = destination
+    }
+
+    /**
+     * Same as [navigate] except if the destination is [Destination.Filter], the backstack will reset to just the main page
+     */
+    fun navigateFromNavDrawer(destination: Destination) {
+        if (DEBUG) Log.v(TAG, "navigate: ${destination.fragmentTag}")
+        if (getCurrentFragment() != navDrawerFragment) {
+            throw IllegalStateException(
+                "navigateFromNavDrawer called when current fragment is not navDrawerFragment: ${getCurrentFragment()}",
+            )
+        }
+        when (destination) {
+            is Destination.Settings,
+            Destination.Pin,
+            Destination.SettingsPin,
+            Destination.Setup,
+            is Destination.UpdateApp,
+            is Destination.ManageServers,
+            is Destination.CreateFilter,
+            is Destination.UpdateMarker,
+            is Destination.Fragment,
+            -> navigate(destination)
+
+            Destination.Main,
+            is Destination.Filter,
+            -> navigate(destination, true)
+
+            else -> navigate(destination, false)
+        }
     }
 
     /**
      * End the current fragment and go to the previous one
      */
     override fun goBack() {
-        controller.pop()
+        // Hacky
+        controller?.pop()
     }
 
     /**
      * Drop all of the back stack and go to the main page, reloading it
      */
     override fun goToMain() {
-        fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        controller.popAll()
-        controller.navigate(Destination.Main)
+        Log.v(TAG, "goToMain")
+        // Hacky
+        while (fragmentManager.popBackStackImmediate()) {
+        }
+        //        fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        if (getCurrentFragment() != navDrawerFragment) {
+            Log.v(TAG, "goToMain: getCurrentFragment() != navDrawerFragment")
+            setFragment(Destination.Main, navDrawerFragment)
+        }
+        controller?.popAll()
+        controller?.navigate(Destination.Main)
+//        navigate(Destination.Main)
     }
 
     /**
@@ -185,7 +194,7 @@ class NavigationManagerCompose(
         fragmentManager.popBackStackImmediate()
         if (getCurrentFragment() == null) {
             navigate(Destination.Main)
-            activity.rootFragmentView.visibility = View.GONE
+//            activity.rootFragmentView.visibility = View.GONE
             notifyListeners(previousDestination, Destination.Main, null)
         }
         onBackPressedCallback.isEnabled = false
@@ -194,8 +203,7 @@ class NavigationManagerCompose(
     private fun getCurrentFragment(): Fragment? = fragmentManager.findFragmentById(R.id.root_fragment)
 
     companion object {
-        const val DESTINATION_ARG = "destination"
-        private const val TAG = "NavigationManager"
+        private const val TAG = "NavigationManagerCompose"
         private const val DEBUG = false
     }
 }

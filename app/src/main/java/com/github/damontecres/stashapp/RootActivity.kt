@@ -38,7 +38,7 @@ import kotlin.properties.Delegates
 class RootActivity :
     FragmentActivity(),
     NavigationListener {
-    private val serverViewModel: ServerViewModel by viewModels<ServerViewModel>()
+    private val serverViewModel by viewModels<ServerViewModel>()
     private var useCompose by Delegates.notNull<Boolean>()
     private lateinit var navigationManager: NavigationManager
     private var currentFragment: Fragment? = null
@@ -69,16 +69,10 @@ class RootActivity :
         )
 
         val appHasPin = appHasPin()
-        if (useCompose && !appHasPin) {
-            // Hide pin fragment
-            rootFragmentView.visibility = View.GONE
-        }
-
-        // Ensure everything is initialized
 
         navigationManager =
             if (useCompose) {
-                NavigationManagerCompose(this)
+                NavigationManagerCompose(this, serverViewModel)
             } else {
                 NavigationManagerLeanback(this)
             }
@@ -127,12 +121,15 @@ class RootActivity :
                 }
             }
 
-            if (!useCompose) {
-                serverViewModel.currentServer.observe(this) { server ->
-                    if (server != null) {
-                        if (savedInstanceState == null) {
-                            if (!appHasPin) {
-                                serverViewModel.currentServer.removeObservers(this@RootActivity)
+            serverViewModel.currentServer.observe(this) { server ->
+                if (server != null) {
+                    if (savedInstanceState == null) {
+                        if (!appHasPin) {
+                            serverViewModel.currentServer.removeObservers(this@RootActivity)
+                            if (useCompose) {
+                                // Workaround because compose goToMain is special
+                                navigationManager.navigate(Destination.Main)
+                            } else {
                                 navigationManager.goToMain()
                             }
                         }
