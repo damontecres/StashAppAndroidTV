@@ -29,7 +29,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -37,6 +39,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.compose.PlayerSurface
@@ -47,6 +50,7 @@ import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.media3.ui.compose.state.rememberPreviousButtonState
 import androidx.preference.PreferenceManager
+import androidx.tv.material3.Text
 import coil3.SingletonImageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
@@ -59,6 +63,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.playback.PlaylistFragment
 import com.github.damontecres.stashapp.playback.TrackActivityPlaybackListener
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
+import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.tryRequestFocus
@@ -181,6 +186,8 @@ fun PlaylistPlaybackPageContent(
     val markers by viewModel.markers.observeAsState(listOf())
     val oCount by viewModel.oCount.observeAsState(0)
     val spriteImageLoaded by viewModel.spriteImageLoaded.observeAsState(false)
+    var subtitles by remember { mutableStateOf<String?>(null) }
+    var subtitleIndex by remember { mutableStateOf<Int?>(null) }
 
     var trackActivityListener = remember<TrackActivityPlaybackListener?>(server) { null }
     val player =
@@ -205,6 +212,15 @@ fun PlaylistPlaybackPageContent(
         player.prepare()
         StashExoPlayer.addListener(
             object : Player.Listener {
+                override fun onCues(cueGroup: CueGroup) {
+                    val cues =
+                        cueGroup.cues
+                            .mapNotNull { it.text }
+                            .joinToString("\n")
+//                    Log.v(TAG, "onCues: \n$cues")
+                    subtitles = cues
+                }
+
                 override fun onMediaItemTransition(
                     mediaItem: MediaItem?,
                     reason: Int,
@@ -212,6 +228,8 @@ fun PlaylistPlaybackPageContent(
                     if (mediaItem != null) {
                         viewModel.changeScene(mediaItem.localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
                     }
+                    subtitles = null
+                    subtitleIndex = null
                 }
             },
         )
@@ -338,6 +356,31 @@ fun PlaylistPlaybackPageContent(
                         .padding(bottom = 70.dp),
             )
         }
+
+        if (!controllerViewState.controlsVisible && subtitleIndex != null && skipIndicatorDuration == 0L) {
+            // TODO style
+            subtitles?.let { text ->
+                if (text.isNotNullOrBlank()) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 48.dp)
+                                .background(AppColors.TransparentBlack50),
+                    ) {
+                        Text(
+                            text = text,
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Clip,
+                            modifier = Modifier.padding(4.dp),
+                        )
+                    }
+                }
+            }
+        }
+
         currentScene?.let {
             AnimatedVisibility(
                 controllerViewState.controlsVisible,
@@ -378,7 +421,15 @@ fun PlaylistPlaybackPageContent(
                                 showPlaylist = true
                             }
 
-                            is PlaybackAction.ToggleCaptions -> TODO()
+                            is PlaybackAction.ToggleCaptions -> {
+                                if (toggleSubtitles(player, subtitleIndex, it.index)) {
+                                    subtitleIndex = it.index
+                                } else {
+                                    subtitleIndex = null
+                                    subtitles = null
+                                }
+                                controllerViewState.hideControls()
+                            }
                         }
                     },
                     onSeekBarChange = seekBarState::onValueChange,
@@ -396,6 +447,7 @@ fun PlaylistPlaybackPageContent(
                                 "Show Playlist" to PlaybackAction.ShowPlaylist,
                             ),
                         ),
+                    subtitleIndex = subtitleIndex,
                 )
             }
         }

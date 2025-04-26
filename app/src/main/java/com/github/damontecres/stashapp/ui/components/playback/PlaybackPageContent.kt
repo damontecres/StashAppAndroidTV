@@ -36,16 +36,19 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.common.C.TRACK_TYPE_TEXT
+import androidx.media3.common.C
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.compose.PlayerSurface
@@ -56,6 +59,7 @@ import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.media3.ui.compose.state.rememberPreviousButtonState
 import androidx.preference.PreferenceManager
+import androidx.tv.material3.Text
 import coil3.SingletonImageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
@@ -74,6 +78,7 @@ import com.github.damontecres.stashapp.playback.TrackActivityPlaybackListener
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
+import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
@@ -186,6 +191,8 @@ fun PlaybackPageContent(
     val markers by viewModel.markers.observeAsState(listOf())
     val oCount by viewModel.oCount.observeAsState(0)
     val imageLoaded by viewModel.previewImageLoader.observeAsState(false)
+    var subtitles by remember { mutableStateOf<String?>(null) }
+    var subtitleIndex by remember { mutableStateOf<Int?>(null) }
 
     var showControls by remember { mutableStateOf(true) }
     var currentContentScaleIndex by remember { mutableIntStateOf(0) }
@@ -262,6 +269,15 @@ fun PlaybackPageContent(
                             Toast.LENGTH_LONG,
                         ).show()
                 }
+
+                override fun onCues(cueGroup: CueGroup) {
+                    val cues =
+                        cueGroup.cues
+                            .mapNotNull { it.text }
+                            .joinToString("\n")
+//                    Log.v(TAG, "onCues: \n$cues")
+                    subtitles = cues
+                }
             },
         )
 
@@ -337,6 +353,30 @@ fun PlaybackPageContent(
             )
         }
 
+        if (!controllerViewState.controlsVisible && subtitleIndex != null && skipIndicatorDuration == 0L) {
+            // TODO style
+            subtitles?.let { text ->
+                if (text.isNotNullOrBlank()) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 48.dp)
+                                .background(AppColors.TransparentBlack50),
+                    ) {
+                        Text(
+                            text = text,
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Clip,
+                            modifier = Modifier.padding(4.dp),
+                        )
+                    }
+                }
+            }
+        }
+
         AnimatedVisibility(
             controllerViewState.controlsVisible,
             Modifier,
@@ -375,23 +415,13 @@ fun PlaybackPageContent(
                         }
 
                         is PlaybackAction.ToggleCaptions -> {
-                            val subtitleTracks =
-                                player.currentTracks.groups.filter { it.type == TRACK_TYPE_TEXT }
-                            if (it.index in subtitleTracks.indices) {
-                                Log.v(
-                                    TAG,
-                                    "Activating subtitle ${subtitleTracks[it.index].mediaTrackGroup.id}",
-                                )
-                                player.trackSelectionParameters =
-                                    player.trackSelectionParameters
-                                        .buildUpon()
-                                        .setOverrideForType(
-                                            TrackSelectionOverride(
-                                                subtitleTracks[it.index].mediaTrackGroup,
-                                                0,
-                                            ),
-                                        ).build()
+                            if (toggleSubtitles(player, subtitleIndex, it.index)) {
+                                subtitleIndex = it.index
+                            } else {
+                                subtitleIndex = null
+                                subtitles = null
                             }
+                            controllerViewState.hideControls()
                         }
                     }
                 },
@@ -407,6 +437,7 @@ fun PlaybackPageContent(
                     MoreButtonOptions(
                         mapOf("Create Marker" to PlaybackAction.CreateMarker),
                     ),
+                subtitleIndex = subtitleIndex,
             )
         }
     }
@@ -545,5 +576,43 @@ class PlaybackKeyHandler(
             result = false
         }
         return result
+    }
+}
+
+@OptIn(UnstableApi::class)
+fun toggleSubtitles(
+    player: Player,
+    subtitleIndex: Int?,
+    index: Int,
+): Boolean {
+    val subtitleTracks =
+        player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }
+    if (index !in subtitleTracks.indices || subtitleIndex != null && subtitleIndex == index) {
+        Log.v(
+            TAG,
+            "Deactivating subtitles",
+        )
+        player.trackSelectionParameters =
+            player.trackSelectionParameters
+                .buildUpon()
+                .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true)
+                .build()
+        return false
+    } else {
+        Log.v(
+            TAG,
+            "Activating subtitle ${subtitleTracks[index].mediaTrackGroup.id}",
+        )
+        player.trackSelectionParameters =
+            player.trackSelectionParameters
+                .buildUpon()
+                .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)
+                .setOverrideForType(
+                    TrackSelectionOverride(
+                        subtitleTracks[index].mediaTrackGroup,
+                        0,
+                    ),
+                ).build()
+        return true
     }
 }

@@ -138,6 +138,7 @@ fun PlaybackOverlay(
     showDebugInfo: Boolean,
     spriteImageLoaded: Boolean,
     moreButtonOptions: MoreButtonOptions,
+    subtitleIndex: Int?,
     modifier: Modifier = Modifier,
     seekPreviewPlaceholder: Painter? = null,
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -237,6 +238,7 @@ fun PlaybackOverlay(
                     seekEnabled = seekEnabled,
                     seekBarInteractionSource = seekBarInteractionSource,
                     moreButtonOptions = moreButtonOptions,
+                    subtitleIndex = subtitleIndex,
                 )
             }
             if (markers.isNotEmpty()) {
@@ -561,6 +563,7 @@ private fun PlaybackOverlayPreview() {
             seekEnabled = true,
             spriteImageLoaded = false,
             moreButtonOptions = MoreButtonOptions(mapOf()),
+            subtitleIndex = 1,
             modifier =
                 Modifier
                     .fillMaxSize(),

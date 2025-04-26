@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
+import android.util.Log
 import android.view.Gravity
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
@@ -32,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -39,7 +41,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -97,6 +98,7 @@ fun PlaybackControls(
     nextEnabled: Boolean,
     seekEnabled: Boolean,
     moreButtonOptions: MoreButtonOptions,
+    subtitleIndex: Int?,
     modifier: Modifier = Modifier,
     initialFocusRequester: FocusRequester = remember { FocusRequester() },
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -160,6 +162,7 @@ fun PlaybackControls(
                 captions = scene.captions,
                 onControllerInteraction = onControllerInteraction,
                 onPlaybackActionClick = onPlaybackActionClick,
+                subtitleIndex = subtitleIndex,
                 modifier = Modifier,
             )
         }
@@ -310,6 +313,7 @@ fun RightPlaybackButtons(
     captions: List<Caption>,
     onControllerInteraction: () -> Unit,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
+    subtitleIndex: Int?,
     modifier: Modifier = Modifier,
 ) {
     var showCaptionDialog by remember { mutableStateOf(false) }
@@ -319,7 +323,7 @@ fun RightPlaybackButtons(
     ) {
         // Captions
         PlaybackButton(
-            enabled = false, // captions.isNotEmpty(), //TODO
+            enabled = captions.isNotEmpty(),
             iconRes = R.drawable.captions_svgrepo_com,
             onClick = {
                 onControllerInteraction.invoke()
@@ -341,8 +345,10 @@ fun RightPlaybackButtons(
     if (showCaptionDialog) {
         val context = LocalContext.current
         val options = captions.map { it.displayString(context) }
+        Log.v(TAG, "subtitleIndex=$subtitleIndex, options=$options")
         BottomDialog(
             choices = options,
+            currentChoice = if (subtitleIndex != null) options[subtitleIndex] else null,
             onDismissRequest = { showCaptionDialog = false },
             onSelectChoice = { index, _ ->
                 onPlaybackActionClick.invoke(PlaybackAction.ToggleCaptions(index))
@@ -482,19 +488,27 @@ private fun BottomDialog(
             ) {
                 choices.forEachIndexed { index, choice ->
                     ListItem(
-                        selected = false,
+                        selected = choice == currentChoice,
                         onClick = {
                             onDismissRequest()
                             onSelectChoice(index, choice)
                         },
-                        headlineContent = {
-                            var fontWeight = FontWeight(400)
+                        leadingContent = {
                             if (choice == currentChoice) {
-                                fontWeight = FontWeight(1000)
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .padding(horizontal = 4.dp)
+                                            .clip(CircleShape)
+                                            .align(Alignment.Center)
+                                            .background(MaterialTheme.colorScheme.onSurface)
+                                            .size(8.dp),
+                                )
                             }
+                        },
+                        headlineContent = {
                             Text(
                                 text = choice,
-                                fontWeight = fontWeight,
                             )
                         },
                     )
@@ -527,6 +541,7 @@ private fun RightPlaybackButtonsPreview() {
             captions = listOf(),
             onControllerInteraction = {},
             onPlaybackActionClick = {},
+            subtitleIndex = 1,
             modifier = Modifier,
         )
     }
