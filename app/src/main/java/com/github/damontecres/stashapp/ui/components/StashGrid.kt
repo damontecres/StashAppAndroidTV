@@ -400,6 +400,17 @@ fun StashGrid(
             }
         }
 
+    val jump = { jump: Int ->
+        scope.launch(StashCoroutineExceptionHandler()) {
+            val newPosition =
+                (gridState.firstVisibleItemIndex + jump).coerceIn(0..<pager.size)
+            if (DEBUG) Log.d(TAG, "newPosition=$newPosition")
+            savedFocusedIndex = newPosition
+            focusOn(newPosition)
+            gridState.scrollToItem(newPosition, 0)
+        }
+    }
+
     Row(
         modifier =
             modifier
@@ -464,22 +475,10 @@ fun StashGrid(
                         }
                         return@onKeyEvent false
                     } else if (useJumpRemoteButtons && isForwardButton(it)) {
-                        scope.launch(StashCoroutineExceptionHandler()) {
-                            val newPosition =
-                                (focusedIndex + jump1).coerceIn(0..<pager.size)
-                            focusOn(newPosition)
-                            gridState.scrollToItem(newPosition, 0)
-                            firstFocus.tryRequestFocus()
-                        }
+                        jump(jump1)
                         return@onKeyEvent true
                     } else if (useJumpRemoteButtons && isBackwardButton(it)) {
-                        scope.launch(StashCoroutineExceptionHandler()) {
-                            val newPosition =
-                                (focusedIndex - jump1).coerceIn(0..<pager.size)
-                            focusOn(newPosition)
-                            gridState.scrollToItem(newPosition, 0)
-                            firstFocus.tryRequestFocus()
-                        }
+                        jump(-jump1)
                         return@onKeyEvent true
                     } else {
                         return@onKeyEvent false
@@ -490,14 +489,7 @@ fun StashGrid(
             JumpButtons(
                 jump1 = jump1,
                 jump2 = jump2,
-                jumpClick = { jump ->
-                    scope.launch(StashCoroutineExceptionHandler()) {
-                        val newPosition =
-                            (focusedIndex + jump).coerceIn(0..<pager.size)
-                        focusOn(newPosition)
-                        gridState.scrollToItem(newPosition, -columns)
-                    }
-                },
+                jumpClick = { jump(it) },
                 modifier = Modifier.align(Alignment.CenterVertically),
             )
         }
@@ -612,7 +604,7 @@ fun StashGrid(
                     Text(
                         modifier = Modifier.padding(4.dp),
                         color = MaterialTheme.colorScheme.onBackground,
-                        text = "${focusedIndex + 1} / ${pager.size}",
+                        text = (if (focusedIndex >= 0) "${focusedIndex + 1}" else "${savedFocusedIndex + 1}") + " / ${pager.size}",
                     )
                 }
             }
