@@ -7,6 +7,7 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.merge
 
 class PerformerDataSupplier(
     private val findFilter: FindFilterType?,
@@ -21,7 +22,7 @@ class PerformerDataSupplier(
             ids = null,
         )
 
-    override fun getDefaultFilter(): FindFilterType = findFilter ?: DataType.PERFORMER.asDefaultFindFilterType
+    override fun getDefaultFilter(): FindFilterType = DataType.PERFORMER.asDefaultFindFilterType.merge(findFilter)
 
     override fun createCountQuery(filter: FindFilterType?): Query<CountPerformersQuery.Data> =
         CountPerformersQuery(filter, performerFilter, null)

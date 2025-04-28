@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.util
 
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
@@ -35,6 +36,7 @@ import com.chrynan.parcelable.core.putParcelable
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
+import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
@@ -76,6 +78,7 @@ import java.net.UnknownHostException
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.net.ssl.SSLHandshakeException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -356,6 +359,9 @@ fun concatIfNotBlank(
 
 fun List<CharSequence?>.joinNotNullOrBlank(sep: CharSequence): String = this.filter { it.isNotNullOrBlank() }.joinToString(sep)
 
+fun listOfNotNullOrBlank(vararg strings: CharSequence?): List<String> =
+    strings.filter { it.isNotNullOrBlank() }.map { it.toString() }.toList()
+
 fun cacheDurationPrefToDuration(value: Int): Duration? =
     when (value) {
         0 -> null
@@ -439,6 +445,8 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
             director = this.director,
             urls = this.urls,
             date = this.date,
+            play_count = play_count,
+            play_duration = play_duration,
             rating100 = this.rating100,
             o_counter = this.o_counter,
             organized = this.organized,
@@ -568,6 +576,58 @@ fun FullSceneData.Scene_marker.asMarkerData(scene: FullSceneData): MarkerData =
         tags = tags.map { MarkerData.Tag("", it.tagData.asSlimTagData) },
         __typename = "",
     )
+
+fun FullMarkerData.asMarkerData(scene: FullSceneData): MarkerData =
+    MarkerData(
+        id = id,
+        title = title,
+        created_at = created_at,
+        updated_at = updated_at,
+        stream = stream,
+        screenshot = screenshot,
+        seconds = seconds,
+        end_seconds = end_seconds,
+        preview = preview,
+        primary_tag = MarkerData.Primary_tag("", primary_tag.tagData.asSlimTagData),
+        scene = MarkerData.Scene(scene.id, scene.asMinimalSceneData),
+        tags = tags.map { MarkerData.Tag("", it.tagData.asSlimTagData) },
+        __typename = "",
+    )
+
+/**
+ * Create a fake [MarkerData] with minimal details
+ */
+fun fakeMarker(
+    tagId: String,
+    seconds: Double,
+    scene: FullSceneData,
+) = MarkerData(
+    id = "",
+    title = "",
+    created_at = "",
+    updated_at = "",
+    stream = "",
+    screenshot = "",
+    seconds = seconds,
+    end_seconds = null,
+    preview = "",
+    primary_tag =
+        MarkerData.Primary_tag(
+            __typename = "",
+            slimTagData =
+                SlimTagData(
+                    id = tagId,
+                    name = "",
+                ),
+        ),
+    tags = listOf(),
+    scene =
+        MarkerData.Scene(
+            __typename = "",
+            minimalSceneData = scene.asMinimalSceneData,
+        ),
+    __typename = "",
+)
 
 fun ScrollView.onlyScrollIfNeeded() {
     val childHeight = getChildAt(0).height
@@ -704,7 +764,9 @@ fun getMaxMeasuredWidth(
 /**
  * Gets the [SlimSceneData.resume_time] in milliseconds
  */
-val SlimSceneData.resume_position get() = resume_time?.times(1000L)?.toLong()
+val SlimSceneData.resume_position get() = resume_time?.toLongMilliseconds
+
+val FullSceneData.resume_position get() = resume_time?.toLongMilliseconds
 
 val Long.toSeconds get() = this / 1000.0
 
@@ -721,7 +783,14 @@ suspend fun showToastOnMain(
     Toast.makeText(context, message, length).show()
 }
 
-fun VideoFile.resolutionName(): CharSequence {
+fun VideoFile.resolutionName() = resolutionName(width, height)
+
+fun ImageData.OnVideoFile.resolutionName() = resolutionName(width, height)
+
+fun resolutionName(
+    width: Int,
+    height: Int,
+): CharSequence {
     val number = if (width > height) height else width
     return if (number >= 6144) {
         "HUGE"
@@ -753,6 +822,16 @@ fun VideoFile.resolutionName(): CharSequence {
         "144p"
     } else {
         "${number}p"
+    }
+}
+
+fun VideoFile.bitRateString(): CharSequence {
+    if (bit_rate > (1024 * 1024)) {
+        return String.format(Locale.getDefault(), "%.1fMbps", bit_rate / (1024 * 1024.0))
+    } else if (bit_rate > (1024)) {
+        return String.format(Locale.getDefault(), "%.1fKbps", bit_rate / (1024.0))
+    } else {
+        return String.format(Locale.getDefault(), "%.1fbps", bit_rate.toDouble())
     }
 }
 
@@ -828,6 +907,13 @@ fun readOnlyModeEnabled(): Boolean {
 }
 
 fun readOnlyModeDisabled(): Boolean = !readOnlyModeEnabled()
+
+fun showDebugInfo(): Boolean {
+    val context = StashApplication.getApplication()
+    return PreferenceManager
+        .getDefaultSharedPreferences(context)
+        .getBoolean(context.getString(R.string.pref_key_show_playback_debug_info), false)
+}
 
 fun getUiTabs(
     context: Context,
@@ -1003,11 +1089,15 @@ fun Any.toReadableString() =
     }
 
 fun Fragment.keepScreenOn(keep: Boolean) {
+    requireActivity().keepScreenOn(keep)
+}
+
+fun Activity.keepScreenOn(keep: Boolean) {
     Log.v("keepScreenOn", "Keep screen on: $keep")
     if (keep) {
-        requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     } else {
-        requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 }
 
@@ -1026,6 +1116,8 @@ fun getPreference(
 ) = PreferenceManager
     .getDefaultSharedPreferences(context)
     .getString(context.getString(key), default)
+
+fun composeEnabled(context: Context = StashApplication.getApplication()) = getPreference(context, R.string.pref_key_use_compose_ui, false)
 
 fun View.updateLayoutParams(transform: ViewGroup.LayoutParams.() -> Unit) {
     val lp = layoutParams
@@ -1054,4 +1146,16 @@ fun calculatePageSize(
     } else {
         number + (numberOfColumns - remainder)
     }
+}
+
+fun Context.findActivity(): Activity? {
+    if (this is Activity) {
+        return this
+    }
+    var context = this
+    while (context is ContextWrapper) {
+        if (context is Activity) return context
+        context = context.baseContext
+    }
+    return null
 }

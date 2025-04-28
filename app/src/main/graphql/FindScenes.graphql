@@ -41,6 +41,8 @@ fragment SlimSceneData on Scene {
   urls
   date
   rating100
+  play_count
+  play_duration
   o_counter
   organized
   resume_time

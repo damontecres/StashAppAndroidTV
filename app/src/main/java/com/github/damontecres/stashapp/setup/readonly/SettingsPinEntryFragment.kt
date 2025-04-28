@@ -9,6 +9,7 @@ import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.views.models.ServerViewModel
@@ -58,7 +59,11 @@ class SettingsPinEntryFragment : GuidedStepSupportFragment() {
             val pin = preferences.getString(getString(R.string.pref_key_read_only_mode_pin), null)
             if (enteredPIN != null && pin == enteredPIN) {
                 finishGuidedStepSupportFragments()
-                serverViewModel.navigationManager.navigate(Destination.Settings)
+                serverViewModel.navigationManager.navigate(
+                    Destination.Settings(
+                        PreferenceScreenOption.BASIC,
+                    ),
+                )
             } else {
                 Toast.makeText(requireContext(), "Incorrect PIN", Toast.LENGTH_SHORT).show()
             }

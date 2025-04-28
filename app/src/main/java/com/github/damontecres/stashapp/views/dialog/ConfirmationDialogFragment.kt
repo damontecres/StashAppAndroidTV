@@ -12,7 +12,7 @@ import com.github.damontecres.stashapp.R
  * A simple dialog to confirm or cancel an action
  */
 class ConfirmationDialogFragment(
-    private val message: String,
+    private val message: CharSequence,
     private val onClickListener: DialogInterface.OnClickListener,
 ) : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
@@ -26,7 +26,7 @@ class ConfirmationDialogFragment(
     companion object {
         fun show(
             fm: FragmentManager,
-            message: String,
+            message: CharSequence,
             onConfirm: () -> Unit,
         ) {
             ConfirmationDialogFragment(message) { _, which ->

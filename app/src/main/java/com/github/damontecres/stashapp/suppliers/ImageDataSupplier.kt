@@ -7,6 +7,7 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.merge
 
 class ImageDataSupplier(
     private val findFilter: FindFilterType?,
@@ -26,7 +27,7 @@ class ImageDataSupplier(
             ids = null,
         )
 
-    override fun getDefaultFilter(): FindFilterType = findFilter ?: DataType.IMAGE.asDefaultFindFilterType
+    override fun getDefaultFilter(): FindFilterType = DataType.IMAGE.asDefaultFindFilterType.merge(findFilter)
 
     override fun createCountQuery(filter: FindFilterType?): Query<CountImagesQuery.Data> = CountImagesQuery(filter, imageFilter)
 

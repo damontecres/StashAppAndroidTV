@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import android.text.InputType
@@ -10,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
+import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.preference.LeanbackEditTextPreferenceDialogFragmentCompat
@@ -24,6 +26,9 @@ import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
+import coil3.SingletonImageLoader
+import coil3.annotation.DelicateCoilApi
+import coil3.imageLoader
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
 import com.github.damontecres.stashapp.api.fragment.StashJob
@@ -42,21 +47,40 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.SubscriptionEngine
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
+import com.github.damontecres.stashapp.util.composeEnabled
+import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
+import com.github.damontecres.stashapp.views.formatBytes
 import com.github.damontecres.stashapp.views.models.ServerViewModel
+import io.noties.markwon.Markwon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import okhttp3.Cache
 import java.io.File
 
+@Serializable
+enum class PreferenceScreenOption {
+    BASIC,
+    ADVANCED,
+    USER_INTERFACE,
+    ;
+
+    companion object {
+        fun fromString(name: String?) = entries.firstOrNull { it.name == name } ?: BASIC
+    }
+}
+
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
     override fun onPreferenceStartInitialScreen() {
+        val destination = requireArguments().getDestination<Destination.Settings>()
         // PREFERENCE_FRAGMENT_TAG is private, so hardcoded here
         val prevFragment =
             childFragmentManager
@@ -248,6 +272,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
         }
 
+        @OptIn(DelicateCoilApi::class)
         override fun onViewCreated(
             view: View,
             savedInstanceState: Bundle?,
@@ -255,11 +280,45 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             Log.v(TAG, "onViewCreated: savedInstanceState==null: ${savedInstanceState == null}")
             super.onViewCreated(view, savedInstanceState)
             setTitle(getString(R.string.stashapp_settings))
-
+            view.requestFocus()
             serverViewModel.currentServer.observe(viewLifecycleOwner) {
                 if (it != null) {
                     refresh(it)
                 }
+            }
+
+            val useCompose = composeEnabled()
+            val composeCategoryPef = findPreference<Preference>("composeCategory")!!
+            val tryComposePref = findPreference<Preference>("tryCompose")!!
+            composeCategoryPef.isVisible = !useCompose
+            tryComposePref.setOnPreferenceClickListener {
+                val message =
+                    """
+                    Want to try the new beta UI based on Android Jetpack Compose?
+
+                    The new UI is looks more modern and performs better on lower memory devices!
+
+                    Almost every feature is available in the new UI, but you can always switch back in "More UI Settings".
+
+                    See the `StashAppAndroidTV` GitHub for more information and known issues.
+
+                    Enabling the new UI will restart the app!
+                    """.trimIndent()
+                ConfirmationDialogFragment.show(
+                    childFragmentManager,
+                    Markwon.create(requireContext()).toMarkdown(message),
+                ) {
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        clearCaches(requireContext())
+                        PreferenceManager.getDefaultSharedPreferences(requireContext()).edit(true) {
+                            putBoolean(getString(R.string.pref_key_use_compose_ui), true)
+                        }
+                        // Clear coil singleton
+                        SingletonImageLoader.reset()
+                        requireActivity().finish()
+                    }
+                }
+                true
             }
 
             if (PreferenceManager
@@ -560,12 +619,11 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             setUsedCachedSummary(cacheSizePref, cache)
 
             findPreference<Preference>("clearCache")!!.setOnPreferenceClickListener {
-                cache.evictAll()
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    withContext(Dispatchers.IO) {
-                        Glide.get(requireContext()).clearDiskCache()
+                    clearCaches(requireContext())
+                    withContext(Dispatchers.Main) {
+                        setUsedCachedSummary(cacheSizePref, cache)
                     }
-                    setUsedCachedSummary(cacheSizePref, cache)
                 }
                 true
             }
@@ -651,6 +709,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         ) {
             super.onViewCreated(view, savedInstanceState)
             setTitle(getString(R.string.advanced_settings))
+            view.requestFocus()
         }
 
         private fun setCacheDurationSummary(
@@ -666,7 +725,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             cacheSizePref: Preference,
             cache: Cache,
         ) {
-            val cacheSize = cache.size() / 1024.0 / 1024
             val glideCacheSize =
                 File(
                     requireContext().cacheDir,
@@ -674,12 +732,27 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 ).walkTopDown()
                     .filter { it.isFile }
                     .map { it.length() }
-                    .sum() / 1024.0 / 1024.0
-            val cacheSizeFormatted = String.format("%.2f", cacheSize)
-            val glideCacheSizeFormatted = String.format("%.2f", glideCacheSize)
+                    .sum()
+            val cacheSizeFormatted = formatBytes(cache.size())
+            val glideCacheSizeFormatted = formatBytes(glideCacheSize)
+
+            val useCompose =
+                PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
+                    .getBoolean(getString(R.string.pref_key_use_compose_ui), false)
+            val composeCacheUsed =
+                if (useCompose) {
+                    val diskUsed =
+                        "D:" + formatBytes(requireContext().imageLoader.diskCache?.size ?: 0L)
+                    val memoryUsed =
+                        "M:" + formatBytes(requireContext().imageLoader.memoryCache?.size ?: 0L)
+                    " (Compose: " + listOf(diskUsed, memoryUsed).joinNotNullOrBlank(" / ") + ")"
+                } else {
+                    ""
+                }
 
             cacheSizePref.summary =
-                "Using $cacheSizeFormatted MB (Images $glideCacheSizeFormatted MB)"
+                "Using $cacheSizeFormatted (Images $glideCacheSizeFormatted)$composeCacheUsed"
         }
     }
 
@@ -707,5 +780,16 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
     companion object {
         const val PREF_STASH_URL = "stashUrl"
         const val PREF_STASH_API_KEY = "stashApiKey"
+
+        suspend fun clearCaches(context: Context) =
+            withContext(Dispatchers.IO) {
+                withContext(Dispatchers.Main) {
+                    Constants.getNetworkCache(context).evictAll()
+                    Glide.get(context).clearMemory()
+                }
+                Glide.get(context).clearDiskCache()
+                context.imageLoader.memoryCache?.clear()
+                context.imageLoader.diskCache?.clear()
+            }
     }
 }

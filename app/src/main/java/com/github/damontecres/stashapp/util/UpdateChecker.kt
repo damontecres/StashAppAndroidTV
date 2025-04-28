@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +28,9 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Request
 import java.io.File
+import java.util.Date
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
 
 class UpdateChecker {
     companion object {
@@ -45,6 +49,31 @@ class UpdateChecker {
             context: Context,
             showNegativeToast: Boolean = false,
         ) {
+            val pref = PreferenceManager.getDefaultSharedPreferences(context)
+
+            val now = Date()
+            val lastUpdateCheckThreshold =
+                pref
+                    .getLong(context.getString(R.string.pref_key_update_last_check_threshold), 12)
+                    .hours
+            val lastUpdateCheck =
+                pref.getLong(
+                    context.getString(R.string.pref_key_update_last_check),
+                    0,
+                )
+            val timeSince = (now.time - lastUpdateCheck).milliseconds
+            Log.v(TAG, "Last update check was $timeSince ago")
+            pref.edit {
+                putLong(context.getString(R.string.pref_key_update_last_check), now.time)
+            }
+            if (lastUpdateCheckThreshold >= timeSince) {
+                Log.i(
+                    TAG,
+                    "Skipping update check, threshold is $lastUpdateCheckThreshold",
+                )
+                return
+            }
+
             val installedVersion = getInstalledVersion(context)
             val latestRelease = getLatestRelease(context)
             if (latestRelease != null && latestRelease.version.isGreaterThan(installedVersion)) {

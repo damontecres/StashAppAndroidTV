@@ -64,7 +64,7 @@ class StashImageCardView(
 
         val FA_FONT = StashApplication.getFont(R.font.fa_solid_900)
 
-        private val ICON_ORDER =
+        val ICON_ORDER =
             listOf(
                 DataType.SCENE,
                 DataType.GROUP,

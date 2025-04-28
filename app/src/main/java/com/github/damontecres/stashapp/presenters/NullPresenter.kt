@@ -1,6 +1,8 @@
 package com.github.damontecres.stashapp.presenters
 
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.util.defaultCardHeight
+import com.github.damontecres.stashapp.util.defaultCardWidth
 
 /**
  * A no-op implementation of [StashPresenter] that accepts a null item

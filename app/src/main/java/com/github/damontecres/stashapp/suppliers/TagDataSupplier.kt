@@ -7,6 +7,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.merge
 
 class TagDataSupplier(
     private val findFilter: FindFilterType?,
@@ -21,7 +22,7 @@ class TagDataSupplier(
             ids = null,
         )
 
-    override fun getDefaultFilter(): FindFilterType = findFilter ?: DataType.TAG.asDefaultFindFilterType
+    override fun getDefaultFilter(): FindFilterType = DataType.TAG.asDefaultFindFilterType.merge(findFilter)
 
     override fun createCountQuery(filter: FindFilterType?): Query<CountTagsQuery.Data> = CountTagsQuery(filter, tagFilter)
 

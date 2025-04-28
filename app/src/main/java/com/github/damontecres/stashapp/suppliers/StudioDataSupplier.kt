@@ -9,6 +9,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.merge
 
 class StudioDataSupplier(
     private val findFilter: FindFilterType?,
@@ -23,7 +24,7 @@ class StudioDataSupplier(
             ids = null,
         )
 
-    override fun getDefaultFilter(): FindFilterType = findFilter ?: DataType.STUDIO.asDefaultFindFilterType
+    override fun getDefaultFilter(): FindFilterType = DataType.STUDIO.asDefaultFindFilterType.merge(findFilter)
 
     override fun createCountQuery(filter: FindFilterType?): Query<CountStudiosQuery.Data> = CountStudiosQuery(filter, studioFilter)
 

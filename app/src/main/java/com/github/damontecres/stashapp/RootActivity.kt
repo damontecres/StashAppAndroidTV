@@ -18,30 +18,46 @@ import androidx.fragment.app.FragmentManager
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationListener
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
+import com.github.damontecres.stashapp.navigation.NavigationManagerLeanback
 import com.github.damontecres.stashapp.util.KeyEventDispatcher
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
+import com.github.damontecres.stashapp.util.composeEnabled
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.maybeGetDestination
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.models.ServerViewModel
+import kotlin.properties.Delegates
 
 /**
  * The only activity in the app
  */
 class RootActivity :
-    FragmentActivity(R.layout.activity_root),
-    NavigationManager.NavigationListener {
-    private val serverViewModel: ServerViewModel by viewModels<ServerViewModel>()
+    FragmentActivity(),
+    NavigationListener {
+    private val serverViewModel by viewModels<ServerViewModel>()
+    private var useCompose by Delegates.notNull<Boolean>()
     private lateinit var navigationManager: NavigationManager
     private var currentFragment: Fragment? = null
+    lateinit var rootFragmentView: View
 
     private var hasCheckedForUpdate = false
     private lateinit var loadingView: ContentLoadingProgressBar
     private lateinit var bgLogo: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        useCompose = composeEnabled(this)
+        if (useCompose) {
+            setContentView(R.layout.activity_root_compose)
+        } else {
+            setContentView(R.layout.activity_root)
+        }
+        rootFragmentView = findViewById(R.id.root_fragment)
+
         setUpLifeCycleListeners()
         Log.v(
             TAG,
@@ -54,18 +70,22 @@ class RootActivity :
 
         val appHasPin = appHasPin()
 
-        navigationManager = NavigationManager(this)
+        navigationManager =
+            if (useCompose) {
+                NavigationManagerCompose(this, serverViewModel)
+            } else {
+                NavigationManagerLeanback(this)
+            }
         navigationManager.addListener(this)
         StashApplication.navigationManager = navigationManager
 
         serverViewModel.navigationManager = navigationManager
 
-        // Ensure everything is initialized
-        super.onCreate(savedInstanceState)
         if (savedInstanceState != null) {
             navigationManager.previousDestination = savedInstanceState.maybeGetDestination()
             Log.d(TAG, "Restoring destination: ${navigationManager.previousDestination}")
         }
+
         loadingView = findViewById(R.id.loading_progress_bar)
         bgLogo = findViewById(R.id.background_logo)
 
@@ -106,7 +126,10 @@ class RootActivity :
                     if (savedInstanceState == null) {
                         if (!appHasPin) {
                             serverViewModel.currentServer.removeObservers(this@RootActivity)
-                            if (!navigationManager.showingFragment) {
+                            if (useCompose) {
+                                // Workaround because compose goToMain is special
+                                navigationManager.navigate(Destination.Main)
+                            } else {
                                 navigationManager.goToMain()
                             }
                         }
@@ -152,8 +175,9 @@ class RootActivity :
     override fun onNavigate(
         previousDestination: Destination?,
         nextDestination: Destination,
-        fragment: Fragment,
+        fragment: Fragment?,
     ) {
+        serverViewModel.setCurrentDestination(nextDestination)
         loadingView.hide()
         bgLogo.animateToInvisible(View.GONE)
         Log.v(

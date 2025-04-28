@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -17,6 +18,7 @@ import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getInt
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 
 /**
  * Tracks the current server
@@ -34,6 +36,12 @@ open class ServerViewModel : ViewModel() {
     val cardUiSettings: LiveData<CardUiSettings> = _cardUiSettings
 
     lateinit var navigationManager: NavigationManager
+    private val _destination = MutableLiveData<Destination>()
+    val destination: LiveData<Destination> = _destination
+
+    fun setCurrentDestination(destination: Destination) {
+        _destination.value = destination
+    }
 
     fun switchServer(newServer: StashServer?) {
         _serverConnection.value = ServerConnection.Pending
@@ -44,6 +52,7 @@ open class ServerViewModel : ViewModel() {
                     StashServer.setCurrentStashServer(StashApplication.getApplication(), newServer)
                     _currentServer.value = newServer
                     _serverConnection.value = ServerConnection.Success
+                    submit(Destination.Main, true)
                 } catch (ex: Exception) {
                     _currentServer.setValueNoCheck(null)
                     _serverConnection.value = ServerConnection.Failure(newServer, ex)
@@ -60,30 +69,10 @@ open class ServerViewModel : ViewModel() {
         _cardUiSettings.value = newHash
     }
 
-    private fun createUiSettings(): CardUiSettings {
-        val context = StashApplication.getApplication()
-        val manager = PreferenceManager.getDefaultSharedPreferences(context)
-        val maxSearchResults = manager.getInt("maxSearchResults", 25)
-        val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
-        val videoPreviewAudio = manager.getBoolean("videoPreviewAudio", false)
-        val columns = manager.getInt("cardSize", context.getString(R.string.card_size_default))
-        val showRatings = manager.getBoolean(context.getString(R.string.pref_key_show_rating), true)
-        val imageCrop =
-            manager.getBoolean(context.getString(R.string.pref_key_crop_card_images), true)
-        val videoDelay =
-            manager.getInt(
-                context.getString(R.string.pref_key_ui_card_overlay_delay),
-                context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
-            )
-        return CardUiSettings(
-            maxSearchResults,
-            playVideoPreviews,
-            videoPreviewAudio,
-            columns,
-            showRatings,
-            imageCrop,
-            videoDelay,
-        )
+    fun init(context: Context) {
+        updateUiSettings()
+        val currentServer = StashServer.findConfiguredStashServer(context)
+        switchServer(currentServer)
     }
 
     fun init(currentServer: StashServer) {
@@ -118,19 +107,6 @@ open class ServerViewModel : ViewModel() {
                 server!! to item
             }.asLiveData()
 
-    /**
-     * Basic UI settings that affect the cards
-     */
-    data class CardUiSettings(
-        val maxSearchResults: Int,
-        val playVideoPreviews: Boolean,
-        val videoPreviewAudio: Boolean,
-        val columns: Int,
-        val showRatings: Boolean,
-        val imageCrop: Boolean,
-        val videoDelay: Int,
-    )
-
     sealed interface ServerConnection {
         data object Pending : ServerConnection
 
@@ -143,4 +119,48 @@ open class ServerViewModel : ViewModel() {
 
         data object NotConfigured : ServerConnection
     }
+
+    companion object {
+        fun createUiSettings(context: Context = StashApplication.getApplication()): CardUiSettings {
+            val manager = PreferenceManager.getDefaultSharedPreferences(context)
+            val maxSearchResults = manager.getInt("maxSearchResults", 25)
+            val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
+            val videoPreviewAudio = manager.getBoolean("videoPreviewAudio", false)
+            val columns = manager.getInt("cardSize", context.getString(R.string.card_size_default))
+            val showRatings =
+                manager.getBoolean(context.getString(R.string.pref_key_show_rating), true)
+            val imageCrop =
+                manager.getBoolean(context.getString(R.string.pref_key_crop_card_images), true)
+            val videoDelay =
+                manager.getInt(
+                    context.getString(R.string.pref_key_ui_card_overlay_delay),
+                    context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
+                )
+            return CardUiSettings(
+                maxSearchResults,
+                playVideoPreviews,
+                videoPreviewAudio,
+                columns,
+                showRatings,
+                imageCrop,
+                videoDelay,
+            )
+        }
+    }
+
+    // For compose navigation
+    val command = MutableLiveData<NavigationCommand?>(null)
+
+    fun submit(
+        destination: Destination,
+        popUpToMain: Boolean = false,
+    ) {
+        command.value = NavigationCommand(destination, popUpToMain)
+    }
 }
+
+@Serializable
+data class NavigationCommand(
+    val destination: Destination,
+    val popUpToMain: Boolean,
+)

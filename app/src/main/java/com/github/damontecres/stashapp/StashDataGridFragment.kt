@@ -52,6 +52,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
+import com.github.damontecres.stashapp.util.defaultCardWidth
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.maybeStartPlayback

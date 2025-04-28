@@ -62,7 +62,7 @@ class ImageClipFragment :
                         .setUri(imageData.paths.image)
                         .build()
                 player?.setMediaItem(mediaItem)
-                maybeMuteAudio(requireContext(), player)
+                maybeMuteAudio(requireContext(), false, player)
                 player?.prepare()
                 player?.play()
 

@@ -157,7 +157,7 @@
             android:max="100"
             app:defaultValue="25" />
         <SeekBarPreference
-            app:key="searchDelay"
+            app:key="@string/pref_key_search_delay"
             app:title="Wait for searching (ms)"
             app:seekBarIncrement="50"
             app:showSeekBarValue="true"
@@ -187,7 +187,7 @@
             app:seekBarIncrement="1"
             app:showSeekBarValue="false"
             android:max="10"
-            app:defaultValue="3" />
+            app:defaultValue="6" />
         <SwitchPreference
             app:key="networkCacheLogging"
             app:title="Cache logging"

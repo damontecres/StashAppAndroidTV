@@ -68,7 +68,7 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
                     per_page = Optional.present(loadSize),
                     page = Optional.present(page),
                 )
-            if (DEBUG) Log.v(TAG, "page=$page, loadSize=$loadSize")
+            if (DEBUG) Log.v(TAG, "page=$page, loadSize=$loadSize, findFilter=$filter")
             val query = dataSupplier.createQuery(filter)
             val queryResult = queryEngine.executeQuery(query)
             if (queryResult.data != null) {

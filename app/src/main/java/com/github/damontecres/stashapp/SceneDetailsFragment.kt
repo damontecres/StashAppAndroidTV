@@ -371,20 +371,14 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         markersRowManager,
                     ).addAction(MARKER_DETAILS_POPUP) { _, item ->
                         serverViewModel.navigationManager.navigate(
-                            Destination.MarkerDetails(
-                                item.id,
-                                item.scene.minimalSceneData.id,
-                            ),
+                            Destination.MarkerDetails(item.id),
                         )
                     }.addAction(
                         PopUpItem(MARKER_DETAILS_POPUP.id + 1, R.string.shift_seconds),
                         { readOnlyModeDisabled() },
                         { _, item ->
                             StashApplication.navigationManager.navigate(
-                                Destination.UpdateMarker(
-                                    item.id,
-                                    item.scene.minimalSceneData.id,
-                                ),
+                                Destination.UpdateMarker(item.id),
                             )
                         },
                     ),

@@ -1,11 +1,25 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.view.View
+import android.widget.Toast
 import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
+import androidx.lifecycle.lifecycleScope
+import androidx.preference.Preference
+import androidx.preference.PreferenceManager
 import androidx.preference.SeekBarPreference
+import androidx.preference.SwitchPreference
+import coil3.SingletonImageLoader
+import coil3.annotation.DelicateCoilApi
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.composeEnabled
+import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
+    @OptIn(DelicateCoilApi::class)
     override fun onCreatePreferences(
         savedInstanceState: Bundle?,
         rootKey: String?,
@@ -39,6 +53,72 @@ class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
             setVideoDelaySummary(imageClipDelayPref, newValue, 2)
             true
         }
+
+        val composeEnabledPref =
+            findPreference<SwitchPreference>(getString(R.string.pref_key_use_compose_ui))!!
+        composeEnabledPref.setOnPreferenceChangeListener { preference, newValue ->
+            if (newValue == true) {
+                ConfirmationDialogFragment.show(
+                    childFragmentManager,
+                    "The new UI is still in beta! Do you want to try it?\n\nNote: the app will restart.",
+                ) {
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        SettingsFragment.clearCaches(requireContext())
+                        composeEnabledPref.isChecked = true
+                        // Clear coil singleton
+                        SingletonImageLoader.reset()
+                        requireActivity().finish()
+                    }
+                }
+            } else if (newValue == false) {
+                ConfirmationDialogFragment.show(
+                    childFragmentManager,
+                    "Please report any issues you encountered with the new UI!\n\nDo you want switch back to the old UI?\n\nNote: the app will restart.",
+                ) {
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        SettingsFragment.clearCaches(requireContext())
+                        composeEnabledPref.isChecked = false
+                        // Clear coil singleton
+                        SingletonImageLoader.reset()
+                        requireActivity().finish()
+                    }
+                }
+            }
+            false
+        }
+
+        val chooseThemePref =
+            findPreference<Preference>(getString(R.string.pref_key_ui_theme_file))
+        chooseThemePref?.summary =
+            PreferenceManager.getDefaultSharedPreferences(requireContext()).getString(
+                getString(R.string.pref_key_ui_theme_file),
+                "default",
+            )
+        if (composeEnabled(requireContext())) {
+            chooseThemePref?.setOnPreferenceClickListener {
+                StashApplication.navigationManager.navigate(Destination.ChooseTheme)
+                true
+            }
+        } else {
+            chooseThemePref?.setOnPreferenceClickListener {
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "Must enable compose to change this",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                true
+            }
+        }
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        setTitle(getString(R.string.ui_settings))
+        view.requestFocus()
     }
 
     private fun setVideoDelaySummary(

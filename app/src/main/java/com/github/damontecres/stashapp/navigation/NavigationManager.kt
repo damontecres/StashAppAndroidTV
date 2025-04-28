@@ -40,18 +40,45 @@ import com.github.damontecres.stashapp.views.MarkerPickerFragment
 /**
  * Manages navigating to pages in the app
  */
-class NavigationManager(
-    private val activity: RootActivity,
-) {
-    private val fragmentManager = activity.supportFragmentManager
+interface NavigationManager {
+    var previousDestination: Destination?
+
+    fun navigate(destination: Destination)
+
+    /**
+     * End the current fragment and go to the previous one
+     */
+    fun goBack()
+
+    /**
+     * Drop all of the back stack and go back to the main page
+     */
+    fun goToMain()
+
+    /**
+     * Remove the [PinFragment]
+     */
+    fun clearPinFragment()
+
+    fun addListener(listener: NavigationListener)
+
+    companion object {
+        const val DESTINATION_ARG = "destination"
+    }
+}
+
+abstract class NavigationManagerParent(
+    protected val activity: RootActivity,
+    protected val fragmentManager: FragmentManager = activity.supportFragmentManager,
+) : NavigationManager {
     private val listeners = mutableListOf<NavigationListener>()
 
-    var previousDestination: Destination? = null
+    override var previousDestination: Destination? = null
 
     /**
      * A [OnBackPressedCallback] that always finishes the [RootActivity]
      */
-    private val onBackPressedCallback: OnBackPressedCallback =
+    protected val onBackPressedCallback: OnBackPressedCallback =
         activity.onBackPressedDispatcher.addCallback(activity, false) {
             activity.finish()
         }
@@ -68,14 +95,37 @@ class NavigationManager(
         }
     }
 
-    private val slideAnimDestinations =
+    protected val slideAnimDestinations =
         setOf(
             Destination.Settings,
             Destination.SettingsPin,
             Destination.ManageServers,
         )
 
-    fun navigate(destination: Destination) {
+    override fun addListener(listener: NavigationListener) {
+        listeners.add(listener)
+    }
+
+    protected fun notifyListeners(
+        previousDestination: Destination?,
+        nextDestination: Destination,
+        fragment: Fragment?,
+    ) {
+        if (previousDestination != nextDestination) {
+            listeners.forEach { it.onNavigate(previousDestination, nextDestination, fragment) }
+        }
+    }
+
+    companion object {
+        private const val TAG = "NavigationManagerParent"
+        private const val DEBUG = false
+    }
+}
+
+class NavigationManagerLeanback(
+    activity: RootActivity,
+) : NavigationManagerParent(activity) {
+    override fun navigate(destination: Destination) {
         if (DEBUG) Log.v(TAG, "navigate: ${destination.fragmentTag}")
         val current = getCurrentFragment()
         if (destination == Destination.Pin && current is PinFragment) {
@@ -90,7 +140,7 @@ class NavigationManager(
             when (destination) {
                 Destination.Main -> MainFragment()
                 Destination.Search -> StashSearchFragment()
-                Destination.Settings -> SettingsFragment()
+                is Destination.Settings -> SettingsFragment()
                 Destination.Pin -> PinFragment()
                 Destination.SettingsPin -> SettingsPinEntryFragment()
                 Destination.Setup -> SetupFragment()
@@ -136,6 +186,8 @@ class NavigationManager(
                         destination.className,
                     )
                 }
+
+                Destination.ChooseTheme -> throw IllegalArgumentException("ChooseTheme not supported unless using Compose")
             }
 
         fragment.arguments = Bundle().putDestination(destination)
@@ -173,14 +225,14 @@ class NavigationManager(
     /**
      * End the current fragment and go to the previous one
      */
-    fun goBack() {
+    override fun goBack() {
         fragmentManager.popBackStack()
     }
 
     /**
      * Drop all of the back stack and go back to the main page
      */
-    fun goToMain() {
+    override fun goToMain() {
         fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
         navigate(Destination.Main)
     }
@@ -188,7 +240,7 @@ class NavigationManager(
     /**
      * Remove the [PinFragment]
      */
-    fun clearPinFragment() {
+    override fun clearPinFragment() {
         if (getCurrentFragment() !is PinFragment) {
             throw IllegalStateException("Current fragment is not PinFragment")
         }
@@ -199,36 +251,18 @@ class NavigationManager(
         onBackPressedCallback.isEnabled = false
     }
 
-    fun addListener(listener: NavigationListener) {
-        listeners.add(listener)
-    }
-
     private fun getCurrentFragment(): Fragment? = fragmentManager.findFragmentById(R.id.root_fragment)
 
-    val showingFragment: Boolean
-        get() = getCurrentFragment() != null
-
-    private fun notifyListeners(
-        previousDestination: Destination?,
-        nextDestination: Destination,
-        fragment: Fragment,
-    ) {
-        if (previousDestination != nextDestination) {
-            listeners.forEach { it.onNavigate(previousDestination, nextDestination, fragment) }
-        }
-    }
-
-    interface NavigationListener {
-        fun onNavigate(
-            previousDestination: Destination?,
-            nextDestination: Destination,
-            fragment: Fragment,
-        )
-    }
-
     companion object {
-        const val DESTINATION_ARG = "destination"
         private const val TAG = "NavigationManager"
         private const val DEBUG = false
     }
+}
+
+interface NavigationListener {
+    fun onNavigate(
+        previousDestination: Destination?,
+        nextDestination: Destination,
+        fragment: Fragment?,
+    )
 }

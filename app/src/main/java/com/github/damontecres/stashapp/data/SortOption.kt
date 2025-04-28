@@ -353,5 +353,17 @@ sealed interface SortOption {
                 SceneMarkersCount,
                 ScenesCount,
             )
+
+        fun sortByName(dataType: DataType): SortOption =
+            when (dataType) {
+                DataType.SCENE -> Title
+                DataType.GROUP -> Name
+                DataType.MARKER -> Title
+                DataType.PERFORMER -> Name
+                DataType.STUDIO -> Name
+                DataType.TAG -> Name
+                DataType.IMAGE -> Title
+                DataType.GALLERY -> Title
+            }
     }
 }

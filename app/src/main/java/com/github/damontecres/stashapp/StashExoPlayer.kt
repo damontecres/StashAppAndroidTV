@@ -124,6 +124,7 @@ class StashExoPlayer private constructor() {
 
                     else -> throw IllegalArgumentException("Unknown HTTP client: $httpClientChoice")
                 }
+            Log.d(TAG, "createInstance")
             return ExoPlayer
                 .Builder(context)
 //                .setLoadControl(
@@ -156,6 +157,7 @@ class StashExoPlayer private constructor() {
                 synchronized(this) {
                     // synchronized to avoid concurrency problem
                     if (instance != null) {
+                        Log.d(TAG, "releasePlayer")
                         removeListeners()
                         instance!!.stop()
                         if (!instance!!.isReleased) {

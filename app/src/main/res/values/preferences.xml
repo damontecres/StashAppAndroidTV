@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="pref_key_video_preview_audio" translatable="false">videoPreviewAudio</string>
     <string name="pref_key_network_cache_size">networkCacheSize</string>
     <string name="pref_key_image_cache_size">iamge.cacheSize</string>
     <string name="pref_key_salt">salt</string>
@@ -9,6 +10,7 @@
     <string name="pref_key_show_grid_footer" translatable="false">interface.showGridFooter</string>
     <string name="pref_key_show_rating" translatable="false">interface.showRating</string>
     <string name="pref_key_max_search_results" translatable="false">maxSearchResults</string>
+    <string name="pref_key_search_delay" translatable="false">searchDelay</string>
     <string name="pref_key_page_size" translatable="false">@string/pref_key_max_search_results</string>
     <string name="pref_key_current_server" translatable="false">stashUrl</string>
     <string name="pref_key_current_api_key" translatable="false">stashApiKey</string>
@@ -53,6 +55,24 @@
     <integer name="pref_key_slideshow_duration_default">5</integer>
     <string name="pref_key_slideshow_duration_image_clip" translatable="false">image.clip.slideshow.duration</string>
     <integer name="pref_key_slideshow_duration_default_image_clip">250</integer>
-
     <string name="pref_key_image_loading_threads">image.loadingThreads</string>
+    <string name="pref_key_update_last_check" translatable="false">update.lastCheck</string>
+    <string name="pref_key_update_last_check_threshold" translatable="false">update.lastCheck.threshold</string>
+
+    <!-- Compose -->
+    <string name="pref_key_use_compose_ui" translatable="false">useComposeUI</string>
+    <string name="pref_key_ui_theme_dark_appearance" translatable="false">ui.theme.darkAppearance</string>
+    <string name="pref_key_ui_theme_file" translatable="false">ui.theme.file</string>
+    <string name="ui_theme_dark_appearance_choice_system">System</string>
+    <string name="ui_theme_dark_appearance_choice_light">Light</string>
+    <string name="ui_theme_dark_appearance_choice_dark">Dark</string>
+    <string-array name="ui_theme_dark_appearance_choices">
+        <item>@string/ui_theme_dark_appearance_choice_system</item>
+        <item>@string/ui_theme_dark_appearance_choice_light</item>
+        <item>@string/ui_theme_dark_appearance_choice_dark</item>
+    </string-array>
+
+    <string name="pref_key_ui_grid_jump_controls" translatable="false">ui.grid.jumpControls</string>
+    <string name="pref_key_playback_seek_count" translatable="false">playback.seekIntervals</string>
+
 </resources>

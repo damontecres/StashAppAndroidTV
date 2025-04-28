@@ -25,13 +25,19 @@ class StashRatingBar(
 ) : FrameLayout(context, attrs) {
     constructor(context: Context) : this(context, null)
 
+    constructor(context: Context, ratingAsStars: Boolean, precision: Float) : this(context) {
+        this.ratingAsStars = ratingAsStars
+        this.precision = precision
+    }
+
     private val starRatingBar: RatingBar
 
     private val decimalLayout: View
     private val decimalRatingText: TextView
     private val decimalRatingBar: SeekBar
 
-    val ratingAsStars: Boolean
+    var ratingAsStars: Boolean? = null
+    var precision: Float? = null
 
     private var ratingCallback: RatingCallback? = null
 
@@ -48,8 +54,6 @@ class StashRatingBar(
     init {
         inflate(context, R.layout.stash_rating_bar, this)
 
-        val serverPreferences = StashServer.requireCurrentServer().serverPreferences
-
         starRatingBar = findViewById(R.id.rating_star)
         starRatingBar.setOnClickListener(RatingOnClickListener())
 
@@ -58,8 +62,14 @@ class StashRatingBar(
         decimalRatingBar = findViewById(R.id.rating_decimal)
         decimalRatingBar.setOnClickListener(RatingOnClickListener())
 
-        ratingAsStars = serverPreferences.ratingsAsStars
-        if (ratingAsStars) {
+        ratingAsStars =
+            if (ratingAsStars == null) {
+                val serverPreferences = StashServer.requireCurrentServer().serverPreferences
+                serverPreferences.ratingsAsStars
+            } else {
+                ratingAsStars
+            }
+        if (ratingAsStars != false) {
             decimalLayout.visibility = View.GONE
         } else {
             starRatingBar.visibility = View.GONE
@@ -96,9 +106,17 @@ class StashRatingBar(
         decimalLayout.background = background
         decimalRatingBar.background = background
 
-        val precision =
-            serverPreferences.preferences.getFloat(ServerPreferences.PREF_RATING_PRECISION, 1.0f)
-        starRatingBar.stepSize = precision
+        precision =
+            if (precision == null) {
+                val serverPreferences = StashServer.requireCurrentServer().serverPreferences
+                serverPreferences.preferences.getFloat(
+                    ServerPreferences.PREF_RATING_PRECISION,
+                    1.0f,
+                )
+            } else {
+                precision
+            }
+        starRatingBar.stepSize = precision!!
 
         decimalRatingBar.setOnSeekBarChangeListener(
             object : SeekBar.OnSeekBarChangeListener {
@@ -168,7 +186,7 @@ class StashRatingBar(
         @SuppressLint("RestrictedApi")
         override fun onClick(v: View) {
             rating100 =
-                if (ratingAsStars) {
+                if (ratingAsStars == true) {
                     (starRatingBar.rating * 20).toInt()
                 } else {
                     decimalRatingBar.progress

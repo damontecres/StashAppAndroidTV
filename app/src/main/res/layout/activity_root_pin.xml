@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_activity_fragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:deviceIds="tv"
+    tools:ignore="MergeRootFrame"
+    android:theme="@style/Widget.Theme.StashAppAndroidTV.MyView">
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/pin_fragment_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="com.github.damontecres.stashapp.PinFragmentCompose"/>
+</FrameLayout>

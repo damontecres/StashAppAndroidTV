@@ -11,6 +11,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.merge
 
 class GalleryDataSupplier(
     private val findFilter: FindFilterType?,
@@ -25,7 +26,7 @@ class GalleryDataSupplier(
             ids = null,
         )
 
-    override fun getDefaultFilter(): FindFilterType = findFilter ?: DataType.GALLERY.asDefaultFindFilterType
+    override fun getDefaultFilter(): FindFilterType = DataType.GALLERY.asDefaultFindFilterType.merge(findFilter)
 
     override fun createCountQuery(filter: FindFilterType?): Query<CountGalleriesQuery.Data> = CountGalleriesQuery(filter, galleryFilter)
 

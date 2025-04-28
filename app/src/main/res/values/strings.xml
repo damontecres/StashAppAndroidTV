@@ -29,12 +29,15 @@
     <string name="fa_angles_up" translatable="false">&#xf102;</string>
     <string name="fa_angle_down" translatable="false">&#xf107;</string>
     <string name="fa_angles_down" translatable="false">&#xf103;</string>
+    <string name="fa_house" translatable="false">&#xf015;</string>
+    <string name="fa_closed_captioning" translatable="false">&#xf20a;</string>
 
 
     <string name="go_to">Go to</string>
     <string name="go_to_scene">Go to scene</string>
     <string name="failed_o_counter">Failed to update o-counter</string>
     <string name="advanced_settings">Advanced Settings</string>
+    <string name="home">Home</string>
 
     <string name="app_update_url" translatable="false">https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/latest</string>
 
@@ -55,6 +58,7 @@
     <string name="play_all">Play All</string>
     <string name="sort_by">Sort By</string>
     <string name="enter_pin">Enter PIN</string>
+    <string name="enter_settings_pin">Enter Settings PIN</string>
     <string name="force_direct">Force direct</string>
     <string name="unsupported">unsupported</string>
     <string name="results">Results</string>
@@ -80,17 +84,32 @@
     <string name="stop_slideshow">Stop Slideshow</string>
     <string name="apply_filters">Apply Filters</string>
     <string name="more_like_this_scene">More like this scene</string>
+    <string name="more">More</string>
     <string name="id">ID</string>
     <string name="selected" tools:override="true">Selected</string>
     <string name="codec">Codec</string>
     <string name="supported">Supported</string>
     <string name="labels">Labels</string>
     <string name="stream_details">Stream Details</string>
+    <string name="play_direct">Play direct</string>
+    <string name="play_transcoding">Play with transcoding</string>
+    <string name="add_tag">Add Tag</string>
+    <string name="add_performer">Add Performer</string>
+    <string name="add_group">Add Group</string>
+    <string name="studio_favorited">Studio favorited!</string>
     <string name="hours">Hours</string>
     <string name="minutes">Minutes</string>
     <string name="milliseconds">Milliseconds</string>
     <string name="shift_seconds">Shift Seconds</string>
     <string name="start_playback_without_audio">Always start playback without audio</string>
     <string name="save_end_time">Save end time</string>
+    <string name="play">Play</string>
+    <string name="change_primary_tag">Change primary tag</string>
+    <string name="timestamps">Timestamps</string>
+    <string name="slideshow_at_beginning">At beginning</string>
+    <string name="no_more_images">No more images</string>
+    <string name="searching">Searching...</string>
+    <string name="ui_settings">Advanced UI Settings</string>
+    <string name="set_rating">Set rating:</string>
 
 </resources>

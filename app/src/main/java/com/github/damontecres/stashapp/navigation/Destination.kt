@@ -1,5 +1,10 @@
 package com.github.damontecres.stashapp.navigation
 
+import android.os.Bundle
+import android.os.Parcel
+import android.os.Parcelable
+import android.os.Parcelable.Creator
+import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -21,6 +26,8 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Release
+import com.github.damontecres.stashapp.util.getDestination
+import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.serialization.Serializable
 import java.util.concurrent.atomic.AtomicLong
@@ -29,28 +36,32 @@ import java.util.concurrent.atomic.AtomicLong
  * Represents a "page" of the app that can be navigated to
  */
 @Serializable
-sealed class Destination {
+sealed class Destination(
+    val fullScreen: Boolean = false,
+) : Parcelable {
     protected val destId = counter.getAndIncrement()
 
     val fragmentTag = "${this::class.simpleName}_$destId"
 
     @Serializable
-    data object Setup : Destination()
+    data object Setup : Destination(true)
 
     @Serializable
     data object Main : Destination()
 
     @Serializable
-    data object Settings : Destination()
+    data class Settings(
+        val screenOption: PreferenceScreenOption,
+    ) : Destination(true)
 
     @Serializable
     data object Search : Destination()
 
     @Serializable
-    data object Pin : Destination()
+    data object Pin : Destination(true)
 
     @Serializable
-    data object SettingsPin : Destination()
+    data object SettingsPin : Destination(true)
 
     @Serializable
     data class Item(
@@ -60,8 +71,7 @@ sealed class Destination {
 
     @Serializable
     data class MarkerDetails(
-        val id: String,
-        val sceneId: String,
+        val markerId: String,
     ) : Destination()
 
     @Serializable
@@ -69,14 +79,14 @@ sealed class Destination {
         val sceneId: String,
         val position: Long,
         val mode: PlaybackMode,
-    ) : Destination()
+    ) : Destination(true)
 
     @Serializable
     data class Slideshow(
         val filterArgs: FilterArgs,
         val position: Int,
         val automatic: Boolean,
-    ) : Destination() {
+    ) : Destination(true) {
         override fun toString(): String = "Slideshow(destId=$destId, position=$position, automatic=$automatic)"
     }
 
@@ -93,7 +103,7 @@ sealed class Destination {
         val filterArgs: FilterArgs,
         val position: Int,
         val duration: Long? = null,
-    ) : Destination() {
+    ) : Destination(true) {
         override fun toString(): String =
             "Playlist(destId=$destId, dataType=${filterArgs.dataType}, position=$position, duration=$duration)"
     }
@@ -109,28 +119,30 @@ sealed class Destination {
     @Serializable
     data class UpdateMarker(
         val markerId: String,
-        val sceneId: String,
-    ) : Destination()
+    ) : Destination(true)
 
     @Serializable
     data class UpdateApp(
         val release: Release,
-    ) : Destination() {
+    ) : Destination(true) {
         override fun toString(): String = "UpdateApp(version=${release.version})"
     }
 
     @Serializable
     data class ManageServers(
         val overrideReadOnly: Boolean,
-    ) : Destination()
+    ) : Destination(true)
 
     @Serializable
     data class CreateFilter(
         val dataType: DataType,
         val startingFilter: FilterArgs?,
-    ) : Destination() {
+    ) : Destination(true) {
         override fun toString(): String = "CreateFilter(destId=$destId, dataType=$dataType)"
     }
+
+    @Serializable
+    data object ChooseTheme : Destination(true)
 
     /**
      * An arbitrary fragment that requires no arguments
@@ -138,10 +150,32 @@ sealed class Destination {
     @Serializable
     data class Fragment(
         val className: String,
-    ) : Destination()
+    ) : Destination(true)
+
+    override fun describeContents(): Int = 0
+
+    override fun writeToParcel(
+        out: Parcel,
+        flags: Int,
+    ) {
+        val bundle = Bundle()
+        bundle.putDestination(this)
+        out.writeBundle(bundle)
+    }
 
     companion object {
         private val counter = AtomicLong(0)
+
+        @JvmField
+        val CREATOR =
+            object : Creator<Destination?> {
+                override fun createFromParcel(`in`: Parcel): Destination? =
+                    `in`
+                        .readBundle(Destination::class.java.getClassLoader())
+                        ?.getDestination<Destination>()
+
+                override fun newArray(size: Int): Array<Destination?> = arrayOfNulls(size)
+            }
 
         fun fromStashData(item: StashData): Destination =
             when (val dataType = getDataType(item)) {

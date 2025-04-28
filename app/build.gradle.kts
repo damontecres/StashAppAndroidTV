@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.apollo)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.room)
+    alias(libs.plugins.compose.compiler)
 }
 
 fun getVersionCode(): Int {
@@ -55,6 +56,8 @@ android {
 
     buildFeatures {
         buildConfig = true
+        compose = true
+        viewBinding = true
     }
 
     defaultConfig {
@@ -115,6 +118,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
@@ -205,6 +209,7 @@ dependencies {
     implementation(libs.apollo.runtime)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.ui.compose)
     implementation(libs.androidx.media3.exoplayer.dash)
     implementation(libs.androidx.media3.exoplayer.hls)
     implementation(libs.androidx.media3.datasource.okhttp)
@@ -228,6 +233,31 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+
+    implementation(libs.glide.compose)
+    implementation(libs.androidx.compose.runtime)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.androidx.material3.android)
+    debugImplementation(libs.androidx.ui.tooling)
+    implementation(libs.androidx.tv.foundation)
+    implementation(libs.androidx.tv.material)
+    implementation(libs.androidx.ui.viewbinding)
+    implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.android.material)
+    implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.androidsvg.aar)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.network.cachecontrol)
+    implementation(libs.coil.svg)
+    implementation(libs.coil.gif)
+    implementation(libs.navigation.reimagined)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.junit)

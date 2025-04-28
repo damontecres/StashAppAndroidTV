@@ -113,24 +113,28 @@ class StashClient private constructor() {
                         },
                     )
             }
-            if (cacheDuration != null) {
-                builder =
-                    builder.addInterceptor {
-                        val request =
-                            it
-                                .request()
-                                .newBuilder()
-                                .cacheControl(
-                                    CacheControl
-                                        .Builder()
-                                        .maxAge(
-                                            cacheDuration.toInt(DurationUnit.HOURS),
-                                            TimeUnit.HOURS,
-                                        ).build(),
-                                ).build()
-                        it.proceed(request)
-                    }
-            }
+            val cacheControl =
+                if (cacheDuration != null) {
+                    CacheControl
+                        .Builder()
+                        .maxAge(
+                            cacheDuration.toInt(DurationUnit.HOURS),
+                            TimeUnit.HOURS,
+                        ).build()
+                } else {
+                    CacheControl.Builder().noCache().build()
+                }
+            builder =
+                builder.addNetworkInterceptor {
+                    val request =
+                        it
+                            .request()
+                            .newBuilder()
+                            .cacheControl(cacheControl)
+                            .build()
+                    it.proceed(request)
+                }
+
             builder.cache(Constants.getNetworkCache(context))
             return builder.build()
         }

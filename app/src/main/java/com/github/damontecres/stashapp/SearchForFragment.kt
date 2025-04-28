@@ -43,6 +43,8 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.defaultCardHeight
+import com.github.damontecres.stashapp.util.defaultCardWidth
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
@@ -368,7 +370,7 @@ class SearchForFragment :
 
                         else -> queryEngine.find(dataType, filter)
                     }
-                val createAllowed = allowCreate(query, results)
+                val createAllowed = allowCreate(dataType, query, results)
                 if (createAllowed && readOnlyModeDisabled()) {
                     searchResultsAdapter.add(StashAction.CREATE_NEW)
                 }
@@ -403,35 +405,6 @@ class SearchForFragment :
                 RESULTS_POS,
                 ListRow(HeaderItem(getString(R.string.waiting_for_query)), ArrayObjectAdapter()),
             )
-        }
-    }
-
-    private fun allowCreate(
-        query: String,
-        items: List<StashData>,
-    ): Boolean {
-        val q = query.lowercase()
-        return when (dataType) {
-            DataType.GROUP -> {
-                items as List<GroupData>
-                items.none { it.name.lowercase() == q || it.aliases?.lowercase() == q }
-            }
-
-            DataType.PERFORMER -> {
-                items as List<PerformerData>
-                items.none { it.name.lowercase() == q || it.alias_list.any { it.lowercase() == q } }
-            }
-
-            DataType.TAG -> {
-                items as List<TagData>
-                items.none { it.name.lowercase() == q || it.aliases.any { it.lowercase() == q } }
-            }
-
-            DataType.SCENE -> false
-            DataType.MARKER -> false
-            DataType.STUDIO -> false
-            DataType.IMAGE -> false
-            DataType.GALLERY -> false
         }
     }
 
@@ -470,5 +443,35 @@ class SearchForFragment :
                 DataType.GALLERY,
                 DataType.GROUP,
             )
+
+        fun allowCreate(
+            dataType: DataType,
+            query: String,
+            items: List<StashData>,
+        ): Boolean {
+            val q = query.lowercase()
+            return when (dataType) {
+                DataType.GROUP -> {
+                    items as List<GroupData>
+                    items.none { it.name.lowercase() == q || it.aliases?.lowercase() == q }
+                }
+
+                DataType.PERFORMER -> {
+                    items as List<PerformerData>
+                    items.none { it.name.lowercase() == q || it.alias_list.any { it.lowercase() == q } }
+                }
+
+                DataType.TAG -> {
+                    items as List<TagData>
+                    items.none { it.name.lowercase() == q || it.aliases.any { it.lowercase() == q } }
+                }
+
+                DataType.SCENE -> false
+                DataType.MARKER -> false
+                DataType.STUDIO -> false
+                DataType.IMAGE -> false
+                DataType.GALLERY -> false
+            }
+        }
     }
 }

@@ -34,7 +34,9 @@ class FrontPageParser(
             val name: String,
             val filter: FilterArgs,
             val data: List<*>,
-        ) : FrontPageRow()
+        ) : FrontPageRow() {
+            override fun toString(): String = "FrontPageRow.Success(name=$name, dataType=${filter.dataType})"
+        }
 
         data object Error : FrontPageRow()
 

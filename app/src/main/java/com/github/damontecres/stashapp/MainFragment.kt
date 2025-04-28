@@ -74,6 +74,7 @@ class MainFragment :
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+
         // Override the focus search so that pressing up from the rows will move to search first
         val browseFrameLayout =
             view.findViewById<BrowseFrameLayout>(androidx.leanback.R.id.browse_frame)

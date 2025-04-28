@@ -116,7 +116,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     )
 
                     exoPlayer.volume = 1f
-                    maybeMuteAudio(requireContext(), exoPlayer)
+                    maybeMuteAudio(requireContext(), false, exoPlayer)
                     if (videoView.controllerShowTimeoutMs > 0) {
                         videoView.hideController()
                     }

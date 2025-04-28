@@ -6,6 +6,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.util.StashServer
+import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -31,7 +32,15 @@ fun getRatingAsDecimalString(
     if (ratingsAsStars) {
         (rating100 / 20.0).toString()
     } else {
-        (rating100 / 10.0).toString()
+        if (rating100 % 10 == 0) {
+            rating100 / 10
+        } else {
+            String.format(
+                Locale.getDefault(),
+                "%.1f",
+                rating100 / 10.0,
+            )
+        }.toString()
     }
 
 fun getRatingString(
@@ -67,6 +76,19 @@ fun parseTimeToString(ts: Any?): String? =
         }
     } else {
         ts.toString()
+    }
+
+fun formatDate(date: String?) =
+    if (date != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        try {
+            val dateFormatter = DateTimeFormatter.ofPattern("MMMM d, yyyy")
+            val localDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE)
+            localDate.format(dateFormatter)
+        } catch (ex: DateTimeParseException) {
+            date
+        }
+    } else {
+        date
     }
 
 val String.fileNameFromPath
@@ -108,7 +130,7 @@ fun abbreviateCounter(counter: Int): String {
     return String.format(Locale.getDefault(), "%.1f%s", count, abbrevSuffixes[unit])
 }
 
-val byteSuffixes = listOf("", "KB", "MB", "GB", "TB")
+val byteSuffixes = listOf("B", "KB", "MB", "GB", "TB")
 val byteRateSuffixes = listOf("bps", "kbps", "mbps", "gbps", "tbps")
 
 /**
@@ -116,6 +138,11 @@ val byteRateSuffixes = listOf("bps", "kbps", "mbps", "gbps", "tbps")
  */
 fun formatBytes(
     bytes: Int,
+    suffixes: List<String> = byteSuffixes,
+) = formatBytes(bytes.toLong(), suffixes)
+
+fun formatBytes(
+    bytes: Long,
     suffixes: List<String> = byteSuffixes,
 ): String {
     var unit = 0

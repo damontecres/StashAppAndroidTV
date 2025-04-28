@@ -12,6 +12,7 @@ import androidx.fragment.app.findFragment
 import androidx.leanback.widget.TitleViewAdapter
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
@@ -91,7 +92,7 @@ class MainTitleView(
                 ) {
                     Destination.SettingsPin
                 } else {
-                    Destination.Settings
+                    Destination.Settings(PreferenceScreenOption.BASIC)
                 }
             serverViewModel.navigationManager.navigate(destination)
         }

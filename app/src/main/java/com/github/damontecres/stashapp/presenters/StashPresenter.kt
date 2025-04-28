@@ -250,8 +250,8 @@ abstract class StashPresenter<T>(
                 .skipMemoryCache(true)
                 .error(ContextCompat.getDrawable(context, R.drawable.baseline_camera_indoor_48))
                 .listener(SvgSoftwareLayerSetter())
-    }
 
-    val String?.isDefaultUrl: Boolean
-        get() = this?.contains("default=true") == true
+        val String?.isDefaultUrl: Boolean
+            get() = this?.contains("default=true") == true
+    }
 }
