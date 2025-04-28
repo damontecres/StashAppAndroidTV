@@ -292,19 +292,15 @@ fun SearchItemsRow(
             modifier =
                 Modifier
                     .padding(top = 8.dp)
+                    .focusGroup()
                     .focusRestorer(firstFocus),
             state = listState,
             contentPadding = PaddingValues(8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             itemsIndexed(items) { index, item ->
-                val cardModifier =
-                    if (index == 0) {
-                        Modifier.focusRequester(firstFocus)
-                    } else {
-                        Modifier
-                    }
                 StashCard(
+                    modifier = Modifier.ifElse(index == 0, Modifier.focusRequester(firstFocus)),
                     uiConfig = uiConfig,
                     item = item,
                     itemOnClick = {

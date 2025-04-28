@@ -35,6 +35,7 @@ import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.preference.PreferenceManager
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -534,9 +535,14 @@ fun SceneDetails(
                                         context.getString(R.string.play_transcoding),
                                         Icons.Default.PlayArrow,
                                     ) {
+                                        // TODO show options for other resolutions
+                                        val format =
+                                            PreferenceManager
+                                                .getDefaultSharedPreferences(context)
+                                                .getString("stream_choice", "HLS")!!
                                         playOnClick(
                                             scene.resume_position ?: 0,
-                                            PlaybackMode.ForcedTranscode("HLS"), // TODO
+                                            PlaybackMode.ForcedTranscode(format),
                                         )
                                     },
                                     DialogItem(

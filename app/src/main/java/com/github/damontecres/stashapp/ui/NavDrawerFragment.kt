@@ -286,7 +286,15 @@ fun FragmentContent(
                     )
                 }
 
-                else -> TODO(item::class.qualifiedName.toString())
+                else -> {
+                    Toast
+                        .makeText(
+                            context,
+                            "Unknown item. This is probably a bug",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    Log.e(TAG, "Unknown item type: ${item::class.qualifiedName}")
+                }
             }
         }
 

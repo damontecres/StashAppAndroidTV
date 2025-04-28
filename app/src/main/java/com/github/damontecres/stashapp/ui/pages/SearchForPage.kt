@@ -66,7 +66,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private val TAG = "SearchForPage"
+private const val TAG = "SearchForPage"
 
 sealed interface SearchState {
     data object NoQuery : SearchState
