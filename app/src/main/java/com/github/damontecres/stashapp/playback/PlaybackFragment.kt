@@ -155,8 +155,11 @@ abstract class PlaybackFragment(
 
     private fun preparePlayer(): ExoPlayer =
         StashExoPlayer
-            .getInstance(requireContext(), serverViewModel.requireServer(), skipParams)
-            .also { it.setupPlayer() }
+            .createInstance(
+                requireContext(),
+                serverViewModel.requireServer(),
+                skipParams,
+            ).also { it.setupPlayer() }
             .also {
                 StashExoPlayer.addListener(
                     object : Player.Listener {
