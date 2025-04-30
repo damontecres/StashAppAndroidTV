@@ -46,38 +46,12 @@ class StashExoPlayer private constructor() {
             server: StashServer,
             skipParams: SkipParams,
         ): ExoPlayer {
-            val skipForward =
-                when (skipParams) {
-                    is SkipParams.Default ->
-                        PreferenceManager
-                            .getDefaultSharedPreferences(context)
-                            .getInt("skip_forward_time", 30) * 1000L
-
-                    is SkipParams.Values -> skipParams.skipForward
-                }
-            val skipBack =
-                when (skipParams) {
-                    is SkipParams.Default ->
-                        PreferenceManager
-                            .getDefaultSharedPreferences(context)
-                            .getInt("skip_back_time", 10) * 1000L
-
-                    is SkipParams.Values -> skipParams.skipBack
-                }
             if (instance == null || skipParams != this.skipParams) {
                 synchronized(this) {
                     // synchronized to avoid concurrency problem
                     if (instance == null || skipParams != this.skipParams) {
                         this.skipParams = skipParams
-                        instance = createInstance(context, server, skipForward, skipBack)
-                        if (getPreference(
-                                context,
-                                R.string.pref_key_playback_debug_logging,
-                                false,
-                            )
-                        ) {
-                            instance?.addAnalyticsListener(EventLogger())
-                        }
+                        instance = createInstance(context, server, skipParams)
                     }
                 }
             }
@@ -88,11 +62,10 @@ class StashExoPlayer private constructor() {
          * Create a new [ExoPlayer] instance. [getInstance] should be preferred where possible.
          */
         @OptIn(UnstableApi::class)
-        private fun createInstance(
+        fun createInstance(
             context: Context,
             server: StashServer,
-            skipForward: Long,
-            skipBack: Long,
+            skipParams: SkipParams,
         ): ExoPlayer {
             releasePlayer()
             val dataSourceFactory =
@@ -125,6 +98,24 @@ class StashExoPlayer private constructor() {
                     else -> throw IllegalArgumentException("Unknown HTTP client: $httpClientChoice")
                 }
             Log.d(TAG, "createInstance")
+            val skipForward =
+                when (skipParams) {
+                    is SkipParams.Default ->
+                        PreferenceManager
+                            .getDefaultSharedPreferences(context)
+                            .getInt("skip_forward_time", 30) * 1000L
+
+                    is SkipParams.Values -> skipParams.skipForward
+                }
+            val skipBack =
+                when (skipParams) {
+                    is SkipParams.Default ->
+                        PreferenceManager
+                            .getDefaultSharedPreferences(context)
+                            .getInt("skip_back_time", 10) * 1000L
+
+                    is SkipParams.Values -> skipParams.skipBack
+                }
             return ExoPlayer
                 .Builder(context)
 //                .setLoadControl(
@@ -149,6 +140,16 @@ class StashExoPlayer private constructor() {
                 ).setSeekBackIncrementMs(skipBack)
                 .setSeekForwardIncrementMs(skipForward)
                 .build()
+                .also {
+                    if (getPreference(
+                            context,
+                            R.string.pref_key_playback_debug_logging,
+                            false,
+                        )
+                    ) {
+                        it.addAnalyticsListener(EventLogger())
+                    }
+                }
         }
 
         @OptIn(UnstableApi::class)

@@ -7,6 +7,9 @@ import android.util.Log
 import androidx.annotation.FontRes
 import androidx.core.content.edit
 import androidx.core.content.res.ResourcesCompat
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.preference.PreferenceManager
 import androidx.room.Room
 import com.github.damontecres.stashapp.data.room.AppDatabase
@@ -79,6 +82,8 @@ class StashApplication : Application() {
         }
         ACRA.errorReporter.putCustomData("SDK_INT", Build.VERSION.SDK_INT.toString())
 
+        ProcessLifecycleOwner.get().lifecycle.addObserver(LifecycleObserverImpl())
+
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val currentVersion = prefs.getString(VERSION_NAME_CURRENT_KEY, null)
         val currentVersionCode = prefs.getLong(VERSION_CODE_CURRENT_KEY, -1)
@@ -133,6 +138,23 @@ class StashApplication : Application() {
     override fun onTrimMemory(level: Int) {
         Log.w(TAG, "onTrimMemory: level=$level")
         super.onTrimMemory(level)
+    }
+
+    inner class LifecycleObserverImpl : DefaultLifecycleObserver {
+        override fun onPause(owner: LifecycleOwner) {
+            Log.v(TAG, "LifecycleObserverImpl.onPause")
+            StashExoPlayer.releasePlayer()
+        }
+
+        override fun onStop(owner: LifecycleOwner) {
+            Log.v(TAG, "LifecycleObserverImpl.onStop")
+            StashExoPlayer.releasePlayer()
+        }
+
+        override fun onDestroy(owner: LifecycleOwner) {
+            Log.v(TAG, "LifecycleObserverImpl.onDestroy")
+            StashExoPlayer.releasePlayer()
+        }
     }
 
     companion object {

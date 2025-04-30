@@ -62,10 +62,7 @@ class MainFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         headersState = HEADERS_DISABLED
-
         setupUIElements()
-        setupEventListeners()
-
         adapter = rowsAdapter
     }
 
@@ -74,6 +71,8 @@ class MainFragment :
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+
+        setupEventListeners()
 
         // Override the focus search so that pressing up from the rows will move to search first
         val browseFrameLayout =

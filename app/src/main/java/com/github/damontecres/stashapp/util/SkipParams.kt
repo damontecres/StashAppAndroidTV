@@ -1,13 +1,10 @@
 package com.github.damontecres.stashapp.util
 
-sealed class SkipParams(
-    val skipForward: Long,
-    val skipBack: Long,
-) {
-    data object Default : SkipParams(-1, -1)
+sealed interface SkipParams {
+    data object Default : SkipParams
 
-    class Values(
-        skipForward: Long,
-        skipBack: Long,
-    ) : SkipParams(skipForward, skipBack)
+    data class Values(
+        val skipForward: Long,
+        val skipBack: Long,
+    ) : SkipParams
 }
