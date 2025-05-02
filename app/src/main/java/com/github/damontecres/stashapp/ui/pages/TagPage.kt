@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,6 +40,7 @@ import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TabWithSubItems
 import com.github.damontecres.stashapp.ui.components.TableRow
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
+import com.github.damontecres.stashapp.ui.filterArgsSaver
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -198,20 +200,25 @@ fun TagPage(
                 ),
                 TabProvider
                     (stringResource(R.string.stashapp_sub_tags)) { positionCallback ->
-                        StashGridTab(
-                            name = stringResource(R.string.stashapp_sub_tags),
-                            server = server,
-                            initialFilter =
+                        var filter by rememberSaveable(saver = filterArgsSaver) {
+                            mutableStateOf(
                                 FilterArgs(
                                     dataType = DataType.TAG,
                                     objectFilter = TagFilterType(parents = tagsFunc(false)),
                                 ),
+                            )
+                        }
+                        StashGridTab(
+                            name = stringResource(R.string.stashapp_sub_tags),
+                            server = server,
+                            initialFilter = filter,
                             itemOnClick = itemOnClick,
                             longClicker = longClicker,
                             modifier = Modifier,
                             positionCallback = positionCallback,
                             composeUiConfig = uiConfig,
                             subToggleLabel = null,
+                            onFilterChange = { filter = it },
                         )
                     },
             ).filter { it.name in uiTabs }
