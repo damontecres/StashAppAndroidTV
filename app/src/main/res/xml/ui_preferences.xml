@@ -103,5 +103,11 @@
             app:defaultValue="@string/ui_theme_dark_appearance_choice_dark"
             app:entries="@array/ui_theme_dark_appearance_choices"
             app:entryValues="@array/ui_theme_dark_appearance_choices" />
+        <SwitchPreference
+            app:key="@string/pref_key_playback_show_skip_progress"
+            app:title="Show progress when skipping"
+            app:summaryOn="Enabled"
+            app:summaryOff="Disabled"
+            app:defaultValue="true" />
     </PreferenceCategory>
 </androidx.preference.PreferenceScreen>
