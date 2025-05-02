@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -44,6 +45,7 @@ import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TabWithSubItems
 import com.github.damontecres.stashapp.ui.components.TableRow
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
+import com.github.damontecres.stashapp.ui.filterArgsSaver
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -210,27 +212,30 @@ fun StudioPage(
                     includeSubStudios,
                 ),
                 TabProvider(stringResource(DataType.TAG.pluralStringId)) { positionCallback ->
-                    StashGridTab(
-                        name = stringResource(DataType.TAG.pluralStringId),
-                        server = server,
-                        initialFilter =
+                    var filter by rememberSaveable(saver = filterArgsSaver) {
+                        mutableStateOf(
                             FilterArgs(
                                 dataType = DataType.TAG,
                                 override = DataSupplierOverride.StudioTags(studio.id),
                             ),
+                        )
+                    }
+                    StashGridTab(
+                        name = stringResource(DataType.TAG.pluralStringId),
+                        server = server,
+                        initialFilter = filter,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         modifier = Modifier,
                         positionCallback = positionCallback,
                         composeUiConfig = uiConfig,
                         subToggleLabel = null,
+                        onFilterChange = { filter = it },
                     )
                 },
                 TabProvider(stringResource(R.string.stashapp_subsidiary_studios)) { positionCallback ->
-                    StashGridTab(
-                        name = stringResource(R.string.stashapp_subsidiary_studios),
-                        server = server,
-                        initialFilter =
+                    var filter by rememberSaveable(saver = filterArgsSaver) {
+                        mutableStateOf(
                             FilterArgs(
                                 dataType = DataType.STUDIO,
                                 findFilter = tabFindFilter(server, PageFilterKey.STUDIO_CHILDREN),
@@ -245,6 +250,12 @@ fun StudioPage(
                                             ),
                                     ),
                             ),
+                        )
+                    }
+                    StashGridTab(
+                        name = stringResource(R.string.stashapp_subsidiary_studios),
+                        server = server,
+                        initialFilter = filter,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         modifier = Modifier,
@@ -258,6 +269,7 @@ fun StudioPage(
                             } else {
                                 null
                             },
+                        onFilterChange = { filter = it },
                     )
                 },
                 TabWithSubItems<SceneMarkerFilterType>(

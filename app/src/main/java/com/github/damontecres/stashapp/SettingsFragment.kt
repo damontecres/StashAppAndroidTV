@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
@@ -296,8 +297,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     """
                     Want to try the new beta UI based on Android Jetpack Compose?
 
-                    The new UI is looks more modern and performs better on lower memory devices!
-
                     Almost every feature is available in the new UI, but you can always switch back in "More UI Settings".
 
                     See the `StashAppAndroidTV` GitHub for more information and known issues.
@@ -315,7 +314,13 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         }
                         // Clear coil singleton
                         SingletonImageLoader.reset()
-                        requireActivity().finish()
+//                        requireActivity().finish()
+                        requireActivity().startActivity(
+                            Intent(
+                                requireActivity(),
+                                RootActivity::class.java,
+                            ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                        )
                     }
                 }
                 true

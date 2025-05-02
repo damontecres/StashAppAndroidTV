@@ -1,15 +1,18 @@
 package com.github.damontecres.stashapp.ui
 
 import android.content.Context
+import android.os.Bundle
 import android.util.Log
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusRequester
@@ -19,7 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getFilterArgs
+import com.github.damontecres.stashapp.util.putFilterArgs
 
 data class GlobalContext(
     val server: StashServer,
@@ -74,3 +80,13 @@ fun Modifier.isElementVisible(onVisibilityChanged: (Boolean) -> Unit) =
             } ?: false
         }
     }
+
+val filterArgsSaver =
+    Saver<MutableState<FilterArgs>, Any>(
+        save = { value ->
+            Bundle().putFilterArgs("filterArgs", value.value)
+        },
+        restore = { value ->
+            mutableStateOf((value as Bundle).getFilterArgs("filterArgs")!!)
+        },
+    )

@@ -40,6 +40,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.filterArgsSaver
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
 import com.github.damontecres.stashapp.util.PageFilterKey
@@ -134,15 +135,23 @@ fun createTabFunc(
         val name =
             StashApplication.getApplication().getString(initialFilter.dataType.pluralStringId)
         TabProvider(name) { positionCallback ->
+            var filter by rememberSaveable(name, saver = filterArgsSaver) {
+                mutableStateOf(
+                    initialFilter,
+                )
+            }
             StashGridTab(
                 name = name,
                 server = server,
-                initialFilter = initialFilter,
+                initialFilter = filter,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 modifier = Modifier,
                 positionCallback = positionCallback,
                 composeUiConfig = composeUiConfig,
+                onFilterChange = {
+                    filter = it
+                },
             )
         }
     }
@@ -164,7 +173,10 @@ data class TabWithSubItems<T : StashDataFilter>(
             StashApplication.getApplication().getString(dataType.pluralStringId)
         return TabProvider(name) { positionCallback ->
             var checked by rememberSaveable(this@TabWithSubItems) { mutableStateOf(includeSubTags) }
-            var filterArgs by remember(this@TabWithSubItems) {
+            var filterArgs by rememberSaveable(
+                this@TabWithSubItems,
+                saver = filterArgsSaver,
+            ) {
                 mutableStateOf(
                     FilterArgs(
                         dataType = dataType,
@@ -195,6 +207,7 @@ data class TabWithSubItems<T : StashDataFilter>(
                 },
                 subToggleChecked = checked,
                 composeUiConfig = composeUiConfig,
+                onFilterChange = { filterArgs = it },
             )
         }
     }
@@ -208,14 +221,15 @@ fun StashGridTab(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     composeUiConfig: ComposeUiConfig,
+    onFilterChange: (FilterArgs) -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: FilterViewModel = viewModel(key = name),
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
     subToggleLabel: String? = null,
     onSubToggleCheck: ((Boolean) -> Unit)? = null,
     subToggleChecked: Boolean = false,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
-    val viewModel = viewModel<FilterViewModel>(key = name)
     LaunchedEffect(server, initialFilter) {
         viewModel.setFilter(server, initialFilter)
     }
@@ -238,7 +252,7 @@ fun StashGridTab(
             modifier = modifier,
             positionCallback = positionCallback,
             uiConfig = composeUiConfig,
-            updateFilter = { viewModel.setFilter(server, it) },
+            updateFilter = { onFilterChange?.invoke(it) },
             letterPosition = viewModel::findLetterPosition,
             subToggleLabel = subToggleLabel,
             onSubToggleCheck = onSubToggleCheck,

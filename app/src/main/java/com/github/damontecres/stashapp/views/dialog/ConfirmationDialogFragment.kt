@@ -23,6 +23,11 @@ class ConfirmationDialogFragment(
             .setNegativeButton(getString(R.string.stashapp_actions_cancel), onClickListener)
             .create()
 
+    override fun onResume() {
+        super.onResume()
+        (dialog as? AlertDialog)?.getButton(DialogInterface.BUTTON_NEGATIVE)?.requestFocus()
+    }
+
     companion object {
         fun show(
             fm: FragmentManager,

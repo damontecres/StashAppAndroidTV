@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -67,7 +68,12 @@ class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
                         composeEnabledPref.isChecked = true
                         // Clear coil singleton
                         SingletonImageLoader.reset()
-                        requireActivity().finish()
+                        requireActivity().startActivity(
+                            Intent(
+                                requireActivity(),
+                                RootActivity::class.java,
+                            ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                        )
                     }
                 }
             } else if (newValue == false) {
@@ -80,7 +86,12 @@ class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
                         composeEnabledPref.isChecked = false
                         // Clear coil singleton
                         SingletonImageLoader.reset()
-                        requireActivity().finish()
+                        requireActivity().startActivity(
+                            Intent(
+                                requireActivity(),
+                                RootActivity::class.java,
+                            ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                        )
                     }
                 }
             }
