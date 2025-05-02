@@ -12,6 +12,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,9 +27,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -59,6 +63,7 @@ import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.media3.ui.compose.state.rememberPreviousButtonState
 import androidx.preference.PreferenceManager
+import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.SingletonImageLoader
 import coil3.request.CachePolicy
@@ -88,6 +93,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -214,6 +220,13 @@ fun PlaybackPageContent(
             prefs.getBoolean(context.getString(R.string.pref_key_show_playback_debug_info), false),
         )
     }
+    val showSkipProgress =
+        remember {
+            prefs.getBoolean(
+                context.getString(R.string.pref_key_playback_show_skip_progress),
+                true,
+            )
+        }
     val skipWithLeftRight = remember { prefs.getBoolean("skipWithDpad", true) }
     var streamDecision by remember { mutableStateOf<StreamDecision?>(null) }
 
@@ -232,11 +245,13 @@ fun PlaybackPageContent(
             }
         }
     var skipIndicatorDuration by remember { mutableLongStateOf(0L) }
+    var skipPosition by remember { mutableLongStateOf(0L) }
     val updateSkipIndicator = { delta: Long ->
         if (skipIndicatorDuration > 0 && delta < 0 || skipIndicatorDuration < 0 && delta > 0) {
             skipIndicatorDuration = 0
         }
         skipIndicatorDuration += delta
+        skipPosition = player.currentPosition
     }
     if (controllerViewState.controlsVisible) {
         // If controls become visible, cancel the skip indicator
@@ -351,6 +366,19 @@ fun PlaybackPageContent(
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 70.dp),
             )
+            if (showSkipProgress && playbackScene.duration != null) {
+                val percent =
+                    skipPosition.toFloat() / (playbackScene.duration.toLongMilliseconds).toFloat()
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomStart)
+                            .background(MaterialTheme.colorScheme.border)
+                            .clip(RectangleShape)
+                            .height(3.dp)
+                            .fillMaxWidth(percent),
+                ) {}
+            }
         }
 
         if (!controllerViewState.controlsVisible && subtitleIndex != null && skipIndicatorDuration == 0L) {
@@ -556,13 +584,13 @@ class PlaybackKeyHandler(
                 }
 
                 Key.MediaFastForward, Key.MediaSkipForward -> {
-                    updateSkipIndicator(player.seekForwardIncrement)
                     player.seekForward()
+                    updateSkipIndicator(player.seekForwardIncrement)
                 }
 
                 Key.MediaRewind, Key.MediaSkipBackward -> {
-                    updateSkipIndicator(-player.seekBackIncrement)
                     player.seekBack()
+                    updateSkipIndicator(-player.seekBackIncrement)
                 }
 
                 Key.MediaNext -> player.seekToNext()
