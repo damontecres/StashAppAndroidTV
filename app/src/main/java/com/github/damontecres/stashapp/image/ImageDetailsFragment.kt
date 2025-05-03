@@ -498,7 +498,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                                     ?.onBaseFile
                                     ?.size
                                     ?.toString()
-                                    ?.toIntOrNull() ?: 0,
+                                    ?.toLongOrNull() ?: 0,
                             )
                         add("Size: $size")
                     }

@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.components
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -18,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -45,9 +43,10 @@ import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashServer
+import kotlinx.coroutines.delay
 import kotlin.reflect.full.createInstance
+import kotlin.time.Duration.Companion.milliseconds
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun TabPage(
     name: AnnotatedString,
@@ -58,6 +57,13 @@ fun TabPage(
     val tabRowFocusRequester = remember { FocusRequester() }
     var showTabRowRaw by rememberSaveable { mutableStateOf(true) }
     val showTabRow by remember { derivedStateOf { showTabRowRaw } }
+
+    var resolvedTabIndex by remember { mutableIntStateOf(selectedTabIndex) }
+    LaunchedEffect(selectedTabIndex) {
+        // Add a slight delay so if scrolling quickly through tabs, can skip rending the skipped tabs
+        delay(200.milliseconds)
+        resolvedTabIndex = selectedTabIndex
+    }
 
     OneTimeLaunchedEffect {
         tabRowFocusRequester.tryRequestFocus()
@@ -73,12 +79,14 @@ fun TabPage(
                 Modifier
                     .align(Alignment.CenterHorizontally),
         )
-        AnimatedVisibility(showTabRow) {
+        AnimatedVisibility(
+            showTabRow,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        ) {
             TabRow(
                 selectedTabIndex = selectedTabIndex,
                 modifier =
                     Modifier
-                        .align(Alignment.CenterHorizontally)
                         .focusRestorer()
                         .focusRequester(tabRowFocusRequester),
             ) {
@@ -107,8 +115,8 @@ fun TabPage(
             }
         }
         if (tabs.isNotEmpty()) {
-            Log.i("Tabs", "selectedTabIndex=$selectedTabIndex")
-            tabs[selectedTabIndex].content(this) { columns, position ->
+//            Log.i("Tabs", "resolvedTabIndex=$resolvedTabIndex")
+            tabs[resolvedTabIndex].content(this) { columns, position ->
                 showTabRowRaw = position < columns
             }
         }

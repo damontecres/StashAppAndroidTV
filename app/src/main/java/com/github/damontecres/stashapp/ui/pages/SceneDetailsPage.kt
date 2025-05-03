@@ -76,6 +76,10 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.RowColumn
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeader
+import com.github.damontecres.stashapp.ui.showAddGroup
+import com.github.damontecres.stashapp.ui.showAddMarker
+import com.github.damontecres.stashapp.ui.showAddPerf
+import com.github.damontecres.stashapp.ui.showAddTag
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -89,6 +93,11 @@ import com.github.damontecres.stashapp.util.toLongMilliseconds
 import com.github.damontecres.stashapp.util.toSeconds
 import com.github.damontecres.stashapp.views.durationToString
 import kotlinx.coroutines.launch
+
+enum class AddRemove {
+    ADD,
+    REMOVE,
+}
 
 class SceneDetailsViewModel(
     server: StashServer,
@@ -139,62 +148,92 @@ class SceneDetailsViewModel(
         return this
     }
 
-    fun addPerformer(performerId: String) = mutatePerformers { add(performerId) }
+    fun addPerformer(performerId: String) = mutatePerformers(performerId, AddRemove.ADD)
 
-    fun removePerformer(performerId: String) = mutatePerformers { remove(performerId) }
+    fun removePerformer(performerId: String) = mutatePerformers(performerId, AddRemove.REMOVE)
 
-    private fun mutatePerformers(mutator: MutableList<String>.() -> Unit) {
+    private fun mutatePerformers(
+        id: String,
+        op: AddRemove,
+    ) {
         val perfs = performers.value?.map { it.id }
         perfs?.let {
             val mutable = it.toMutableList()
-            mutator.invoke(mutable)
+            when (op) {
+                AddRemove.ADD -> mutable.add(id)
+                AddRemove.REMOVE -> mutable.remove(id)
+            }
             viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                performers.value =
+                val results =
                     mutationEngine
                         .setPerformersOnScene(sceneId, mutable)
                         ?.performers
                         ?.map { it.performerData }
                         .orEmpty()
+                performers.value = results
+                if (op == AddRemove.ADD) {
+                    results.firstOrNull { it.id == id }?.let { showAddPerf(it) }
+                }
             }
         }
     }
 
-    fun addTag(id: String) = mutateTags { add(id) }
+    fun addTag(id: String) = mutateTags(id, AddRemove.ADD)
 
-    fun removeTag(id: String) = mutateTags { remove(id) }
+    fun removeTag(id: String) = mutateTags(id, AddRemove.REMOVE)
 
-    private fun mutateTags(mutator: MutableList<String>.() -> Unit) {
+    private fun mutateTags(
+        id: String,
+        op: AddRemove,
+    ) {
         val ids = tags.value?.map { it.id }
         ids?.let {
             val mutable = it.toMutableList()
-            mutator.invoke(mutable)
+            when (op) {
+                AddRemove.ADD -> mutable.add(id)
+                AddRemove.REMOVE -> mutable.remove(id)
+            }
             viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                tags.value =
+                val results =
                     mutationEngine
                         .setTagsOnScene(sceneId, mutable)
                         ?.tags
                         ?.map { it.tagData }
                         .orEmpty()
+                tags.value = results
+                if (op == AddRemove.ADD) {
+                    results.firstOrNull { it.id == id }?.let { showAddTag(it) }
+                }
             }
         }
     }
 
-    fun addGroup(id: String) = mutateGroup { add(id) }
+    fun addGroup(id: String) = mutateGroup(id, AddRemove.ADD)
 
-    fun removeGroup(id: String) = mutateGroup { remove(id) }
+    fun removeGroup(id: String) = mutateGroup(id, AddRemove.REMOVE)
 
-    private fun mutateGroup(mutator: MutableList<String>.() -> Unit) {
+    private fun mutateGroup(
+        id: String,
+        op: AddRemove,
+    ) {
         val ids = groups.value?.map { it.id }
         ids?.let {
             val mutable = it.toMutableList()
-            mutator.invoke(mutable)
+            when (op) {
+                AddRemove.ADD -> mutable.add(id)
+                AddRemove.REMOVE -> mutable.remove(id)
+            }
             viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                groups.value =
+                val results =
                     mutationEngine
                         .setGroupsOnScene(sceneId, mutable)
                         ?.groups
                         ?.map { it.group.groupData }
                         .orEmpty()
+                groups.value = results
+                if (op == AddRemove.ADD) {
+                    results.firstOrNull { it.id == id }?.let { showAddGroup(it) }
+                }
             }
         }
     }
@@ -215,6 +254,7 @@ class SceneDetailsViewModel(
                         ?.apply { add(m) }
                         ?.sortedBy { it.seconds }
                         ?: listOf(m)
+                showAddMarker(m)
             }
         }
     }

@@ -23,8 +23,9 @@ class ServerPreferences(
 ) {
     private val serverKey = server.url.replace(Regex("[^\\w.]"), "_")
 
-    val preferences: SharedPreferences =
+    val preferences: SharedPreferences by lazy {
         StashApplication.getApplication().getSharedPreferences(serverKey, Context.MODE_PRIVATE)
+    }
 
     private val _defaultFilters = mutableMapOf<DataType, FilterArgs>()
     val defaultFilters: Map<DataType, FilterArgs> = _defaultFilters

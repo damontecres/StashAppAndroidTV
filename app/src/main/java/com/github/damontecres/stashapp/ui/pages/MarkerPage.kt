@@ -1,5 +1,10 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -227,8 +233,31 @@ fun MarkerPageContent(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
+
+            val interactionSource = remember { MutableInteractionSource() }
+            val isFocused = interactionSource.collectIsFocusedAsState().value
+            val bgColor =
+                if (isFocused) {
+                    MaterialTheme.colorScheme.onPrimary.copy(alpha = .75f)
+                } else {
+                    Color.Unspecified
+                }
             Text(
-                modifier = Modifier,
+                modifier =
+                    Modifier
+                        .background(bgColor, shape = RoundedCornerShape(8.dp))
+                        .clickable(
+                            enabled = true,
+                            interactionSource = interactionSource,
+                            indication = LocalIndication.current,
+                        ) {
+                            navigationManager.navigate(
+                                Destination.Item(
+                                    DataType.SCENE,
+                                    marker.scene.videoSceneData.id,
+                                ),
+                            )
+                        },
                 text = marker.scene.videoSceneData.titleOrFilename ?: "",
                 color = MaterialTheme.colorScheme.onBackground,
                 style =

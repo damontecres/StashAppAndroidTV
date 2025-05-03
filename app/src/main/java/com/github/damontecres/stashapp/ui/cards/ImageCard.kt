@@ -17,6 +17,7 @@ import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.titleOrFilename
 import java.util.EnumMap
 
 @Composable
@@ -60,7 +61,7 @@ fun ImageCard(
         imageUrl = imageUrl,
         defaultImageDrawableRes = R.drawable.default_image,
         videoUrl = item.paths.preview,
-        title = item.title ?: "",
+        title = item.titleOrFilename ?: "",
         subtitle = {
             Text(concatIfNotBlank(" - ", details))
         },
