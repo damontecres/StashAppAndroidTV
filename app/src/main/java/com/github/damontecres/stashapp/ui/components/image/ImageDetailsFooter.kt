@@ -58,7 +58,7 @@ fun ImageDetailsFooter(
                 stringResource(R.string.stashapp_filesize),
                 it.size
                     .toString()
-                    .toIntOrNull()
+                    .toLongOrNull()
                     ?.let { bytes -> formatBytes(bytes) } ?: it.size.toString(),
             )
         }

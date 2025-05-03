@@ -8,6 +8,8 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
+import com.github.damontecres.stashapp.ui.showAddTag
+import com.github.damontecres.stashapp.ui.showShort
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -65,6 +67,7 @@ class MarkerDetailsViewModel : ViewModel() {
                 _item.value = result
                 _primaryTag.value = result.primary_tag.tagData
                 _tags.value = result.tags.map { it.tagData }
+                showShort("Set primary tag to '${result.primary_tag.tagData.name}'")
             }
         }
     }
@@ -85,6 +88,7 @@ class MarkerDetailsViewModel : ViewModel() {
                 _item.value = result
                 _primaryTag.value = result.primary_tag.tagData
                 _tags.value = result.tags.map { it.tagData }
+                result.tags.firstOrNull { it.tagData.id == tagId }?.let { showAddTag(it.tagData) }
             }
         }
     }

@@ -61,7 +61,7 @@ fun SceneDetailsFooter(
                 stringResource(R.string.stashapp_filesize),
                 file.size
                     .toString()
-                    .toIntOrNull()
+                    .toLongOrNull()
                     ?.let { bytes -> formatBytes(bytes) } ?: file.size.toString(),
             )
         }

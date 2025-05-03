@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
@@ -62,10 +63,13 @@ import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationListener
+import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
+import com.github.damontecres.stashapp.ui.GlobalContext
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.ItemDetailsFooter
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -623,40 +627,72 @@ private fun PerformerDetailsPreview() {
         LongClicker<Any> { item, filterAndPosition ->
         }
 
-    AppTheme {
-        PerformerDetails(
-            perf = performer,
-            tags = listOf(tagPreview, tagPreview.copy(id = "723")),
-            studios = listOf(),
-            favorite = performer.favorite,
-            favoriteClick = {},
-            rating100 = performer.rating100 ?: 0,
-            rating100Click = {},
-            uiConfig =
-                ComposeUiConfig(
-                    ratingAsStars = true,
-                    starPrecision = StarRatingPrecision.HALF,
-                    showStudioAsText = true,
-                    debugTextEnabled = true,
-                    showTitleDuringPlayback = true,
-                    readOnlyModeEnabled = false,
-                    cardSettings =
-                        CardUiSettings(
-                            maxSearchResults = 25,
-                            playVideoPreviews = true,
-                            videoPreviewAudio = false,
-                            columns = 5,
-                            showRatings = true,
-                            imageCrop = true,
-                            videoDelay = 1,
-                        ),
-                ),
-            itemOnClick = itemOnClick,
-            longClicker = longClicker,
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .background(color = MaterialTheme.colorScheme.background),
-        )
+    CompositionLocalProvider(
+        LocalGlobalContext provides
+            GlobalContext(
+                StashServer("http://0.0.0.0", null),
+                object : NavigationManager {
+                    override var previousDestination: Destination?
+                        get() = TODO("Not yet implemented")
+                        set(value) {}
+
+                    override fun navigate(destination: Destination) {
+                        TODO("Not yet implemented")
+                    }
+
+                    override fun goBack() {
+                        TODO("Not yet implemented")
+                    }
+
+                    override fun goToMain() {
+                        TODO("Not yet implemented")
+                    }
+
+                    override fun clearPinFragment() {
+                        TODO("Not yet implemented")
+                    }
+
+                    override fun addListener(listener: NavigationListener) {
+                        TODO("Not yet implemented")
+                    }
+                },
+            ),
+    ) {
+        AppTheme {
+            PerformerDetails(
+                perf = performer,
+                tags = listOf(tagPreview, tagPreview.copy(id = "723")),
+                studios = listOf(),
+                favorite = performer.favorite,
+                favoriteClick = {},
+                rating100 = performer.rating100 ?: 0,
+                rating100Click = {},
+                uiConfig =
+                    ComposeUiConfig(
+                        ratingAsStars = true,
+                        starPrecision = StarRatingPrecision.HALF,
+                        showStudioAsText = true,
+                        debugTextEnabled = true,
+                        showTitleDuringPlayback = true,
+                        readOnlyModeEnabled = false,
+                        cardSettings =
+                            CardUiSettings(
+                                maxSearchResults = 25,
+                                playVideoPreviews = true,
+                                videoPreviewAudio = false,
+                                columns = 5,
+                                showRatings = true,
+                                imageCrop = true,
+                                videoDelay = 1,
+                            ),
+                    ),
+                itemOnClick = itemOnClick,
+                longClicker = longClicker,
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(color = MaterialTheme.colorScheme.background),
+            )
+        }
     }
 }

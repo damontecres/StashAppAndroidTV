@@ -94,7 +94,7 @@ fun StudioPage(
             Optional.present(
                 HierarchicalMultiCriterionInput(
                     value = Optional.present(listOf(studio.id)),
-                    modifier = CriterionModifier.INCLUDES_ALL,
+                    modifier = CriterionModifier.INCLUDES,
                     depth = Optional.present(if (includeSubStudios) -1 else 0),
                 ),
             )
