@@ -35,8 +35,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
@@ -475,7 +475,7 @@ fun FragmentContent(
             }
             // TODO should each "root" page have a separate back stack so pressing back on the "root" scene filter page does:
             // 1. opens drawer (instead of going back to main), 2. back again goes to main
-
+            var serverFocused by remember { mutableStateOf(false) }
             NavigationDrawer(
                 modifier = Modifier.focusRequester(drawerFocusRequester),
                 drawerState = drawerState,
@@ -487,48 +487,59 @@ fun FragmentContent(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        var serverFocused by remember { mutableStateOf(false) }
-                        NavigationDrawerItem(
-                            modifier =
-                                Modifier
-                                    .onFocusChanged {
-                                        serverFocused = it.isFocused
-                                    },
-                            selected = false,
-                            onClick = {
-                                navigationManager.navigate(
-                                    Destination.ManageServers(
-                                        false,
-                                    ),
-                                )
-                            },
-                            leadingContent = {
-                                Icon(
-                                    painterResource(id = R.mipmap.stash_logo),
-                                    contentDescription = null,
-                                )
-                            },
-                        ) {
-                            Text(
-                                modifier =
-                                    Modifier.enableMarquee(serverFocused),
-                                text = server.url,
-                                maxLines = 1,
-                            )
-                        }
-
-                        // Group of item with same padding
-
                         LazyColumn(
                             contentPadding = PaddingValues(0.dp),
                             modifier =
                                 Modifier
                                     .focusGroup()
-                                    .focusRestorer(initialFocus)
+                                    .focusProperties {
+                                        onExit = {
+                                            val selectedIndex = pages.indexOf(selectedScreen)
+                                            if (selectedIndex !in listState.layoutInfo.visibleItemsInfo.map { it.index }) {
+                                                scope.launch(StashCoroutineExceptionHandler()) {
+                                                    listState.animateScrollToItem(selectedIndex)
+                                                }
+                                            }
+                                        }
+                                        onEnter = {
+                                            initialFocus.tryRequestFocus()
+                                        }
+                                    }
+//                                    .focusRestorer(initialFocus)
                                     .selectableGroup(),
                             state = listState,
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
+                            item {
+                                NavigationDrawerItem(
+                                    modifier =
+                                        Modifier
+                                            .onFocusChanged {
+                                                serverFocused = it.isFocused
+                                            },
+                                    selected = false,
+                                    onClick = {
+                                        navigationManager.navigate(
+                                            Destination.ManageServers(
+                                                false,
+                                            ),
+                                        )
+                                    },
+                                    leadingContent = {
+                                        Icon(
+                                            painterResource(id = R.mipmap.stash_logo),
+                                            contentDescription = null,
+                                        )
+                                    },
+                                ) {
+                                    Text(
+                                        modifier =
+                                            Modifier.enableMarquee(serverFocused),
+                                        text = server.url,
+                                        maxLines = 1,
+                                    )
+                                }
+                            }
                             items(
                                 pages,
                                 key = null,
@@ -537,7 +548,7 @@ fun FragmentContent(
                                     modifier =
                                         Modifier
                                             .ifElse(
-                                                currentScreen == page,
+                                                selectedScreen == page,
                                                 Modifier
                                                     .focusRequester(initialFocus),
                                             ).isElementVisible { visiblePages[page] = it },
