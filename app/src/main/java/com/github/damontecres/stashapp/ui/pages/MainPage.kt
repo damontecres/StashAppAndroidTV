@@ -158,13 +158,7 @@ fun MainPage(
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-            val checkForUpdates =
-                PreferenceManager
-                    .getDefaultSharedPreferences(context)
-                    .getBoolean("autoCheckForUpdates", true)
-            if (checkForUpdates) {
-                UpdateChecker.checkForUpdate(context, false)
-            }
+            UpdateChecker.maybeShowUpdateToast(context, false)
         }
     }
     if (frontPageRows.isEmpty()) {

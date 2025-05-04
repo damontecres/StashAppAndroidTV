@@ -89,14 +89,8 @@ open class ServerViewModel : ViewModel() {
     }
 
     fun maybeShowUpdate(context: Context) {
-        val checkForUpdates =
-            PreferenceManager
-                .getDefaultSharedPreferences(StashApplication.getApplication())
-                .getBoolean("autoCheckForUpdates", true)
-        if (checkForUpdates) {
-            viewModelScope.launch(StashCoroutineExceptionHandler()) {
-                UpdateChecker.checkForUpdate(context, false)
-            }
+        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+            UpdateChecker.maybeShowUpdateToast(context, false)
         }
     }
 
