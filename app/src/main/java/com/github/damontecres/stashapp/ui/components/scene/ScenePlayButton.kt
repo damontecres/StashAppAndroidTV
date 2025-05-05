@@ -44,6 +44,7 @@ fun PlayButtons(
     oCounterOnLongClick: () -> Unit,
     buttonOnFocusChanged: (FocusState) -> Unit,
     focusRequester: FocusRequester,
+    alwaysStartFromBeginning: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val firstFocus = remember { FocusRequester() }
@@ -55,7 +56,7 @@ fun PlayButtons(
                 .focusGroup()
                 .focusRestorer { firstFocus },
     ) {
-        if (resume > 0) {
+        if (resume > 0 && !alwaysStartFromBeginning) {
             item {
 //                LaunchedEffect(Unit) { firstFocus.tryRequestFocus() }
                 PlayButton(

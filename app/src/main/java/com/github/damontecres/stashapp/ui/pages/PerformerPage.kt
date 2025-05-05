@@ -675,6 +675,7 @@ private fun PerformerDetailsPreview() {
                         debugTextEnabled = true,
                         showTitleDuringPlayback = true,
                         readOnlyModeEnabled = false,
+                        showCardProgress = true,
                         cardSettings =
                             CardUiSettings(
                                 maxSearchResults = 25,

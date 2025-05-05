@@ -16,6 +16,7 @@ data class ComposeUiConfig(
     val debugTextEnabled: Boolean,
     val showTitleDuringPlayback: Boolean,
     val readOnlyModeEnabled: Boolean,
+    val showCardProgress: Boolean,
     val cardSettings: CardUiSettings,
 ) {
     val readOnlyModeDisabled = !readOnlyModeEnabled
@@ -43,6 +44,7 @@ data class ComposeUiConfig(
                     ),
                 cardSettings = ServerViewModel.createUiSettings(context),
                 showTitleDuringPlayback = prefs.getBoolean("exoShowTitle", true),
+                showCardProgress = !server.serverPreferences.alwaysStartFromBeginning,
                 readOnlyModeEnabled =
                     prefs.getBoolean(
                         context.getString(R.string.pref_key_read_only_mode),
