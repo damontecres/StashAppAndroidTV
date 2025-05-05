@@ -15,6 +15,7 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.concatIfNotBlank
+import com.github.damontecres.stashapp.util.name
 import java.util.EnumMap
 
 @Composable
@@ -53,7 +54,7 @@ fun GalleryCard(
         imageUrl = imageUrl,
         defaultImageDrawableRes = R.drawable.default_gallery,
         videoUrl = videoUrl,
-        title = item.title ?: "",
+        title = item.name ?: "",
         subtitle = {
             Text(concatIfNotBlank(" - ", details))
         },

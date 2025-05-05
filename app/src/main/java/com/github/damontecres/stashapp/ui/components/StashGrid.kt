@@ -429,13 +429,13 @@ fun StashGrid(
                         return@onKeyEvent true
                     } else if (useBackToJump && it.key == Key.Back && focusedIndex > 0) {
                         scope.launch(StashCoroutineExceptionHandler()) {
-                            focusOn(0)
                             if (focusedIndex < (columns * 6)) {
                                 // If close, animate the scroll
                                 gridState.animateScrollToItem(0, 0)
                             } else {
                                 gridState.scrollToItem(0, 0)
                             }
+                            focusOn(0)
                             zeroFocus.tryRequestFocus()
                         }
                         return@onKeyEvent true

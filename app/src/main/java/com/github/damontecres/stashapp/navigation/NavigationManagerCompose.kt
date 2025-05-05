@@ -172,8 +172,11 @@ class NavigationManagerCompose(
      * End the current fragment and go to the previous one
      */
     override fun goBack() {
-        // Hacky
-        controller?.pop()
+        if (getCurrentFragment() == navDrawerFragment) {
+            controller?.pop()
+        } else {
+            fragmentManager.popBackStack()
+        }
     }
 
     /**
