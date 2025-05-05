@@ -107,3 +107,8 @@ fun showAddPerf(perf: PerformerData) = showShort("Added performer '${perf.name}'
 fun showAddGroup(group: GroupData) = showShort("Added group '${group.name}'")
 
 fun showAddMarker(marker: MarkerData) = showShort("Added marker at ${marker.seconds.seconds}")
+
+inline fun <T> List<T>.indexOfFirstOrNull(predicate: (T) -> Boolean): Int? {
+    val index = this.indexOfFirst(predicate)
+    return if (index >= 0) index else null
+}

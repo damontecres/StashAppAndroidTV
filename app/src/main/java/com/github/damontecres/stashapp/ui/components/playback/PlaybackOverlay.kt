@@ -27,11 +27,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
@@ -66,6 +65,8 @@ import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.RootCard
 import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
+import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.CoilPreviewTransformation
 import com.github.damontecres.stashapp.util.defaultCardHeight
 import com.github.damontecres.stashapp.util.defaultCardWidth
@@ -78,6 +79,7 @@ import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -379,7 +381,6 @@ fun SeekPreviewImage(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SceneMarkerBar(
     uiConfig: ComposeUiConfig,
@@ -390,21 +391,27 @@ fun SceneMarkerBar(
     modifier: Modifier = Modifier,
 ) {
     if (markers.isNotEmpty()) {
-        val firstFocus = remember { FocusRequester() }
+        val focusRequesters =
+            remember {
+                markers.map { FocusRequester() }
+            }
         LazyRow(
             modifier =
                 modifier
-                    .focusRestorer { firstFocus },
+                    .focusProperties {
+                        onEnter = {
+                            // Start on the next marker from the current position
+                            val pos = player.currentPosition.milliseconds
+                            val nextMarkerIndex =
+                                markers.indexOfFirstOrNull { it.seconds >= pos }
+                                    ?: markers.lastIndex
+                            focusRequesters[nextMarkerIndex].tryRequestFocus()
+                        }
+                    },
             contentPadding = PaddingValues(8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             itemsIndexed(markers, key = { _, item -> item.id }) { index, item ->
-                val cardModifier =
-                    if (index == 0) {
-                        Modifier.focusRequester(firstFocus)
-                    } else {
-                        Modifier
-                    }
                 BasicMarkerCard(
                     marker = item,
                     onClick = {
@@ -413,7 +420,8 @@ fun SceneMarkerBar(
                     },
                     uiConfig = uiConfig,
                     modifier =
-                        cardModifier
+                        Modifier
+                            .focusRequester(focusRequesters[index])
                             .onFocusChanged {
 //                                    Log.i(TAG, "Marker ${item.id} focused: ${it.isFocused}")
                                 if (it.isFocused) {

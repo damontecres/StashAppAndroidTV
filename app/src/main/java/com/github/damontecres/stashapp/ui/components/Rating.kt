@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
@@ -56,6 +61,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 
 enum class StarRatingPrecision {
@@ -138,14 +144,15 @@ fun StarRating(
     bgColor: Color = AppColors.TransparentBlack75, // MaterialTheme.colorScheme.background,
 ) {
     var tempRating by remember(rating100) { mutableIntStateOf(rating100) }
-    val percentage = remember(rating100) { (if (enabled) tempRating else rating100) / 100f }
+    val percentage = (if (enabled) tempRating else rating100) / 100f
+    val focusRequesters = remember { List(5) { FocusRequester() } }
     Box(
         modifier =
             modifier
                 .clip(RoundedCornerShape(16.dp))
                 .background(bgColor),
     ) {
-        Row(
+        LazyRow(
             modifier =
                 Modifier
                     .selectableGroup()
@@ -161,78 +168,97 @@ fun StarRating(
                                 )
                             }
                         }
+                    }.focusGroup()
+                    .focusProperties {
+                        onEnter = {
+                            val index =
+                                if (rating100 <= 20) {
+                                    0
+                                } else if (rating100 <= 40) {
+                                    1
+                                } else if (rating100 <= 60) {
+                                    2
+                                } else if (rating100 <= 80) {
+                                    3
+                                } else {
+                                    4
+                                }
+                            focusRequesters[index].tryRequestFocus()
+                        }
                     },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
             for (i in 1..5) {
-                val isRated = (if (enabled) tempRating else rating100) >= (i * 20)
-                val icon = Icons.Filled.Star
-                var focused by remember { mutableStateOf(false) }
+                item {
+                    val isRated = (if (enabled) tempRating else rating100) >= (i * 20)
+                    val icon = Icons.Filled.Star
+                    var focused by remember { mutableStateOf(false) }
 
-                // TODO this still looks weird with fractional star
-                val focusedColor =
-                    if (focused) {
-                        MaterialTheme.colorScheme.border
-                    } else {
-                        Color.Unspecified
-                    }
-                Box(
-                    modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(focusedColor),
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        tint = FilledStarColor,
-                        contentDescription = null,
+                    val focusedColor =
+                        if (focused) {
+                            MaterialTheme.colorScheme.border
+                        } else {
+                            Color.Unspecified
+                        }
+                    Box(
                         modifier =
-                            if (enabled) {
-                                Modifier
-                                    .onFocusChanged {
-                                        focused = it.isFocused
-                                        if (it.isFocused) {
-                                            tempRating = i * 20
-                                        } else {
-                                            tempRating = rating100
-                                        }
-                                    }.selectable(
-                                        selected = isRated,
-                                        onClick = {
-                                            val newRating100 =
-                                                when (precision) {
-                                                    StarRatingPrecision.FULL -> i * 20
-                                                    StarRatingPrecision.HALF -> {
-                                                        if (rating100 > i * 20) {
-                                                            i * 20
-                                                        } else if (rating100 == i * 20) {
-                                                            i * 20 - 10
-                                                        } else if (rating100 == i * 20 - 10) {
-                                                            (i - 1) * 20
-                                                        } else if (i == 1 && rating100 < 20) {
-                                                            0
-                                                        } else {
-                                                            (i) * 20
+                            Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(focusedColor),
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            tint = FilledStarColor,
+                            contentDescription = null,
+                            modifier =
+                                if (enabled) {
+                                    Modifier
+                                        .onFocusChanged {
+                                            focused = it.isFocused
+                                            if (it.isFocused) {
+                                                tempRating = i * 20
+                                            } else {
+                                                tempRating = rating100
+                                            }
+                                        }.focusRequester(focusRequesters[i - 1])
+                                        .selectable(
+                                            selected = isRated,
+                                            onClick = {
+                                                val newRating100 =
+                                                    when (precision) {
+                                                        StarRatingPrecision.FULL -> i * 20
+                                                        StarRatingPrecision.HALF -> {
+                                                            if (rating100 > i * 20) {
+                                                                i * 20
+                                                            } else if (rating100 == i * 20) {
+                                                                i * 20 - 10
+                                                            } else if (rating100 == i * 20 - 10) {
+                                                                (i - 1) * 20
+                                                            } else if (i == 1 && rating100 < 20) {
+                                                                0
+                                                            } else {
+                                                                (i) * 20
+                                                            }
+                                                        }
+
+                                                        StarRatingPrecision.QUARTER -> {
+                                                            // TODO
+                                                            null
                                                         }
                                                     }
-
-                                                    StarRatingPrecision.QUARTER -> {
-                                                        // TODO
-                                                        null
-                                                    }
+                                                if (newRating100 != null) {
+                                                    tempRating = newRating100
+                                                    onRatingChange(newRating100)
                                                 }
-                                            if (newRating100 != null) {
-                                                tempRating = newRating100
-                                                onRatingChange(newRating100)
-                                            }
-                                        },
-                                    )
-                            } else {
-                                Modifier
-                            }.fillMaxHeight()
-                                .aspectRatio(1f),
-                    )
+                                            },
+                                        )
+                                } else {
+                                    Modifier
+                                }.fillMaxHeight()
+                                    .aspectRatio(1f),
+                        )
+                    }
                 }
             }
         }

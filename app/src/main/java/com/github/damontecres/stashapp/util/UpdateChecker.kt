@@ -36,6 +36,7 @@ class UpdateChecker {
     companion object {
         private const val ASSET_NAME = "StashAppAndroidTV.apk"
         private const val DEBUG_ASSET_NAME = "StashAppAndroidTV-debug.apk"
+        private const val RELEASE_ASSET_NAME = "StashAppAndroidTV-release.apk"
 
         private const val APK_MIME_TYPE = "application/vnd.android.package-archive"
 
@@ -45,11 +46,14 @@ class UpdateChecker {
 
         private val NOTE_REGEX = Regex("<!-- app-note:(.+) -->")
 
-        suspend fun checkForUpdate(
+        suspend fun maybeShowUpdateToast(
             context: Context,
             showNegativeToast: Boolean = false,
         ) {
             val pref = PreferenceManager.getDefaultSharedPreferences(context)
+            if (!pref.getBoolean("autoCheckForUpdates", true)) {
+                return
+            }
 
             val now = Date()
             val lastUpdateCheckThreshold =
@@ -62,28 +66,27 @@ class UpdateChecker {
                     0,
                 )
             val timeSince = (now.time - lastUpdateCheck).milliseconds
-            Log.v(TAG, "Last update check was $timeSince ago")
-            pref.edit {
-                putLong(context.getString(R.string.pref_key_update_last_check), now.time)
-            }
-            if (lastUpdateCheckThreshold >= timeSince) {
-                Log.i(
-                    TAG,
-                    "Skipping update check, threshold is $lastUpdateCheckThreshold",
-                )
-                return
-            }
-
+            Log.v(TAG, "Last successful update check was $timeSince ago")
             val installedVersion = getInstalledVersion(context)
             val latestRelease = getLatestRelease(context)
             if (latestRelease != null && latestRelease.version.isGreaterThan(installedVersion)) {
                 Log.v(TAG, "Update available $installedVersion => ${latestRelease.version}")
-                Toast
-                    .makeText(
-                        context,
-                        "Update available: $installedVersion => ${latestRelease.version}!",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                pref.edit {
+                    putLong(context.getString(R.string.pref_key_update_last_check), now.time)
+                }
+                if (lastUpdateCheckThreshold >= timeSince) {
+                    Log.i(
+                        TAG,
+                        "Skipping update notification, threshold is $lastUpdateCheckThreshold",
+                    )
+                } else {
+                    Toast
+                        .makeText(
+                            context,
+                            "Update available: $installedVersion => ${latestRelease.version}!",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                }
             } else {
                 Log.v(TAG, "No update available for $installedVersion")
                 if (showNegativeToast) {
@@ -104,6 +107,15 @@ class UpdateChecker {
 
         suspend fun getLatestRelease(context: Context): Release? {
             return withContext(Dispatchers.IO) {
+                val preferredAsset =
+                    if (PreferenceManager
+                            .getDefaultSharedPreferences(context)
+                            .getBoolean("updatePreferRelease", true)
+                    ) {
+                        RELEASE_ASSET_NAME
+                    } else {
+                        DEBUG_ASSET_NAME
+                    }
                 val updateUrl =
                     PreferenceManager.getDefaultSharedPreferences(context).getStringNotNull(
                         "updateCheckUrl",
@@ -132,7 +144,7 @@ class UpdateChecker {
                                 ?.firstOrNull { asset ->
                                     val assetName =
                                         asset.jsonObject["name"]?.jsonPrimitive?.contentOrNull
-                                    assetName == ASSET_NAME || assetName == DEBUG_ASSET_NAME
+                                    assetName == ASSET_NAME || assetName == preferredAsset
                                 }?.jsonObject
                                 ?.get("browser_download_url")
                                 ?.jsonPrimitive

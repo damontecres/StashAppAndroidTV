@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  APK_SHORT_NAME: StashAppAndroidTV-debug.apk
+  APK_SHORT_NAME: StashAppAndroidTV-release.apk
   BRANCH_NAME: ${{ github.ref_name }}
   BUILD_TOOLS_VERSION: 35.0.0
 
@@ -56,7 +56,7 @@ jobs:
           echo "LATEST_TAG=$LATEST_TAG" >> "$GITHUB_ENV"
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
           echo "TAG_NAME=$TAG_NAME" >> "$GITHUB_ENV"
-      - name: Build app
+      - name: Build debug app
         id: buildapp
         env:
           KEY_ALIAS: "${{ secrets.KEY_ALIAS }}"
@@ -65,13 +65,23 @@ jobs:
           SIGNING_KEY: "${{ secrets.SIGNING_KEY }}"
         run: |
           ./gradlew clean assembleDebug
-          echo "apk=$(ls app/build/outputs/apk/debug/StashAppAndroidTV-debug*.apk)" >> "$GITHUB_OUTPUT"
+          echo "apk_debug=$(ls app/build/outputs/apk/debug/StashAppAndroidTV-debug*.apk)" >> "$GITHUB_OUTPUT"
+      - name: Build release app
+        id: buildrelease
+        env:
+          KEY_ALIAS: "${{ secrets.KEY_ALIAS }}"
+          KEY_PASSWORD: "${{ secrets.KEY_PASSWORD }}"
+          KEY_STORE_PASSWORD: "${{ secrets.KEY_STORE_PASSWORD }}"
+          SIGNING_KEY: "${{ secrets.SIGNING_KEY }}"
+        run: |
+          ./gradlew clean assembleRelease
+          echo "apk=$(ls app/build/outputs/apk/release/StashAppAndroidTV-release*.apk)" >> "$GITHUB_OUTPUT"
       - name: Verify signature
         run: |
-          ${{env.ANDROID_SDK_ROOT}}/build-tools/${{ env.BUILD_TOOLS_VERSION }}/apksigner verify --verbose --print-certs "${{ steps.buildapp.outputs.apk }}"
+          ${{env.ANDROID_SDK_ROOT}}/build-tools/${{ env.BUILD_TOOLS_VERSION }}/apksigner verify --verbose --print-certs "${{ steps.buildrelease.outputs.apk }}"
       - name: Copy APK to ${{ env.APK_SHORT_NAME }}
         run: |
-          cp "${{ steps.buildapp.outputs.apk }}" "${{ env.APK_SHORT_NAME }}"
+          cp "${{ steps.buildrelease.outputs.apk }}" "${{ env.APK_SHORT_NAME }}"
 
       - name: Delete ${{ env.TAG_NAME }} tag and release
         uses: dev-drprasad/delete-tag-and-release@v1.1
@@ -97,7 +107,7 @@ jobs:
         with:
           allowUpdates: true
           artifactErrorsFailBuild: true
-          artifacts: "${{ steps.buildapp.outputs.apk }},${{ env.APK_SHORT_NAME }}"
+          artifacts: "${{ steps.buildapp.outputs.apk_debug }},${{ steps.buildrelease.outputs.apk }},${{ env.APK_SHORT_NAME }}"
           draft: false
           generateReleaseNotes: false
           makeLatest: false
