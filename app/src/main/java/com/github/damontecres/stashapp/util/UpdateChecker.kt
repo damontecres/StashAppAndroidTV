@@ -107,6 +107,15 @@ class UpdateChecker {
 
         suspend fun getLatestRelease(context: Context): Release? {
             return withContext(Dispatchers.IO) {
+                val preferredAsset =
+                    if (PreferenceManager
+                            .getDefaultSharedPreferences(context)
+                            .getBoolean("updatePreferRelease", true)
+                    ) {
+                        RELEASE_ASSET_NAME
+                    } else {
+                        DEBUG_ASSET_NAME
+                    }
                 val updateUrl =
                     PreferenceManager.getDefaultSharedPreferences(context).getStringNotNull(
                         "updateCheckUrl",
@@ -135,9 +144,7 @@ class UpdateChecker {
                                 ?.firstOrNull { asset ->
                                     val assetName =
                                         asset.jsonObject["name"]?.jsonPrimitive?.contentOrNull
-                                    assetName == ASSET_NAME ||
-                                        assetName == RELEASE_ASSET_NAME ||
-                                        assetName == DEBUG_ASSET_NAME
+                                    assetName == ASSET_NAME || assetName == preferredAsset
                                 }?.jsonObject
                                 ?.get("browser_download_url")
                                 ?.jsonPrimitive
