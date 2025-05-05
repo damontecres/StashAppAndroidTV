@@ -56,16 +56,6 @@ jobs:
           echo "LATEST_TAG=$LATEST_TAG" >> "$GITHUB_ENV"
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
           echo "TAG_NAME=$TAG_NAME" >> "$GITHUB_ENV"
-      - name: Build debug app
-        id: buildapp
-        env:
-          KEY_ALIAS: "${{ secrets.KEY_ALIAS }}"
-          KEY_PASSWORD: "${{ secrets.KEY_PASSWORD }}"
-          KEY_STORE_PASSWORD: "${{ secrets.KEY_STORE_PASSWORD }}"
-          SIGNING_KEY: "${{ secrets.SIGNING_KEY }}"
-        run: |
-          ./gradlew clean assembleDebug
-          echo "apk_debug=$(ls app/build/outputs/apk/debug/StashAppAndroidTV-debug*.apk)" >> "$GITHUB_OUTPUT"
       - name: Build release app
         id: buildrelease
         env:
@@ -76,6 +66,16 @@ jobs:
         run: |
           ./gradlew clean assembleRelease
           echo "apk=$(ls app/build/outputs/apk/release/StashAppAndroidTV-release*.apk)" >> "$GITHUB_OUTPUT"
+      - name: Build debug app
+        id: buildapp
+        env:
+          KEY_ALIAS: "${{ secrets.KEY_ALIAS }}"
+          KEY_PASSWORD: "${{ secrets.KEY_PASSWORD }}"
+          KEY_STORE_PASSWORD: "${{ secrets.KEY_STORE_PASSWORD }}"
+          SIGNING_KEY: "${{ secrets.SIGNING_KEY }}"
+        run: |
+          ./gradlew assembleDebug
+          echo "apk_debug=$(ls app/build/outputs/apk/debug/StashAppAndroidTV-debug*.apk)" >> "$GITHUB_OUTPUT"
       - name: Verify signature
         run: |
           ${{env.ANDROID_SDK_ROOT}}/build-tools/${{ env.BUILD_TOOLS_VERSION }}/apksigner verify --verbose --print-certs "${{ steps.buildrelease.outputs.apk }}"
