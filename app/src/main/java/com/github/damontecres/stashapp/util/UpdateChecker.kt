@@ -36,6 +36,7 @@ class UpdateChecker {
     companion object {
         private const val ASSET_NAME = "StashAppAndroidTV.apk"
         private const val DEBUG_ASSET_NAME = "StashAppAndroidTV-debug.apk"
+        private const val RELEASE_ASSET_NAME = "StashAppAndroidTV-release.apk"
 
         private const val APK_MIME_TYPE = "application/vnd.android.package-archive"
 
@@ -134,7 +135,9 @@ class UpdateChecker {
                                 ?.firstOrNull { asset ->
                                     val assetName =
                                         asset.jsonObject["name"]?.jsonPrimitive?.contentOrNull
-                                    assetName == ASSET_NAME || assetName == DEBUG_ASSET_NAME
+                                    assetName == ASSET_NAME ||
+                                        assetName == RELEASE_ASSET_NAME ||
+                                        assetName == DEBUG_ASSET_NAME
                                 }?.jsonObject
                                 ?.get("browser_download_url")
                                 ?.jsonPrimitive
