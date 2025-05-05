@@ -102,7 +102,7 @@ jobs:
         with:
           allowUpdates: true
           artifactErrorsFailBuild: true
-          artifacts: "${{ steps.build.outputs.apk_debug }},${{ steps.build.outputs.apk }},${{ env.APK_SHORT_NAME }}"
+          artifacts: "${{ steps.build.outputs.apk_debug }},${{ steps.build.outputs.apk }},${{ env.APK_DEBUG_SHORT_NAME }},${{ env.APK_SHORT_NAME }}"
           draft: false
           generateReleaseNotes: false
           makeLatest: false
