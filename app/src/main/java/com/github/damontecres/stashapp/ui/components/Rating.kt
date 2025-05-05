@@ -222,7 +222,10 @@ fun StarRating(
                                                 tempRating = rating100
                                             }
                                         }.focusRequester(focusRequesters[i - 1])
-                                        .selectable(
+                                        .focusProperties {
+                                            left = if (i == 1)focusRequesters.last() else FocusRequester.Default
+                                            right = if (i == 5)focusRequesters.first() else FocusRequester.Default
+                                        }.selectable(
                                             selected = isRated,
                                             onClick = {
                                                 val newRating100 =

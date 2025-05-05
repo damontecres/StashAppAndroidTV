@@ -44,6 +44,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getUiTabs
+import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import kotlinx.coroutines.launch
 
@@ -147,7 +148,7 @@ fun GalleryPage(
                     ),
                 ),
             ).filter { it.name in uiTabs }
-        val title = AnnotatedString(gallery.title ?: "")
+        val title = AnnotatedString(gallery.name ?: "")
         TabPage(title, tabs, modifier)
     }
 }
