@@ -46,6 +46,7 @@ import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
+import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackMode
@@ -53,6 +54,7 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.ScrollableDialog
 import com.github.damontecres.stashapp.ui.components.TitleValueText
@@ -69,6 +71,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SceneDetailsHeader(
     scene: FullSceneData,
+    studio: StudioData?,
     rating100: Int,
     oCount: Int,
     uiConfig: ComposeUiConfig,
@@ -80,6 +83,7 @@ fun SceneDetailsHeader(
     onRatingChange: (Int) -> Unit,
     focusRequester: FocusRequester,
     bringIntoViewRequester: BringIntoViewRequester,
+    removeLongClicker: LongClicker<Any>,
     alwaysStartFromBeginning: Boolean,
     modifier: Modifier = Modifier,
     showRatingBar: Boolean = true,
@@ -262,11 +266,11 @@ fun SceneDetailsHeader(
                                 .fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
-                        if (scene.studio != null) {
+                        if (studio != null) {
                             val navigationManager = LocalGlobalContext.current.navigationManager
                             TitleValueText(
                                 stringResource(R.string.stashapp_studio),
-                                scene.studio.studioData.name,
+                                studio.name,
                                 modifier =
                                     Modifier.onFocusChanged {
                                         if (it.isFocused) {
@@ -277,9 +281,12 @@ fun SceneDetailsHeader(
                                     navigationManager.navigate(
                                         Destination.Item(
                                             DataType.STUDIO,
-                                            scene.studio.studioData.id,
+                                            studio.id,
                                         ),
                                     )
+                                },
+                                onLongClick = {
+                                    removeLongClicker.longClick(studio, null)
                                 },
                             )
                         }

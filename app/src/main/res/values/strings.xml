@@ -111,5 +111,6 @@
     <string name="searching">Searching...</string>
     <string name="ui_settings">Advanced UI Settings</string>
     <string name="set_rating">Set rating:</string>
+    <string name="set_studio">Set Studio</string>
 
 </resources>
