@@ -301,7 +301,11 @@ fun FragmentContent(
     var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
     val longClicker =
         remember {
-            DefaultLongClicker(navigationManager, itemOnClick) { dialogParams = it }
+            DefaultLongClicker(
+                navigationManager,
+                itemOnClick,
+                server.serverPreferences.alwaysStartFromBeginning,
+            ) { dialogParams = it }
         }
 
     // TODO this works, but sometimes requires restart when changed and going back from settings is awkward

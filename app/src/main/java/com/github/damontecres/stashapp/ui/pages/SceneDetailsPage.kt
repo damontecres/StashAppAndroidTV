@@ -591,6 +591,7 @@ fun SceneDetails(
                 onRatingChange = onRatingChange,
                 removeLongClicker = removeLongClicker,
                 studio = studio,
+                alwaysStartFromBeginning = server.serverPreferences.alwaysStartFromBeginning,
                 moreOnClick = {
                     showDialog =
                         DialogParams(
@@ -603,7 +604,11 @@ fun SceneDetails(
                                         Icons.Default.PlayArrow,
                                     ) {
                                         playOnClick(
-                                            scene.resume_position ?: 0,
+                                            if (server.serverPreferences.alwaysStartFromBeginning) {
+                                                0L
+                                            } else {
+                                                scene.resume_position ?: 0
+                                            },
                                             PlaybackMode.ForcedDirectPlay,
                                         )
                                     },
@@ -617,7 +622,11 @@ fun SceneDetails(
                                                 .getDefaultSharedPreferences(context)
                                                 .getString("stream_choice", "HLS")!!
                                         playOnClick(
-                                            scene.resume_position ?: 0,
+                                            if (server.serverPreferences.alwaysStartFromBeginning) {
+                                                0L
+                                            } else {
+                                                scene.resume_position ?: 0
+                                            },
                                             PlaybackMode.ForcedTranscode(format),
                                         )
                                     },

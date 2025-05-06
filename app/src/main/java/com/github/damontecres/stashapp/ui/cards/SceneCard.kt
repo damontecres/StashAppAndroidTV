@@ -97,7 +97,7 @@ fun SceneCard(
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                         text = videoFile.resolutionName().toString(),
                     )
-                    if (item.resume_time != null) {
+                    if (item.resume_time != null && uiConfig.showCardProgress) {
                         val percentWatched = item.resume_time / videoFile.duration
                         Box(
                             modifier =
