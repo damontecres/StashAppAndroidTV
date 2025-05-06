@@ -571,9 +571,13 @@ fun FragmentContent(
                                         if (refreshMain) {
                                             navigationManager.goToMain()
                                         } else {
-                                            navigationManager.navigateFromNavDrawer(
-                                                page.destination,
-                                            )
+                                            val pageDest =
+                                                if (page.destination is Destination.Filter) {
+                                                    page.destination.copy(filterArgs = page.destination.filterArgs.withResolvedRandom())
+                                                } else {
+                                                    page.destination
+                                                }
+                                            navigationManager.navigateFromNavDrawer(pageDest)
                                         }
                                     },
                                     leadingContent = {
