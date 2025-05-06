@@ -26,6 +26,7 @@ import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -107,6 +108,8 @@ fun showAddPerf(perf: PerformerData) = showShort("Added performer '${perf.name}'
 fun showAddGroup(group: GroupData) = showShort("Added group '${group.name}'")
 
 fun showAddMarker(marker: MarkerData) = showShort("Added marker at ${marker.seconds.seconds}")
+
+fun showSetStudio(studio: StudioData) = showShort("Set studio to '${studio.name}'")
 
 inline fun <T> List<T>.indexOfFirstOrNull(predicate: (T) -> Boolean): Int? {
     val index = this.indexOfFirst(predicate)

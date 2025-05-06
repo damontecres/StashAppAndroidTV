@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
@@ -80,6 +81,7 @@ import com.github.damontecres.stashapp.ui.showAddGroup
 import com.github.damontecres.stashapp.ui.showAddMarker
 import com.github.damontecres.stashapp.ui.showAddPerf
 import com.github.damontecres.stashapp.ui.showAddTag
+import com.github.damontecres.stashapp.ui.showSetStudio
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -114,6 +116,7 @@ class SceneDetailsViewModel(
     val galleries = MutableLiveData<List<GalleryData>>(listOf())
     val groups = MutableLiveData<List<GroupData>>(listOf())
     val markers = MutableLiveData<List<MarkerData>>(listOf())
+    val studio = MutableLiveData<StudioData?>(null)
 
     val rating100 = MutableLiveData(0)
     val oCount = MutableLiveData(0)
@@ -128,6 +131,7 @@ class SceneDetailsViewModel(
                     tags.value = scene.tags.map { it.tagData }
                     groups.value = scene.groups.map { it.group.groupData }
                     markers.value = scene.scene_markers.map { it.asMarkerData(scene) }
+                    studio.value = scene.studio?.studioData
                     this@SceneDetailsViewModel.scene = scene
 
                     loadingState.value = SceneLoadingState.Success(scene)
@@ -238,6 +242,20 @@ class SceneDetailsViewModel(
         }
     }
 
+    fun setStudio(id: String) = mutateStudio(id)
+
+    fun removeStudio() = mutateStudio(null)
+
+    private fun mutateStudio(id: String?) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            val result = mutationEngine.setStudioOnScene(sceneId, id)?.studio?.studioData
+            studio.value = result
+            if (result != null) {
+                showSetStudio(result)
+            }
+        }
+    }
+
     fun addMarker(marker: MarkerData) {
         viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
             val newMarker =
@@ -333,6 +351,7 @@ fun SceneDetailsPage(
     val markers by viewModel.markers.observeAsState(listOf())
     val rating100 by viewModel.rating100.observeAsState(0)
     val oCount by viewModel.oCount.observeAsState(0)
+    val studio by viewModel.studio.observeAsState(null)
 
     LaunchedEffect(Unit) {
         viewModel.init()
@@ -359,6 +378,7 @@ fun SceneDetailsPage(
                 galleries = galleries,
                 groups = groups,
                 markers = markers,
+                studio = studio,
                 uiConfig = uiConfig,
                 itemOnClick = itemOnClick,
                 playOnClick = playOnClick,
@@ -368,7 +388,7 @@ fun SceneDetailsPage(
                         is TagData, is SlimTagData -> viewModel.addTag(item.id)
                         is GroupData, is GroupRelationshipData -> viewModel.addGroup(item.id)
                         is GalleryData -> {} // TODO
-                        is StudioData -> {} // TODO
+                        is StudioData -> viewModel.setStudio(item.id)
                         is MarkerData -> viewModel.addMarker(item)
 
                         is FullMarkerData -> throw UnsupportedOperationException()
@@ -382,7 +402,7 @@ fun SceneDetailsPage(
                         is TagData, is SlimTagData -> viewModel.removeTag(item.id)
                         is GroupData, is GroupRelationshipData -> viewModel.removeGroup(item.id)
                         is GalleryData -> {} // TODO
-                        is StudioData -> {} // TODO
+                        is StudioData -> viewModel.removeStudio()
                         is MarkerData, is FullMarkerData -> viewModel.removeMarker(item.id)
 
                         is ImageData, is ExtraImageData -> throw UnsupportedOperationException()
@@ -422,6 +442,7 @@ fun SceneDetails(
     galleries: List<GalleryData>,
     groups: List<GroupData>,
     markers: List<MarkerData>,
+    studio: StudioData?,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
@@ -492,7 +513,10 @@ fun SceneDetails(
                     items =
                         buildList {
                             add(
-                                DialogItem("Go to", Icons.Default.PlayArrow) {
+                                DialogItem(
+                                    context.getString(R.string.go_to),
+                                    Icons.Default.PlayArrow,
+                                ) {
                                     itemOnClick.onClick(
                                         item,
                                         filterAndPosition,
@@ -510,6 +534,16 @@ fun SceneDetails(
                                 )
                             }
                             if (item !is GalleryData && uiConfig.readOnlyModeDisabled) {
+                                if (item is StudioData) {
+                                    add(
+                                        DialogItem(
+                                            context.getString(R.string.replace),
+                                            Icons.Default.Edit,
+                                        ) {
+                                            searchForDataType = SearchForParams(DataType.STUDIO)
+                                        },
+                                    )
+                                }
                                 add(
                                     DialogItem(
                                         onClick = { removeItem(item) },
@@ -555,6 +589,8 @@ fun SceneDetails(
                 playOnClick = playOnClick,
                 showRatingBar = showRatingBar,
                 onRatingChange = onRatingChange,
+                removeLongClicker = removeLongClicker,
+                studio = studio,
                 moreOnClick = {
                     showDialog =
                         DialogParams(
@@ -609,10 +645,10 @@ fun SceneDetails(
                                         },
                                     ),
                                     DialogItem(
-                                        context.getString(R.string.add_group),
-                                        DataType.GROUP.iconStringId,
+                                        context.getString(R.string.add_tag),
+                                        DataType.TAG.iconStringId,
                                     ) {
-                                        searchForDataType = SearchForParams(DataType.GROUP)
+                                        searchForDataType = SearchForParams(DataType.TAG)
                                     },
                                     DialogItem(
                                         context.getString(R.string.add_performer),
@@ -621,10 +657,16 @@ fun SceneDetails(
                                         searchForDataType = SearchForParams(DataType.PERFORMER)
                                     },
                                     DialogItem(
-                                        context.getString(R.string.add_tag),
-                                        DataType.TAG.iconStringId,
+                                        context.getString(R.string.set_studio),
+                                        DataType.STUDIO.iconStringId,
                                     ) {
-                                        searchForDataType = SearchForParams(DataType.TAG)
+                                        searchForDataType = SearchForParams(DataType.STUDIO)
+                                    },
+                                    DialogItem(
+                                        context.getString(R.string.add_group),
+                                        DataType.GROUP.iconStringId,
+                                    ) {
+                                        searchForDataType = SearchForParams(DataType.GROUP)
                                     },
                                 ),
                         )

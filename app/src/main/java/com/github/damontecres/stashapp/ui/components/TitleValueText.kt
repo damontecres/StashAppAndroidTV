@@ -18,7 +18,7 @@ package com.github.damontecres.stashapp.ui.components
 
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Column
@@ -43,9 +43,11 @@ fun TitleValueText(
     value: String,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
 ) {
     MaybeClickColumn(
         onClick = onClick,
+        onLongClick = onLongClick,
         modifier = modifier,
     ) {
         Text(
@@ -67,9 +69,10 @@ fun TitleValueText(
 private fun MaybeClickColumn(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    if (onClick != null) {
+    if (onClick != null || onLongClick != null) {
         val interactionSource = remember { MutableInteractionSource() }
         val isFocused by interactionSource.collectIsFocusedAsState()
         val bgColor =
@@ -84,11 +87,12 @@ private fun MaybeClickColumn(
                 modifier
                     .background(bgColor, shape = RoundedCornerShape(4.dp))
                     .ifElse(isFocused, Modifier.scale(1.1f))
-                    .clickable(
+                    .combinedClickable(
                         enabled = true,
                         interactionSource = interactionSource,
                         indication = LocalIndication.current,
-                        onClick = onClick,
+                        onClick = { onClick?.invoke() },
+                        onLongClick = { onLongClick?.invoke() },
                     ),
         )
     } else {
