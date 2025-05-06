@@ -115,6 +115,8 @@ private fun adjustFilter(filter: FilterArgs): FilterArgs =
         filter.copy(override = DataSupplierOverride.Playlist)
     }
 
+val maxPlaylistSize = 100 // TODO
+
 @Composable
 fun PlaylistPlaybackPage(
     server: StashServer,
@@ -126,8 +128,9 @@ fun PlaylistPlaybackPage(
     viewModel: FilterViewModel = viewModel(key = "main"),
     playlistViewModel: FilterViewModel = viewModel(key = "playlist"),
 ) {
+    Log.v("PlaybackPageContent", "startIndex=$startIndex")
     val context = LocalContext.current
-    val maxPlaylistSize = 100 // TODO
+
     LaunchedEffect(server, filterArgs) {
         // TODO switch to single query
         viewModel.setFilter(server, adjustFilter(filterArgs))
@@ -139,7 +142,7 @@ fun PlaylistPlaybackPage(
     LaunchedEffect(pager) {
         playlist = pager?.let {
             buildList {
-                for (i in startIndex..<(it.size).coerceAtMost(maxPlaylistSize)) {
+                for (i in 0..<(it.size).coerceAtMost(maxPlaylistSize)) {
                     it.getBlocking(i)?.let { item ->
                         if (filterArgs.dataType == DataType.SCENE) {
                             val scene = Scene.fromVideoSceneData(item as VideoSceneData)
@@ -182,6 +185,7 @@ fun PlaylistPlaybackPage(
         PlaylistPlaybackPageContent(
             server = server,
             playlist = playlist,
+            startIndex = startIndex,
             uiConfig = uiConfig,
             markersEnabled = filterArgs.dataType == DataType.SCENE,
             playlistPager = playlistPager,

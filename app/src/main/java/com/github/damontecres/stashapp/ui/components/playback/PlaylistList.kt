@@ -1,6 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
-import androidx.compose.foundation.ExperimentalFoundationApi
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,7 +38,6 @@ import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlaylistList(
     mediaItemCount: Int,
@@ -83,6 +82,7 @@ fun PlaylistList(
         }
     }
     LaunchedEffect(Unit) {
+        Log.v(TAG, "Focusing on currentIndex=$currentIndex")
         state.scrollToItem(currentIndex)
         focusRequester.tryRequestFocus()
     }
@@ -106,7 +106,7 @@ fun PlaylistItemCompose(
             modifier = Modifier.fillMaxSize(),
         ) {
             Text(
-                text = item.index.toString(),
+                text = (item.index + 1).toString(),
                 color = textColor,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(start = 8.dp),
