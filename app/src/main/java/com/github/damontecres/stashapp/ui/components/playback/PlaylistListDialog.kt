@@ -17,7 +17,6 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.PlaylistItem
 import com.github.damontecres.stashapp.data.toPlayListItem
-import com.github.damontecres.stashapp.ui.Material3AppTheme
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.MappedList
 
@@ -30,48 +29,46 @@ fun PlaylistListDialog(
     modifier: Modifier = Modifier,
 ) {
     if (show && pager != null) {
-        Material3AppTheme {
-            Dialog(
-                onDismissRequest = onDismiss,
-                properties = DialogProperties(usePlatformDefaultWidth = false),
-            ) {
-                val dialogWindowProvider = LocalView.current.parent as? DialogWindowProvider
-                dialogWindowProvider?.window?.let { window ->
-                    window.setGravity(Gravity.START)
-                    window.setDimAmount(0f)
-                }
-                PlaylistList(
-                    mediaItemCount = player.mediaItemCount,
-                    currentIndex = player.currentMediaItemIndex,
-                    mediaItemCountOffset = 0, // TODO
-                    items =
-                        MappedList(pager) { index, item ->
-                            when (item) {
-                                is MarkerData -> item.toPlayListItem(index)
-                                is SlimSceneData -> item.toPlayListItem(index)
-                                else -> {
-                                    PlaylistItem(
-                                        index,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                    )
-                                }
-                            }
-                        },
-                    title = pager.filter.name ?: stringResource(pager.filter.dataType.pluralStringId),
-                    onClick = { index ->
-                        player.seekTo(index, 0L)
-                        onDismiss.invoke()
-                    },
-                    modifier =
-                        modifier
-                            .fillMaxHeight()
-                            .background(MaterialTheme.colorScheme.secondaryContainer),
-                )
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(usePlatformDefaultWidth = true),
+        ) {
+            val dialogWindowProvider = LocalView.current.parent as? DialogWindowProvider
+            dialogWindowProvider?.window?.let { window ->
+                window.setGravity(Gravity.START or Gravity.TOP)
+                window.setDimAmount(0f)
             }
+            PlaylistList(
+                mediaItemCount = player.mediaItemCount,
+                currentIndex = player.currentMediaItemIndex,
+                mediaItemCountOffset = 0, // TODO
+                items =
+                    MappedList(pager) { index, item ->
+                        when (item) {
+                            is MarkerData -> item.toPlayListItem(index)
+                            is SlimSceneData -> item.toPlayListItem(index)
+                            else -> {
+                                PlaylistItem(
+                                    index,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                )
+                            }
+                        }
+                    },
+                title = pager.filter.name ?: stringResource(pager.filter.dataType.pluralStringId),
+                onClick = { index ->
+                    player.seekTo(index, 0L)
+                    onDismiss.invoke()
+                },
+                modifier =
+                    modifier
+                        .fillMaxHeight()
+                        .background(MaterialTheme.colorScheme.secondaryContainer),
+            )
         }
     }
 }

@@ -177,6 +177,7 @@ class PlaylistViewModel : ViewModel() {
 fun PlaylistPlaybackPageContent(
     server: StashServer,
     playlist: List<MediaItem>,
+    startIndex: Int,
     uiConfig: ComposeUiConfig,
     markersEnabled: Boolean,
     playlistPager: ComposePager<StashData>?,
@@ -184,11 +185,13 @@ fun PlaylistPlaybackPageContent(
     controlsEnabled: Boolean = true,
     viewModel: PlaylistViewModel = viewModel(),
 ) {
-    if (playlist.isEmpty()) {
+    if (playlist.isEmpty() || playlist.size < startIndex) {
         return
     }
     val context = LocalContext.current
-    val currentScene by viewModel.mediaItemTag.observeAsState(playlist[0].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
+    val currentScene by viewModel.mediaItemTag.observeAsState(
+        playlist[startIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag,
+    )
     val markers by viewModel.markers.observeAsState(listOf())
     val oCount by viewModel.oCount.observeAsState(0)
     val spriteImageLoaded by viewModel.spriteImageLoaded.observeAsState(false)
@@ -214,7 +217,7 @@ fun PlaylistPlaybackPageContent(
     LaunchedEffect(Unit) {
         viewModel.init(server, markersEnabled)
         maybeMuteAudio(context, false, player)
-        player.setMediaItems(playlist)
+        player.setMediaItems(playlist, startIndex, 0L)
         player.prepare()
         StashExoPlayer.addListener(
             object : Player.Listener {
