@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.components.scene
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,7 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
@@ -68,7 +66,6 @@ import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.formatBytes
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun SceneDetailsHeader(
     scene: FullSceneData,
@@ -83,6 +80,7 @@ fun SceneDetailsHeader(
     onRatingChange: (Int) -> Unit,
     focusRequester: FocusRequester,
     bringIntoViewRequester: BringIntoViewRequester,
+    alwaysStartFromBeginning: Boolean,
     modifier: Modifier = Modifier,
     showRatingBar: Boolean = true,
 ) {
@@ -320,6 +318,7 @@ fun SceneDetailsHeader(
                                 scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
                             }
                         },
+                        alwaysStartFromBeginning = alwaysStartFromBeginning,
                     )
                 }
             }

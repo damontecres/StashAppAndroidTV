@@ -31,6 +31,7 @@ fun interface LongClicker<T> {
 class DefaultLongClicker(
     private val nav: NavigationManager,
     private val itemOnClick: ItemOnClicker<Any>,
+    private val alwaysStartFromBeginning: Boolean,
     private val onLongClick: (DialogParams) -> Unit,
 ) : LongClicker<Any> {
     override fun longClick(
@@ -82,7 +83,7 @@ class DefaultLongClicker(
                     )
                 }
                 if (item is SlimSceneData) {
-                    if (item.resume_time != null && item.resume_time > 0) {
+                    if (item.resume_time != null && item.resume_time > 0 && alwaysStartFromBeginning) {
                         add(
                             DialogItem(
                                 context.getString(R.string.resume),
