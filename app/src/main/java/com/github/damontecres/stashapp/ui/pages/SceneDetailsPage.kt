@@ -546,7 +546,13 @@ fun SceneDetails(
                                 }
                                 add(
                                     DialogItem(
-                                        onClick = { removeItem(item) },
+                                        onClick = {
+                                            removeItem(item)
+                                            when (item) {
+                                                is StudioData -> headerFocusRequester.tryRequestFocus()
+                                                else -> {} // TODO other types
+                                            }
+                                        },
                                         headlineContent = {
                                             Text(stringResource(R.string.stashapp_actions_remove))
                                         },
