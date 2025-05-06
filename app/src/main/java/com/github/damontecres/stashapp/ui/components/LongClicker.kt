@@ -20,6 +20,7 @@ import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.util.resume_position
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 
 fun interface LongClicker<T> {
     fun longClick(
@@ -128,6 +129,22 @@ class DefaultLongClicker(
                             },
                         )
                     }
+                }
+                if ((item is SlimSceneData || item is MarkerData) && filterAndPosition != null) {
+                    add(
+                        DialogItem(
+                            context.getString(R.string.play_from_here),
+                            Icons.Default.PlayArrow,
+                        ) {
+                            nav.navigate(
+                                Destination.Playlist(
+                                    filterAndPosition.filter,
+                                    filterAndPosition.position,
+                                    30.seconds.inWholeMilliseconds,
+                                ),
+                            )
+                        },
+                    )
                 }
             }
         onLongClick.invoke(DialogParams(true, title, items))
