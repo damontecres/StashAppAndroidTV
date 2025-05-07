@@ -34,6 +34,7 @@ class DefaultLongClicker(
     private val nav: NavigationManager,
     private val itemOnClick: ItemOnClicker<Any>,
     private val alwaysStartFromBeginning: Boolean,
+    private val markerPlayAllOnClick: (FilterAndPosition) -> Unit,
     private val onLongClick: (DialogParams) -> Unit,
 ) : LongClicker<Any> {
     override fun longClick(
@@ -140,13 +141,17 @@ class DefaultLongClicker(
                             context.getString(R.string.play_from_here),
                             Icons.Default.PlayArrow,
                         ) {
-                            nav.navigate(
-                                Destination.Playlist(
-                                    filterAndPosition.filter,
-                                    filterAndPosition.position,
-                                    30.seconds.inWholeMilliseconds,
-                                ),
-                            )
+                            if (item is MarkerData) {
+                                markerPlayAllOnClick.invoke(filterAndPosition)
+                            } else {
+                                nav.navigate(
+                                    Destination.Playlist(
+                                        filterAndPosition.filter,
+                                        filterAndPosition.position,
+                                        30.seconds.inWholeMilliseconds,
+                                    ),
+                                )
+                            }
                         },
                     )
                 }
