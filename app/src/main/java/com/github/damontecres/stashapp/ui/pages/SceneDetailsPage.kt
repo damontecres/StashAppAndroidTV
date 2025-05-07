@@ -67,6 +67,7 @@ import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.cards.PerformerCard
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -745,7 +746,7 @@ fun SceneDetails(
         if (performers.isNotEmpty()) {
             item {
                 ItemsRow(
-                    title = R.string.stashapp_performers,
+                    title = stringResource(R.string.stashapp_performers),
                     items = performers,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
@@ -755,6 +756,22 @@ fun SceneDetails(
                         cardOnFocus.invoke(isFocused, 2, index)
                     },
                     focusPair = createFocusPair(2),
+                    itemContent = { uiConfig, item, itemOnClick, longClicker, getFilterAndPosition, cardModifier ->
+                        PerformerCard(
+                            uiConfig = uiConfig,
+                            item = item,
+                            onClick = {
+                                itemOnClick.onClick(
+                                    item,
+                                    getFilterAndPosition?.invoke(item),
+                                )
+                            },
+                            longClicker = longClicker,
+                            getFilterAndPosition = getFilterAndPosition,
+                            ageOnDate = scene.date,
+                            modifier = cardModifier,
+                        )
+                    },
                 )
             }
         }

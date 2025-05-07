@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -22,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import kotlinx.parcelize.Parcelize
@@ -45,6 +45,16 @@ fun <T : StashData> ItemsRow(
     cardOnFocus = cardOnFocus,
     modifier = modifier,
     focusPair = focusPair,
+    itemContent = { uiConfig, item, itemOnClick, longClicker, getFilterAndPosition, modifier ->
+        StashCard(
+            uiConfig = uiConfig,
+            item = item,
+            itemOnClick = { itemOnClick.onClick(item, null) },
+            longClicker = longClicker,
+            getFilterAndPosition = null,
+            modifier = modifier,
+        )
+    },
 )
 
 @Composable
@@ -64,9 +74,18 @@ fun <T : StashData> ItemsRow(
     cardOnFocus = { _, _ -> },
     modifier = modifier,
     focusPair = null,
+    itemContent = { uiConfig, item, itemOnClick, longClicker, getFilterAndPosition, modifier ->
+        StashCard(
+            uiConfig = uiConfig,
+            item = item,
+            itemOnClick = { itemOnClick.onClick(item, null) },
+            longClicker = longClicker,
+            getFilterAndPosition = null,
+            modifier = modifier,
+        )
+    },
 )
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun <T : StashData> ItemsRow(
     title: String,
@@ -77,6 +96,14 @@ fun <T : StashData> ItemsRow(
     cardOnFocus: (isFocused: Boolean, index: Int) -> Unit,
     modifier: Modifier = Modifier,
     focusPair: FocusPair? = null,
+    itemContent: @Composable (
+        uiConfig: ComposeUiConfig,
+        item: T,
+        itemOnClick: ItemOnClicker<Any>,
+        longClicker: LongClicker<Any>,
+        getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
+        modifier: Modifier,
+    ) -> Unit,
 ) {
     val firstFocus = remember { FocusRequester() }
     val state = rememberLazyListState()
@@ -118,13 +145,13 @@ fun <T : StashData> ItemsRow(
                             }
                     }
 
-                StashCard(
-                    uiConfig = uiConfig,
-                    item = item,
-                    itemOnClick = { itemOnClick.onClick(item, null) },
-                    longClicker = longClicker,
-                    getFilterAndPosition = null,
-                    modifier = cardModifier,
+                itemContent.invoke(
+                    uiConfig,
+                    item,
+                    itemOnClick,
+                    longClicker,
+                    null,
+                    cardModifier,
                 )
             }
         }
