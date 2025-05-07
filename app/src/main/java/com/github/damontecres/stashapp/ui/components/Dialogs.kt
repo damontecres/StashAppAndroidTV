@@ -47,6 +47,8 @@ import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 sealed interface DialogItemEntry
 
@@ -262,4 +264,36 @@ fun ScrollableDialog(
                     },
         )
     }
+}
+
+@Composable
+fun MarkerDurationDialog(
+    onDismissRequest: () -> Unit,
+    onClick: (Long) -> Unit,
+) {
+    val dialogItems =
+        remember {
+            listOf(
+                15.seconds,
+                20.seconds,
+                30.seconds,
+                60.seconds,
+                5.minutes,
+                10.minutes,
+                20.minutes,
+            ).map {
+                DialogItem(it.toString()) {
+                    onClick.invoke(it.inWholeMilliseconds)
+                }
+            }
+        }
+    DialogPopup(
+        showDialog = true,
+        title = "How long?",
+        dialogItems = dialogItems,
+        onDismissRequest = onDismissRequest,
+        dismissOnClick = false,
+        waitToLoad = false,
+        properties = DialogProperties(),
+    )
 }

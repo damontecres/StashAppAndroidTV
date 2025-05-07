@@ -73,6 +73,7 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.NavDrawerFragment.Companion.TAG
@@ -80,6 +81,7 @@ import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.pages.ChooseThemePage
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.FilterPage
@@ -299,12 +301,14 @@ fun FragmentContent(
         }
 
     var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
+    var showMarkerDialog by remember { mutableStateOf<FilterAndPosition?>(null) }
     val longClicker =
         remember {
             DefaultLongClicker(
                 navigationManager,
                 itemOnClick,
                 server.serverPreferences.alwaysStartFromBeginning,
+                markerPlayAllOnClick = { showMarkerDialog = it },
             ) { dialogParams = it }
         }
 
@@ -640,6 +644,23 @@ fun FragmentContent(
                 dismissOnClick = true,
                 waitToLoad = true,
                 properties = DialogProperties(),
+            )
+        }
+        if (showMarkerDialog != null) {
+            MarkerDurationDialog(
+                onDismissRequest = { showMarkerDialog = null },
+                onClick = {
+                    showMarkerDialog?.let { filterAndPosition ->
+                        val dest =
+                            Destination.Playlist(
+                                filterAndPosition.filter,
+                                filterAndPosition.position,
+                                it,
+                            )
+                        navigationManager.navigate(dest)
+                    }
+                    showMarkerDialog = null
+                },
             )
         }
     }

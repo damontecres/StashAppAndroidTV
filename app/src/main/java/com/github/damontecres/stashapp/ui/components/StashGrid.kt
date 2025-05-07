@@ -81,7 +81,6 @@ import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "StashGrid"
 private const val DEBUG = false
@@ -145,6 +144,7 @@ fun StashGridControls(
 //            gridFocusRequester.tryRequestFocus()
 //        }
 //    }
+    var showMarkerDialog by rememberSaveable { mutableStateOf(false) }
 
     Column(modifier = modifier) {
         if (showTopRow) {
@@ -187,17 +187,25 @@ fun StashGridControls(
                     if (dataType.supportsPlaylists || dataType == DataType.IMAGE) {
                         Button(
                             onClick = {
-                                val destination =
-                                    if (dataType == DataType.IMAGE) {
-                                        Destination.Slideshow(filterArgs, 0, true)
-                                    } else {
-                                        Destination.Playlist(
-                                            filterArgs,
-                                            0,
-                                            30.seconds.inWholeMilliseconds,
+                                when (dataType) {
+                                    DataType.IMAGE -> {
+                                        navManager.navigate(
+                                            Destination.Slideshow(
+                                                filterArgs,
+                                                0,
+                                                true,
+                                            ),
                                         )
                                     }
-                                navManager.navigate(destination)
+
+                                    DataType.MARKER -> {
+                                        showMarkerDialog = true
+                                    }
+
+                                    else -> {
+                                        navManager.navigate(Destination.Playlist(filterArgs, 0, 0))
+                                    }
+                                }
                             },
                             modifier = Modifier.focusProperties { down = gridFocusRequester },
                         ) {
@@ -284,6 +292,16 @@ fun StashGridControls(
                             }
                         }
                     },
+        )
+    }
+    if (showMarkerDialog) {
+        MarkerDurationDialog(
+            onDismissRequest = { showMarkerDialog = false },
+            onClick = {
+                showMarkerDialog = false
+                val destination = Destination.Playlist(filterArgs, 0, it)
+                navManager.navigate(destination)
+            },
         )
     }
 }
