@@ -49,6 +49,7 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
+import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
@@ -72,62 +73,86 @@ import coil3.size.Scale
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
-import com.github.damontecres.stashapp.api.fragment.FullSceneData
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.navigation.NavigationManager
-import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.PlaybackSceneFragment
-import com.github.damontecres.stashapp.playback.StreamDecision
+import com.github.damontecres.stashapp.playback.PlaylistFragment
 import com.github.damontecres.stashapp.playback.TrackActivityPlaybackListener
-import com.github.damontecres.stashapp.playback.buildMediaItem
-import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.toLongMilliseconds
+import com.github.damontecres.stashapp.views.models.EqualityMutableLiveData
 import kotlinx.coroutines.launch
+import kotlin.properties.Delegates
 import kotlin.time.Duration.Companion.milliseconds
 
 const val TAG = "PlaybackPageContent"
 
 class PlaybackViewModel : ViewModel() {
     private lateinit var server: StashServer
-    private lateinit var scene: FullSceneData
+    private var markersEnabled by Delegates.notNull<Boolean>()
 
+    val mediaItemTag = EqualityMutableLiveData<PlaylistFragment.MediaItemTag>()
     val markers = MutableLiveData<List<BasicMarker>>(listOf())
     val oCount = MutableLiveData(0)
-    val previewImageLoader = MutableLiveData(false)
+    val spriteImageLoaded = MutableLiveData(false)
 
     fun init(
-        context: Context,
         server: StashServer,
-        scene: FullSceneData,
+        markersEnabled: Boolean,
     ) {
         this.server = server
-        this.scene = scene
-        markers.value = scene.scene_markers.map { BasicMarker(it.asMarkerData(scene)) }
-        oCount.value = scene.o_counter ?: 0
+        this.markersEnabled = markersEnabled
+    }
+
+    fun changeScene(tag: PlaylistFragment.MediaItemTag) {
+        this.mediaItemTag.value = tag
+        this.oCount.value = 0
+        this.markers.value = listOf()
+        this.spriteImageLoaded.value = false
+
+        refreshScene(tag.item.id)
+
+        // Fetch preview sprites
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
+            val context = StashApplication.getApplication()
             val imageLoader = SingletonImageLoader.get(context)
-            if (scene.paths.sprite.isNotNullOrBlank()) {
+            if (tag.item.spriteUrl.isNotNullOrBlank()) {
                 val request =
                     ImageRequest
                         .Builder(context)
-                        .data(scene.paths.sprite)
+                        .data(tag.item.spriteUrl)
                         .memoryCachePolicy(CachePolicy.ENABLED)
                         .scale(Scale.FILL)
                         .build()
                 val result = imageLoader.enqueue(request).job.await()
-                previewImageLoader.value = result.image != null
+                spriteImageLoaded.value = result.image != null
+            }
+        }
+    }
+
+    private fun refreshScene(sceneId: String) {
+        // Fetch o count & markers
+        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            val queryEngine = QueryEngine(server)
+            val scene = queryEngine.getScene(sceneId)
+            if (scene != null) {
+                oCount.value = scene.o_counter ?: 0
+                markers.value =
+                    scene.scene_markers
+                        .sortedBy { it.seconds }
+                        .map(::BasicMarker)
             }
         }
     }
@@ -136,19 +161,20 @@ class PlaybackViewModel : ViewModel() {
         position: Long,
         tagId: String,
     ) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-            val mutationEngine = MutationEngine(server)
-            val newMarker = mutationEngine.createMarker(scene.id, position, tagId)
-            newMarker?.let {
-                val list = markers.value!!.toMutableList()
-                list.add(BasicMarker(it.asMarkerData(scene)))
-                markers.value = list.sortedBy { m -> m.seconds }
-                Toast
-                    .makeText(
-                        StashApplication.getApplication(),
-                        "Created marker at ${position.milliseconds}",
-                        Toast.LENGTH_SHORT,
-                    ).show()
+        mediaItemTag.value?.let {
+            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                val mutationEngine = MutationEngine(server)
+                val newMarker = mutationEngine.createMarker(it.item.id, position, tagId)
+                if (newMarker != null) {
+                    // Refresh markers
+                    refreshScene(it.item.id)
+                    Toast
+                        .makeText(
+                            StashApplication.getApplication(),
+                            "Created marker at ${position.milliseconds}",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                }
             }
         }
     }
@@ -165,16 +191,31 @@ class PlaybackViewModel : ViewModel() {
 @Composable
 fun PlaybackPageContent(
     server: StashServer,
-    scene: FullSceneData,
-    startPosition: Long,
-    playbackMode: PlaybackMode,
+    playlist: List<MediaItem>,
+    startIndex: Int,
     uiConfig: ComposeUiConfig,
+    markersEnabled: Boolean,
+    playlistPager: ComposePager<StashData>?,
     modifier: Modifier = Modifier,
     controlsEnabled: Boolean = true,
     viewModel: PlaybackViewModel = viewModel(),
+    startPosition: Long = C.TIME_UNSET,
 ) {
+    if (playlist.isEmpty() || playlist.size < startIndex) {
+        return
+    }
     val context = LocalContext.current
     val navigationManager = LocalGlobalContext.current.navigationManager
+    val currentScene by viewModel.mediaItemTag.observeAsState(
+        playlist[startIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag,
+    )
+    val markers by viewModel.markers.observeAsState(listOf())
+    val oCount by viewModel.oCount.observeAsState(0)
+    val spriteImageLoaded by viewModel.spriteImageLoaded.observeAsState(false)
+    var subtitles by remember { mutableStateOf<String?>(null) }
+    var subtitleIndex by remember { mutableStateOf<Int?>(null) }
+
+    var trackActivityListener = remember<TrackActivityPlaybackListener?>(server) { null }
     val player =
         remember {
             StashExoPlayer.getInstance(context, server).apply {
@@ -183,24 +224,16 @@ fun PlaybackPageContent(
             }
         }
     AmbientPlayerListener(player)
-    var trackActivityListener = remember<TrackActivityPlaybackListener?>(server, scene) { null }
+
     LifecycleStartEffect(Unit) {
         onStopOrDispose {
             trackActivityListener?.release(player.currentPosition)
             StashExoPlayer.releasePlayer()
         }
     }
-    LaunchedEffect(server, scene.id) {
-        viewModel.init(context, server, scene)
-    }
-    val playbackScene = remember { Scene.fromFullSceneData(scene) }
-    val markers by viewModel.markers.observeAsState(listOf())
-    val oCount by viewModel.oCount.observeAsState(0)
-    val imageLoaded by viewModel.previewImageLoader.observeAsState(false)
-    var subtitles by remember { mutableStateOf<String?>(null) }
-    var subtitleIndex by remember { mutableStateOf<Int?>(null) }
 
     var showControls by remember { mutableStateOf(true) }
+    var showPlaylist by remember { mutableStateOf(false) }
     var currentContentScaleIndex by remember { mutableIntStateOf(0) }
     val contentScale = ContentScale.Fit
 
@@ -213,8 +246,7 @@ fun PlaybackPageContent(
     var createMarkerPosition by remember { mutableLongStateOf(-1L) }
     var playingBeforeCreateMarker by remember { mutableStateOf(false) }
 
-    val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-
+    val prefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
     var showDebugInfo by remember {
         mutableStateOf(
             prefs.getBoolean(context.getString(R.string.pref_key_show_playback_debug_info), false),
@@ -228,7 +260,6 @@ fun PlaybackPageContent(
             )
         }
     val skipWithLeftRight = remember { prefs.getBoolean("skipWithDpad", true) }
-    var streamDecision by remember { mutableStateOf<StreamDecision?>(null) }
 
     val controllerViewState =
         remember {
@@ -244,6 +275,81 @@ fun PlaybackPageContent(
                 it.observe()
             }
         }
+
+    LaunchedEffect(Unit) {
+        viewModel.init(server, markersEnabled)
+        viewModel.changeScene(playlist[startIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
+        maybeMuteAudio(context, false, player)
+        player.setMediaItems(playlist, startIndex, startPosition)
+        if (playlistPager == null) {
+            player.setupFinishedBehavior(context, navigationManager) {
+                controllerViewState.showControls()
+            }
+        }
+        StashExoPlayer.addListener(
+            object : Player.Listener {
+                override fun onCues(cueGroup: CueGroup) {
+                    val cues =
+                        cueGroup.cues
+                            .mapNotNull { it.text }
+                            .joinToString("\n")
+//                    Log.v(TAG, "onCues: \n$cues")
+                    subtitles = cues
+                }
+
+                override fun onMediaItemTransition(
+                    mediaItem: MediaItem?,
+                    reason: Int,
+                ) {
+                    if (mediaItem != null) {
+                        viewModel.changeScene(mediaItem.localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
+                    }
+                    subtitles = null
+                    subtitleIndex = null
+                }
+
+                override fun onPlayerError(error: PlaybackException) {
+                    Log.e(TAG, "PlaybackException on scene ${currentScene.item.id}", error)
+                    Toast
+                        .makeText(
+                            context,
+                            "Play error: ${error.localizedMessage}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                }
+            },
+        )
+
+        player.prepare()
+    }
+
+    LaunchedEffect(server, currentScene, player) {
+        trackActivityListener?.apply {
+            release()
+            StashExoPlayer.removeListener(this)
+        }
+        currentScene?.let {
+            val appTracking =
+                PreferenceManager
+                    .getDefaultSharedPreferences(context)
+                    .getBoolean(context.getString(R.string.pref_key_playback_track_activity), true)
+            trackActivityListener =
+                if (appTracking && server.serverPreferences.trackActivity) {
+                    TrackActivityPlaybackListener(
+                        context = context,
+                        server = server,
+                        scene = currentScene.item,
+                        getCurrentPosition = {
+                            player.currentPosition
+                        },
+                    )
+                } else {
+                    null
+                }
+            trackActivityListener?.let { StashExoPlayer.addListener(it) }
+        }
+    }
+
     var skipIndicatorDuration by remember { mutableLongStateOf(0L) }
     var skipPosition by remember { mutableLongStateOf(0L) }
     val updateSkipIndicator = { delta: Long ->
@@ -253,73 +359,11 @@ fun PlaybackPageContent(
         skipIndicatorDuration += delta
         skipPosition = player.currentPosition
     }
-    if (controllerViewState.controlsVisible) {
-        // If controls become visible, cancel the skip indicator
-        skipIndicatorDuration = 0L
-    }
-
     val scope = rememberCoroutineScope()
     val playPauseState = rememberPlayPauseButtonState(player)
     val previousState = rememberPreviousButtonState(player)
     val nextState = rememberNextButtonState(player)
     val seekBarState = rememberSeekBarState(player, scope)
-
-    LaunchedEffect(server, scene, player) {
-        trackActivityListener?.apply {
-            release()
-            StashExoPlayer.removeListener(this)
-        }
-        player.setupFinishedBehavior(context, navigationManager) {
-            controllerViewState.showControls()
-        }
-
-        StashExoPlayer.addListener(
-            object : Player.Listener {
-                override fun onPlayerError(error: PlaybackException) {
-                    Log.e(TAG, "PlaybackException on ${scene.id}", error)
-                    Toast
-                        .makeText(
-                            context,
-                            "Play error: ${error.localizedMessage}",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                }
-
-                override fun onCues(cueGroup: CueGroup) {
-                    val cues =
-                        cueGroup.cues
-                            .mapNotNull { it.text }
-                            .joinToString("\n")
-//                    Log.v(TAG, "onCues: \n$cues")
-                    subtitles = cues
-                }
-            },
-        )
-
-        val appTracking =
-            prefs.getBoolean(context.getString(R.string.pref_key_playback_track_activity), true)
-        trackActivityListener =
-            if (appTracking && server.serverPreferences.trackActivity) {
-                TrackActivityPlaybackListener(
-                    context = context,
-                    server = server,
-                    scene = playbackScene,
-                    getCurrentPosition = {
-                        player.currentPosition
-                    },
-                )
-            } else {
-                null
-            }
-        maybeMuteAudio(context, false, player)
-        val decision = getStreamDecision(context, playbackScene, playbackMode)
-        Log.d(TAG, "streamDecision=$decision")
-        val media = buildMediaItem(context, decision, playbackScene)
-        player.setMediaItem(media, startPosition.coerceAtLeast(0L))
-        player.prepare()
-        streamDecision = decision
-        trackActivityListener?.let { StashExoPlayer.addListener(it) }
-    }
 
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
@@ -354,7 +398,6 @@ fun PlaybackPageContent(
                     .background(Color.Black),
             )
         }
-
         if (!controllerViewState.controlsVisible && skipIndicatorDuration != 0L) {
             SkipIndicator(
                 durationMs = skipIndicatorDuration,
@@ -366,18 +409,20 @@ fun PlaybackPageContent(
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 70.dp),
             )
-            if (showSkipProgress && playbackScene.duration != null) {
-                val percent =
-                    skipPosition.toFloat() / (playbackScene.duration.toLongMilliseconds).toFloat()
-                Box(
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomStart)
-                            .background(MaterialTheme.colorScheme.border)
-                            .clip(RectangleShape)
-                            .height(3.dp)
-                            .fillMaxWidth(percent),
-                ) {}
+            if (showSkipProgress) {
+                currentScene.item.duration?.let {
+                    val percent =
+                        skipPosition.toFloat() / (it.toLongMilliseconds).toFloat()
+                    Box(
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomStart)
+                                .background(MaterialTheme.colorScheme.border)
+                                .clip(RectangleShape)
+                                .height(3.dp)
+                                .fillMaxWidth(percent),
+                    ) {}
+                }
             }
         }
 
@@ -405,88 +450,106 @@ fun PlaybackPageContent(
             }
         }
 
-        AnimatedVisibility(
-            controllerViewState.controlsVisible,
-            Modifier,
-            slideInVertically { it },
-            slideOutVertically { it },
-        ) {
-            PlaybackOverlay(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(Color.Transparent),
-                uiConfig = uiConfig,
-                scene = playbackScene,
-                markers = markers,
-                streamDecision = streamDecision,
-                oCounter = oCount,
-                playerControls = PlayerControlsImpl(player),
-                onPlaybackActionClick = {
-                    when (it) {
-                        PlaybackAction.CreateMarker -> {
-                            playingBeforeCreateMarker = player.isPlaying
-                            player.pause()
-                            createMarkerPosition = player.currentPosition
-                        }
-
-                        PlaybackAction.OCount -> {
-                            viewModel.incrementOCount(scene.id)
-                        }
-
-                        PlaybackAction.ShowDebug -> {
-                            showDebugInfo = !showDebugInfo
-                        }
-
-                        PlaybackAction.ShowPlaylist -> {
-                            // no-op
-                        }
-
-                        is PlaybackAction.ToggleCaptions -> {
-                            if (toggleSubtitles(player, subtitleIndex, it.index)) {
-                                subtitleIndex = it.index
-                            } else {
-                                subtitleIndex = null
-                                subtitles = null
+        currentScene?.let {
+            AnimatedVisibility(
+                controllerViewState.controlsVisible,
+                Modifier,
+                slideInVertically { it },
+                slideOutVertically { it },
+            ) {
+                PlaybackOverlay(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(Color.Transparent),
+                    uiConfig = uiConfig,
+                    scene = currentScene.item,
+                    markers = markers,
+                    streamDecision = currentScene.streamDecision,
+                    oCounter = oCount,
+                    playerControls = PlayerControlsImpl(player),
+                    onPlaybackActionClick = {
+                        when (it) {
+                            PlaybackAction.CreateMarker -> {
+                                if (markersEnabled) {
+                                    playingBeforeCreateMarker = player.isPlaying
+                                    player.pause()
+                                    createMarkerPosition = player.currentPosition
+                                }
                             }
-                            controllerViewState.hideControls()
+
+                            PlaybackAction.OCount -> {
+                                viewModel.incrementOCount(currentScene.item.id)
+                            }
+
+                            PlaybackAction.ShowDebug -> {
+                                showDebugInfo = !showDebugInfo
+                            }
+
+                            PlaybackAction.ShowPlaylist -> {
+                                if (playlistPager != null && playlistPager.size > 1) {
+                                    showPlaylist = true
+                                }
+                            }
+
+                            is PlaybackAction.ToggleCaptions -> {
+                                if (toggleSubtitles(player, subtitleIndex, it.index)) {
+                                    subtitleIndex = it.index
+                                } else {
+                                    subtitleIndex = null
+                                    subtitles = null
+                                }
+                                controllerViewState.hideControls()
+                            }
                         }
-                    }
-                },
-                onSeekBarChange = seekBarState::onValueChange,
-                controllerViewState = controllerViewState,
-                showPlay = playPauseState.showPlay,
-                previousEnabled = previousState.isEnabled,
-                nextEnabled = nextState.isEnabled,
-                seekEnabled = seekBarState.isEnabled,
-                showDebugInfo = showDebugInfo,
-                spriteImageLoaded = imageLoaded,
-                moreButtonOptions =
-                    MoreButtonOptions(
-                        mapOf("Create Marker" to PlaybackAction.CreateMarker),
-                    ),
-                subtitleIndex = subtitleIndex,
-            )
+                    },
+                    onSeekBarChange = seekBarState::onValueChange,
+                    controllerViewState = controllerViewState,
+                    showPlay = playPauseState.showPlay,
+                    previousEnabled = previousState.isEnabled,
+                    nextEnabled = nextState.isEnabled,
+                    seekEnabled = seekBarState.isEnabled,
+                    showDebugInfo = showDebugInfo,
+                    spriteImageLoaded = spriteImageLoaded,
+                    moreButtonOptions =
+                        MoreButtonOptions(
+                            buildMap {
+                                put("Create Marker", PlaybackAction.CreateMarker)
+                                if (playlistPager != null && playlistPager.size > 1) {
+                                    put("Show Playlist", PlaybackAction.ShowPlaylist)
+                                }
+                            },
+                        ),
+                    subtitleIndex = subtitleIndex,
+                )
+            }
         }
-    }
-    val dismiss = {
-        createMarkerPosition = -1
-        if (playingBeforeCreateMarker) {
-            player.play()
+        val dismiss = {
+            createMarkerPosition = -1
+            if (playingBeforeCreateMarker) {
+                player.play()
+            }
         }
+        SearchForDialog(
+            show = markersEnabled && createMarkerPosition >= 0,
+            uiConfig = uiConfig,
+            dataType = DataType.TAG,
+            onItemClick = { item ->
+                viewModel.addMarker(createMarkerPosition, item.id)
+                dismiss.invoke()
+            },
+            onDismissRequest = dismiss,
+            dialogTitle = "Create marker at ${createMarkerPosition.milliseconds}?",
+            dismissOnClick = false,
+        )
+        PlaylistListDialog(
+            show = showPlaylist,
+            onDismiss = { showPlaylist = false },
+            player = player,
+            pager = playlistPager,
+            modifier = Modifier,
+        )
     }
-    SearchForDialog(
-        show = createMarkerPosition >= 0,
-        uiConfig = uiConfig,
-        dataType = DataType.TAG,
-        onItemClick = { item ->
-            viewModel.addMarker(createMarkerPosition, item.id)
-            dismiss.invoke()
-        },
-        onDismissRequest = dismiss,
-        dialogTitle = "Create marker at ${createMarkerPosition.milliseconds}?",
-        dismissOnClick = false,
-    )
 }
 
 fun Player.setupFinishedBehavior(

@@ -36,7 +36,6 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageContent
-import com.github.damontecres.stashapp.ui.components.playback.PlaylistPlaybackPageContent
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -70,16 +69,26 @@ fun PlaybackPage(
     }
     Log.d("PlaybackPage", "scene=${scene?.id}")
     scene?.let {
+        val playbackScene = remember { Scene.fromFullSceneData(it) }
+        val decision = getStreamDecision(context, playbackScene, playbackMode)
+        val media =
+            buildMediaItem(context, decision, playbackScene) {
+                setTag(PlaylistFragment.MediaItemTag(playbackScene, decision))
+            }
+
         PlaybackPageContent(
             server = server,
-            scene = it,
-            startPosition = startPosition,
-            playbackMode = playbackMode,
+            playlist = listOf(media),
+            startIndex = 0,
             uiConfig = uiConfig,
+            markersEnabled = true,
+            playlistPager = null,
             modifier =
-                modifier
+                Modifier
                     .fillMaxSize()
                     .background(Color.Transparent),
+            controlsEnabled = true,
+            startPosition = startPosition,
         )
     }
 }
@@ -115,7 +124,7 @@ private fun adjustFilter(filter: FilterArgs): FilterArgs =
         filter.copy(override = DataSupplierOverride.Playlist)
     }
 
-val maxPlaylistSize = 100 // TODO
+const val MAX_PLAYLIST_SIZE = 100 // TODO
 
 @Composable
 fun PlaylistPlaybackPage(
@@ -142,7 +151,7 @@ fun PlaylistPlaybackPage(
     LaunchedEffect(pager) {
         playlist = pager?.let {
             buildList {
-                for (i in 0..<(it.size).coerceAtMost(maxPlaylistSize)) {
+                for (i in 0..<(it.size).coerceAtMost(MAX_PLAYLIST_SIZE)) {
                     it.getBlocking(i)?.let { item ->
                         if (filterArgs.dataType == DataType.SCENE) {
                             val scene = Scene.fromVideoSceneData(item as VideoSceneData)
@@ -182,7 +191,7 @@ fun PlaylistPlaybackPage(
         } ?: listOf()
     }
     if (playlist.isNotEmpty()) {
-        PlaylistPlaybackPageContent(
+        PlaybackPageContent(
             server = server,
             playlist = playlist,
             startIndex = startIndex,
