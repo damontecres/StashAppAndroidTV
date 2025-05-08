@@ -113,5 +113,6 @@
     <string name="set_rating">Set rating:</string>
     <string name="set_studio">Set Studio</string>
     <string name="play_from_here">Play from here</string>
+    <string name="add_gallery">Add Gallery</string>
 
 </resources>
