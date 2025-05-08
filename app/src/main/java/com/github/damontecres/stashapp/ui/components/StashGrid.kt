@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -375,9 +376,18 @@ fun StashGrid(
     val showJumpButtons =
         remember { getPreference(context, R.string.pref_key_ui_grid_jump_controls, true) }
 
+    var alphabetFocus by remember { mutableStateOf(false) }
     val focusOn = { index: Int ->
         previouslyFocusedIndex = focusedIndex
         focusedIndex = index
+    }
+
+    // Wait for a recomposition to focus
+    LaunchedEffect(alphabetFocus) {
+        if (alphabetFocus) {
+            firstFocus.tryRequestFocus()
+        }
+        alphabetFocus = false
     }
 
     val prefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
@@ -430,6 +440,7 @@ fun StashGrid(
     }
 
     Row(
+//        horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier =
             modifier
                 .fillMaxSize()
@@ -512,7 +523,7 @@ fun StashGrid(
             )
         }
         Box(
-            modifier = Modifier,
+            modifier = Modifier.weight(1f),
         ) {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(columns),
@@ -628,7 +639,8 @@ fun StashGrid(
             }
         }
         // Letters
-        if (pager.size > 0 &&
+        if (showJumpButtons &&
+            pager.size > 0 &&
             SortOption.isJumpSupported(
                 filterArgs.dataType,
                 filterArgs.sortAndDirection.sort,
@@ -639,7 +651,11 @@ fun StashGrid(
                 letterClicked = { letter ->
                     scope.launch(StashCoroutineExceptionHandler()) {
                         val jumpPosition = letterPosition.invoke(letter)
+                        Log.d(TAG, "Alphabet jump to $jumpPosition")
                         gridState.scrollToItem(jumpPosition)
+                        focusOn(jumpPosition)
+                        alphabetFocus = true
+//                        firstFocus.tryRequestFocus()
                     }
                 },
             )
@@ -693,6 +709,9 @@ fun AlphabetButtons(
             key = { AlphabetSearchUtils.LETTERS[it] },
         ) { index ->
             Button(
+                modifier =
+                    Modifier.size(24.dp),
+                contentPadding = PaddingValues(2.dp),
                 onClick = {
                     letterClicked.invoke(AlphabetSearchUtils.LETTERS[index])
                 },

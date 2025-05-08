@@ -392,8 +392,8 @@ fun SceneMarkerBar(
 ) {
     if (markers.isNotEmpty()) {
         val focusRequesters =
-            remember {
-                markers.map { FocusRequester() }
+            remember(markers.size) {
+                List(markers.size) { FocusRequester() }
             }
         LazyRow(
             modifier =
@@ -405,7 +405,9 @@ fun SceneMarkerBar(
                             val nextMarkerIndex =
                                 markers.indexOfFirstOrNull { it.seconds >= pos }
                                     ?: markers.lastIndex
-                            focusRequesters[nextMarkerIndex].tryRequestFocus()
+                            if (nextMarkerIndex in focusRequesters.indices) {
+                                focusRequesters[nextMarkerIndex].tryRequestFocus()
+                            }
                         }
                     },
             contentPadding = PaddingValues(8.dp),
