@@ -155,7 +155,7 @@ abstract class PlaybackFragment(
 
     private fun preparePlayer(): ExoPlayer =
         StashExoPlayer
-            .createInstance(
+            .getInstance(
                 requireContext(),
                 serverViewModel.requireServer(),
                 skipParams,
@@ -676,6 +676,7 @@ abstract class PlaybackFragment(
     override fun onStop() {
         Log.v(TAG, "onStop")
         releasePlayer()
+        keepScreenOn(false)
         super.onStop()
     }
 
