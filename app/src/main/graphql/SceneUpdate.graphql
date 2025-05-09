@@ -16,6 +16,9 @@ mutation SceneUpdate($input: SceneUpdateInput!) {
         ...GroupData
       }
     }
+    galleries {
+      ...GalleryData
+    }
     rating100
   }
 }

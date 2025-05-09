@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
+import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -32,6 +33,7 @@ import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getFilterArgs
+import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.putFilterArgs
 import kotlin.time.Duration.Companion.seconds
 
@@ -110,6 +112,8 @@ fun showAddGroup(group: GroupData) = showShort("Added group '${group.name}'")
 fun showAddMarker(marker: MarkerData) = showShort("Added marker at ${marker.seconds.seconds}")
 
 fun showSetStudio(studio: StudioData) = showShort("Set studio to '${studio.name}'")
+
+fun showAddGallery(gallery: GalleryData) = showShort("Added group '${gallery.name}'")
 
 inline fun <T> List<T>.indexOfFirstOrNull(predicate: (T) -> Boolean): Int? {
     val index = this.indexOfFirst(predicate)

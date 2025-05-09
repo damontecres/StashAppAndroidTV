@@ -278,6 +278,23 @@ class MutationEngine(
         return result.data?.sceneUpdate
     }
 
+    suspend fun setGalleriesOnScene(
+        sceneId: String,
+        galleryIds: List<String>,
+    ): SceneUpdateMutation.SceneUpdate? {
+        Log.v(TAG, "setGalleriesOnScene sceneId=$sceneId, galleryIds=$galleryIds")
+        val mutation =
+            SceneUpdateMutation(
+                input =
+                    SceneUpdateInput(
+                        id = sceneId,
+                        gallery_ids = Optional.present(galleryIds),
+                    ),
+            )
+        val result = executeMutation(mutation)
+        return result.data?.sceneUpdate
+    }
+
     suspend fun incrementOCounter(sceneId: String): OCounter {
         val mutation = SceneAddOMutation(sceneId, emptyList())
         val result = executeMutation(mutation)

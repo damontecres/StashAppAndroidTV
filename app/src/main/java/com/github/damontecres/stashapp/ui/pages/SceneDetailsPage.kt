@@ -78,6 +78,7 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.RowColumn
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeader
+import com.github.damontecres.stashapp.ui.showAddGallery
 import com.github.damontecres.stashapp.ui.showAddGroup
 import com.github.damontecres.stashapp.ui.showAddMarker
 import com.github.damontecres.stashapp.ui.showAddPerf
@@ -286,6 +287,36 @@ class SceneDetailsViewModel(
         }
     }
 
+    fun addGallery(id: String) = mutateGallery(id, AddRemove.ADD)
+
+    fun removeGallery(id: String) = mutateGallery(id, AddRemove.REMOVE)
+
+    private fun mutateGallery(
+        id: String,
+        op: AddRemove,
+    ) {
+        val ids = galleries.value?.map { it.id }
+        ids?.let {
+            val mutable = it.toMutableList()
+            when (op) {
+                AddRemove.ADD -> mutable.add(id)
+                AddRemove.REMOVE -> mutable.remove(id)
+            }
+            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                val results =
+                    mutationEngine
+                        .setGalleriesOnScene(sceneId, mutable)
+                        ?.galleries
+                        ?.map { it.galleryData }
+                        .orEmpty()
+                galleries.value = results
+                if (op == AddRemove.ADD) {
+                    results.firstOrNull { it.id == id }?.let { showAddGallery(it) }
+                }
+            }
+        }
+    }
+
     fun updateOCount(action: suspend MutationEngine.(String) -> OCounter) {
         viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
             val newOCount = action.invoke(mutationEngine, sceneId)
@@ -388,7 +419,7 @@ fun SceneDetailsPage(
                         is PerformerData, is SlimPerformerData -> viewModel.addPerformer(item.id)
                         is TagData, is SlimTagData -> viewModel.addTag(item.id)
                         is GroupData, is GroupRelationshipData -> viewModel.addGroup(item.id)
-                        is GalleryData -> {} // TODO
+                        is GalleryData -> viewModel.addGallery(item.id)
                         is StudioData -> viewModel.setStudio(item.id)
                         is MarkerData -> viewModel.addMarker(item)
 
@@ -402,7 +433,7 @@ fun SceneDetailsPage(
                         is PerformerData, is SlimPerformerData -> viewModel.removePerformer(item.id)
                         is TagData, is SlimTagData -> viewModel.removeTag(item.id)
                         is GroupData, is GroupRelationshipData -> viewModel.removeGroup(item.id)
-                        is GalleryData -> {} // TODO
+                        is GalleryData -> viewModel.removeGallery(item.id)
                         is StudioData -> viewModel.removeStudio()
                         is MarkerData, is FullMarkerData -> viewModel.removeMarker(item.id)
 
@@ -534,7 +565,7 @@ fun SceneDetails(
                                     },
                                 )
                             }
-                            if (item !is GalleryData && uiConfig.readOnlyModeDisabled) {
+                            if (uiConfig.readOnlyModeDisabled) {
                                 if (item is StudioData) {
                                     add(
                                         DialogItem(
@@ -683,6 +714,12 @@ fun SceneDetails(
                                         DataType.GROUP.iconStringId,
                                     ) {
                                         searchForDataType = SearchForParams(DataType.GROUP)
+                                    },
+                                    DialogItem(
+                                        context.getString(R.string.add_gallery),
+                                        DataType.GALLERY.iconStringId,
+                                    ) {
+                                        searchForDataType = SearchForParams(DataType.GALLERY)
                                     },
                                 ),
                         )
