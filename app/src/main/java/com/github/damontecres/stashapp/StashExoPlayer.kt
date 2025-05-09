@@ -194,6 +194,7 @@ class StashExoPlayer private constructor() {
         fun removeListener(listener: Player.Listener) {
             if (listeners.remove(listener)) {
                 instance?.removeListener(listener)
+                Log.v(TAG, "Removed listener: $listener")
             } else {
                 Log.w(TAG, "Listener was not added previously: $listener")
             }
