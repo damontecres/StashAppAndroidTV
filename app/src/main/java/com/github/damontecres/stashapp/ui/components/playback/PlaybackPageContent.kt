@@ -351,6 +351,10 @@ fun PlaybackPageContent(
     }
 
     var skipIndicatorDuration by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(controllerViewState.controlsVisible) {
+        // If controller shows/hides, immediately cancel the skip indicator
+        skipIndicatorDuration = 0L
+    }
     var skipPosition by remember { mutableLongStateOf(0L) }
     val updateSkipIndicator = { delta: Long ->
         if (skipIndicatorDuration > 0 && delta < 0 || skipIndicatorDuration < 0 && delta > 0) {
