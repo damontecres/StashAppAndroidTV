@@ -97,20 +97,30 @@ class ComposePager<T : StashData>(
         private const val TAG = "ComposePager"
         private const val DEBUG = false
     }
-}
 
-class ItemList<T : StashData>(
-    val size: Int,
-    val pageSize: Int,
-    val pages: Map<Int, List<T>>,
-) {
-    operator fun get(position: Int): T? {
-        val page = position / pageSize + 1
-        val data = pages[page]
-        if (data != null) {
-            return data[position % pageSize]
-        } else {
-            return null
+    class ItemList<T : StashData>(
+        val size: Int,
+        val pageSize: Int,
+        val pages: Map<Int, List<T>>,
+    ) {
+        operator fun get(position: Int): T? {
+            val page = position / pageSize + 1
+            val data = pages[page]
+            if (data != null) {
+                val index = position % pageSize
+                if (index in data.indices) {
+                    return data[index]
+                } else {
+                    // This can happen when items are removed while scrolling through a filter
+                    Log.w(
+                        TAG,
+                        "Index $index not in data: position=$position, data.size=${data.size}",
+                    )
+                    return null
+                }
+            } else {
+                return null
+            }
         }
     }
 }
