@@ -2,6 +2,7 @@ import com.android.build.gradle.internal.cxx.io.writeTextIfDifferent
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import java.io.ByteArrayOutputStream
 import java.util.Base64
+import java.util.Properties
 
 val isCI = if (System.getenv("CI") != null) System.getenv("CI").toBoolean() else false
 val shouldSign = isCI && System.getenv("KEY_ALIAS") != null
@@ -96,6 +97,13 @@ android {
             )
             if (shouldSign) {
                 signingConfig = signingConfigs.getByName("ci")
+            } else {
+                val properties = Properties()
+                properties.load(project.rootProject.file("local.properties").inputStream())
+                val signingConfigName = properties["release.signing.config"]?.toString()
+                if (signingConfigName != null) {
+                    signingConfig = signingConfigs.getByName(signingConfigName)
+                }
             }
         }
         debug {
