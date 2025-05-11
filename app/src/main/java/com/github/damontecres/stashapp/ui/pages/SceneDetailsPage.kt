@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.pages
 
-import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -526,13 +525,16 @@ fun SceneDetails(
 //    }
 
     val cardOnFocus = { isFocused: Boolean, row: Int, column: Int ->
-//        Log.v("SceneDetails", "cardOnFocus: isFocused=$isFocused, row=$row, column=$column")
         if (isFocused) {
             focusPosition = RowColumn(row, column)
         } else if (focusPosition?.let { it.row == row && it.column == column } == true) {
             savedFocusPosition = focusPosition
 //            focusPosition = null
         }
+//        Log.v(
+//            "SceneDetails",
+//            "cardOnFocus: isFocused=$isFocused, row=$row, column=$column, savedFocusPosition=$savedFocusPosition, focusPosition=$focusPosition",
+//        )
     }
 
     val removeLongClicker =
@@ -882,7 +884,7 @@ fun SceneDetails(
     LaunchedEffect(Unit) {
         if (savedFocusPosition != null) {
             focusPosition = savedFocusPosition
-            Log.v("SceneDetails", "Focusing on $focusPosition")
+//            Log.v("SceneDetails", "Focusing on $focusPosition")
             focusPositionRequester.tryRequestFocus()
         } else {
             bringIntoViewRequester.bringIntoView()

@@ -636,7 +636,9 @@ class PlaybackKeyHandler(
             }
         } else if (isMedia(it)) {
             when (it.key) {
-                Key.MediaPlay -> Util.handlePlayButtonAction(player)
+                Key.MediaPlay -> {
+                    Util.handlePlayButtonAction(player)
+                }
                 Key.MediaPause -> {
                     Util.handlePauseButtonAction(player)
                     controllerViewState.showControls()

@@ -35,6 +35,7 @@ import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -64,6 +65,7 @@ import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.cards.ViewAllCard
 import com.github.damontecres.stashapp.ui.components.CircularProgress
@@ -71,7 +73,9 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.RowColumn
 import com.github.damontecres.stashapp.ui.components.main.MainPageHeader
+import com.github.damontecres.stashapp.ui.isPlayKeyUp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.getDestinationForItem
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
@@ -318,7 +322,6 @@ fun HomePage(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun HomePageRow(
     uiConfig: ComposeUiConfig,
@@ -329,6 +332,7 @@ fun HomePageRow(
     rowFocusRequester: FocusRequester?,
     modifier: Modifier = Modifier,
 ) {
+    val navigationManager = LocalGlobalContext.current.navigationManager
     Column(modifier = modifier) {
         ProvideTextStyle(MaterialTheme.typography.titleLarge.copy(color = MaterialTheme.colorScheme.onBackground)) {
             Text(
@@ -348,8 +352,24 @@ fun HomePageRow(
                             firstFocus.tryRequestFocus()
                         }
                     }.focusGroup()
-                    .focusRestorer { firstFocus }
-                    .fillMaxWidth(),
+                    .focusRestorer(firstFocus)
+                    .fillMaxWidth()
+                    .onKeyEvent {
+                        if (isPlayKeyUp(it)) {
+                            val destination =
+                                getDestinationForItem(
+                                    row.data[focusedIndex],
+                                    FilterAndPosition(row.filter, focusedIndex),
+                                )
+                            return@onKeyEvent if (destination != null) {
+                                navigationManager.navigate(destination)
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                        return@onKeyEvent false
+                    },
             contentPadding = PaddingValues(start = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {

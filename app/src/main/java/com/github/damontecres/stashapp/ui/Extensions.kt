@@ -17,6 +17,11 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
@@ -119,3 +124,8 @@ inline fun <T> List<T>.indexOfFirstOrNull(predicate: (T) -> Boolean): Int? {
     val index = this.indexOfFirst(predicate)
     return if (index >= 0) index else null
 }
+
+/**
+ * Whether the [KeyEvent] is a key up event pressing media play or media play/pause
+ */
+fun isPlayKeyUp(key: KeyEvent) = key.type == KeyEventType.KeyUp && (key.key == Key.MediaPlay || key.key == Key.MediaPlayPause)
