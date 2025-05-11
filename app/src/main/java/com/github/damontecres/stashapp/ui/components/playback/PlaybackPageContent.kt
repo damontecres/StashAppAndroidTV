@@ -55,6 +55,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.util.Util
 import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
@@ -351,6 +352,10 @@ fun PlaybackPageContent(
     }
 
     var skipIndicatorDuration by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(controllerViewState.controlsVisible) {
+        // If controller shows/hides, immediately cancel the skip indicator
+        skipIndicatorDuration = 0L
+    }
     var skipPosition by remember { mutableLongStateOf(0L) }
     val updateSkipIndicator = { delta: Long ->
         if (skipIndicatorDuration > 0 && delta < 0 || skipIndicatorDuration < 0 && delta > 0) {
@@ -631,18 +636,16 @@ class PlaybackKeyHandler(
             }
         } else if (isMedia(it)) {
             when (it.key) {
-                Key.MediaPlay -> player.play()
+                Key.MediaPlay -> Util.handlePlayButtonAction(player)
                 Key.MediaPause -> {
-                    player.pause()
+                    Util.handlePauseButtonAction(player)
                     controllerViewState.showControls()
                 }
 
                 Key.MediaPlayPause -> {
-                    if (player.isPlaying) {
-                        player.pause()
+                    Util.handlePlayPauseButtonAction(player)
+                    if (!player.isPlaying) {
                         controllerViewState.showControls()
-                    } else {
-                        player.play()
                     }
                 }
 
@@ -656,8 +659,8 @@ class PlaybackKeyHandler(
                     updateSkipIndicator(-player.seekBackIncrement)
                 }
 
-                Key.MediaNext -> player.seekToNext()
-                Key.MediaPrevious -> player.seekToPrevious()
+                Key.MediaNext -> if (player.isCommandAvailable(Player.COMMAND_SEEK_TO_NEXT)) player.seekToNext()
+                Key.MediaPrevious -> if (player.isCommandAvailable(Player.COMMAND_SEEK_TO_PREVIOUS)) player.seekToPrevious()
                 else -> result = false
             }
         } else if (it.key == Key.Back && controllerViewState.controlsVisible) {
