@@ -98,11 +98,14 @@ android {
             if (shouldSign) {
                 signingConfig = signingConfigs.getByName("ci")
             } else {
-                val properties = Properties()
-                properties.load(project.rootProject.file("local.properties").inputStream())
-                val signingConfigName = properties["release.signing.config"]?.toString()
-                if (signingConfigName != null) {
-                    signingConfig = signingConfigs.getByName(signingConfigName)
+                val localPropertiesFile = project.rootProject.file("local.properties")
+                if (localPropertiesFile.exists()) {
+                    val properties = Properties()
+                    properties.load(localPropertiesFile.inputStream())
+                    val signingConfigName = properties["release.signing.config"]?.toString()
+                    if (signingConfigName != null) {
+                        signingConfig = signingConfigs.getByName(signingConfigName)
+                    }
                 }
             }
         }
