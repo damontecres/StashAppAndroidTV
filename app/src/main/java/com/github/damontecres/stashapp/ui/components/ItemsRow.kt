@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components
 
 import android.os.Parcelable
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -151,22 +152,19 @@ fun <T : StashData> ItemsRow(
                         Modifier
                             .focusRequester(firstFocus)
                     } else {
-                        if (focusPair != null) {
+                        if (focusPair != null && focusPair.column == index) {
+                            Log.d("SceneDetails", "Setting focusPair on $index")
                             Modifier
                                 .focusRequester(focusPair.focusRequester)
                         } else {
                             Modifier
                         }
-//                        .ifElse(
-//                        focusPair != null && focusPair.column == index,
-//                        { Modifier.focusRequester(focusPair!!.focusRequester) },
-//                    )
-                            .onFocusChanged {
-                                if (it.isFocused) {
-                                    focusedIndex = index
-                                }
-                                cardOnFocus.invoke(it.isFocused, index)
-                            }
+                    }.onFocusChanged {
+                        if (it.isFocused) {
+                            Log.d("SceneDetails", "focused on $index")
+                            focusedIndex = index
+                        }
+                        cardOnFocus.invoke(it.isFocused, index)
                     }
 
                 itemContent.invoke(

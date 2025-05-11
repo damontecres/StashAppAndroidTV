@@ -526,13 +526,16 @@ fun SceneDetails(
 //    }
 
     val cardOnFocus = { isFocused: Boolean, row: Int, column: Int ->
-//        Log.v("SceneDetails", "cardOnFocus: isFocused=$isFocused, row=$row, column=$column")
         if (isFocused) {
             focusPosition = RowColumn(row, column)
         } else if (focusPosition?.let { it.row == row && it.column == column } == true) {
             savedFocusPosition = focusPosition
 //            focusPosition = null
         }
+        Log.v(
+            "SceneDetails",
+            "cardOnFocus: isFocused=$isFocused, row=$row, column=$column, savedFocusPosition=$savedFocusPosition, focusPosition=$focusPosition",
+        )
     }
 
     val removeLongClicker =
