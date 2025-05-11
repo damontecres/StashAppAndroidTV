@@ -17,6 +17,7 @@ fun isDpad(event: KeyEvent): Boolean =
 
 fun isMedia(event: KeyEvent): Boolean =
     event.key == Key.MediaPlay ||
+        event.key == Key.MediaPause ||
         event.key == Key.MediaPlayPause ||
         event.key == Key.MediaFastForward ||
         event.key == Key.MediaSkipForward ||
