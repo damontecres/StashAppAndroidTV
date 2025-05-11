@@ -10,12 +10,16 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
@@ -23,7 +27,10 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.cards.StashCard
+import com.github.damontecres.stashapp.ui.isPlayKeyUp
+import com.github.damontecres.stashapp.ui.util.getDestinationForItem
 import kotlinx.parcelize.Parcelize
 
 @Composable
@@ -105,7 +112,9 @@ fun <T : StashData> ItemsRow(
         modifier: Modifier,
     ) -> Unit,
 ) {
+    val navigationManager = LocalGlobalContext.current.navigationManager
     val firstFocus = remember { FocusRequester() }
+    var focusedIndex by remember { mutableIntStateOf(focusPair?.column ?: 0) }
     val state = rememberLazyListState()
     Column(
         modifier = modifier,
@@ -119,7 +128,19 @@ fun <T : StashData> ItemsRow(
             modifier =
                 Modifier
                     .padding(top = 8.dp)
-                    .focusRestorer(focusPair?.focusRequester ?: firstFocus),
+                    .focusRestorer(focusPair?.focusRequester ?: firstFocus)
+                    .onKeyEvent {
+                        if (isPlayKeyUp(it)) {
+                            val destination = getDestinationForItem(items[focusedIndex], null)
+                            return@onKeyEvent if (destination != null) {
+                                navigationManager.navigate(destination)
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                        return@onKeyEvent false
+                    },
             state = state,
             contentPadding = PaddingValues(8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -141,6 +162,9 @@ fun <T : StashData> ItemsRow(
 //                        { Modifier.focusRequester(focusPair!!.focusRequester) },
 //                    )
                             .onFocusChanged {
+                                if (it.isFocused) {
+                                    focusedIndex = index
+                                }
                                 cardOnFocus.invoke(it.isFocused, index)
                             }
                     }

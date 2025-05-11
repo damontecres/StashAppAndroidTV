@@ -50,15 +50,11 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.api.fragment.ImageData
-import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.AppColors
@@ -69,7 +65,9 @@ import com.github.damontecres.stashapp.ui.cards.LoadingCard
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.playback.isBackwardButton
 import com.github.damontecres.stashapp.ui.components.playback.isForwardButton
+import com.github.damontecres.stashapp.ui.isPlayKeyUp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.getDestinationForItem
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
@@ -77,8 +75,6 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.defaultCardWidth
 import com.github.damontecres.stashapp.util.getPreference
-import com.github.damontecres.stashapp.util.resume_position
-import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -468,41 +464,18 @@ fun StashGrid(
                             zeroFocus.tryRequestFocus()
                         }
                         return@onKeyEvent true
-                    } else if (it.key == Key.MediaPlay || it.key == Key.MediaPlayPause) {
-                        val item = pager[focusedIndex]
+                    } else if (isPlayKeyUp(it)) {
                         val destination =
-                            when (item) {
-                                is SlimSceneData ->
-                                    Destination.Playback(
-                                        item.id,
-                                        item.resume_position ?: 0L,
-                                        PlaybackMode.Choose,
-                                    )
-
-                                is MarkerData ->
-                                    Destination.Playback(
-                                        item.scene.minimalSceneData.id,
-                                        item.seconds.toLongMilliseconds,
-                                        PlaybackMode.Choose,
-                                    )
-
-                                is ImageData ->
-                                    Destination.Slideshow(
-                                        filterArgs = pager.filter,
-                                        position = focusedIndex,
-                                        automatic = true,
-                                    )
-
-                                else -> null
-                            }
-                        if (destination != null) {
+                            getDestinationForItem(
+                                pager[focusedIndex],
+                                FilterAndPosition(pager.filter, focusedIndex),
+                            )
+                        return@onKeyEvent if (destination != null) {
                             navigationManager.navigate(destination)
-                            return@onKeyEvent true
-                        } else if (item != null) {
-                            itemOnClick.onClick(item, FilterAndPosition(pager.filter, focusedIndex))
-                            return@onKeyEvent true
+                            true
+                        } else {
+                            false
                         }
-                        return@onKeyEvent false
                     } else if (useJumpRemoteButtons && isForwardButton(it)) {
                         jump(jump1)
                         return@onKeyEvent true

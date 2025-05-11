@@ -32,7 +32,16 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.onPlaced
+import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
+import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.util.resume_position
+import com.github.damontecres.stashapp.util.toLongMilliseconds
 
 /**
  * Handles horizontal (Left & Right) D-Pad Keys and consumes the event(s) so that the focus doesn't
@@ -211,3 +220,43 @@ fun Modifier.ifElse(
     ifTrueModifier: () -> Modifier,
     ifFalseModifier: Modifier = Modifier,
 ): Modifier = then(if (condition) ifTrueModifier.invoke() else ifFalseModifier)
+
+fun getDestinationForItem(
+    item: Any?,
+    filterAndPosition: FilterAndPosition?,
+): Destination? {
+    val destination =
+        when (item) {
+            is SlimSceneData ->
+                Destination.Playback(
+                    item.id,
+                    item.resume_position ?: 0L,
+                    PlaybackMode.Choose,
+                )
+
+            is MarkerData ->
+                Destination.Playback(
+                    item.scene.minimalSceneData.id,
+                    item.seconds.toLongMilliseconds,
+                    PlaybackMode.Choose,
+                )
+
+            is ImageData -> {
+                filterAndPosition?.let {
+                    Destination.Slideshow(
+                        filterArgs = filterAndPosition.filter,
+                        position = filterAndPosition.position,
+                        automatic = true,
+                    )
+                }
+            }
+
+            else -> null
+        }
+    if (destination != null) {
+        return destination
+    } else if (item is StashData && item !is ImageData) {
+        return Destination.fromStashData(item)
+    }
+    return null
+}
