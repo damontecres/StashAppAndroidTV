@@ -76,6 +76,9 @@ class DebugFragment : Fragment(R.layout.debug) {
         )
         formatSupportedTable.isStretchAllColumns = true
 
+        otherTable.addView(
+            createRow("Build type", BuildConfig.BUILD_TYPE),
+        )
         val server = StashServer.getCurrentStashServer()
         if (server != null) {
             otherTable.addView(
