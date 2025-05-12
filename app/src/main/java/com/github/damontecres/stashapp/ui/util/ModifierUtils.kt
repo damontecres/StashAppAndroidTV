@@ -18,6 +18,8 @@
 
 package com.github.damontecres.stashapp.ui.util
 
+import android.content.Context
+import android.media.AudioManager
 import android.view.KeyEvent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
@@ -29,9 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.platform.LocalContext
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -259,4 +263,29 @@ fun getDestinationForItem(
         return Destination.fromStashData(item)
     }
     return null
+}
+
+@Composable
+fun Modifier.playSoundOnFocus(enabled: Boolean): Modifier {
+    if (!enabled) {
+        return this
+    }
+    val context = LocalContext.current
+    val audioManager =
+        remember {
+            context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        }
+    return onFocusChanged {
+        if (it.isFocused) {
+            audioManager.playSoundEffect(AudioManager.FX_FOCUS_NAVIGATION_UP)
+        }
+    }
+}
+
+fun playOnClickSound(
+    context: Context,
+    effectType: Int = AudioManager.FX_KEY_CLICK,
+) {
+    val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    audioManager.playSoundEffect(effectType)
 }

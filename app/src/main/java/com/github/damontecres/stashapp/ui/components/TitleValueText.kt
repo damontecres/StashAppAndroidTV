@@ -25,29 +25,34 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.ui.util.ifElse
+import com.github.damontecres.stashapp.ui.util.playOnClickSound
 
 @Composable
 fun TitleValueText(
     title: String,
     value: String,
     modifier: Modifier = Modifier,
+    playSoundOnFocus: Boolean = false,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
 ) {
     MaybeClickColumn(
         onClick = onClick,
         onLongClick = onLongClick,
+        playSoundOnFocus = playSoundOnFocus,
         modifier = modifier,
     ) {
         Text(
@@ -67,20 +72,28 @@ fun TitleValueText(
 
 @Composable
 private fun MaybeClickColumn(
+    playSoundOnFocus: Boolean,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (onClick != null || onLongClick != null) {
+        val context = LocalContext.current
         val interactionSource = remember { MutableInteractionSource() }
         val isFocused by interactionSource.collectIsFocusedAsState()
+        if (playSoundOnFocus) {
+            LaunchedEffect(isFocused) {
+                if (isFocused) playOnClickSound(context)
+            }
+        }
         val bgColor =
             if (isFocused) {
                 MaterialTheme.colorScheme.onPrimary.copy(alpha = .75f)
             } else {
                 Color.Unspecified
             }
+
         Column(
             content = content,
             modifier =
@@ -91,8 +104,14 @@ private fun MaybeClickColumn(
                         enabled = true,
                         interactionSource = interactionSource,
                         indication = LocalIndication.current,
-                        onClick = { onClick?.invoke() },
-                        onLongClick = { onLongClick?.invoke() },
+                        onClick = {
+                            if (playSoundOnFocus) playOnClickSound(context)
+                            onClick?.invoke()
+                        },
+                        onLongClick = {
+                            if (playSoundOnFocus) playOnClickSound(context)
+                            onLongClick?.invoke()
+                        },
                     ),
         )
     } else {

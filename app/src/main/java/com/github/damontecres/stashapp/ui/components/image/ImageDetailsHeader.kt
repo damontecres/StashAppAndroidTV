@@ -200,6 +200,7 @@ fun ImageDetailsHeader(
                     TitleValueText(
                         stringResource(R.string.stashapp_studio),
                         image.studio.name,
+                        playSoundOnFocus = uiConfig.playSoundOnFocus,
                         modifier =
                             Modifier.onFocusChanged {
                                 if (it.isFocused) {
@@ -226,6 +227,7 @@ fun ImageDetailsHeader(
                     TitleValueText(
                         stringResource(R.string.stashapp_photographer),
                         image.photographer,
+                        playSoundOnFocus = uiConfig.playSoundOnFocus,
                         modifier =
                             Modifier.onFocusChanged {
                                 if (it.isFocused) {
