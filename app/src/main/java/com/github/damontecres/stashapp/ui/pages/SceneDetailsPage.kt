@@ -20,10 +20,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.MutableLiveData
@@ -536,7 +538,7 @@ fun SceneDetails(
 //            "cardOnFocus: isFocused=$isFocused, row=$row, column=$column, savedFocusPosition=$savedFocusPosition, focusPosition=$focusPosition",
 //        )
     }
-
+    val focusManager = LocalFocusManager.current
     val removeLongClicker =
         LongClicker<Any> { item, filterAndPosition ->
             item as StashData
@@ -581,11 +583,11 @@ fun SceneDetails(
                                 add(
                                     DialogItem(
                                         onClick = {
-                                            removeItem(item)
                                             when (item) {
                                                 is StudioData -> headerFocusRequester.tryRequestFocus()
-                                                else -> {} // TODO other types
+                                                else -> focusManager.moveFocus(FocusDirection.Previous)
                                             }
+                                            removeItem(item)
                                         },
                                         headlineContent = {
                                             Text(stringResource(R.string.stashapp_actions_remove))

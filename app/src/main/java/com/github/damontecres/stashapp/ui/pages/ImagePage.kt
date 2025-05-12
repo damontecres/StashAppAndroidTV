@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -34,6 +35,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -368,6 +370,7 @@ fun ImagePage(
                 // TODO
                 Text("No image URL")
             }
+            val focusManager = LocalFocusManager.current
             AnimatedVisibility(showOverlay) {
                 ImageOverlay(
                     modifier =
@@ -399,6 +402,7 @@ fun ImagePage(
                         }
                     },
                     removeItem = { item ->
+                        focusManager.moveFocus(FocusDirection.Previous)
                         when (item) {
                             is TagData -> viewModel.removeTag(image.id, item.id)
                             is PerformerData -> viewModel.removePerformer(image.id, item.id)

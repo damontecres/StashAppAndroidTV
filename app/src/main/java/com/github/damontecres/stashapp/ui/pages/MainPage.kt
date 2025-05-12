@@ -53,7 +53,7 @@ import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import coil3.request.crossfade
+import coil3.request.transitionFactory
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
@@ -75,6 +75,7 @@ import com.github.damontecres.stashapp.ui.components.RowColumn
 import com.github.damontecres.stashapp.ui.components.main.MainPageHeader
 import com.github.damontecres.stashapp.ui.isPlayKeyUp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.CrossFadeFactory
 import com.github.damontecres.stashapp.ui.util.getDestinationForItem
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.FilterParser
@@ -86,6 +87,7 @@ import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val TAG = "MainPage"
 
@@ -233,7 +235,7 @@ fun HomePage(
                         ImageRequest
                             .Builder(LocalContext.current)
                             .data(imageUrl)
-                            .crossfade(true)
+                            .transitionFactory(CrossFadeFactory(250.milliseconds))
                             .build(),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
