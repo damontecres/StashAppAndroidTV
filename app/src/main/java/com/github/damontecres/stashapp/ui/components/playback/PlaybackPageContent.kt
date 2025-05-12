@@ -19,7 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,6 +53,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.Tracks
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
@@ -80,10 +81,14 @@ import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaybackSceneFragment
 import com.github.damontecres.stashapp.playback.PlaylistFragment
 import com.github.damontecres.stashapp.playback.TrackActivityPlaybackListener
+import com.github.damontecres.stashapp.playback.TrackSupportReason
+import com.github.damontecres.stashapp.playback.TrackType
+import com.github.damontecres.stashapp.playback.checkForSupport
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.ComposePager
@@ -188,6 +193,17 @@ class PlaybackViewModel : ViewModel() {
     }
 }
 
+val playbackScaleOptions =
+    mapOf(
+        ContentScale.Fit to "Fit",
+        ContentScale.None to "None",
+        ContentScale.Crop to "Crop",
+//        ContentScale.Inside to "Inside",
+        ContentScale.FillBounds to "Fill",
+        ContentScale.FillWidth to "Fill Width",
+        ContentScale.FillHeight to "Fill Height",
+    )
+
 @OptIn(UnstableApi::class)
 @Composable
 fun PlaybackPageContent(
@@ -215,6 +231,8 @@ fun PlaybackPageContent(
     val spriteImageLoaded by viewModel.spriteImageLoaded.observeAsState(false)
     var subtitles by remember { mutableStateOf<String?>(null) }
     var subtitleIndex by remember { mutableStateOf<Int?>(null) }
+    var audioIndex by remember { mutableStateOf<Int?>(null) }
+    var audioOptions by remember { mutableStateOf<List<String>>(listOf()) }
 
     var trackActivityListener = remember<TrackActivityPlaybackListener?>(server) { null }
     val player =
@@ -235,8 +253,9 @@ fun PlaybackPageContent(
 
     var showControls by remember { mutableStateOf(true) }
     var showPlaylist by remember { mutableStateOf(false) }
-    var currentContentScaleIndex by remember { mutableIntStateOf(0) }
-    val contentScale = ContentScale.Fit
+    var contentScale by remember { mutableStateOf(ContentScale.Fit) }
+    var playbackSpeed by remember { mutableFloatStateOf(1.0f) }
+    LaunchedEffect(playbackSpeed) { player.setPlaybackSpeed(playbackSpeed) }
 
     val presentationState = rememberPresentationState(player)
     val scaledModifier =
@@ -296,6 +315,14 @@ fun PlaybackPageContent(
                             .joinToString("\n")
 //                    Log.v(TAG, "onCues: \n$cues")
                     subtitles = cues
+                }
+
+                override fun onTracksChanged(tracks: Tracks) {
+                    val audioTracks =
+                        checkForSupport(tracks).filter { it.type == TrackType.AUDIO && it.supported == TrackSupportReason.HANDLED }
+                    audioIndex = audioTracks.indexOfFirstOrNull { it.selected }
+                    audioOptions =
+                        audioTracks.map { it.labels.joinToString(", ").ifBlank { "Default" } }
                 }
 
                 override fun onMediaItemTransition(
@@ -506,6 +533,16 @@ fun PlaybackPageContent(
                                 }
                                 controllerViewState.hideControls()
                             }
+
+                            is PlaybackAction.PlaybackSpeed -> playbackSpeed = it.value
+                            is PlaybackAction.Scale -> contentScale = it.scale
+                            is PlaybackAction.ToggleAudio -> {
+                                if (toggleAudio(player, audioIndex, it.index)) {
+                                    audioIndex = it.index
+                                } else {
+                                    audioIndex = null
+                                }
+                            }
                         }
                     },
                     onSeekBarChange = seekBarState::onValueChange,
@@ -526,6 +563,10 @@ fun PlaybackPageContent(
                             },
                         ),
                     subtitleIndex = subtitleIndex,
+                    audioIndex = audioIndex,
+                    audioOptions = audioOptions,
+                    playbackSpeed = playbackSpeed,
+                    scale = contentScale,
                 )
             }
         }
@@ -706,6 +747,44 @@ fun toggleSubtitles(
                 .setOverrideForType(
                     TrackSelectionOverride(
                         subtitleTracks[index].mediaTrackGroup,
+                        0,
+                    ),
+                ).build()
+        return true
+    }
+}
+
+@OptIn(UnstableApi::class)
+fun toggleAudio(
+    player: Player,
+    audioIndex: Int?,
+    index: Int,
+): Boolean {
+    val audioTracks =
+        player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO && it.isSupported }
+    if (index !in audioTracks.indices || audioIndex != null && audioIndex == index) {
+        Log.v(
+            TAG,
+            "Deactivating audio",
+        )
+        player.trackSelectionParameters =
+            player.trackSelectionParameters
+                .buildUpon()
+                .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
+                .build()
+        return false
+    } else {
+        Log.v(
+            TAG,
+            "Activating audio ${audioTracks[index].mediaTrackGroup.id}",
+        )
+        player.trackSelectionParameters =
+            player.trackSelectionParameters
+                .buildUpon()
+                .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, false)
+                .setOverrideForType(
+                    TrackSelectionOverride(
+                        audioTracks[index].mediaTrackGroup,
                         0,
                     ),
                 ).build()
