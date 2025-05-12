@@ -141,6 +141,10 @@ fun PlaybackOverlay(
     spriteImageLoaded: Boolean,
     moreButtonOptions: MoreButtonOptions,
     subtitleIndex: Int?,
+    audioIndex: Int?,
+    audioOptions: List<String>,
+    playbackSpeed: Float,
+    scale: ContentScale,
     modifier: Modifier = Modifier,
     seekPreviewPlaceholder: Painter? = null,
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -241,6 +245,10 @@ fun PlaybackOverlay(
                     seekBarInteractionSource = seekBarInteractionSource,
                     moreButtonOptions = moreButtonOptions,
                     subtitleIndex = subtitleIndex,
+                    audioIndex = audioIndex,
+                    audioOptions = audioOptions,
+                    playbackSpeed = playbackSpeed,
+                    scale = scale,
                 )
             }
             if (markers.isNotEmpty()) {
@@ -579,6 +587,10 @@ private fun PlaybackOverlayPreview() {
             modifier =
                 Modifier
                     .fillMaxSize(),
+            audioIndex = null,
+            audioOptions = listOf(),
+            playbackSpeed = 1.0f,
+            scale = ContentScale.Fit,
         )
     }
 }

@@ -4,10 +4,10 @@ import android.util.Log
 import android.view.Gravity
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +38,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
@@ -80,10 +81,21 @@ sealed interface PlaybackAction {
     data class ToggleCaptions(
         val index: Int,
     ) : PlaybackAction
+
+    data class ToggleAudio(
+        val index: Int,
+    ) : PlaybackAction
+
+    data class PlaybackSpeed(
+        val value: Float,
+    ) : PlaybackAction
+
+    data class Scale(
+        val scale: ContentScale,
+    ) : PlaybackAction
 }
 
 @OptIn(UnstableApi::class)
-@kotlin.OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlaybackControls(
     scene: Scene,
@@ -99,6 +111,10 @@ fun PlaybackControls(
     seekEnabled: Boolean,
     moreButtonOptions: MoreButtonOptions,
     subtitleIndex: Int?,
+    audioIndex: Int?,
+    audioOptions: List<String>,
+    playbackSpeed: Float,
+    scale: ContentScale,
     modifier: Modifier = Modifier,
     initialFocusRequester: FocusRequester = remember { FocusRequester() },
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -111,6 +127,12 @@ fun PlaybackControls(
             bringIntoViewRequester.bringIntoView()
         }
         controllerViewState.pulseControls()
+    }
+    val onControllerInteractionForDialog = {
+        scope.launch(StashCoroutineExceptionHandler()) {
+            bringIntoViewRequester.bringIntoView()
+        }
+        controllerViewState.pulseControls(Int.MAX_VALUE)
     }
     LaunchedEffect(controllerViewState.controlsVisible) {
         if (controllerViewState.controlsVisible) {
@@ -159,11 +181,16 @@ fun PlaybackControls(
                 modifier = Modifier,
             )
             RightPlaybackButtons(
+                modifier = Modifier,
                 captions = scene.captions,
                 onControllerInteraction = onControllerInteraction,
+                onControllerInteractionForDialog = onControllerInteractionForDialog,
                 onPlaybackActionClick = onPlaybackActionClick,
                 subtitleIndex = subtitleIndex,
-                modifier = Modifier,
+                audioOptions = audioOptions,
+                audioIndex = audioIndex,
+                playbackSpeed = playbackSpeed,
+                scale = scale,
             )
         }
     }
@@ -308,15 +335,26 @@ fun LeftPlaybackButtons(
     }
 }
 
+private val speedOptions = listOf(".25", ".5", ".75", "1.0", "1.25", "1.5", "2.0")
+
 @Composable
 fun RightPlaybackButtons(
     captions: List<Caption>,
     onControllerInteraction: () -> Unit,
+    onControllerInteractionForDialog: () -> Unit,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
     subtitleIndex: Int?,
+    audioOptions: List<String>,
+    audioIndex: Int?,
+    playbackSpeed: Float,
+    scale: ContentScale,
     modifier: Modifier = Modifier,
 ) {
     var showCaptionDialog by remember { mutableStateOf(false) }
+    var showOptionsDialog by remember { mutableStateOf(false) }
+    var showAudioDialog by remember { mutableStateOf(false) }
+    var showSpeedDialog by remember { mutableStateOf(false) }
+    var showScaleDialog by remember { mutableStateOf(false) }
     Row(
         modifier = modifier.focusGroup(),
         horizontalArrangement = Arrangement.spacedBy(buttonSpacing),
@@ -326,7 +364,7 @@ fun RightPlaybackButtons(
             enabled = captions.isNotEmpty(),
             iconRes = R.drawable.captions_svgrepo_com,
             onClick = {
-                onControllerInteraction.invoke()
+                onControllerInteractionForDialog.invoke()
                 showCaptionDialog = true
             },
             onControllerInteraction = onControllerInteraction,
@@ -335,10 +373,10 @@ fun RightPlaybackButtons(
         PlaybackButton(
             iconRes = R.drawable.vector_settings,
             onClick = {
-                // TODO playback settings
-                onControllerInteraction.invoke()
+                onControllerInteractionForDialog.invoke()
+                showOptionsDialog = true
             },
-            enabled = false,
+            enabled = true,
             onControllerInteraction = onControllerInteraction,
         )
     }
@@ -349,9 +387,73 @@ fun RightPlaybackButtons(
         BottomDialog(
             choices = options,
             currentChoice = if (subtitleIndex != null) options[subtitleIndex] else null,
-            onDismissRequest = { showCaptionDialog = false },
+            onDismissRequest = {
+                onControllerInteraction.invoke()
+                showCaptionDialog = false
+            },
             onSelectChoice = { index, _ ->
                 onPlaybackActionClick.invoke(PlaybackAction.ToggleCaptions(index))
+            },
+            gravity = Gravity.END,
+        )
+    }
+    if (showOptionsDialog) {
+        val options = listOf("Audio Track", "Playback Speed", "Video Scale")
+        BottomDialog(
+            choices = options,
+            currentChoice = null,
+            onDismissRequest = {
+                onControllerInteraction.invoke()
+                showOptionsDialog = false
+            },
+            onSelectChoice = { index, _ ->
+                when (index) {
+                    0 -> showAudioDialog = true
+                    1 -> showSpeedDialog = true
+                    2 -> showScaleDialog = true
+                }
+            },
+            gravity = Gravity.END,
+        )
+    }
+    if (showAudioDialog) {
+        BottomDialog(
+            choices = audioOptions,
+            currentChoice = if (audioIndex != null && audioIndex in audioOptions.indices) audioOptions[audioIndex] else null,
+            onDismissRequest = {
+                onControllerInteraction.invoke()
+                showAudioDialog = false
+            },
+            onSelectChoice = { index, _ ->
+                onPlaybackActionClick.invoke(PlaybackAction.ToggleAudio(index))
+            },
+            gravity = Gravity.END,
+        )
+    }
+    if (showSpeedDialog) {
+        BottomDialog(
+            choices = speedOptions,
+            currentChoice = playbackSpeed.toString(),
+            onDismissRequest = {
+                onControllerInteraction.invoke()
+                showSpeedDialog = false
+            },
+            onSelectChoice = { _, value ->
+                onPlaybackActionClick.invoke(PlaybackAction.PlaybackSpeed(value.toFloat()))
+            },
+            gravity = Gravity.END,
+        )
+    }
+    if (showScaleDialog) {
+        BottomDialog(
+            choices = playbackScaleOptions.values.toList(),
+            currentChoice = playbackScaleOptions[scale],
+            onDismissRequest = {
+                onControllerInteraction.invoke()
+                showScaleDialog = false
+            },
+            onSelectChoice = { index, _ ->
+                onPlaybackActionClick.invoke(PlaybackAction.Scale(playbackScaleOptions.keys.toList()[index]))
             },
             gravity = Gravity.END,
         )
@@ -461,6 +563,7 @@ private fun BottomDialog(
     gravity: Int,
     currentChoice: String? = null,
 ) {
+    // TODO enforcing a width ends up ignore the gravity
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(usePlatformDefaultWidth = true),
@@ -482,11 +585,20 @@ private fun BottomDialog(
                 modifier =
                     Modifier
                         .fillMaxWidth()
+//                        .widthIn(max = 240.dp)
                         .wrapContentWidth(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 choices.forEachIndexed { index, choice ->
+                    val interactionSource = remember { MutableInteractionSource() }
+                    val focused = interactionSource.collectIsFocusedAsState().value
+                    val color =
+                        if (focused) {
+                            MaterialTheme.colorScheme.inverseOnSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        }
                     ListItem(
                         selected = choice == currentChoice,
                         onClick = {
@@ -501,7 +613,7 @@ private fun BottomDialog(
                                             .padding(horizontal = 4.dp)
                                             .clip(CircleShape)
                                             .align(Alignment.Center)
-                                            .background(MaterialTheme.colorScheme.onSurface)
+                                            .background(color)
                                             .size(8.dp),
                                 )
                             }
@@ -509,8 +621,10 @@ private fun BottomDialog(
                         headlineContent = {
                             Text(
                                 text = choice,
+                                color = color,
                             )
                         },
+                        interactionSource = interactionSource,
                     )
                 }
             }
@@ -540,9 +654,14 @@ private fun RightPlaybackButtonsPreview() {
         RightPlaybackButtons(
             captions = listOf(),
             onControllerInteraction = {},
+            onControllerInteractionForDialog = {},
             onPlaybackActionClick = {},
             subtitleIndex = 1,
             modifier = Modifier,
+            audioOptions = listOf(),
+            audioIndex = null,
+            playbackSpeed = 1.0f,
+            scale = ContentScale.Fit,
         )
     }
 }
