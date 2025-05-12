@@ -109,5 +109,10 @@
             app:summaryOn="Enabled"
             app:summaryOff="Disabled"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_movement_sounds"
+            app:title="Play movement sound effects"
+            app:summary="Applies to Compose UI pages only"
+            app:defaultValue="true" />
     </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

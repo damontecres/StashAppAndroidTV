@@ -98,6 +98,8 @@ import com.github.damontecres.stashapp.ui.pages.SearchPage
 import com.github.damontecres.stashapp.ui.pages.StudioPage
 import com.github.damontecres.stashapp.ui.pages.TagPage
 import com.github.damontecres.stashapp.ui.util.ifElse
+import com.github.damontecres.stashapp.ui.util.playOnClickSound
+import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.models.ServerViewModel
@@ -222,6 +224,8 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                         }
                                     },
                                     modifier = Modifier.background(MaterialTheme.colorScheme.background),
+                                    // TODO could use onKeyEvent here to make focus/movement sounds everywhere
+                                    // But it wouldn't know if the focus would actually change
                                 )
                             }
                         }
@@ -524,9 +528,14 @@ fun FragmentContent(
                                         Modifier
                                             .onFocusChanged {
                                                 serverFocused = it.isFocused
-                                            },
+                                            }.playSoundOnFocus(composeUiConfig.playSoundOnFocus),
                                     selected = false,
                                     onClick = {
+                                        if (composeUiConfig.playSoundOnFocus) {
+                                            playOnClickSound(
+                                                context,
+                                            )
+                                        }
                                         navigationManager.navigate(
                                             Destination.ManageServers(
                                                 false,
@@ -559,9 +568,15 @@ fun FragmentContent(
                                                 selectedScreen == page,
                                                 Modifier
                                                     .focusRequester(initialFocus),
-                                            ).isElementVisible { visiblePages[page] = it },
+                                            ).isElementVisible { visiblePages[page] = it }
+                                            .playSoundOnFocus(composeUiConfig.playSoundOnFocus),
                                     selected = selectedScreen == page && drawerState.currentValue == DrawerValue.Open,
                                     onClick = {
+                                        if (composeUiConfig.playSoundOnFocus) {
+                                            playOnClickSound(
+                                                context,
+                                            )
+                                        }
                                         val refreshMain =
                                             selectedScreen == DrawerPage.HOME_PAGE && page == DrawerPage.HOME_PAGE
                                         currentScreen = page

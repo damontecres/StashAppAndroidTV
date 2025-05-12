@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +63,8 @@ import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.playOnClickSound
+import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 
 enum class StarRatingPrecision {
@@ -100,6 +103,7 @@ fun Rating100(
         uiConfig.ratingAsStars,
         uiConfig.starPrecision,
         enabled && uiConfig.readOnlyModeDisabled,
+        uiConfig.playSoundOnFocus,
         modifier,
         bgColor,
     )
@@ -112,6 +116,7 @@ fun Rating100(
     ratingAsStars: Boolean,
     starPrecision: StarRatingPrecision,
     enabled: Boolean,
+    playSoundOnFocus: Boolean,
     modifier: Modifier = Modifier,
     bgColor: Color = AppColors.TransparentBlack75, // MaterialTheme.colorScheme.background,
 ) {
@@ -121,6 +126,7 @@ fun Rating100(
             onRatingChange = onRatingChange,
             precision = starPrecision,
             enabled = enabled,
+            playSoundOnFocus = playSoundOnFocus,
             modifier = modifier,
             bgColor = bgColor,
         )
@@ -129,6 +135,7 @@ fun Rating100(
             rating100 = rating100,
             onRatingChange = onRatingChange,
             enabled = enabled,
+            playSoundOnFocus = playSoundOnFocus,
             modifier = modifier,
         )
     }
@@ -140,9 +147,11 @@ fun StarRating(
     onRatingChange: (Int) -> Unit,
     precision: StarRatingPrecision,
     enabled: Boolean,
+    playSoundOnFocus: Boolean,
     modifier: Modifier = Modifier,
     bgColor: Color = AppColors.TransparentBlack75, // MaterialTheme.colorScheme.background,
 ) {
+    val context = LocalContext.current
     var tempRating by remember(rating100) { mutableIntStateOf(rating100) }
     val percentage = (if (enabled) tempRating else rating100) / 100f
     val focusRequesters = remember { List(5) { FocusRequester() } }
@@ -221,13 +230,17 @@ fun StarRating(
                                             } else {
                                                 tempRating = rating100
                                             }
-                                        }.focusRequester(focusRequesters[i - 1])
+                                        }.playSoundOnFocus(playSoundOnFocus)
+                                        .focusRequester(focusRequesters[i - 1])
                                         .focusProperties {
-                                            left = if (i == 1)focusRequesters.last() else FocusRequester.Default
-                                            right = if (i == 5)focusRequesters.first() else FocusRequester.Default
+                                            left =
+                                                if (i == 1) focusRequesters.last() else FocusRequester.Default
+                                            right =
+                                                if (i == 5) focusRequesters.first() else FocusRequester.Default
                                         }.selectable(
                                             selected = isRated,
                                             onClick = {
+                                                if (playSoundOnFocus) playOnClickSound(context)
                                                 val newRating100 =
                                                     when (precision) {
                                                         StarRatingPrecision.FULL -> i * 20
@@ -273,6 +286,7 @@ fun DecimalRating(
     rating100: Int,
     onRatingChange: (Int) -> Unit,
     enabled: Boolean,
+    playSoundOnFocus: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -286,6 +300,11 @@ fun DecimalRating(
         } else {
             Color.Unspecified
         }
+    if (playSoundOnFocus) {
+        LaunchedEffect(focused) {
+            if (focused) playOnClickSound(context)
+        }
+    }
     Row(
         modifier =
             modifier
@@ -296,6 +315,7 @@ fun DecimalRating(
                     interactionSource = interactionSource,
                     indication = LocalIndication.current,
                 ) {
+                    if (playSoundOnFocus) playOnClickSound(context)
                     showDialog = true
                 },
         verticalAlignment = Alignment.CenterVertically,
@@ -399,6 +419,7 @@ private fun StarRatingPreview() {
                 precision = StarRatingPrecision.HALF,
                 onRatingChange = { rating = it },
                 enabled = true,
+                playSoundOnFocus = true,
                 bgColor = bgColor,
                 modifier =
                     Modifier
@@ -411,6 +432,7 @@ private fun StarRatingPreview() {
                 precision = StarRatingPrecision.FULL,
                 onRatingChange = { rating2 = it },
                 enabled = true,
+                playSoundOnFocus = true,
                 bgColor = bgColor,
                 modifier = Modifier.height(32.dp),
             )
@@ -419,6 +441,7 @@ private fun StarRatingPreview() {
                 precision = StarRatingPrecision.HALF,
                 onRatingChange = {},
                 enabled = true,
+                playSoundOnFocus = true,
                 bgColor = bgColor,
                 modifier = Modifier.height(32.dp),
             )
@@ -427,6 +450,7 @@ private fun StarRatingPreview() {
                 precision = StarRatingPrecision.HALF,
                 onRatingChange = {},
                 enabled = true,
+                playSoundOnFocus = true,
                 bgColor = bgColor,
                 modifier = Modifier.height(32.dp),
             )
@@ -436,6 +460,7 @@ private fun StarRatingPreview() {
                 starPrecision = StarRatingPrecision.HALF,
                 onRatingChange = {},
                 enabled = true,
+                playSoundOnFocus = true,
                 bgColor = bgColor,
                 modifier = Modifier.height(32.dp),
             )

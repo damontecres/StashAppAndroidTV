@@ -58,6 +58,8 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.ScrollableDialog
 import com.github.damontecres.stashapp.ui.components.TitleValueText
+import com.github.damontecres.stashapp.ui.util.playOnClickSound
+import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
@@ -203,11 +205,15 @@ fun SceneDetailsHeader(
                                         if (it.isFocused) {
                                             scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
                                         }
-                                    }.clickable(
+                                    }.playSoundOnFocus(uiConfig.playSoundOnFocus)
+                                    .clickable(
                                         enabled = true,
                                         interactionSource = interactionSource,
                                         indication = LocalIndication.current,
-                                    ) { showDetailsDialog = true },
+                                    ) {
+                                        if (uiConfig.playSoundOnFocus) playOnClickSound(context)
+                                        showDetailsDialog = true
+                                    },
                         ) {
                             Text(
                                 text = scene.details,
@@ -271,6 +277,7 @@ fun SceneDetailsHeader(
                             TitleValueText(
                                 stringResource(R.string.stashapp_studio),
                                 studio.name,
+                                playSoundOnFocus = uiConfig.playSoundOnFocus,
                                 modifier =
                                     Modifier.onFocusChanged {
                                         if (it.isFocused) {

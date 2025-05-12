@@ -513,6 +513,7 @@ private fun PlaybackOverlayPreview() {
                     showTitleDuringPlayback = true,
                     readOnlyModeEnabled = false,
                     showCardProgress = true,
+                    playSoundOnFocus = true,
                     cardSettings =
                         CardUiSettings(
                             maxSearchResults = 25,

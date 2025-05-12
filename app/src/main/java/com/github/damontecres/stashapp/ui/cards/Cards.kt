@@ -98,6 +98,8 @@ import com.github.damontecres.stashapp.ui.LocalPlayerContext
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
+import com.github.damontecres.stashapp.ui.util.playOnClickSound
+import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
 import com.github.damontecres.stashapp.util.CreateNew
 import com.github.damontecres.stashapp.util.asSlimeSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -344,8 +346,12 @@ fun RootCard(
         imageWidth * (1 + (5f - uiConfig.cardSettings.columns) / uiConfig.cardSettings.columns)
 
     Card(
-        onClick = onClick,
+        onClick = {
+            if (uiConfig.playSoundOnFocus) playOnClickSound(context)
+            onClick.invoke()
+        },
         onLongClick = {
+            if (uiConfig.playSoundOnFocus) playOnClickSound(context)
             item?.let {
                 longClicker.longClick(
                     item,
@@ -356,7 +362,8 @@ fun RootCard(
         modifier =
             modifier
                 .padding(0.dp)
-                .width(width),
+                .width(width)
+                .playSoundOnFocus(uiConfig.playSoundOnFocus),
         interactionSource = interactionSource,
         shape = shape,
         colors = colors,
