@@ -155,10 +155,12 @@ class PlaybackViewModel : ViewModel() {
             val scene = queryEngine.getScene(sceneId)
             if (scene != null) {
                 oCount.value = scene.o_counter ?: 0
-                markers.value =
-                    scene.scene_markers
-                        .sortedBy { it.seconds }
-                        .map(::BasicMarker)
+                if (markersEnabled) {
+                    markers.value =
+                        scene.scene_markers
+                            .sortedBy { it.seconds }
+                            .map(::BasicMarker)
+                }
             }
         }
     }
@@ -362,7 +364,7 @@ fun PlaybackPageContent(
                     .getDefaultSharedPreferences(context)
                     .getBoolean(context.getString(R.string.pref_key_playback_track_activity), true)
             trackActivityListener =
-                if (appTracking && server.serverPreferences.trackActivity) {
+                if (appTracking && server.serverPreferences.trackActivity && markersEnabled) {
                     TrackActivityPlaybackListener(
                         context = context,
                         server = server,

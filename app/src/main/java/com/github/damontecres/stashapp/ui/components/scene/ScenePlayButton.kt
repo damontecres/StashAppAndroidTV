@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -39,12 +40,14 @@ fun PlayButtons(
     scene: FullSceneData,
     oCount: Int,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    editOnClick: () -> Unit,
     moreOnClick: () -> Unit,
     oCounterOnClick: () -> Unit,
     oCounterOnLongClick: () -> Unit,
     buttonOnFocusChanged: (FocusState) -> Unit,
     focusRequester: FocusRequester,
     alwaysStartFromBeginning: Boolean,
+    showEditButton: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val firstFocus = remember { FocusRequester() }
@@ -106,6 +109,7 @@ fun PlayButtons(
             Button(
                 onClick = oCounterOnClick,
                 onLongClick = oCounterOnLongClick,
+                enabled = showEditButton,
                 modifier =
                     Modifier
                         .padding(start = 8.dp, end = 8.dp)
@@ -124,6 +128,31 @@ fun PlayButtons(
                 )
             }
         }
+        // Edit button
+        if (showEditButton) {
+            item {
+                Button(
+                    onClick = editOnClick,
+                    onLongClick = {},
+                    modifier =
+                        Modifier
+                            .padding(start = 8.dp, end = 8.dp)
+                            .onFocusChanged(buttonOnFocusChanged),
+                    contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                    )
+                    Spacer(Modifier.size(8.dp))
+                    Text(
+                        text = stringResource(R.string.stashapp_actions_edit),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                }
+            }
+        }
+
         // More button
         item {
             Button(
