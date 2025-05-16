@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -44,6 +45,7 @@ fun <T : StashData> ItemsRow(
     cardOnFocus: (isFocused: Boolean, index: Int) -> Unit,
     modifier: Modifier = Modifier,
     focusPair: FocusPair? = null,
+    additionalContent: (LazyListScope.() -> Unit)? = null,
 ) = ItemsRow(
     title = stringResource(title),
     items = items,
@@ -63,6 +65,7 @@ fun <T : StashData> ItemsRow(
             modifier = modifier,
         )
     },
+    additionalContent = additionalContent,
 )
 
 @Composable
@@ -73,6 +76,7 @@ fun <T : StashData> ItemsRow(
     itemOnClick: ItemOnClicker<Any>,
     modifier: Modifier = Modifier,
     longClicker: LongClicker<Any>? = null,
+    additionalContent: (LazyListScope.() -> Unit)? = null,
 ) = ItemsRow(
     title = title,
     items = items,
@@ -92,6 +96,7 @@ fun <T : StashData> ItemsRow(
             modifier = modifier,
         )
     },
+    additionalContent = additionalContent,
 )
 
 @Composable
@@ -104,6 +109,7 @@ fun <T : StashData> ItemsRow(
     cardOnFocus: (isFocused: Boolean, index: Int) -> Unit,
     modifier: Modifier = Modifier,
     focusPair: FocusPair? = null,
+    additionalContent: (LazyListScope.() -> Unit)? = null,
     itemContent: @Composable (
         uiConfig: ComposeUiConfig,
         item: T,
@@ -176,6 +182,7 @@ fun <T : StashData> ItemsRow(
                     cardModifier,
                 )
             }
+            additionalContent?.invoke(this)
         }
     }
 }

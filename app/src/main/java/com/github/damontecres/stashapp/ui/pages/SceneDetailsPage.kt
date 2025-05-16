@@ -79,6 +79,7 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.RowColumn
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeader
+import com.github.damontecres.stashapp.ui.components.scene.markerPlayAll
 import com.github.damontecres.stashapp.ui.showAddGallery
 import com.github.damontecres.stashapp.ui.showAddGroup
 import com.github.damontecres.stashapp.ui.showAddMarker
@@ -765,6 +766,14 @@ fun SceneDetails(
                     },
                     focusPair = createFocusPair(0),
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
+                    additionalContent = {
+                        markerPlayAll(
+                            sceneId = scene.id,
+                            markers = markers,
+                            uiConfig = uiConfig,
+                            navigationManager = navigationManager,
+                        )
+                    },
                 )
             }
         }
