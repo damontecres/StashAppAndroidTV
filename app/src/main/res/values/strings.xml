@@ -114,5 +114,6 @@
     <string name="set_studio">Set Studio</string>
     <string name="play_from_here">Play from here</string>
     <string name="add_gallery">Add Gallery</string>
+    <string name="play_all_markers">Play all markers</string>
 
 </resources>

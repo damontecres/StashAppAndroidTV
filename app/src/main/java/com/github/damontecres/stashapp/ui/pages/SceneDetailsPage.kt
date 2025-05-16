@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import android.content.Context
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,21 +30,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -60,11 +56,20 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
+import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.SortOption
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
@@ -76,288 +81,19 @@ import com.github.damontecres.stashapp.ui.components.FocusPair
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.components.RowColumn
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeader
-import com.github.damontecres.stashapp.ui.components.scene.markerPlayAll
-import com.github.damontecres.stashapp.ui.showAddGallery
-import com.github.damontecres.stashapp.ui.showAddGroup
-import com.github.damontecres.stashapp.ui.showAddMarker
-import com.github.damontecres.stashapp.ui.showAddPerf
-import com.github.damontecres.stashapp.ui.showAddTag
-import com.github.damontecres.stashapp.ui.showSetStudio
+import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsViewModel
+import com.github.damontecres.stashapp.ui.components.scene.SceneLoadingState
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.fakeMarker
 import com.github.damontecres.stashapp.util.resume_position
-import com.github.damontecres.stashapp.util.showSetRatingToast
-import com.github.damontecres.stashapp.util.toLongMilliseconds
 import com.github.damontecres.stashapp.util.toSeconds
 import com.github.damontecres.stashapp.views.durationToString
-import kotlinx.coroutines.launch
-
-enum class AddRemove {
-    ADD,
-    REMOVE,
-}
-
-class SceneDetailsViewModel(
-    server: StashServer,
-    val sceneId: String,
-) : ViewModel() {
-    private val queryEngine = QueryEngine(server)
-    private val mutationEngine = MutationEngine(server)
-
-    private var scene: FullSceneData? = null
-
-    val loadingState = MutableLiveData<SceneLoadingState>(SceneLoadingState.Loading)
-    val tags = MutableLiveData<List<TagData>>(listOf())
-    val performers = MutableLiveData<List<PerformerData>>(listOf())
-    val galleries = MutableLiveData<List<GalleryData>>(listOf())
-    val groups = MutableLiveData<List<GroupData>>(listOf())
-    val markers = MutableLiveData<List<MarkerData>>(listOf())
-    val studio = MutableLiveData<StudioData?>(null)
-
-    val rating100 = MutableLiveData(0)
-    val oCount = MutableLiveData(0)
-
-    fun init(): SceneDetailsViewModel {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-            try {
-                val scene = queryEngine.getScene(sceneId)
-                if (scene != null) {
-                    rating100.value = scene.rating100 ?: 0
-                    oCount.value = scene.o_counter ?: 0
-                    tags.value = scene.tags.map { it.tagData }
-                    groups.value = scene.groups.map { it.group.groupData }
-                    markers.value = scene.scene_markers.map { it.asMarkerData(scene) }
-                    studio.value = scene.studio?.studioData
-                    this@SceneDetailsViewModel.scene = scene
-
-                    loadingState.value = SceneLoadingState.Success(scene)
-                    if (scene.performers.isNotEmpty()) {
-                        performers.value =
-                            queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
-                    }
-                    if (scene.galleries.isNotEmpty()) {
-                        galleries.value = queryEngine.getGalleries(scene.galleries.map { it.id })
-                    }
-                } else {
-                    loadingState.value = SceneLoadingState.Error
-                }
-            } catch (ex: Exception) {
-                loadingState.value = SceneLoadingState.Error
-            }
-        }
-        return this
-    }
-
-    fun addPerformer(performerId: String) = mutatePerformers(performerId, AddRemove.ADD)
-
-    fun removePerformer(performerId: String) = mutatePerformers(performerId, AddRemove.REMOVE)
-
-    private fun mutatePerformers(
-        id: String,
-        op: AddRemove,
-    ) {
-        val perfs = performers.value?.map { it.id }
-        perfs?.let {
-            val mutable = it.toMutableList()
-            when (op) {
-                AddRemove.ADD -> mutable.add(id)
-                AddRemove.REMOVE -> mutable.remove(id)
-            }
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                val results =
-                    mutationEngine
-                        .setPerformersOnScene(sceneId, mutable)
-                        ?.performers
-                        ?.map { it.performerData }
-                        .orEmpty()
-                performers.value = results
-                if (op == AddRemove.ADD) {
-                    results.firstOrNull { it.id == id }?.let { showAddPerf(it) }
-                }
-            }
-        }
-    }
-
-    fun addTag(id: String) = mutateTags(id, AddRemove.ADD)
-
-    fun removeTag(id: String) = mutateTags(id, AddRemove.REMOVE)
-
-    private fun mutateTags(
-        id: String,
-        op: AddRemove,
-    ) {
-        val ids = tags.value?.map { it.id }
-        ids?.let {
-            val mutable = it.toMutableList()
-            when (op) {
-                AddRemove.ADD -> mutable.add(id)
-                AddRemove.REMOVE -> mutable.remove(id)
-            }
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                val results =
-                    mutationEngine
-                        .setTagsOnScene(sceneId, mutable)
-                        ?.tags
-                        ?.map { it.tagData }
-                        .orEmpty()
-                tags.value = results
-                if (op == AddRemove.ADD) {
-                    results.firstOrNull { it.id == id }?.let { showAddTag(it) }
-                }
-            }
-        }
-    }
-
-    fun addGroup(id: String) = mutateGroup(id, AddRemove.ADD)
-
-    fun removeGroup(id: String) = mutateGroup(id, AddRemove.REMOVE)
-
-    private fun mutateGroup(
-        id: String,
-        op: AddRemove,
-    ) {
-        val ids = groups.value?.map { it.id }
-        ids?.let {
-            val mutable = it.toMutableList()
-            when (op) {
-                AddRemove.ADD -> mutable.add(id)
-                AddRemove.REMOVE -> mutable.remove(id)
-            }
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                val results =
-                    mutationEngine
-                        .setGroupsOnScene(sceneId, mutable)
-                        ?.groups
-                        ?.map { it.group.groupData }
-                        .orEmpty()
-                groups.value = results
-                if (op == AddRemove.ADD) {
-                    results.firstOrNull { it.id == id }?.let { showAddGroup(it) }
-                }
-            }
-        }
-    }
-
-    fun setStudio(id: String) = mutateStudio(id)
-
-    fun removeStudio() = mutateStudio(null)
-
-    private fun mutateStudio(id: String?) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-            val result = mutationEngine.setStudioOnScene(sceneId, id)?.studio?.studioData
-            studio.value = result
-            if (result != null) {
-                showSetStudio(result)
-            }
-        }
-    }
-
-    fun addMarker(marker: MarkerData) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-            val newMarker =
-                mutationEngine.createMarker(
-                    sceneId,
-                    marker.seconds.toLongMilliseconds,
-                    marker.primary_tag.slimTagData.id,
-                )
-            newMarker?.let {
-                val m = newMarker.asMarkerData(scene!!)
-                markers.value =
-                    markers.value
-                        ?.toMutableList()
-                        ?.apply { add(m) }
-                        ?.sortedBy { it.seconds }
-                        ?: listOf(m)
-                showAddMarker(m)
-            }
-        }
-    }
-
-    fun removeMarker(id: String) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-            if (mutationEngine.deleteMarker(id)) {
-                markers.value = markers.value?.filter { it.id != id }.orEmpty()
-            }
-        }
-    }
-
-    fun addGallery(id: String) = mutateGallery(id, AddRemove.ADD)
-
-    fun removeGallery(id: String) = mutateGallery(id, AddRemove.REMOVE)
-
-    private fun mutateGallery(
-        id: String,
-        op: AddRemove,
-    ) {
-        val ids = galleries.value?.map { it.id }
-        ids?.let {
-            val mutable = it.toMutableList()
-            when (op) {
-                AddRemove.ADD -> mutable.add(id)
-                AddRemove.REMOVE -> mutable.remove(id)
-            }
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                val results =
-                    mutationEngine
-                        .setGalleriesOnScene(sceneId, mutable)
-                        ?.galleries
-                        ?.map { it.galleryData }
-                        .orEmpty()
-                galleries.value = results
-                if (op == AddRemove.ADD) {
-                    results.firstOrNull { it.id == id }?.let { showAddGallery(it) }
-                }
-            }
-        }
-    }
-
-    fun updateOCount(action: suspend MutationEngine.(String) -> OCounter) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-            val newOCount = action.invoke(mutationEngine, sceneId)
-            oCount.value = newOCount.count
-        }
-    }
-
-    fun updateRating(rating100: Int) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-            val newRating =
-                mutationEngine.setRating(sceneId, rating100)?.rating100 ?: 0
-            this@SceneDetailsViewModel.rating100.value = newRating
-            showSetRatingToast(StashApplication.getApplication(), newRating)
-        }
-    }
-
-    companion object {
-        val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
-        val SCENE_ID_KEY = object : CreationExtras.Key<String> {}
-        val Factory: ViewModelProvider.Factory =
-            viewModelFactory {
-                initializer {
-                    val server = this[SERVER_KEY]!!
-                    val sceneId = this[SCENE_ID_KEY]!!
-                    SceneDetailsViewModel(server, sceneId)
-                }
-            }
-    }
-}
-
-sealed class SceneLoadingState {
-    data object Loading : SceneLoadingState()
-
-    data object Error : SceneLoadingState()
-
-    data class Success(
-        val scene: FullSceneData,
-    ) : SceneLoadingState()
-}
 
 @Composable
 fun SceneDetailsPage(
@@ -508,6 +244,14 @@ fun SceneDetails(
        SceneHeaderDetails will be brought into view and headerFocusRequester will be called
      */
 
+    var showMarkerDurationDialog by remember { mutableStateOf(false) }
+    if (showMarkerDurationDialog) {
+        MarkerDurationDialog(
+            onDismissRequest = { showMarkerDurationDialog = false },
+            onClick = { playAllMarkers(navigationManager, scene.id, it) },
+        )
+    }
+
     val createFocusPair = { row: Int ->
         focusPosition?.let {
             if (it.row == row) {
@@ -635,44 +379,14 @@ fun SceneDetails(
                 removeLongClicker = removeLongClicker,
                 studio = studio,
                 alwaysStartFromBeginning = server.serverPreferences.alwaysStartFromBeginning,
-                moreOnClick = {
+                showEditButton = uiConfig.readOnlyModeDisabled,
+                editOnClick = {
                     showDialog =
                         DialogParams(
-                            title = context.getString(R.string.more) + "...",
+                            title = context.getString(R.string.stashapp_actions_edit) + "...",
                             fromLongClick = false,
                             items =
                                 listOf(
-                                    DialogItem(
-                                        context.getString(R.string.play_direct),
-                                        Icons.Default.PlayArrow,
-                                    ) {
-                                        playOnClick(
-                                            if (server.serverPreferences.alwaysStartFromBeginning) {
-                                                0L
-                                            } else {
-                                                scene.resume_position ?: 0
-                                            },
-                                            PlaybackMode.ForcedDirectPlay,
-                                        )
-                                    },
-                                    DialogItem(
-                                        context.getString(R.string.play_transcoding),
-                                        Icons.Default.PlayArrow,
-                                    ) {
-                                        // TODO show options for other resolutions
-                                        val format =
-                                            PreferenceManager
-                                                .getDefaultSharedPreferences(context)
-                                                .getString("stream_choice", "HLS")!!
-                                        playOnClick(
-                                            if (server.serverPreferences.alwaysStartFromBeginning) {
-                                                0L
-                                            } else {
-                                                scene.resume_position ?: 0
-                                            },
-                                            PlaybackMode.ForcedTranscode(format),
-                                        )
-                                    },
                                     DialogItem(
                                         headlineContent = {
                                             Text(
@@ -729,6 +443,23 @@ fun SceneDetails(
                                 ),
                         )
                 },
+                moreOnClick = {
+                    showDialog =
+                        DialogParams(
+                            title = context.getString(R.string.more) + "...",
+                            fromLongClick = false,
+                            items =
+                                moreOptionsItems(
+                                    server = server,
+                                    context = context,
+                                    navigationManager = navigationManager,
+                                    scene = scene,
+                                    markers = markers,
+                                    playOnClick = playOnClick,
+                                    showDurationDialog = { showMarkerDurationDialog = true },
+                                ),
+                        )
+                },
                 oCounterOnClick = { oCountAction.invoke(MutationEngine::incrementOCounter) },
                 oCounterOnLongClick = {
                     showDialog =
@@ -766,14 +497,6 @@ fun SceneDetails(
                     },
                     focusPair = createFocusPair(0),
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
-                    additionalContent = {
-                        markerPlayAll(
-                            sceneId = scene.id,
-                            markers = markers,
-                            uiConfig = uiConfig,
-                            navigationManager = navigationManager,
-                        )
-                    },
                 )
             }
         }
@@ -903,4 +626,99 @@ fun SceneDetails(
             headerFocusRequester.tryRequestFocus()
         }
     }
+}
+
+fun moreOptionsItems(
+    server: StashServer,
+    context: Context,
+    navigationManager: NavigationManager,
+    scene: FullSceneData,
+    markers: List<MarkerData>,
+    playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    showDurationDialog: () -> Unit,
+): List<DialogItem> =
+    buildList {
+        add(
+            DialogItem(
+                context.getString(R.string.play_direct),
+                Icons.Default.PlayArrow,
+            ) {
+                playOnClick(
+                    if (server.serverPreferences.alwaysStartFromBeginning) {
+                        0L
+                    } else {
+                        scene.resume_position ?: 0
+                    },
+                    PlaybackMode.ForcedDirectPlay,
+                )
+            },
+        )
+        add(
+            DialogItem(
+                context.getString(R.string.play_transcoding),
+                Icons.Default.PlayArrow,
+            ) {
+                // TODO show options for other resolutions
+                val format =
+                    PreferenceManager
+                        .getDefaultSharedPreferences(context)
+                        .getString("stream_choice", "HLS")!!
+                playOnClick(
+                    if (server.serverPreferences.alwaysStartFromBeginning) {
+                        0L
+                    } else {
+                        scene.resume_position ?: 0
+                    },
+                    PlaybackMode.ForcedTranscode(format),
+                )
+            },
+        )
+        add(
+            DialogItem(
+                context.getString(R.string.play_all_markers),
+                Icons.Default.Place,
+            ) {
+                if (markers.firstOrNull { it.end_seconds == null } != null) {
+                    showDurationDialog.invoke()
+                } else {
+                    playAllMarkers(navigationManager, scene.id, 0)
+                }
+            },
+        )
+    }
+
+fun playAllMarkers(
+    navigationManager: NavigationManager,
+    sceneId: String,
+    durationMs: Long,
+) {
+    val objectFilter =
+        SceneMarkerFilterType(
+            scenes =
+                Optional.present(
+                    MultiCriterionInput(
+                        value = Optional.present(listOf(sceneId)),
+                        modifier = CriterionModifier.INCLUDES,
+                    ),
+                ),
+        )
+    val filterArgs =
+        FilterArgs(
+            dataType = DataType.MARKER,
+            objectFilter = objectFilter,
+            findFilter =
+                StashFindFilter(
+                    SortAndDirection(
+                        SortOption.Seconds,
+                        SortDirectionEnum.ASC,
+                    ),
+                ),
+        )
+    val destination =
+        Destination.Playlist(
+            filterArgs = filterArgs,
+            position = 0,
+            duration = durationMs,
+        )
+    navigationManager.navigate(destination)
 }

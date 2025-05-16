@@ -79,6 +79,7 @@ fun SceneDetailsHeader(
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    editOnClick: () -> Unit,
     moreOnClick: () -> Unit,
     oCounterOnClick: () -> Unit,
     oCounterOnLongClick: () -> Unit,
@@ -86,6 +87,7 @@ fun SceneDetailsHeader(
     focusRequester: FocusRequester,
     bringIntoViewRequester: BringIntoViewRequester,
     removeLongClicker: LongClicker<Any>,
+    showEditButton: Boolean,
     alwaysStartFromBeginning: Boolean,
     modifier: Modifier = Modifier,
     showRatingBar: Boolean = true,
@@ -323,6 +325,7 @@ fun SceneDetailsHeader(
                         scene = scene,
                         oCount = oCount,
                         playOnClick = playOnClick,
+                        editOnClick = editOnClick,
                         moreOnClick = moreOnClick,
                         oCounterOnClick = oCounterOnClick,
                         oCounterOnLongClick = oCounterOnLongClick,
@@ -333,6 +336,7 @@ fun SceneDetailsHeader(
                             }
                         },
                         alwaysStartFromBeginning = alwaysStartFromBeginning,
+                        showEditButton = showEditButton,
                     )
                 }
             }
