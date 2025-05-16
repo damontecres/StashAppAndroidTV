@@ -558,7 +558,9 @@ fun PlaybackPageContent(
                     moreButtonOptions =
                         MoreButtonOptions(
                             buildMap {
-                                put("Create Marker", PlaybackAction.CreateMarker)
+                                if (markersEnabled) {
+                                    put("Create Marker", PlaybackAction.CreateMarker)
+                                }
                                 if (playlistPager != null && playlistPager.size > 1) {
                                     put("Show Playlist", PlaybackAction.ShowPlaylist)
                                 }
