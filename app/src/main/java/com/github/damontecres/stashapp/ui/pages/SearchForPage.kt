@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -52,6 +53,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.Material3AppTheme
+import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.SearchEditTextBox
 import com.github.damontecres.stashapp.util.CreateNew
@@ -228,6 +230,7 @@ fun SearchForPage(
                         } else {
                             SearchState.Success(
                                 if (allowCreate &&
+                                    uiConfig.readOnlyModeDisabled &&
                                     SearchForFragment.allowCreate(
                                         dataType,
                                         query,
@@ -360,11 +363,22 @@ fun SearchForPage(
                     )
 
                 SearchState.NoResults ->
-                    Text(
-                        text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text(
+                            text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        if (allowCreate && uiConfig.readOnlyModeDisabled) {
+                            StashCard(
+                                uiConfig = uiConfig,
+                                item = CreateNew(dataType, searchQuery),
+                                itemOnClick = { itemOnClickWrapper.invoke(it, null) },
+                                longClicker = { _, _ -> },
+                                getFilterAndPosition = null,
+                            )
+                        }
+                    }
 
                 is SearchState.Success ->
                     SearchItemsRow(
