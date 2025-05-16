@@ -373,7 +373,7 @@ fun maybeMuteAudio(
             getPreference(
                 context,
                 R.string.pref_key_video_preview_audio,
-                true,
+                false,
             )
         val startMuted = getPreference(context, R.string.pref_key_playback_start_muted, false)
         Log.v(
