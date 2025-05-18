@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -16,10 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import com.apollographql.apollo.api.Optional
+import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
@@ -41,6 +46,8 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -69,6 +76,13 @@ fun PlaybackPage(
     }
     Log.d("PlaybackPage", "scene=${scene?.id}")
     scene?.let {
+        val player =
+            remember {
+                StashExoPlayer.getInstance(context, server).apply {
+                    repeatMode = Player.REPEAT_MODE_OFF
+                    playWhenReady = true
+                }
+            }
         val playbackScene = remember { Scene.fromFullSceneData(it) }
         val decision = getStreamDecision(context, playbackScene, playbackMode)
         val media =
@@ -78,6 +92,7 @@ fun PlaybackPage(
 
         PlaybackPageContent(
             server = server,
+            player = player,
             playlist = listOf(media),
             startIndex = 0,
             uiConfig = uiConfig,
@@ -89,6 +104,7 @@ fun PlaybackPage(
                     .background(Color.Transparent),
             controlsEnabled = true,
             startPosition = startPosition,
+            onClickPlaylistItem = null,
         )
     }
 }
@@ -124,7 +140,9 @@ private fun adjustFilter(filter: FilterArgs): FilterArgs =
         filter.copy(override = DataSupplierOverride.Playlist)
     }
 
-const val MAX_PLAYLIST_SIZE = 100 // TODO
+const val MAX_PLAYLIST_SIZE = 50
+const val PLAYLIST_THRESHOLD = 10
+const val PLAYLIST_PREFETCH = 15
 
 @Composable
 fun PlaylistPlaybackPage(
@@ -137,6 +155,7 @@ fun PlaylistPlaybackPage(
     viewModel: FilterViewModel = viewModel(key = "main"),
     playlistViewModel: FilterViewModel = viewModel(key = "playlist"),
 ) {
+    val scope = rememberCoroutineScope()
     Log.v("PlaybackPageContent", "startIndex=$startIndex")
     val context = LocalContext.current
 
@@ -153,54 +172,137 @@ fun PlaylistPlaybackPage(
             buildList {
                 for (i in 0..<(it.size).coerceAtMost(MAX_PLAYLIST_SIZE)) {
                     it.getBlocking(i)?.let { item ->
-                        if (filterArgs.dataType == DataType.SCENE) {
-                            val scene = Scene.fromVideoSceneData(item as VideoSceneData)
-                            val decision = getStreamDecision(context, scene, PlaybackMode.Choose)
-                            val mediaItem =
-                                buildMediaItem(context, decision, scene) {
-                                    setTag(PlaylistFragment.MediaItemTag(scene, decision))
-                                }
-                            add(mediaItem)
-                        } else {
-                            // Markers
-                            item as FullMarkerData
-                            val scene = Scene.fromVideoSceneData(item.scene.videoSceneData)
-                            val decision = getStreamDecision(context, scene, PlaybackMode.Choose)
-                            val mediaItem =
-                                buildMediaItem(context, decision, scene) {
-                                    setTag(PlaylistFragment.MediaItemTag(scene, decision))
-                                    val startPos =
-                                        item.seconds.seconds.inWholeMilliseconds
-                                            .coerceAtLeast(0L)
-                                    val endPos =
-                                        item.end_seconds?.seconds?.inWholeMilliseconds
-                                            ?: (startPos + clipDuration.inWholeMilliseconds)
-                                    val clipConfig =
-                                        MediaItem.ClippingConfiguration
-                                            .Builder()
-                                            .setStartPositionMs(startPos)
-                                            .setEndPositionMs(endPos)
-                                            .build()
-                                    setClippingConfiguration(clipConfig)
-                                }
-                            add(mediaItem)
-                        }
+                        add(convertToMediaItem(context, filterArgs.dataType, clipDuration, item))
                     }
                 }
             }
         } ?: listOf()
     }
     if (playlist.isNotEmpty()) {
+        val player =
+            remember {
+                StashExoPlayer.getInstance(context, server).apply {
+                    repeatMode = Player.REPEAT_MODE_OFF
+                    playWhenReady = true
+                }
+            }
+        val mutex = remember { Mutex() }
+        LaunchedEffect(Unit) {
+            StashExoPlayer.addListener(
+                object : Player.Listener {
+                    override fun onMediaItemTransition(
+                        mediaItem: MediaItem?,
+                        reason: Int,
+                    ) {
+                        scope.launch(StashCoroutineExceptionHandler()) {
+                            mutex.withLock {
+                                val currentIndex = player.currentMediaItemIndex
+                                val count = player.mediaItemCount
+                                pager?.let { pager ->
+                                    if (count - currentIndex < PLAYLIST_THRESHOLD && pager.size > count) {
+                                        val maxIndex =
+                                            (currentIndex + PLAYLIST_PREFETCH)
+                                                .coerceAtMost(pager.size)
+                                        val newMediaItems =
+                                            (currentIndex..<maxIndex).mapNotNull { index ->
+                                                pager.getBlocking(index)?.let { item ->
+                                                    convertToMediaItem(
+                                                        context,
+                                                        filterArgs.dataType,
+                                                        clipDuration,
+                                                        item,
+                                                    )
+                                                }
+                                            }
+                                        player.addMediaItems(newMediaItems)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+            )
+        }
+
         PlaybackPageContent(
             server = server,
+            player = player,
             playlist = playlist,
             startIndex = startIndex,
             uiConfig = uiConfig,
             markersEnabled = filterArgs.dataType == DataType.SCENE,
             playlistPager = playlistPager,
+            onClickPlaylistItem = { index ->
+                if (index < player.mediaItemCount) {
+                    player.seekTo(index, C.TIME_UNSET)
+                } else {
+                    scope.launch(StashCoroutineExceptionHandler()) {
+                        mutex.withLock {
+                            val count = player.mediaItemCount
+                            pager?.let { pager ->
+                                val newMediaItems =
+                                    (count..<(index + PLAYLIST_PREFETCH).coerceAtMost(pager.size)).mapNotNull { index ->
+                                        pager.getBlocking(index)?.let { item ->
+                                            convertToMediaItem(
+                                                context,
+                                                filterArgs.dataType,
+                                                clipDuration,
+                                                item,
+                                            )
+                                        }
+                                    }
+                                player.addMediaItems(newMediaItems)
+                                player.seekTo(index, C.TIME_UNSET)
+                            }
+                        }
+                    }
+                }
+            },
             modifier = modifier,
         )
     } else {
         CircularProgress()
+    }
+}
+
+/**
+ * Converts a [VideoSceneData] or [FullMarkerData] to a [MediaItem]
+ */
+private fun convertToMediaItem(
+    context: Context,
+    dataType: DataType,
+    clipDuration: Duration,
+    item: StashData,
+): MediaItem {
+    if (dataType == DataType.SCENE) {
+        item as VideoSceneData
+        val scene = Scene.fromVideoSceneData(item)
+        val decision = getStreamDecision(context, scene, PlaybackMode.Choose)
+        return buildMediaItem(context, decision, scene) {
+            setTag(PlaylistFragment.MediaItemTag(scene, decision))
+        }
+    } else {
+        // Markers
+        item as FullMarkerData
+        val scene = Scene.fromVideoSceneData(item.scene.videoSceneData)
+        val decision = getStreamDecision(context, scene, PlaybackMode.Choose)
+        val mediaItem =
+            buildMediaItem(context, decision, scene) {
+                setTag(PlaylistFragment.MediaItemTag(scene, decision))
+                val startPos =
+                    item.seconds.seconds.inWholeMilliseconds
+                        .coerceAtLeast(0L)
+                val endPos =
+                    item.end_seconds?.seconds?.inWholeMilliseconds
+                        ?: (startPos + clipDuration.inWholeMilliseconds)
+                val clipConfig =
+                    MediaItem.ClippingConfiguration
+                        .Builder()
+                        .setStartPositionMs(startPos)
+                        .setEndPositionMs(endPos)
+                        .build()
+                setClippingConfiguration(clipConfig)
+            }
+        return mediaItem
     }
 }

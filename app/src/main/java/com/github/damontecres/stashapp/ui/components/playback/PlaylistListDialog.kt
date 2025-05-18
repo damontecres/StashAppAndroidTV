@@ -25,10 +25,11 @@ fun PlaylistListDialog(
     show: Boolean,
     onDismiss: () -> Unit,
     player: Player,
-    pager: ComposePager<StashData>?,
+    pager: ComposePager<StashData>,
+    onClickPlaylistItem: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (show && pager != null) {
+    if (show) {
         Dialog(
             onDismissRequest = onDismiss,
             properties = DialogProperties(usePlatformDefaultWidth = true),
@@ -39,9 +40,9 @@ fun PlaylistListDialog(
                 window.setDimAmount(0f)
             }
             PlaylistList(
-                mediaItemCount = player.mediaItemCount,
+                mediaItemCount = pager.size,
                 currentIndex = player.currentMediaItemIndex,
-                mediaItemCountOffset = 0, // TODO
+                mediaItemCountOffset = 0,
                 items =
                     MappedList(pager) { index, item ->
                         when (item) {
@@ -61,7 +62,7 @@ fun PlaylistListDialog(
                     },
                 title = pager.filter.name ?: stringResource(pager.filter.dataType.pluralStringId),
                 onClick = { index ->
-                    player.seekTo(index, 0L)
+                    onClickPlaylistItem.invoke(index)
                     onDismiss.invoke()
                 },
                 modifier =

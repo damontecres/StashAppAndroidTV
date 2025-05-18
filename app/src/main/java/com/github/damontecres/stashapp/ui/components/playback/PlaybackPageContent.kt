@@ -210,11 +210,13 @@ val playbackScaleOptions =
 @Composable
 fun PlaybackPageContent(
     server: StashServer,
+    player: Player,
     playlist: List<MediaItem>,
     startIndex: Int,
     uiConfig: ComposeUiConfig,
     markersEnabled: Boolean,
     playlistPager: ComposePager<StashData>?,
+    onClickPlaylistItem: ((Int) -> Unit)?,
     modifier: Modifier = Modifier,
     controlsEnabled: Boolean = true,
     viewModel: PlaybackViewModel = viewModel(),
@@ -237,13 +239,6 @@ fun PlaybackPageContent(
     var audioOptions by remember { mutableStateOf<List<String>>(listOf()) }
 
     var trackActivityListener = remember<TrackActivityPlaybackListener?>(server) { null }
-    val player =
-        remember {
-            StashExoPlayer.getInstance(context, server).apply {
-                repeatMode = Player.REPEAT_MODE_OFF
-                playWhenReady = true
-            }
-        }
     AmbientPlayerListener(player)
 
     LifecycleStartEffect(Unit) {
@@ -592,13 +587,16 @@ fun PlaybackPageContent(
             dialogTitle = "Create marker at ${createMarkerPosition.milliseconds}?",
             dismissOnClick = false,
         )
-        PlaylistListDialog(
-            show = showPlaylist,
-            onDismiss = { showPlaylist = false },
-            player = player,
-            pager = playlistPager,
-            modifier = Modifier,
-        )
+        if (playlistPager != null && onClickPlaylistItem != null) {
+            PlaylistListDialog(
+                show = showPlaylist,
+                onDismiss = { showPlaylist = false },
+                player = player,
+                pager = playlistPager,
+                onClickPlaylistItem = onClickPlaylistItem,
+                modifier = Modifier,
+            )
+        }
     }
 }
 
