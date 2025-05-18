@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,6 +30,7 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
+import com.github.damontecres.stashapp.data.VideoFilter
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.DialogItem
@@ -64,10 +66,13 @@ fun ImageOverlay(
     onZoom: (Float) -> Unit,
     onRotate: (Int) -> Unit,
     onReset: () -> Unit,
+    imageFilter: VideoFilter,
+    onFilterChange: (VideoFilter) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     var showDialog by remember { mutableStateOf<DialogParams?>(null) }
+    var showFilterDialog by remember { mutableStateOf(false) }
     var searchForDataType by remember { mutableStateOf<SearchForParams?>(null) }
 
     val removeLongClicker =
@@ -168,6 +173,14 @@ fun ImageOverlay(
                                             },
                                         )
                                     }
+                                    add(
+                                        DialogItem(
+                                            context.getString(R.string.apply_filters),
+                                            Icons.Default.Edit,
+                                        ) {
+                                            showFilterDialog = true
+                                        },
+                                    )
                                 },
                         )
                 },
@@ -253,4 +266,11 @@ fun ImageOverlay(
         dismissOnClick = false,
         uiConfig = uiConfig,
     )
+    if (showFilterDialog) {
+        ImageFilterDialog(
+            filter = imageFilter,
+            onChange = onFilterChange,
+            onDismissRequest = { showFilterDialog = false },
+        )
+    }
 }

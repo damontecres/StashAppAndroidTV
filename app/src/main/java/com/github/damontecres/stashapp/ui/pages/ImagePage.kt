@@ -26,6 +26,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorMatrixColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -56,6 +57,7 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.data.VideoFilter
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -105,6 +107,7 @@ fun ImagePage(
     val performers by viewModel.performers.observeAsState(listOf())
     val rating100 by viewModel.rating100.observeAsState(0)
     val oCount by viewModel.oCount.observeAsState(0)
+    val imageFilter by viewModel.imageFilter.observeAsState(VideoFilter())
 
     var zoomFactor by rememberSaveable { mutableFloatStateOf(1f) }
     var rotation by rememberSaveable { mutableIntStateOf(0) }
@@ -330,6 +333,14 @@ fun ImagePage(
                                 .build(),
                         contentDescription = null,
                         contentScale = ContentScale.FillHeight,
+                        colorFilter =
+                            if (imageFilter.hasImageFilter()) {
+                                ColorMatrixColorFilter(
+                                    imageFilter.createComposeColorMatrix(),
+                                )
+                            } else {
+                                null
+                            },
                         error = {
                             Text(
                                 modifier =
@@ -409,6 +420,8 @@ fun ImagePage(
                             else -> {}
                         }
                     },
+                    imageFilter = imageFilter,
+                    onFilterChange = { viewModel.updateImageFilter(it) },
                 )
             }
         }

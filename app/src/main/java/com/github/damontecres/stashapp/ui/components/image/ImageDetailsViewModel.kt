@@ -14,6 +14,8 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
+import com.github.damontecres.stashapp.data.ThrottledLiveData
+import com.github.damontecres.stashapp.data.VideoFilter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
@@ -67,6 +69,8 @@ class ImageDetailsViewModel : ViewModel() {
 
     val rating100 = MutableLiveData(0)
     val oCount = MutableLiveData(0)
+    private val _imageFilter = MutableLiveData(VideoFilter()) // TODO save & load filters
+    val imageFilter = ThrottledLiveData(_imageFilter, 500L)
 
     fun init(
         server: StashServer,
@@ -284,6 +288,10 @@ class ImageDetailsViewModel : ViewModel() {
                         invokeOnCompletion { if (it !is CancellationException) pulseSlideshow() }
                     }
         }
+    }
+
+    fun updateImageFilter(newFilter: VideoFilter) {
+        _imageFilter.value = newFilter
     }
 
     companion object {

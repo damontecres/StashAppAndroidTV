@@ -55,9 +55,10 @@ fun Modifier.handleDPadKeyEvents(
     onLeft: (() -> Unit)? = null,
     onRight: (() -> Unit)? = null,
     onCenter: (() -> Unit)? = null,
+    triggerOnAction: Int = KeyEvent.ACTION_UP,
 ) = onPreviewKeyEvent {
     fun onActionUp(block: () -> Unit) {
-        if (it.nativeKeyEvent.action == KeyEvent.ACTION_UP) block()
+        if (it.nativeKeyEvent.action == triggerOnAction) block()
     }
 
     when (it.nativeKeyEvent.keyCode) {
