@@ -4,6 +4,8 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimTagData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.GenderEnum
+import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
+import com.github.damontecres.stashapp.views.models.CardUiSettings
 
 val performerPreview =
     PerformerData(
@@ -71,4 +73,26 @@ val tagPreview =
         created_at = "2024-03-11T13:42:30-04:00",
         updated_at = "2024-03-11T13:42:30-04:00",
         sort_name = null,
+    )
+
+val uiConfigPreview =
+    ComposeUiConfig(
+        ratingAsStars = true,
+        starPrecision = StarRatingPrecision.HALF,
+        showStudioAsText = true,
+        debugTextEnabled = true,
+        showTitleDuringPlayback = true,
+        readOnlyModeEnabled = false,
+        showCardProgress = true,
+        playSoundOnFocus = true,
+        cardSettings =
+            CardUiSettings(
+                maxSearchResults = 25,
+                playVideoPreviews = true,
+                videoPreviewAudio = false,
+                columns = 5,
+                showRatings = true,
+                imageCrop = true,
+                videoDelay = 1,
+            ),
     )

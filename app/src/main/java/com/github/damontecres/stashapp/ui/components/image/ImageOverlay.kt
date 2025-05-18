@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -64,6 +65,7 @@ fun ImageOverlay(
     onZoom: (Float) -> Unit,
     onRotate: (Int) -> Unit,
     onReset: () -> Unit,
+    onShowFilterDialogClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -168,6 +170,14 @@ fun ImageOverlay(
                                             },
                                         )
                                     }
+                                    add(
+                                        DialogItem(
+                                            context.getString(R.string.apply_filters),
+                                            Icons.Default.Edit,
+                                        ) {
+                                            onShowFilterDialogClick.invoke()
+                                        },
+                                    )
                                 },
                         )
                 },

@@ -76,7 +76,6 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
-import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
 import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
@@ -85,6 +84,7 @@ import com.github.damontecres.stashapp.ui.components.createTabFunc
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.ui.performerPreview
 import com.github.damontecres.stashapp.ui.tagPreview
+import com.github.damontecres.stashapp.ui.uiConfigPreview
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -94,7 +94,6 @@ import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.showSetRatingToast
-import com.github.damontecres.stashapp.views.models.CardUiSettings
 import kotlinx.coroutines.launch
 import kotlin.math.floor
 import kotlin.math.round
@@ -667,27 +666,7 @@ private fun PerformerDetailsPreview() {
                 favoriteClick = {},
                 rating100 = performer.rating100 ?: 0,
                 rating100Click = {},
-                uiConfig =
-                    ComposeUiConfig(
-                        ratingAsStars = true,
-                        starPrecision = StarRatingPrecision.HALF,
-                        showStudioAsText = true,
-                        debugTextEnabled = true,
-                        showTitleDuringPlayback = true,
-                        readOnlyModeEnabled = false,
-                        showCardProgress = true,
-                        playSoundOnFocus = true,
-                        cardSettings =
-                            CardUiSettings(
-                                maxSearchResults = 25,
-                                playVideoPreviews = true,
-                                videoPreviewAudio = false,
-                                columns = 5,
-                                showRatings = true,
-                                imageCrop = true,
-                                videoDelay = 1,
-                            ),
-                    ),
+                uiConfig = uiConfigPreview,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 modifier =

@@ -26,6 +26,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorMatrixColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -56,6 +57,7 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.data.VideoFilter
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -65,6 +67,7 @@ import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.image.ImageDetailsViewModel
+import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
 import com.github.damontecres.stashapp.ui.components.image.ImageOverlay
 import com.github.damontecres.stashapp.ui.components.image.SlideshowControls
 import com.github.damontecres.stashapp.ui.components.playback.isDpad
@@ -97,7 +100,14 @@ fun ImagePage(
                 StashApplication.getApplication().resources.getInteger(R.integer.pref_key_slideshow_duration_default),
             ) * 1000L
 
-        viewModel.init(server, filter, startPosition, startSlideshow, slideshowDelay)
+        viewModel.init(
+            server,
+            filter,
+            startPosition,
+            startSlideshow,
+            slideshowDelay,
+            uiConfig.persistVideoFilters,
+        )
     }
 
     val imageState by viewModel.image.observeAsState()
@@ -105,10 +115,12 @@ fun ImagePage(
     val performers by viewModel.performers.observeAsState(listOf())
     val rating100 by viewModel.rating100.observeAsState(0)
     val oCount by viewModel.oCount.observeAsState(0)
+    val imageFilter by viewModel.imageFilter.observeAsState(VideoFilter())
 
     var zoomFactor by rememberSaveable { mutableFloatStateOf(1f) }
     var rotation by rememberSaveable { mutableIntStateOf(0) }
     var showOverlay by rememberSaveable { mutableStateOf(false) }
+    var showFilterDialog by rememberSaveable { mutableStateOf(false) }
     var panX by rememberSaveable { mutableFloatStateOf(0f) }
     var panY by rememberSaveable { mutableFloatStateOf(0f) }
 
@@ -208,10 +220,11 @@ fun ImagePage(
                 .focusRequester(focusRequester)
                 .focusable()
                 .onKeyEvent {
+                    val isOverlayShowing = showOverlay || showFilterDialog
                     var result = false
                     if (it.type != KeyEventType.KeyUp) {
                         result = false
-                    } else if (!showOverlay && zoomFactor * 100 > 105 && isDpad(it)) {
+                    } else if (!isOverlayShowing && zoomFactor * 100 > 105 && isDpad(it)) {
                         // Image is zoomed in
                         when (it.key) {
                             Key.DirectionLeft -> panX += with(density) { 30.dp.toPx() }
@@ -220,10 +233,10 @@ fun ImagePage(
                             Key.DirectionDown -> panY -= with(density) { 30.dp.toPx() }
                         }
                         result = true
-                    } else if (!showOverlay && zoomFactor * 100 > 105 && it.key == Key.Back) {
+                    } else if (!isOverlayShowing && zoomFactor * 100 > 105 && it.key == Key.Back) {
                         reset(false)
                         result = true
-                    } else if (!showOverlay && (it.key == Key.DirectionLeft || it.key == Key.DirectionRight)) {
+                    } else if (!isOverlayShowing && (it.key == Key.DirectionLeft || it.key == Key.DirectionRight)) {
                         when (it.key) {
                             Key.DirectionLeft, Key.DirectionUpLeft, Key.DirectionDownLeft -> {
                                 if (!viewModel.previousImage()) {
@@ -247,11 +260,11 @@ fun ImagePage(
                                 }
                             }
                         }
-                    } else if (showOverlay && it.key == Key.Back) {
+                    } else if (isOverlayShowing && it.key == Key.Back) {
                         showOverlay = false
                         viewModel.unpauseSlideshow()
                         result = true
-                    } else if (!showOverlay && it.key != Key.Back) {
+                    } else if (!isOverlayShowing && it.key != Key.Back) {
                         showOverlay = true
                         viewModel.pauseSlideshow()
                         result = true
@@ -330,6 +343,14 @@ fun ImagePage(
                                 .build(),
                         contentDescription = null,
                         contentScale = ContentScale.FillHeight,
+                        colorFilter =
+                            if (imageFilter.hasImageFilter()) {
+                                ColorMatrixColorFilter(
+                                    imageFilter.createComposeColorMatrix(),
+                                )
+                            } else {
+                                null
+                            },
                         error = {
                             Text(
                                 modifier =
@@ -408,6 +429,24 @@ fun ImagePage(
                             is PerformerData -> viewModel.removePerformer(image.id, item.id)
                             else -> {}
                         }
+                    },
+                    onShowFilterDialogClick = {
+                        showFilterDialog = true
+                        showOverlay = false
+                        viewModel.pauseSlideshow()
+                    },
+                )
+            }
+            AnimatedVisibility(showFilterDialog) {
+                ImageFilterDialog(
+                    filter = imageFilter,
+                    uiConfig = uiConfig,
+                    onChange = viewModel::updateImageFilter,
+                    onClickSave = viewModel::saveImageFilter,
+                    onDismissRequest = {
+                        showFilterDialog = false
+                        viewModel.unpauseSlideshow()
+                        viewModel.pulseSlideshow()
                     },
                 )
             }

@@ -174,4 +174,46 @@ data class VideoFilter(
         // TODO blur
         return matrix
     }
+
+    @OptIn(UnstableApi::class)
+    fun createComposeColorMatrix(): androidx.compose.ui.graphics.ColorMatrix {
+        val matrix =
+            androidx.compose.ui.graphics
+                .ColorMatrix()
+
+        if (saturation != COLOR_DEFAULT) {
+            matrix.setToSaturation(saturation / 100f)
+        }
+        if (hasRgb()) {
+            matrix.setToScale(
+                redScale = red / 100f,
+                greenScale = green / 100f,
+                blueScale = blue / 100f,
+                alphaScale = 1f,
+            )
+        }
+        if (hasContrast()) {
+            val scale = contrast / 100.0f
+            val tempMatrix =
+                androidx.compose.ui.graphics
+                    .ColorMatrix()
+            tempMatrix.setToScale(scale, scale, scale, 1f)
+            matrix.timesAssign(tempMatrix)
+        }
+        if (hasBrightness()) {
+            val b = brightness / 100.0f
+            val m = FloatArray(20)
+            m[0] = b
+            m[6] = b
+            m[12] = b
+            m[18] = 1f
+            val tempMatrix =
+                androidx.compose.ui.graphics
+                    .ColorMatrix(m)
+            matrix.timesAssign(tempMatrix)
+        }
+        // TODO hue
+        // TODO blur
+        return matrix
+    }
 }

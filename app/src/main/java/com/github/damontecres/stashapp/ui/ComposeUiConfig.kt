@@ -18,6 +18,7 @@ data class ComposeUiConfig(
     val readOnlyModeEnabled: Boolean,
     val showCardProgress: Boolean,
     val playSoundOnFocus: Boolean,
+    val persistVideoFilters: Boolean = true,
     val cardSettings: CardUiSettings,
 ) {
     val readOnlyModeDisabled = !readOnlyModeEnabled
@@ -55,6 +56,11 @@ data class ComposeUiConfig(
                     prefs.getBoolean(
                         context.getString(R.string.pref_key_read_only_mode),
                         false,
+                    ),
+                persistVideoFilters =
+                    prefs.getBoolean(
+                        context.getString(R.string.pref_key_playback_save_effects),
+                        true,
                     ),
             )
         }
