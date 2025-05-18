@@ -118,7 +118,7 @@ import kotlin.time.Duration.Companion.seconds
 class NavDrawerFragment : Fragment(R.layout.compose_frame) {
     private val serverViewModel: ServerViewModel by activityViewModels()
 
-    lateinit var navController: NavController<Destination>
+    var navController: NavController<Destination>? = null
 
     @OptIn(ExperimentalCoilApi::class)
     override fun onViewCreated(
@@ -171,11 +171,12 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                     remember { mutableStateOf(getTheme(requireContext(), false, isSystemInDarkTheme)) }
                 MaterialTheme(colorScheme = colorScheme.tvColorScheme) {
                     key(server) {
-                        navController = rememberNavController<Destination>(Destination.Main)
+                        val navController = rememberNavController<Destination>(Destination.Main)
+                        this@NavDrawerFragment.navController = navController
                         NavBackHandler(navController)
                         val navManager =
                             (serverViewModel.navigationManager as NavigationManagerCompose)
-                        navManager.controller = navController
+//                        navManager.controller = navController
 
                         val navCommand by serverViewModel.command.observeAsState()
                         LaunchedEffect(navCommand) {

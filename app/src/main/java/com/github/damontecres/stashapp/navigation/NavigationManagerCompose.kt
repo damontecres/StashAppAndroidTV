@@ -28,19 +28,19 @@ class NavigationManagerCompose(
     activity: RootActivity,
     private val serverViewModel: ServerViewModel,
 ) : NavigationManagerParent(activity) {
-    var controller: NavController<Destination>? = null
-
     private val navDrawerFragment: NavDrawerFragment
 
     init {
-        val current = getCurrentFragment()
-        if (current is NavDrawerFragment) {
-            navDrawerFragment = current
-            controller = current.navController
+        val navFragment = fragmentManager.findFragmentByTag(NAV_FRAGMENT_TAG)
+        if (navFragment is NavDrawerFragment) {
+            navDrawerFragment = navFragment
         } else {
             navDrawerFragment = NavDrawerFragment()
         }
     }
+
+    val controller: NavController<Destination>?
+        get() = navDrawerFragment.navController
 
     private fun navigate(
         destination: Destination,
@@ -111,6 +111,12 @@ class NavigationManagerCompose(
     ) {
         Log.v(TAG, "setFragment: destination=$destination")
         fragment.arguments = Bundle().putDestination(destination)
+        val tag =
+            if (fragment is NavDrawerFragment) {
+                NAV_FRAGMENT_TAG
+            } else {
+                destination.fragmentTag
+            }
         if (fragment is GuidedStepSupportFragment) {
             GuidedStepSupportFragment.add(fragmentManager, fragment, R.id.root_fragment)
         } else {
@@ -133,7 +139,7 @@ class NavigationManagerCompose(
                         R.animator.fade_out,
                     )
                 }
-                replace(R.id.root_fragment, fragment, fragment.tag ?: destination.fragmentTag)
+                replace(R.id.root_fragment, fragment, tag)
             }
         }
     }
@@ -143,9 +149,10 @@ class NavigationManagerCompose(
      */
     fun navigateFromNavDrawer(destination: Destination) {
         if (DEBUG) Log.v(TAG, "navigate: ${destination.fragmentTag}")
-        if (getCurrentFragment() != navDrawerFragment) {
+        val current = getCurrentFragment()
+        if (current != navDrawerFragment) {
             throw IllegalStateException(
-                "navigateFromNavDrawer called when current fragment is not navDrawerFragment: ${getCurrentFragment()}",
+                "navigateFromNavDrawer called when current fragment is not navDrawerFragment: $current",
             )
         }
         when (destination) {
@@ -217,6 +224,7 @@ class NavigationManagerCompose(
 
     companion object {
         private const val TAG = "NavigationManagerCompose"
+        private const val NAV_FRAGMENT_TAG = "NavDrawerFragment_Tag"
         private const val DEBUG = false
     }
 }
