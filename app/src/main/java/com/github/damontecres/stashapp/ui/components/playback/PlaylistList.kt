@@ -2,6 +2,8 @@ package com.github.damontecres.stashapp.ui.components.playback
 
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -34,6 +36,7 @@ import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.PlaylistItem
 import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -95,9 +98,12 @@ fun PlaylistItemCompose(
     modifier: Modifier = Modifier,
     imageWidth: Dp = 120.dp,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val focused = interactionSource.collectIsFocusedAsState().value
     val textColor = MaterialTheme.colorScheme.onSurfaceVariant
     Card(
         onClick = onClick,
+        interactionSource = interactionSource,
         modifier = modifier,
     ) {
         Row(
@@ -139,6 +145,7 @@ fun PlaylistItemCompose(
                         style = MaterialTheme.typography.bodyLarge,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.enableMarquee(focused),
                     )
                 }
                 if (item.subtitle.isNotNullOrBlank()) {
