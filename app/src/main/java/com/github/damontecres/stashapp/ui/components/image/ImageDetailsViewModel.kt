@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components.image
 
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -16,6 +17,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.data.VideoFilter
+import com.github.damontecres.stashapp.data.room.PlaybackEffect
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
@@ -25,16 +27,20 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
+import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.properties.Delegates
 
 class ImageDetailsViewModel : ViewModel() {
     private var server: StashServer? = null
+    private var saveFilters = true
 
     private val _slideshow = MutableLiveData(false)
 
@@ -78,8 +84,10 @@ class ImageDetailsViewModel : ViewModel() {
         startPosition: Int,
         slideshow: Boolean,
         slideshowDelay: Long,
+        saveFilters: Boolean,
     ): ImageDetailsViewModel {
         Log.v(TAG, "View model init")
+        this.saveFilters = saveFilters
         this.slideshowDelay = slideshowDelay
         if (pager.value?.filter != filterArgs || server != this.server) {
             if (filterArgs.dataType != DataType.IMAGE) {
@@ -143,9 +151,36 @@ class ImageDetailsViewModel : ViewModel() {
                         oCount.value = image.o_counter ?: 0
                         tags.value = listOf()
                         performers.value = listOf()
-                        _image.value = image
-
-                        loadingState.value = ImageLoadingState.Success(image)
+                        // reset image filter
+                        updateImageFilter(VideoFilter())
+                        if (saveFilters) {
+                            viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+                                val vf =
+                                    StashApplication
+                                        .getDatabase()
+                                        .playbackEffectsDao()
+                                        .getPlaybackEffect(server!!.url, image.id, DataType.IMAGE)
+                                if (vf != null) {
+                                    Log.d(
+                                        TAG,
+                                        "Loaded VideoFilter for image ${image.id}",
+                                    )
+                                    withContext(Dispatchers.Main) {
+                                        // Pause throttling so that the image loads with the filter applied immediately
+                                        imageFilter.stopThrottling(true)
+                                        updateImageFilter(vf.videoFilter)
+                                        imageFilter.startThrottling()
+                                    }
+                                }
+                                withContext(Dispatchers.Main) {
+                                    _image.value = image
+                                    loadingState.value = ImageLoadingState.Success(image)
+                                }
+                            }
+                        } else {
+                            _image.value = image
+                            loadingState.value = ImageLoadingState.Success(image)
+                        }
                         if (image.tags.isNotEmpty()) {
                             tags.value =
                                 queryEngine.getTags(image.tags.map { it.id })
@@ -259,6 +294,7 @@ class ImageDetailsViewModel : ViewModel() {
 
     fun pauseSlideshow() {
         if (_slideshow.value == true) {
+            Log.v(TAG, "pauseSlideshow")
             _slideshowPaused.value = true
             slideshowJob?.cancel()
         }
@@ -266,6 +302,7 @@ class ImageDetailsViewModel : ViewModel() {
 
     fun unpauseSlideshow() {
         if (_slideshow.value == true) {
+            Log.v(TAG, "unpauseSlideshow")
             _slideshowPaused.value = false
         }
     }
@@ -273,7 +310,7 @@ class ImageDetailsViewModel : ViewModel() {
     fun pulseSlideshow() = pulseSlideshow(slideshowDelay)
 
     fun pulseSlideshow(milliseconds: Long) {
-        Log.v(TAG, "pulseSlideshow")
+        Log.v(TAG, "pulseSlideshow $milliseconds")
         slideshowJob?.cancel()
         if (slideshow.value!!) {
             slideshowJob =
@@ -292,6 +329,31 @@ class ImageDetailsViewModel : ViewModel() {
 
     fun updateImageFilter(newFilter: VideoFilter) {
         _imageFilter.value = newFilter
+    }
+
+    fun saveImageFilter() {
+        if (server != null) {
+            image.value?.let {
+                viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+                    val vf = _imageFilter.value
+                    if (vf != null) {
+                        StashApplication
+                            .getDatabase()
+                            .playbackEffectsDao()
+                            .insert(PlaybackEffect(server!!.url, it.id, DataType.IMAGE, vf))
+                        Log.d(TAG, "Saved VideoFilter for image ${it.id}")
+                        withContext(Dispatchers.Main) {
+                            Toast
+                                .makeText(
+                                    StashApplication.getApplication(),
+                                    "Saved",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     companion object {

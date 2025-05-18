@@ -41,7 +41,7 @@ fun SliderBar(
     val animatedIndicatorHeight by animateDpAsState(
         targetValue = 6.dp.times((if (isFocused) 2f else 1f)),
     )
-    var currentValue by remember { mutableIntStateOf(value) }
+    var currentValue by remember(value) { mutableIntStateOf(value) }
     val percent = currentValue.toFloat() / (max - min)
 
     val handleSeekEventModifier =

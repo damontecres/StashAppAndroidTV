@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
@@ -23,17 +24,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.VideoFilter
 import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.SliderBar
 
 @Composable
 fun ImageFilterSliders(
     filter: VideoFilter,
+    showSaveButton: Boolean,
     onChange: (VideoFilter) -> Unit,
+    onClickSave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -123,6 +128,30 @@ fun ImageFilterSliders(
 //                valueFormater = { "${it}px" },
 //            )
 //        }
+        item {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier,
+                ) {
+                    if (showSaveButton) {
+                        Button(
+                            onClick = onClickSave,
+                        ) {
+                            Text(text = stringResource(R.string.stashapp_actions_save))
+                        }
+                    }
+                    Button(
+                        onClick = { onChange(VideoFilter()) },
+                    ) {
+                        Text(text = stringResource(R.string.stashapp_effect_filters_reset_filters))
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -170,7 +199,9 @@ fun SliderBarRow(
 @Composable
 fun ImageFilterDialog(
     filter: VideoFilter,
+    uiConfig: ComposeUiConfig,
     onChange: (VideoFilter) -> Unit,
+    onClickSave: () -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -191,7 +222,13 @@ fun ImageFilterDialog(
                     .padding(8.dp)
                     .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .4f)),
         ) {
-            ImageFilterSliders(filter, onChange, Modifier.padding(8.dp))
+            ImageFilterSliders(
+                filter = filter,
+                showSaveButton = uiConfig.persistVideoFilters,
+                onChange = onChange,
+                onClickSave = onClickSave,
+                modifier = Modifier.padding(8.dp),
+            )
         }
     }
 }
@@ -204,6 +241,8 @@ private fun ImageFilterSlidersPreview() {
             filter =
                 VideoFilter(),
             onChange = {},
+            onClickSave = {},
+            showSaveButton = true,
             modifier = Modifier.padding(8.dp),
         )
     }
