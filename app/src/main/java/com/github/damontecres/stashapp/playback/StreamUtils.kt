@@ -249,18 +249,22 @@ fun checkIfAlwaysTranscode(
 }
 
 fun Caption.displayString(context: Context): String {
-    val languageName =
-        try {
-            if (language_code != "00") {
-                Locale(language_code).displayLanguage
-            } else {
-                context.getString(R.string.stashapp_display_mode_unknown)
-            }
-        } catch (ex: Exception) {
-            Log.w(TAG, "Error in locale for '${language_code}'", ex)
-            language_code.uppercase()
-        }
+    val languageName = languageName(context, language_code)
     return "$languageName ($caption_type)"
+}
+
+fun languageName(
+    context: Context,
+    code: String?,
+) = if (code != null && code != "00") {
+    try {
+        Locale(code).displayLanguage
+    } catch (ex: Exception) {
+        Log.w(TAG, "Error in locale for '$code'", ex)
+        code.uppercase()
+    }
+} else {
+    context.getString(R.string.stashapp_display_mode_unknown)
 }
 
 enum class TrackSupportReason {
@@ -326,7 +330,32 @@ data class TrackSupport(
     val labels: List<String>,
     val codecs: String?,
     val format: Format,
-)
+) {
+    @OptIn(UnstableApi::class)
+    fun displayString(context: Context): String =
+        if (labels.isNotEmpty()) {
+            labels.joinToString(", ")
+        } else {
+            val type =
+                when (codecs) {
+                    MimeTypes.TEXT_VTT -> "vtt"
+                    MimeTypes.APPLICATION_VOBSUB -> "vobsub"
+                    MimeTypes.APPLICATION_SUBRIP -> "srt"
+                    MimeTypes.TEXT_SSA -> "ssa"
+                    MimeTypes.APPLICATION_PGS -> "pgs"
+                    MimeTypes.APPLICATION_DVBSUBS -> "dvd"
+                    MimeTypes.APPLICATION_TTML -> "ttml"
+                    MimeTypes.TEXT_UNKNOWN -> "unknown"
+                    null -> "unknown"
+                    else -> {
+                        val split = codecs.split("/")
+                        if (split.size > 1) split[1] else codecs
+                    }
+                }
+            val language = languageName(context, format.language)
+            "$language ($type)"
+        }
+}
 
 @OptIn(UnstableApi::class)
 fun checkForSupport(tracks: Tracks): List<TrackSupport> =
