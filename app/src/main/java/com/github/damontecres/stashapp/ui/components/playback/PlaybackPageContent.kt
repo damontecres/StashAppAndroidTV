@@ -7,10 +7,12 @@ import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,6 +35,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -55,6 +58,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
+import androidx.media3.common.text.Cue
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
@@ -86,6 +90,7 @@ import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaybackSceneFragment
 import com.github.damontecres.stashapp.playback.PlaylistFragment
 import com.github.damontecres.stashapp.playback.TrackActivityPlaybackListener
+import com.github.damontecres.stashapp.playback.TrackSupport
 import com.github.damontecres.stashapp.playback.TrackSupportReason
 import com.github.damontecres.stashapp.playback.TrackType
 import com.github.damontecres.stashapp.playback.checkForSupport
@@ -302,7 +307,8 @@ fun PlaybackPageContent(
     val markers by viewModel.markers.observeAsState(listOf())
     val oCount by viewModel.oCount.observeAsState(0)
     val spriteImageLoaded by viewModel.spriteImageLoaded.observeAsState(false)
-    var subtitles by remember { mutableStateOf<String?>(null) }
+    var captions by remember { mutableStateOf<List<TrackSupport>>(listOf()) }
+    var subtitles by remember { mutableStateOf<List<Cue>?>(null) }
     var subtitleIndex by remember { mutableStateOf<Int?>(null) }
     var audioIndex by remember { mutableStateOf<Int?>(null) }
     var audioOptions by remember { mutableStateOf<List<String>>(listOf()) }
@@ -379,20 +385,24 @@ fun PlaybackPageContent(
         StashExoPlayer.addListener(
             object : Player.Listener {
                 override fun onCues(cueGroup: CueGroup) {
-                    val cues =
-                        cueGroup.cues
-                            .mapNotNull { it.text }
-                            .joinToString("\n")
+//                    val cues =
+//                        cueGroup.cues
+//                            .mapNotNull { it.text }
+//                            .joinToString("\n")
 //                    Log.v(TAG, "onCues: \n$cues")
-                    subtitles = cues
+                    subtitles = if (cueGroup.cues.isNotEmpty()) cueGroup.cues else null
                 }
 
                 override fun onTracksChanged(tracks: Tracks) {
+                    val trackInfo = checkForSupport(tracks)
                     val audioTracks =
-                        checkForSupport(tracks).filter { it.type == TrackType.AUDIO && it.supported == TrackSupportReason.HANDLED }
+                        trackInfo
+                            .filter { it.type == TrackType.AUDIO && it.supported == TrackSupportReason.HANDLED }
                     audioIndex = audioTracks.indexOfFirstOrNull { it.selected }
                     audioOptions =
                         audioTracks.map { it.labels.joinToString(", ").ifBlank { "Default" } }
+                    captions =
+                        trackInfo.filter { it.type == TrackType.TEXT && it.supported == TrackSupportReason.HANDLED }
                 }
 
                 override fun onMediaItemTransition(
@@ -534,15 +544,26 @@ fun PlaybackPageContent(
 
         if (!controllerViewState.controlsVisible && subtitleIndex != null && skipIndicatorDuration == 0L) {
             // TODO style
-            subtitles?.let { text ->
-                if (text.isNotNullOrBlank()) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = 48.dp)
-                                .background(AppColors.TransparentBlack50),
-                    ) {
+            subtitles?.let { cues ->
+                val text = cues.mapNotNull { it.text }.joinToString("\n")
+                val bitmaps =
+                    cues.mapNotNull { cue ->
+                        cue.bitmap?.let { Pair(it, cue.bitmapHeight) }
+                    }
+                val background =
+                    if (text.isNotNullOrBlank()) {
+                        AppColors.TransparentBlack50
+                    } else {
+                        Color.Transparent
+                    }
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 48.dp)
+                            .background(background),
+                ) {
+                    if (text.isNotNullOrBlank()) {
                         Text(
                             text = text,
                             color = Color.White,
@@ -551,6 +572,16 @@ fun PlaybackPageContent(
                             overflow = TextOverflow.Clip,
                             modifier = Modifier.padding(4.dp),
                         )
+                    } else if (bitmaps.isNotEmpty()) {
+                        Column {
+                            bitmaps.forEach {
+                                Image(
+                                    bitmap = it.first.asImageBitmap(),
+                                    contentDescription = null,
+//                                    modifier = Modifier.height(100.dp),
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -570,6 +601,7 @@ fun PlaybackPageContent(
                             .background(Color.Transparent),
                     uiConfig = uiConfig,
                     scene = currentScene.item,
+                    captions = captions,
                     markers = markers,
                     streamDecision = currentScene.streamDecision,
                     oCounter = oCount,
@@ -825,7 +857,7 @@ fun toggleSubtitles(
     index: Int,
 ): Boolean {
     val subtitleTracks =
-        player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }
+        player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT && it.isSupported }
     if (index !in subtitleTracks.indices || subtitleIndex != null && subtitleIndex == index) {
         Log.v(
             TAG,

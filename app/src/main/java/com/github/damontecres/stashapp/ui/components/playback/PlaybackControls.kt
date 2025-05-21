@@ -57,9 +57,8 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.api.fragment.Caption
 import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.playback.displayString
+import com.github.damontecres.stashapp.playback.TrackSupport
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.tryRequestFocus
@@ -101,6 +100,7 @@ sealed interface PlaybackAction {
 @Composable
 fun PlaybackControls(
     scene: Scene,
+    captions: List<TrackSupport>,
     oCounter: Int,
     playerControls: PlayerControls,
     controllerViewState: ControllerViewState,
@@ -184,7 +184,7 @@ fun PlaybackControls(
             )
             RightPlaybackButtons(
                 modifier = Modifier,
-                captions = scene.captions,
+                captions = captions,
                 onControllerInteraction = onControllerInteraction,
                 onControllerInteractionForDialog = onControllerInteractionForDialog,
                 onPlaybackActionClick = onPlaybackActionClick,
@@ -341,7 +341,7 @@ private val speedOptions = listOf(".25", ".5", ".75", "1.0", "1.25", "1.5", "2.0
 
 @Composable
 fun RightPlaybackButtons(
-    captions: List<Caption>,
+    captions: List<TrackSupport>,
     onControllerInteraction: () -> Unit,
     onControllerInteractionForDialog: () -> Unit,
     onPlaybackActionClick: (PlaybackAction) -> Unit,

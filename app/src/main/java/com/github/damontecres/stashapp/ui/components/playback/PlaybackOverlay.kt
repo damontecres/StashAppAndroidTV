@@ -59,6 +59,7 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.StreamDecision
+import com.github.damontecres.stashapp.playback.TrackSupport
 import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.AppTheme
@@ -126,6 +127,7 @@ class ControllerViewState internal constructor(
 fun PlaybackOverlay(
     uiConfig: ComposeUiConfig,
     scene: Scene,
+    captions: List<TrackSupport>,
     markers: List<BasicMarker>,
     streamDecision: StreamDecision?,
     oCounter: Int,
@@ -229,6 +231,7 @@ fun PlaybackOverlay(
                 PlaybackControls(
                     modifier = Modifier.fillMaxWidth(),
                     scene = scene,
+                    captions = captions,
                     oCounter = oCounter,
                     playerControls = playerControls,
                     onPlaybackActionClick = onPlaybackActionClick,
@@ -553,6 +556,7 @@ private fun PlaybackOverlayPreview() {
                     captionUrl = "",
                     captions = listOf(),
                 ),
+            captions = listOf(),
             markers =
                 List(1) {
                     BasicMarker(
