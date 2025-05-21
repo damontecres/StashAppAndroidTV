@@ -75,7 +75,7 @@ class ImageDetailsViewModel : ViewModel() {
 
     val rating100 = MutableLiveData(0)
     val oCount = MutableLiveData(0)
-    private val _imageFilter = MutableLiveData(VideoFilter()) // TODO save & load filters
+    private val _imageFilter = MutableLiveData(VideoFilter())
     val imageFilter = ThrottledLiveData(_imageFilter, 500L)
 
     fun init(

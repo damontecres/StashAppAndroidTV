@@ -77,6 +77,8 @@ sealed interface PlaybackAction {
 
     data object ShowPlaylist : PlaybackAction
 
+    data object ShowVideoFilterDialog : PlaybackAction
+
     data class ToggleCaptions(
         val index: Int,
     ) : PlaybackAction

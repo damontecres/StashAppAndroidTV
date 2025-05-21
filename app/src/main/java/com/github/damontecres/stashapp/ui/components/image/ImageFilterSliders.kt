@@ -36,6 +36,7 @@ import com.github.damontecres.stashapp.ui.components.SliderBar
 @Composable
 fun ImageFilterSliders(
     filter: VideoFilter,
+    showVideoOptions: Boolean,
     showSaveButton: Boolean,
     onChange: (VideoFilter) -> Unit,
     onClickSave: () -> Unit,
@@ -75,16 +76,18 @@ fun ImageFilterSliders(
                 valueFormater = { "$it%" },
             )
         }
-//        item {
-//            SliderBarRow(
-//                title = R.string.stashapp_effect_filters_hue,
-//                value = filter.hue,
-//                min = 0,
-//                max = 360,
-//                onChange = { onChange.invoke(filter.copy(hue = it)) },
-//                valueFormater = { "$it\u00b0" },
-//            )
-//        }
+        if (showVideoOptions) {
+            item {
+                SliderBarRow(
+                    title = R.string.stashapp_effect_filters_hue,
+                    value = filter.hue,
+                    min = 0,
+                    max = 360,
+                    onChange = { onChange.invoke(filter.copy(hue = it)) },
+                    valueFormater = { "$it\u00b0" },
+                )
+            }
+        }
         item {
             SliderBarRow(
                 title = R.string.stashapp_effect_filters_red,
@@ -118,16 +121,18 @@ fun ImageFilterSliders(
                 color = Color.Blue.copy(alpha = .8f),
             )
         }
-//        item {
-//            SliderBarRow(
-//                title = R.string.stashapp_effect_filters_blur,
-//                value = filter.blur,
-//                min = 0,
-//                max = 250,
-//                onChange = { onChange.invoke(filter.copy(blur = it)) },
-//                valueFormater = { "${it}px" },
-//            )
-//        }
+        if (showVideoOptions) {
+            item {
+                SliderBarRow(
+                    title = R.string.stashapp_effect_filters_blur,
+                    value = filter.blur,
+                    min = 0,
+                    max = 250,
+                    onChange = { onChange.invoke(filter.copy(blur = it)) },
+                    valueFormater = { "${it}px" },
+                )
+            }
+        }
         item {
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -199,6 +204,7 @@ fun SliderBarRow(
 @Composable
 fun ImageFilterDialog(
     filter: VideoFilter,
+    showVideoOptions: Boolean,
     uiConfig: ComposeUiConfig,
     onChange: (VideoFilter) -> Unit,
     onClickSave: () -> Unit,
@@ -224,6 +230,7 @@ fun ImageFilterDialog(
         ) {
             ImageFilterSliders(
                 filter = filter,
+                showVideoOptions = showVideoOptions,
                 showSaveButton = uiConfig.persistVideoFilters,
                 onChange = onChange,
                 onClickSave = onClickSave,
@@ -238,8 +245,8 @@ fun ImageFilterDialog(
 private fun ImageFilterSlidersPreview() {
     AppTheme {
         ImageFilterSliders(
-            filter =
-                VideoFilter(),
+            filter = VideoFilter(),
+            showVideoOptions = true,
             onChange = {},
             onClickSave = {},
             showSaveButton = true,
