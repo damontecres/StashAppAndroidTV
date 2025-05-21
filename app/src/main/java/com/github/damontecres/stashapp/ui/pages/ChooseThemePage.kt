@@ -10,6 +10,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
@@ -42,8 +44,11 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationListener
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.presenters.ScenePresenter
+import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.IconRowText
 import com.github.damontecres.stashapp.ui.cards.ImageOverlay
@@ -55,6 +60,7 @@ import com.github.damontecres.stashapp.ui.defaultColorSchemeSet
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.ui.parseThemeJson
 import com.github.damontecres.stashapp.ui.readThemeJson
+import com.github.damontecres.stashapp.ui.uiConfigPreview
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.durationToString
@@ -103,77 +109,79 @@ fun ChooseThemePage(
                             .border(2.dp, color = Color.LightGray),
                     contentAlignment = Alignment.Center,
                 ) {
-                    val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-                    dataTypeMap[DataType.TAG] = 2
-                    dataTypeMap[DataType.PERFORMER] = 3
-                    dataTypeMap[DataType.GROUP] = 2
-                    dataTypeMap[DataType.MARKER] = 5
-                    RootCard(
-                        modifier = Modifier.padding(32.dp),
-                        item = "",
-                        onClick = {},
-                        title = "Sample Title",
-                        imageContent = {
-                            Image(
-                                modifier = Modifier.fillMaxSize(.75f),
-                                painter = painterResource(R.drawable.baseline_camera_indoor_48),
-                                contentDescription = null,
-                            )
-                        },
-                        subtitle = {
-                            Text(
-                                text = "This is the description",
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        },
-                        description = {
-                            IconRowText(
-                                dataTypeMap,
-                                2,
-                                Modifier
-                                    .enableMarquee(it)
-                                    .align(Alignment.Center),
-                            )
-                        },
-                        uiConfig = uiConfig,
-                        imageWidth = dataTypeImageWidth(DataType.SCENE).dp / 1.5f,
-                        imageHeight = dataTypeImageHeight(DataType.SCENE).dp / 1.5f,
-                        longClicker = { _: Any, _ -> },
-                        getFilterAndPosition = null,
-                        imageOverlay = {
-                            ImageOverlay(uiConfig.ratingAsStars, rating100 = 80) {
-                                val duration = durationToString(1625.2)
+                    Row {
+                        val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
+                        dataTypeMap[DataType.TAG] = 2
+                        dataTypeMap[DataType.PERFORMER] = 3
+                        dataTypeMap[DataType.GROUP] = 2
+                        dataTypeMap[DataType.MARKER] = 5
+                        RootCard(
+                            modifier = Modifier.padding(32.dp),
+                            item = "",
+                            onClick = {},
+                            title = "Sample Title",
+                            imageContent = {
+                                Image(
+                                    modifier = Modifier.fillMaxSize(.75f),
+                                    painter = painterResource(R.drawable.baseline_camera_indoor_48),
+                                    contentDescription = null,
+                                )
+                            },
+                            subtitle = {
                                 Text(
-                                    modifier =
-                                        Modifier
-                                            .align(Alignment.BottomEnd)
-                                            .padding(4.dp),
-                                    text = duration,
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    text = "This is the description",
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
-                                Text(
-                                    modifier =
-                                        Modifier
-                                            .align(Alignment.BottomStart)
-                                            .padding(4.dp),
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                    text = "1080p",
+                            },
+                            description = {
+                                IconRowText(
+                                    dataTypeMap,
+                                    2,
+                                    Modifier
+                                        .enableMarquee(it)
+                                        .align(Alignment.Center),
                                 )
-                                val percentWatched = .6
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .align(Alignment.BottomStart)
-                                            .background(
-                                                MaterialTheme.colorScheme.tertiary,
-                                            ).clip(RectangleShape)
-                                            .height(4.dp)
-                                            .width((ScenePresenter.CARD_WIDTH * percentWatched).dp / 2),
-                                )
-                            }
-                        },
-                    )
+                            },
+                            uiConfig = uiConfig,
+                            imageWidth = dataTypeImageWidth(DataType.SCENE).dp / 1.5f,
+                            imageHeight = dataTypeImageHeight(DataType.SCENE).dp / 1.5f,
+                            longClicker = { _: Any, _ -> },
+                            getFilterAndPosition = null,
+                            imageOverlay = {
+                                ImageOverlay(uiConfig.ratingAsStars, rating100 = 80) {
+                                    val duration = durationToString(1625.2)
+                                    Text(
+                                        modifier =
+                                            Modifier
+                                                .align(Alignment.BottomEnd)
+                                                .padding(4.dp),
+                                        text = duration,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                    Text(
+                                        modifier =
+                                            Modifier
+                                                .align(Alignment.BottomStart)
+                                                .padding(4.dp),
+                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                        text = "1080p",
+                                    )
+                                    val percentWatched = .6
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .align(Alignment.BottomStart)
+                                                .background(
+                                                    MaterialTheme.colorScheme.tertiary,
+                                                ).clip(RectangleShape)
+                                                .height(4.dp)
+                                                .width((ScenePresenter.CARD_WIDTH * percentWatched).dp / 2),
+                                    )
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -244,6 +252,14 @@ fun ChooseThemePage(
                 }
             }
         }
+        item {
+            Text(
+                text =
+                    "This is a very early, alpha feature and is not guaranteed to work perfectly! " +
+                        "It is also not guaranteed to be supported in the future.",
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
     }
     SearchForDialog(
         show = showDialog,
@@ -307,7 +323,9 @@ fun writeJson(
 
 fun getThemes(context: Context): List<String> {
     val dir = context.getDir("themes", Context.MODE_PRIVATE)
-    return dir.listFiles { _, name -> name.endsWith(".json") }?.map { it.name.removeSuffix(".json") } ?: listOf()
+    return dir
+        ?.listFiles { _, name -> name.endsWith(".json") }
+        ?.map { it.name.removeSuffix(".json") } ?: listOf()
 }
 
 fun deleteJson(
@@ -316,4 +334,43 @@ fun deleteJson(
 ): Boolean {
     val dir = context.getDir("themes", Context.MODE_PRIVATE)
     return File(dir, "$name.json").delete()
+}
+
+@Preview
+@Composable
+private fun ChooseThemePagePreview() {
+    AppTheme {
+        ChooseThemePage(
+            server = StashServer("0.0.0.0", null),
+            navigationManager =
+                object : NavigationManager {
+                    override var previousDestination: Destination?
+                        get() = TODO("Not yet implemented")
+                        set(value) {}
+
+                    override fun navigate(destination: Destination) {
+                        TODO("Not yet implemented")
+                    }
+
+                    override fun goBack() {
+                        TODO("Not yet implemented")
+                    }
+
+                    override fun goToMain() {
+                        TODO("Not yet implemented")
+                    }
+
+                    override fun clearPinFragment() {
+                        TODO("Not yet implemented")
+                    }
+
+                    override fun addListener(listener: NavigationListener) {
+                        TODO("Not yet implemented")
+                    }
+                },
+            uiConfig = uiConfigPreview,
+            onChooseTheme = {},
+            modifier = Modifier,
+        )
+    }
 }
