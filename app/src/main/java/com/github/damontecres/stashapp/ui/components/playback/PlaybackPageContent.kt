@@ -420,6 +420,7 @@ fun PlaybackPageContent(
 
         player.prepare()
         if (useVideoFilters) {
+            Log.d(TAG, "Enabling video effects")
             player.setVideoEffects(listOf())
         }
     }
