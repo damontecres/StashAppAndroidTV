@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,6 +58,7 @@ import androidx.media3.common.Tracks
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
@@ -77,6 +79,9 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.ThrottledLiveData
+import com.github.damontecres.stashapp.data.VideoFilter
+import com.github.damontecres.stashapp.data.room.PlaybackEffect
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaybackSceneFragment
 import com.github.damontecres.stashapp.playback.PlaylistFragment
@@ -88,6 +93,7 @@ import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
 import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.tryRequestFocus
@@ -97,9 +103,12 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import com.github.damontecres.stashapp.views.models.EqualityMutableLiveData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.properties.Delegates
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -108,18 +117,27 @@ const val TAG = "PlaybackPageContent"
 class PlaybackViewModel : ViewModel() {
     private lateinit var server: StashServer
     private var markersEnabled by Delegates.notNull<Boolean>()
+    private var saveFilters = true
+    private var videoFiltersEnabled = false
 
     val mediaItemTag = EqualityMutableLiveData<PlaylistFragment.MediaItemTag>()
     val markers = MutableLiveData<List<BasicMarker>>(listOf())
     val oCount = MutableLiveData(0)
     val spriteImageLoaded = MutableLiveData(false)
 
+    private val _videoFilter = MutableLiveData<VideoFilter?>(null)
+    val videoFilter = ThrottledLiveData(_videoFilter, 500L)
+
     fun init(
         server: StashServer,
         markersEnabled: Boolean,
+        saveFilters: Boolean,
+        videoFiltersEnabled: Boolean,
     ) {
         this.server = server
         this.markersEnabled = markersEnabled
+        this.saveFilters = saveFilters
+        this.videoFiltersEnabled = videoFiltersEnabled
     }
 
     fun changeScene(tag: PlaylistFragment.MediaItemTag) {
@@ -129,6 +147,30 @@ class PlaybackViewModel : ViewModel() {
         this.spriteImageLoaded.value = false
 
         refreshScene(tag.item.id)
+
+        if (videoFiltersEnabled) {
+            updateVideoFilter(VideoFilter())
+            if (saveFilters && videoFiltersEnabled) {
+                viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+                    val vf =
+                        StashApplication
+                            .getDatabase()
+                            .playbackEffectsDao()
+                            .getPlaybackEffect(server.url, tag.item.id, DataType.SCENE)
+                    if (vf != null) {
+                        Log.d(
+                            TAG,
+                            "Loaded VideoFilter for scene ${tag.item.id}",
+                        )
+                        withContext(Dispatchers.Main) {
+                            videoFilter.stopThrottling(true)
+                            updateVideoFilter(vf.videoFilter)
+                            videoFilter.startThrottling()
+                        }
+                    }
+                }
+            }
+        }
 
         // Fetch preview sprites
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
@@ -193,6 +235,33 @@ class PlaybackViewModel : ViewModel() {
             oCount.value = mutationEngine.incrementOCounter(sceneId).count
         }
     }
+
+    fun updateVideoFilter(newFilter: VideoFilter?) {
+        _videoFilter.value = newFilter
+    }
+
+    fun saveVideoFilter() {
+        mediaItemTag.value?.item?.let {
+            viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+                val vf = _videoFilter.value
+                if (vf != null) {
+                    StashApplication
+                        .getDatabase()
+                        .playbackEffectsDao()
+                        .insert(PlaybackEffect(server.url, it.id, DataType.SCENE, vf))
+                    Log.d(TAG, "Saved VideoFilter for scene ${it.id}")
+                    withContext(Dispatchers.Main) {
+                        Toast
+                            .makeText(
+                                StashApplication.getApplication(),
+                                "Saved",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                    }
+                }
+            }
+        }
+    }
 }
 
 val playbackScaleOptions =
@@ -210,7 +279,7 @@ val playbackScaleOptions =
 @Composable
 fun PlaybackPageContent(
     server: StashServer,
-    player: Player,
+    player: ExoPlayer,
     playlist: List<MediaItem>,
     startIndex: Int,
     uiConfig: ComposeUiConfig,
@@ -237,6 +306,8 @@ fun PlaybackPageContent(
     var subtitleIndex by remember { mutableStateOf<Int?>(null) }
     var audioIndex by remember { mutableStateOf<Int?>(null) }
     var audioOptions by remember { mutableStateOf<List<String>>(listOf()) }
+    var showFilterDialog by rememberSaveable { mutableStateOf(false) }
+    val videoFilter by viewModel.videoFilter.observeAsState()
 
     var trackActivityListener = remember<TrackActivityPlaybackListener?>(server) { null }
     AmbientPlayerListener(player)
@@ -277,6 +348,8 @@ fun PlaybackPageContent(
             )
         }
     val skipWithLeftRight = remember { prefs.getBoolean("skipWithDpad", true) }
+    val useVideoFilters =
+        remember { prefs.getBoolean(context.getString(R.string.pref_key_video_filters), false) }
 
     val controllerViewState =
         remember {
@@ -294,7 +367,7 @@ fun PlaybackPageContent(
         }
 
     LaunchedEffect(Unit) {
-        viewModel.init(server, markersEnabled)
+        viewModel.init(server, markersEnabled, uiConfig.persistVideoFilters, useVideoFilters)
         viewModel.changeScene(playlist[startIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
         maybeMuteAudio(context, false, player)
         player.setMediaItems(playlist, startIndex, startPosition)
@@ -346,6 +419,9 @@ fun PlaybackPageContent(
         )
 
         player.prepare()
+        if (useVideoFilters) {
+            player.setVideoEffects(listOf())
+        }
     }
 
     LaunchedEffect(server, currentScene, player) {
@@ -515,6 +591,8 @@ fun PlaybackPageContent(
                                 showDebugInfo = !showDebugInfo
                             }
 
+                            PlaybackAction.ShowVideoFilterDialog -> showFilterDialog = true
+
                             PlaybackAction.ShowPlaylist -> {
                                 if (playlistPager != null && playlistPager.size > 1) {
                                     showPlaylist = true
@@ -559,6 +637,9 @@ fun PlaybackPageContent(
                                 if (playlistPager != null && playlistPager.size > 1) {
                                     put("Show Playlist", PlaybackAction.ShowPlaylist)
                                 }
+                                if (useVideoFilters) {
+                                    put("Set video filters", PlaybackAction.ShowVideoFilterDialog)
+                                }
                             },
                         ),
                     subtitleIndex = subtitleIndex,
@@ -596,6 +677,24 @@ fun PlaybackPageContent(
                 onClickPlaylistItem = onClickPlaylistItem,
                 modifier = Modifier,
             )
+        }
+        videoFilter?.let {
+            val effectList = it.createEffectList()
+            Log.d(TAG, "Applying ${effectList.size} effects")
+            player.setVideoEffects(effectList)
+
+            AnimatedVisibility(showFilterDialog) {
+                ImageFilterDialog(
+                    filter = it,
+                    showVideoOptions = false,
+                    uiConfig = uiConfig,
+                    onChange = viewModel::updateVideoFilter,
+                    onClickSave = viewModel::saveVideoFilter,
+                    onDismissRequest = {
+                        showFilterDialog = false
+                    },
+                )
+            }
         }
     }
 }

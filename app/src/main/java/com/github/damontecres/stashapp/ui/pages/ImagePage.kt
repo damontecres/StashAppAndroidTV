@@ -440,6 +440,7 @@ fun ImagePage(
             AnimatedVisibility(showFilterDialog) {
                 ImageFilterDialog(
                     filter = imageFilter,
+                    showVideoOptions = false,
                     uiConfig = uiConfig,
                     onChange = viewModel::updateImageFilter,
                     onClickSave = viewModel::saveImageFilter,
