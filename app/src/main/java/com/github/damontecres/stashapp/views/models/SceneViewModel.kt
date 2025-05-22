@@ -5,7 +5,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
@@ -16,22 +15,14 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.TagData
-import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
-import com.github.damontecres.stashapp.api.type.IntCriterionInput
-import com.github.damontecres.stashapp.api.type.MultiCriterionInput
-import com.github.damontecres.stashapp.api.type.SceneFilterType
-import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.SortAndDirection
-import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
-import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
+import com.github.damontecres.stashapp.util.createSceneSuggestionFilter
 import kotlinx.coroutines.launch
 
 class SceneViewModel : ViewModel() {
@@ -113,84 +104,8 @@ class SceneViewModel : ViewModel() {
                     // Suggestions
                     if (!_suggestedScenes.isInitialized || _suggestedScenes.value!!.isEmpty()) {
                         viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
-                            val idFilter =
-                                Optional.present(
-                                    IntCriterionInput(
-                                        value = newScene.id.toInt(),
-                                        modifier = CriterionModifier.NOT_EQUALS,
-                                    ),
-                                )
-                            val filters =
-                                buildList {
-                                    if (newScene.tags.isNotEmpty()) {
-                                        add(
-                                            SceneFilterType(
-                                                id = idFilter,
-                                                tags =
-                                                    Optional.present(
-                                                        HierarchicalMultiCriterionInput(
-                                                            value = Optional.present(newScene.tags.map { it.tagData.id }),
-                                                            modifier = CriterionModifier.INCLUDES,
-                                                        ),
-                                                    ),
-                                            ),
-                                        )
-                                    }
-                                    if (newScene.performers.isNotEmpty()) {
-                                        add(
-                                            SceneFilterType(
-                                                id = idFilter,
-                                                performers =
-                                                    Optional.presentIfNotNull(
-                                                        MultiCriterionInput(
-                                                            value = Optional.present(newScene.performers.map { it.id }),
-                                                            modifier = CriterionModifier.INCLUDES,
-                                                        ),
-                                                    ),
-                                            ),
-                                        )
-                                    }
-                                    if (newScene.studio?.studioData != null) {
-                                        add(
-                                            SceneFilterType(
-                                                id = idFilter,
-                                                studios =
-                                                    Optional.present(
-                                                        HierarchicalMultiCriterionInput(
-                                                            value = Optional.present(listOf(newScene.studio.studioData.id)),
-                                                            modifier = CriterionModifier.EQUALS,
-                                                        ),
-                                                    ),
-                                            ),
-                                        )
-                                    }
-                                    if (newScene.groups.isNotEmpty()) {
-                                        add(
-                                            SceneFilterType(
-                                                id = idFilter,
-                                                groups =
-                                                    Optional.present(
-                                                        HierarchicalMultiCriterionInput(
-                                                            value = Optional.present(newScene.groups.map { it.group.groupData.id }),
-                                                            modifier = CriterionModifier.INCLUDES,
-                                                        ),
-                                                    ),
-                                            ),
-                                        )
-                                    }
-                                }.toMutableList()
-                            if (filters.isNotEmpty()) {
-                                for (i in (1..<filters.size).reversed()) {
-                                    filters[i - 1] =
-                                        filters[i - 1].copy(OR = Optional.present(filters[i]))
-                                }
-                                val objectFilter = filters.first()
-                                val filterArgs =
-                                    FilterArgs(
-                                        DataType.SCENE,
-                                        objectFilter = objectFilter,
-                                        findFilter = StashFindFilter(sortAndDirection = SortAndDirection.random()),
-                                    ).withResolvedRandom()
+                            val filterArgs = createSceneSuggestionFilter(newScene)
+                            if (filterArgs != null) {
                                 val pageSize =
                                     PreferenceManager
                                         .getDefaultSharedPreferences(StashApplication.getApplication())

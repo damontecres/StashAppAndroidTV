@@ -75,6 +75,7 @@ import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.cards.PerformerCard
 import com.github.damontecres.stashapp.ui.components.CircularProgress
+import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.FocusPair
@@ -122,6 +123,7 @@ fun SceneDetailsPage(
     val rating100 by viewModel.rating100.observeAsState(0)
     val oCount by viewModel.oCount.observeAsState(0)
     val studio by viewModel.studio.observeAsState(null)
+    val suggestions by viewModel.suggestions.observeAsState(listOf())
 
     LaunchedEffect(Unit) {
         viewModel.init()
@@ -149,6 +151,7 @@ fun SceneDetailsPage(
                 groups = groups,
                 markers = markers,
                 studio = studio,
+                suggestions = suggestions,
                 uiConfig = uiConfig,
                 itemOnClick = itemOnClick,
                 playOnClick = playOnClick,
@@ -213,6 +216,7 @@ fun SceneDetails(
     groups: List<GroupData>,
     markers: List<MarkerData>,
     studio: StudioData?,
+    suggestions: List<SlimSceneData>,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
@@ -284,73 +288,87 @@ fun SceneDetails(
 //        )
     }
     val focusManager = LocalFocusManager.current
+    val defaultLongClicker =
+        remember {
+            DefaultLongClicker(
+                navigationManager,
+                itemOnClick,
+                server.serverPreferences.alwaysStartFromBeginning,
+                markerPlayAllOnClick = { },
+            ) { showDialog = it }
+        }
     val removeLongClicker =
-        LongClicker<Any> { item, filterAndPosition ->
-            item as StashData
-            showDialog =
-                DialogParams(
-                    title = extractTitle(item) ?: "",
-                    fromLongClick = true,
-                    items =
-                        buildList {
-                            add(
-                                DialogItem(
-                                    context.getString(R.string.go_to),
-                                    Icons.Default.PlayArrow,
-                                ) {
-                                    itemOnClick.onClick(
-                                        item,
-                                        filterAndPosition,
-                                    )
-                                },
-                            )
-                            if (Destination.getDataType(item) == DataType.MARKER) {
+        remember {
+            LongClicker<Any> { item, filterAndPosition ->
+                item as StashData
+                showDialog =
+                    DialogParams(
+                        title = extractTitle(item) ?: "",
+                        fromLongClick = true,
+                        items =
+                            buildList {
                                 add(
                                     DialogItem(
-                                        context.getString(R.string.stashapp_details),
-                                        Icons.Default.Info,
+                                        context.getString(R.string.go_to),
+                                        Icons.Default.PlayArrow,
                                     ) {
-                                        navigationManager.navigate(Destination.MarkerDetails(item.id))
+                                        itemOnClick.onClick(
+                                            item,
+                                            filterAndPosition,
+                                        )
                                     },
                                 )
-                            }
-                            if (uiConfig.readOnlyModeDisabled) {
-                                if (item is StudioData) {
+                                if (Destination.getDataType(item) == DataType.MARKER) {
                                     add(
                                         DialogItem(
-                                            context.getString(R.string.replace),
-                                            Icons.Default.Edit,
+                                            context.getString(R.string.stashapp_details),
+                                            Icons.Default.Info,
                                         ) {
-                                            searchForDataType = SearchForParams(DataType.STUDIO)
+                                            navigationManager.navigate(
+                                                Destination.MarkerDetails(
+                                                    item.id,
+                                                ),
+                                            )
                                         },
                                     )
                                 }
-                                add(
-                                    DialogItem(
-                                        onClick = {
-                                            when (item) {
-                                                is StudioData -> headerFocusRequester.tryRequestFocus()
-                                                else -> focusManager.moveFocus(FocusDirection.Previous)
-                                            }
-                                            removeItem(item)
-                                        },
-                                        headlineContent = {
-                                            Text(stringResource(R.string.stashapp_actions_remove))
-                                        },
-                                        leadingContent = {
-                                            Icon(
-                                                imageVector = Icons.Default.Delete,
-                                                contentDescription = stringResource(R.string.stashapp_actions_remove),
-                                                tint = Color.Red,
-                                            )
-                                        },
-                                    ),
-                                )
-                            }
-                        },
-                )
+                                if (uiConfig.readOnlyModeDisabled && item !is SlimSceneData) {
+                                    if (item is StudioData) {
+                                        add(
+                                            DialogItem(
+                                                context.getString(R.string.replace),
+                                                Icons.Default.Edit,
+                                            ) {
+                                                searchForDataType = SearchForParams(DataType.STUDIO)
+                                            },
+                                        )
+                                    }
+                                    add(
+                                        DialogItem(
+                                            onClick = {
+                                                when (item) {
+                                                    is StudioData -> headerFocusRequester.tryRequestFocus()
+                                                    else -> focusManager.moveFocus(FocusDirection.Previous)
+                                                }
+                                                removeItem(item)
+                                            },
+                                            headlineContent = {
+                                                Text(stringResource(R.string.stashapp_actions_remove))
+                                            },
+                                            leadingContent = {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = stringResource(R.string.stashapp_actions_remove),
+                                                    tint = Color.Red,
+                                                )
+                                            },
+                                        ),
+                                    )
+                                }
+                            },
+                    )
+            }
         }
-
     val listState = rememberLazyListState()
     LazyColumn(
         state = listState,
@@ -576,6 +594,22 @@ fun SceneDetails(
                         cardOnFocus.invoke(isFocused, 4, index)
                     },
                     focusPair = createFocusPair(4),
+                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
+                )
+            }
+        }
+        if (suggestions.isNotEmpty()) {
+            item {
+                ItemsRow(
+                    title = R.string.suggestions,
+                    items = suggestions,
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = defaultLongClicker,
+                    cardOnFocus = { isFocused, index ->
+                        cardOnFocus.invoke(isFocused, 5, index)
+                    },
+                    focusPair = createFocusPair(5),
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
             }

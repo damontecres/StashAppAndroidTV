@@ -7,15 +7,21 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.preference.PreferenceManager
+import com.apollographql.apollo.api.Query
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.OCounter
+import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
+import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.ui.showAddGallery
 import com.github.damontecres.stashapp.ui.showAddGroup
 import com.github.damontecres.stashapp.ui.showAddMarker
@@ -27,12 +33,13 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
+import com.github.damontecres.stashapp.util.createSceneSuggestionFilter
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.launch
 
 class SceneDetailsViewModel(
-    server: StashServer,
+    val server: StashServer,
     val sceneId: String,
 ) : ViewModel() {
     private val queryEngine = QueryEngine(server)
@@ -47,6 +54,7 @@ class SceneDetailsViewModel(
     val groups = MutableLiveData<List<GroupData>>(listOf())
     val markers = MutableLiveData<List<MarkerData>>(listOf())
     val studio = MutableLiveData<StudioData?>(null)
+    val suggestions = MutableLiveData<List<SlimSceneData>>()
 
     val rating100 = MutableLiveData(0)
     val oCount = MutableLiveData(0)
@@ -71,6 +79,28 @@ class SceneDetailsViewModel(
                     }
                     if (scene.galleries.isNotEmpty()) {
                         galleries.value = queryEngine.getGalleries(scene.galleries.map { it.id })
+                    }
+                    if (!suggestions.isInitialized || suggestions.value?.isEmpty() == true) {
+                        val filterArgs = createSceneSuggestionFilter(scene)
+                        if (filterArgs != null) {
+                            val pageSize =
+                                PreferenceManager
+                                    .getDefaultSharedPreferences(StashApplication.getApplication())
+                                    .getInt(
+                                        StashApplication
+                                            .getApplication()
+                                            .getString(R.string.pref_key_max_search_results),
+                                        25,
+                                    )
+                            val supplier =
+                                DataSupplierFactory(server.version)
+                                    .create<Query.Data, SlimSceneData, Query.Data>(filterArgs)
+                            suggestions.value =
+                                StashPagingSource<Query.Data, SlimSceneData, SlimSceneData, Query.Data>(
+                                    queryEngine,
+                                    supplier,
+                                ).fetchPage(1, pageSize)
+                        }
                     }
                 } else {
                     loadingState.value = SceneLoadingState.Error
