@@ -84,10 +84,12 @@ fun PlaybackPage(
                 }
             }
         val playbackScene = remember { Scene.fromFullSceneData(it) }
-        val decision = getStreamDecision(context, playbackScene, playbackMode)
+        val decision = remember { getStreamDecision(context, playbackScene, playbackMode) }
         val media =
-            buildMediaItem(context, decision, playbackScene) {
-                setTag(PlaylistFragment.MediaItemTag(playbackScene, decision))
+            remember {
+                buildMediaItem(context, decision, playbackScene) {
+                    setTag(PlaylistFragment.MediaItemTag(playbackScene, decision))
+                }
             }
 
         PlaybackPageContent(
