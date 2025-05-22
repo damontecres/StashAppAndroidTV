@@ -453,3 +453,19 @@ fun findPossibleTranscodeLabels(
             }
         }
 }
+
+fun switchToTranscode(
+    context: Context,
+    current: MediaItem,
+): MediaItem {
+    val currScene = (current.localConfiguration!!.tag as PlaylistFragment.MediaItemTag).item
+    val format =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getString("stream_choice", "HLS")!!
+    val transcodeDecision =
+        getStreamDecision(context, currScene, PlaybackMode.ForcedTranscode(format))
+    return buildMediaItem(context, transcodeDecision, currScene) {
+        setTag(PlaylistFragment.MediaItemTag(currScene, transcodeDecision))
+    }
+}

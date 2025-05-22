@@ -93,8 +93,10 @@ import com.github.damontecres.stashapp.playback.TrackActivityPlaybackListener
 import com.github.damontecres.stashapp.playback.TrackSupport
 import com.github.damontecres.stashapp.playback.TrackSupportReason
 import com.github.damontecres.stashapp.playback.TrackType
+import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.playback.checkForSupport
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
+import com.github.damontecres.stashapp.playback.switchToTranscode
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
@@ -110,7 +112,6 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.toLongMilliseconds
-import com.github.damontecres.stashapp.views.models.EqualityMutableLiveData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -125,7 +126,7 @@ class PlaybackViewModel : ViewModel() {
     private var saveFilters = true
     private var videoFiltersEnabled = false
 
-    val mediaItemTag = EqualityMutableLiveData<PlaylistFragment.MediaItemTag>()
+    val mediaItemTag = MutableLiveData<PlaylistFragment.MediaItemTag>()
     val markers = MutableLiveData<List<BasicMarker>>(listOf())
     val oCount = MutableLiveData(0)
     val spriteImageLoaded = MutableLiveData(false)
@@ -372,6 +373,8 @@ fun PlaybackPageContent(
             }
         }
 
+    val retryMediaItemIds = remember { mutableSetOf<String>() }
+
     LaunchedEffect(Unit) {
         viewModel.init(server, markersEnabled, uiConfig.persistVideoFilters, useVideoFilters)
         viewModel.changeScene(playlist[startIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
@@ -417,13 +420,58 @@ fun PlaybackPageContent(
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
-                    Log.e(TAG, "PlaybackException on scene ${currentScene.item.id}", error)
-                    Toast
-                        .makeText(
-                            context,
-                            "Play error: ${error.localizedMessage}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                    Log.e(
+                        TAG,
+                        "PlaybackException on scene ${currentScene.item.id}, errorCode=${error.errorCode}",
+                        error,
+                    )
+                    val showError =
+                        when (error.errorCode) {
+                            PlaybackException.ERROR_CODE_DECODING_FAILED,
+                            PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES,
+                            PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED,
+                            -> {
+                                val current = player.currentMediaItem
+                                val currentPosition = player.currentMediaItemIndex
+                                if (current != null) {
+                                    val tag =
+                                        (current.localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
+                                    val id = tag.item.id
+                                    val isTranscoding =
+                                        tag.streamDecision.transcodeDecision == TranscodeDecision.Transcode ||
+                                            tag.streamDecision.transcodeDecision is TranscodeDecision.ForcedTranscode
+                                    if (id !in retryMediaItemIds && !isTranscoding) {
+                                        retryMediaItemIds.add(id)
+                                        val newMediaItem = switchToTranscode(context, current)
+                                        val newTag =
+                                            newMediaItem.localConfiguration!!.tag as PlaylistFragment.MediaItemTag
+                                        Log.d(
+                                            TAG,
+                                            "Using new transcoding media item: ${newTag.streamDecision}",
+                                        )
+                                        viewModel.changeScene(newTag)
+                                        player.replaceMediaItem(currentPosition, newMediaItem)
+                                        player.prepare()
+                                        player.play()
+                                        false
+                                    } else {
+                                        true
+                                    }
+                                } else {
+                                    true
+                                }
+                            }
+
+                            else -> true
+                        }
+                    if (showError) {
+                        Toast
+                            .makeText(
+                                context,
+                                "Play error: ${error.localizedMessage}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                    }
                 }
             },
         )
