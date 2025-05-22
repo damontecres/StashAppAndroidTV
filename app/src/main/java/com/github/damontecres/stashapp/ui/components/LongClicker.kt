@@ -86,7 +86,7 @@ class DefaultLongClicker(
                     )
                 }
                 if (item is SlimSceneData) {
-                    if (item.resume_time != null && item.resume_time > 0 && alwaysStartFromBeginning) {
+                    if (item.resume_time != null && item.resume_time > 0 && !alwaysStartFromBeginning) {
                         add(
                             DialogItem(
                                 context.getString(R.string.resume),
