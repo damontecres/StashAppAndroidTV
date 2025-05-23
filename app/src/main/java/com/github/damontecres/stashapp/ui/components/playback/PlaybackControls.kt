@@ -79,6 +79,8 @@ sealed interface PlaybackAction {
 
     data object ShowVideoFilterDialog : PlaybackAction
 
+    data object ShowSceneDetails : PlaybackAction
+
     data class ToggleCaptions(
         val index: Int,
     ) : PlaybackAction
@@ -289,7 +291,7 @@ fun LeftPlaybackButtons(
     ) {
         // More options
         PlaybackButton(
-            iconRes = R.drawable.vector_settings,
+            iconRes = R.drawable.baseline_more_vert_96,
             onClick = {
                 onControllerInteraction.invoke()
                 showMoreOptions = true

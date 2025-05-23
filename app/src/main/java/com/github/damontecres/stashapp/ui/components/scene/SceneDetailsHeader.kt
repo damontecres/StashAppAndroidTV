@@ -47,11 +47,8 @@ import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
-import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -140,205 +137,246 @@ fun SceneDetailsHeader(
         }
         Column(modifier = Modifier.fillMaxWidth(0.8f)) {
             Spacer(modifier = Modifier.height(60.dp))
-            Column(
-                modifier = Modifier.padding(start = 16.dp),
-            ) {
-                // Title
-                Text(
-                    text = scene.titleOrFilename ?: "",
-                    color = MaterialTheme.colorScheme.onBackground,
-                    style =
-                        MaterialTheme.typography.displayMedium.copy(
-                            shadow =
-                                Shadow(
-                                    color = Color.DarkGray,
-                                    offset = Offset(5f, 2f),
-                                    blurRadius = 2f,
-                                ),
-                        ),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-
-                Column(
-                    modifier = Modifier.alpha(0.75f),
-                ) {
-                    // Rating
-                    if (showRatingBar) {
-                        Rating100(
-                            rating100 = rating100,
-                            uiConfig = uiConfig,
-                            onRatingChange = onRatingChange,
-                            enabled = true,
-                            modifier =
-                                Modifier
-                                    .height(32.dp)
-                                    .padding(start = 12.dp),
-                        )
+            SceneDetailsHeaderInfo(
+                scene = scene,
+                studio = studio,
+                rating100 = rating100,
+                oCount = oCount,
+                uiConfig = uiConfig,
+                itemOnClick = itemOnClick,
+                playOnClick = playOnClick,
+                editOnClick = editOnClick,
+                moreOnClick = moreOnClick,
+                oCounterOnClick = oCounterOnClick,
+                oCounterOnLongClick = oCounterOnLongClick,
+                onRatingChange = onRatingChange,
+                focusRequester = focusRequester,
+                bringIntoViewRequester = bringIntoViewRequester,
+                removeLongClicker = removeLongClicker,
+                showEditButton = showEditButton,
+                alwaysStartFromBeginning = alwaysStartFromBeginning,
+                modifier = Modifier,
+                showRatingBar = showRatingBar,
+            )
+            // Playback controls
+            PlayButtons(
+                scene = scene,
+                oCount = oCount,
+                playOnClick = playOnClick,
+                editOnClick = editOnClick,
+                moreOnClick = moreOnClick,
+                oCounterOnClick = oCounterOnClick,
+                oCounterOnLongClick = oCounterOnLongClick,
+                focusRequester = focusRequester,
+                buttonOnFocusChanged = {
+                    if (it.isFocused) {
+                        scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
                     }
-                    // Quick info
-                    val file = scene.files.firstOrNull()?.videoFile
-                    DotSeparatedRow(
-                        modifier = Modifier.padding(top = 6.dp, start = 8.dp),
-                        textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        texts =
-                            listOfNotNullOrBlank(
-                                scene.date,
-                                file?.let { durationToString(it.duration) },
-                                file?.resolutionName(),
-                            ),
+                },
+                alwaysStartFromBeginning = alwaysStartFromBeginning,
+                showEditButton = showEditButton,
+            )
+        }
+    }
+}
+
+@Composable
+fun SceneDetailsHeaderInfo(
+    scene: FullSceneData,
+    studio: StudioData?,
+    rating100: Int,
+    oCount: Int,
+    uiConfig: ComposeUiConfig,
+    itemOnClick: ItemOnClicker<Any>,
+    playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    editOnClick: () -> Unit,
+    moreOnClick: () -> Unit,
+    oCounterOnClick: () -> Unit,
+    oCounterOnLongClick: () -> Unit,
+    onRatingChange: (Int) -> Unit,
+    focusRequester: FocusRequester,
+    bringIntoViewRequester: BringIntoViewRequester,
+    removeLongClicker: LongClicker<Any>,
+    showEditButton: Boolean,
+    alwaysStartFromBeginning: Boolean,
+    modifier: Modifier = Modifier,
+    showRatingBar: Boolean = true,
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    Column(
+        modifier = Modifier.padding(start = 16.dp),
+    ) {
+        // Title
+        Text(
+            text = scene.titleOrFilename ?: "",
+            color = Color.LightGray,
+            style =
+                MaterialTheme.typography.displayMedium.copy(
+                    shadow =
+                        Shadow(
+                            color = Color.DarkGray,
+                            offset = Offset(5f, 2f),
+                            blurRadius = 2f,
+                        ),
+                ),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+
+        Column(
+            modifier = Modifier.alpha(0.75f),
+        ) {
+            // Rating
+            if (showRatingBar) {
+                Rating100(
+                    rating100 = rating100,
+                    uiConfig = uiConfig,
+                    onRatingChange = onRatingChange,
+                    enabled = true,
+                    modifier =
+                        Modifier
+                            .height(32.dp)
+                            .padding(start = 12.dp),
+                )
+            }
+            // Quick info
+            val file = scene.files.firstOrNull()?.videoFile
+            DotSeparatedRow(
+                modifier = Modifier.padding(top = 6.dp, start = 8.dp),
+                textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                texts =
+                    listOfNotNullOrBlank(
+                        scene.date,
+                        file?.let { durationToString(it.duration) },
+                        file?.resolutionName(),
+                    ),
+            )
+            // Description
+            if (scene.details.isNotNullOrBlank()) {
+                val interactionSource = remember { MutableInteractionSource() }
+                val isFocused = interactionSource.collectIsFocusedAsState().value
+                val bgColor =
+                    if (isFocused) {
+                        MaterialTheme.colorScheme.onPrimary.copy(alpha = .75f)
+                    } else {
+                        Color.Unspecified
+                    }
+                var showDetailsDialog by remember { mutableStateOf(false) }
+                Box(
+                    modifier =
+                        Modifier
+                            .background(bgColor, shape = RoundedCornerShape(8.dp))
+                            .onFocusChanged {
+                                if (it.isFocused) {
+                                    scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
+                                }
+                            }.playSoundOnFocus(uiConfig.playSoundOnFocus)
+                            .clickable(
+                                enabled = true,
+                                interactionSource = interactionSource,
+                                indication = LocalIndication.current,
+                            ) {
+                                if (uiConfig.playSoundOnFocus) playOnClickSound(context)
+                                showDetailsDialog = true
+                            },
+                ) {
+                    Text(
+                        text = scene.details,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(8.dp),
                     )
-                    // Description
-                    if (scene.details.isNotNullOrBlank()) {
-                        val interactionSource = remember { MutableInteractionSource() }
-                        val isFocused = interactionSource.collectIsFocusedAsState().value
-                        val bgColor =
-                            if (isFocused) {
-                                MaterialTheme.colorScheme.onPrimary.copy(alpha = .75f)
-                            } else {
-                                Color.Unspecified
-                            }
-                        var showDetailsDialog by remember { mutableStateOf(false) }
-                        Box(
-                            modifier =
-                                Modifier
-                                    .background(bgColor, shape = RoundedCornerShape(8.dp))
-                                    .onFocusChanged {
-                                        if (it.isFocused) {
-                                            scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
-                                        }
-                                    }.playSoundOnFocus(uiConfig.playSoundOnFocus)
-                                    .clickable(
-                                        enabled = true,
-                                        interactionSource = interactionSource,
-                                        indication = LocalIndication.current,
-                                    ) {
-                                        if (uiConfig.playSoundOnFocus) playOnClickSound(context)
-                                        showDetailsDialog = true
-                                    },
-                        ) {
+                }
+                if (showDetailsDialog) {
+                    ScrollableDialog(
+                        onDismissRequest = { showDetailsDialog = false },
+                        modifier = Modifier,
+                    ) {
+                        item {
                             Text(
                                 text = scene.details,
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 3,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(8.dp),
-                            )
-                        }
-                        if (showDetailsDialog) {
-                            ScrollableDialog(
-                                onDismissRequest = { showDetailsDialog = false },
-                                modifier = Modifier,
-                            ) {
-                                item {
-                                    Text(
-                                        text = scene.details,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        modifier =
-                                            Modifier
-                                                .fillMaxWidth(),
-                                    )
-                                }
-                                if (scene.files.isNotEmpty()) {
-                                    item {
-                                        HorizontalDivider()
-                                        Text(
-                                            stringResource(R.string.stashapp_files) + ":",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onBackground,
-                                        )
-                                    }
-                                }
-                                items(scene.files.map { it.videoFile }) {
-                                    val size =
-                                        it.size
-                                            .toString()
-                                            .toIntOrNull()
-                                            ?.let(::formatBytes)
-                                    Text(
-                                        text = listOf(it.path, size).joinNotNullOrBlank(" - "),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onBackground,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    // Key-Values
-                    Row(
-                        modifier =
-                            Modifier
-                                .padding(top = 8.dp, start = 16.dp)
-                                .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        if (studio != null) {
-                            val navigationManager = LocalGlobalContext.current.navigationManager
-                            TitleValueText(
-                                stringResource(R.string.stashapp_studio),
-                                studio.name,
-                                playSoundOnFocus = uiConfig.playSoundOnFocus,
                                 modifier =
-                                    Modifier.onFocusChanged {
-                                        if (it.isFocused) {
-                                            scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
-                                        }
-                                    },
-                                onClick = {
-                                    navigationManager.navigate(
-                                        Destination.Item(
-                                            DataType.STUDIO,
-                                            studio.id,
-                                        ),
-                                    )
-                                },
-                                onLongClick = {
-                                    removeLongClicker.longClick(studio, null)
-                                },
+                                    Modifier
+                                        .fillMaxWidth(),
                             )
                         }
-                        if (scene.code.isNotNullOrBlank()) {
-                            TitleValueText(
-                                stringResource(R.string.stashapp_scene_code),
-                                scene.code,
-                            )
-                        }
-                        if (scene.director.isNotNullOrBlank()) {
-                            TitleValueText(
-                                stringResource(R.string.stashapp_director),
-                                scene.director,
-                            )
-                        }
-                        TitleValueText(
-                            stringResource(R.string.stashapp_play_count),
-                            (scene.play_count ?: 0).toString(),
-                        )
-                        TitleValueText(
-                            stringResource(R.string.stashapp_play_duration),
-                            durationToString(scene.play_duration ?: 0.0),
-                        )
-                    }
-                    // Playback controls
-                    PlayButtons(
-                        scene = scene,
-                        oCount = oCount,
-                        playOnClick = playOnClick,
-                        editOnClick = editOnClick,
-                        moreOnClick = moreOnClick,
-                        oCounterOnClick = oCounterOnClick,
-                        oCounterOnLongClick = oCounterOnLongClick,
-                        focusRequester = focusRequester,
-                        buttonOnFocusChanged = {
-                            if (it.isFocused) {
-                                scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
+                        if (scene.files.isNotEmpty()) {
+                            item {
+                                HorizontalDivider()
+                                Text(
+                                    stringResource(R.string.stashapp_files) + ":",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                )
                             }
+                        }
+                        items(scene.files.map { it.videoFile }) {
+                            val size =
+                                it.size
+                                    .toString()
+                                    .toIntOrNull()
+                                    ?.let(::formatBytes)
+                            Text(
+                                text = listOf(it.path, size).joinNotNullOrBlank(" - "),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onBackground,
+                            )
+                        }
+                    }
+                }
+            }
+            // Key-Values
+            Row(
+                modifier =
+                    Modifier
+                        .padding(top = 8.dp, start = 16.dp)
+                        .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                if (studio != null) {
+                    TitleValueText(
+                        stringResource(R.string.stashapp_studio),
+                        studio.name,
+                        playSoundOnFocus = uiConfig.playSoundOnFocus,
+                        modifier =
+                            Modifier.onFocusChanged {
+                                if (it.isFocused) {
+                                    scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
+                                }
+                            },
+                        onClick = {
+                            itemOnClick.onClick(studio, null)
                         },
-                        alwaysStartFromBeginning = alwaysStartFromBeginning,
-                        showEditButton = showEditButton,
+                        onLongClick = {
+                            removeLongClicker.longClick(studio, null)
+                        },
                     )
                 }
+                if (scene.code.isNotNullOrBlank()) {
+                    TitleValueText(
+                        stringResource(R.string.stashapp_scene_code),
+                        scene.code,
+                    )
+                }
+                if (scene.director.isNotNullOrBlank()) {
+                    TitleValueText(
+                        stringResource(R.string.stashapp_director),
+                        scene.director,
+                    )
+                }
+                TitleValueText(
+                    stringResource(R.string.stashapp_play_count),
+                    (scene.play_count ?: 0).toString(),
+                )
+                TitleValueText(
+                    stringResource(R.string.stashapp_play_duration),
+                    durationToString(scene.play_duration ?: 0.0),
+                )
             }
         }
     }

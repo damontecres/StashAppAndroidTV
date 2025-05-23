@@ -73,14 +73,12 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
-import com.github.damontecres.stashapp.ui.cards.PerformerCard
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.FocusPair
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
-import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.components.RowColumn
@@ -88,7 +86,7 @@ import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeader
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsViewModel
 import com.github.damontecres.stashapp.ui.components.scene.SceneLoadingState
-import com.github.damontecres.stashapp.ui.titleCount
+import com.github.damontecres.stashapp.ui.components.scene.sceneDetailsBody
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashServer
@@ -503,118 +501,25 @@ fun SceneDetails(
         }
         val startPadding = 24.dp
         val bottomPadding = 16.dp
-        if (markers.isNotEmpty()) {
-            item {
-                ItemsRow(
-                    title = titleCount(R.string.stashapp_markers, markers),
-                    items = markers,
-                    uiConfig = uiConfig,
-                    itemOnClick = itemOnClick,
-                    longClicker = removeLongClicker,
-                    cardOnFocus = { isFocused, index ->
-                        cardOnFocus.invoke(isFocused, 0, index)
-                    },
-                    focusPair = createFocusPair(0),
-                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
-                )
-            }
-        }
-        if (groups.isNotEmpty()) {
-            item {
-                ItemsRow(
-                    title = titleCount(R.string.stashapp_groups, groups),
-                    items = groups,
-                    uiConfig = uiConfig,
-                    itemOnClick = itemOnClick,
-                    longClicker = removeLongClicker,
-                    cardOnFocus = { isFocused, index ->
-                        cardOnFocus.invoke(isFocused, 1, index)
-                    },
-                    focusPair = createFocusPair(1),
-                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
-                )
-            }
-        }
-        if (performers.isNotEmpty()) {
-            item {
-                ItemsRow(
-                    title = titleCount(R.string.stashapp_performers, performers),
-                    items = performers,
-                    uiConfig = uiConfig,
-                    itemOnClick = itemOnClick,
-                    longClicker = removeLongClicker,
-                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
-                    cardOnFocus = { isFocused, index ->
-                        cardOnFocus.invoke(isFocused, 2, index)
-                    },
-                    focusPair = createFocusPair(2),
-                    itemContent = { uiConfig, item, itemOnClick, longClicker, getFilterAndPosition, cardModifier ->
-                        PerformerCard(
-                            uiConfig = uiConfig,
-                            item = item,
-                            onClick = {
-                                itemOnClick.onClick(
-                                    item,
-                                    getFilterAndPosition?.invoke(item),
-                                )
-                            },
-                            longClicker = longClicker,
-                            getFilterAndPosition = getFilterAndPosition,
-                            ageOnDate = scene.date,
-                            modifier = cardModifier,
-                        )
-                    },
-                )
-            }
-        }
-        if (tags.isNotEmpty()) {
-            item {
-                ItemsRow(
-                    title = titleCount(R.string.stashapp_tags, tags),
-                    items = tags,
-                    uiConfig = uiConfig,
-                    itemOnClick = itemOnClick,
-                    longClicker = removeLongClicker,
-                    cardOnFocus = { isFocused, index ->
-                        cardOnFocus.invoke(isFocused, 3, index)
-                    },
-                    focusPair = createFocusPair(3),
-                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
-                )
-            }
-        }
-        if (galleries.isNotEmpty()) {
-            item {
-                ItemsRow(
-                    title = titleCount(R.string.stashapp_galleries, galleries),
-                    items = galleries,
-                    uiConfig = uiConfig,
-                    itemOnClick = itemOnClick,
-                    longClicker = removeLongClicker,
-                    cardOnFocus = { isFocused, index ->
-                        cardOnFocus.invoke(isFocused, 4, index)
-                    },
-                    focusPair = createFocusPair(4),
-                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
-                )
-            }
-        }
-        if (suggestions.isNotEmpty()) {
-            item {
-                ItemsRow(
-                    title = titleCount(R.string.suggestions, suggestions),
-                    items = suggestions,
-                    uiConfig = uiConfig,
-                    itemOnClick = itemOnClick,
-                    longClicker = defaultLongClicker,
-                    cardOnFocus = { isFocused, index ->
-                        cardOnFocus.invoke(isFocused, 5, index)
-                    },
-                    focusPair = createFocusPair(5),
-                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
-                )
-            }
-        }
+
+        sceneDetailsBody(
+            scene = scene,
+            tags = tags,
+            performers = performers,
+            galleries = galleries,
+            groups = groups,
+            markers = markers,
+            suggestions = suggestions,
+            uiConfig = uiConfig,
+            itemOnClick = itemOnClick,
+            removeLongClicker = removeLongClicker,
+            defaultLongClicker = defaultLongClicker,
+            cardOnFocus = cardOnFocus,
+            createFocusPair = createFocusPair,
+            startPadding = startPadding,
+            bottomPadding = bottomPadding,
+        )
+
         item {
             SceneDetailsFooter(
                 scene,

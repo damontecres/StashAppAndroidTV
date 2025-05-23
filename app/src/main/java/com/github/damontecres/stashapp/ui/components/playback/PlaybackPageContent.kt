@@ -47,6 +47,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -81,6 +83,8 @@ import coil3.size.Scale
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
+import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.ThrottledLiveData
@@ -125,6 +129,9 @@ class PlaybackViewModel : ViewModel() {
     private var markersEnabled by Delegates.notNull<Boolean>()
     private var saveFilters = true
     private var videoFiltersEnabled = false
+
+    val scene = MutableLiveData<FullSceneData>()
+    val performers = MutableLiveData<List<PerformerData>>(listOf())
 
     val mediaItemTag = MutableLiveData<PlaylistFragment.MediaItemTag>()
     val markers = MutableLiveData<List<BasicMarker>>(listOf())
@@ -199,6 +206,10 @@ class PlaybackViewModel : ViewModel() {
     private fun refreshScene(sceneId: String) {
         // Fetch o count & markers
         viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            oCount.value = 0
+            markers.value = listOf()
+            performers.value = listOf()
+
             val queryEngine = QueryEngine(server)
             val scene = queryEngine.getScene(sceneId)
             if (scene != null) {
@@ -209,7 +220,10 @@ class PlaybackViewModel : ViewModel() {
                             .sortedBy { it.seconds }
                             .map(::BasicMarker)
                 }
+                performers.value =
+                    queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
             }
+            this@PlaybackViewModel.scene.value = scene
         }
     }
 
@@ -316,6 +330,10 @@ fun PlaybackPageContent(
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
     val videoFilter by viewModel.videoFilter.observeAsState()
 
+    var showSceneDetails by remember { mutableStateOf(false) }
+    val scene by viewModel.scene.observeAsState()
+    val performers by viewModel.performers.observeAsState(listOf())
+
     var trackActivityListener = remember<TrackActivityPlaybackListener?>(server) { null }
     AmbientPlayerListener(player)
 
@@ -339,7 +357,7 @@ fun PlaybackPageContent(
     var contentCurrentPosition by remember { mutableLongStateOf(0L) }
 
     var createMarkerPosition by remember { mutableLongStateOf(-1L) }
-    var playingBeforeCreateMarker by remember { mutableStateOf(false) }
+    var playingBeforeDialog by remember { mutableStateOf(false) }
 
     val prefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
     var showDebugInfo by remember {
@@ -658,8 +676,9 @@ fun PlaybackPageContent(
                         when (it) {
                             PlaybackAction.CreateMarker -> {
                                 if (markersEnabled) {
-                                    playingBeforeCreateMarker = player.isPlaying
+                                    playingBeforeDialog = player.isPlaying
                                     player.pause()
+                                    controllerViewState.hideControls()
                                     createMarkerPosition = player.currentPosition
                                 }
                             }
@@ -677,6 +696,7 @@ fun PlaybackPageContent(
                             PlaybackAction.ShowPlaylist -> {
                                 if (playlistPager != null && playlistPager.size > 1) {
                                     showPlaylist = true
+                                    controllerViewState.hideControls()
                                 }
                             }
 
@@ -698,6 +718,13 @@ fun PlaybackPageContent(
                                 } else {
                                     audioIndex = null
                                 }
+                            }
+
+                            PlaybackAction.ShowSceneDetails -> {
+                                playingBeforeDialog = player.isPlaying
+                                player.pause()
+                                controllerViewState.hideControls()
+                                showSceneDetails = true
                             }
                         }
                     },
@@ -721,6 +748,7 @@ fun PlaybackPageContent(
                                 if (useVideoFilters) {
                                     put("Set video filters", PlaybackAction.ShowVideoFilterDialog)
                                 }
+                                put("Details", PlaybackAction.ShowSceneDetails)
                             },
                         ),
                     subtitleIndex = subtitleIndex,
@@ -733,7 +761,7 @@ fun PlaybackPageContent(
         }
         val dismiss = {
             createMarkerPosition = -1
-            if (playingBeforeCreateMarker) {
+            if (playingBeforeDialog) {
                 player.play()
             }
         }
@@ -775,6 +803,30 @@ fun PlaybackPageContent(
                         showFilterDialog = false
                     },
                 )
+            }
+        }
+        AnimatedVisibility(showSceneDetails && scene != null) {
+            scene?.let {
+                Dialog(
+                    onDismissRequest = {
+                        showSceneDetails = false
+                        if (playingBeforeDialog) {
+                            player.play()
+                        }
+                    },
+                    properties = DialogProperties(usePlatformDefaultWidth = false),
+                ) {
+                    SceneDetailsOverlay(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.background.copy(alpha = .75f)),
+                        server = server,
+                        scene = it,
+                        performers = performers,
+                        uiConfig = uiConfig,
+                    )
+                }
             }
         }
     }
