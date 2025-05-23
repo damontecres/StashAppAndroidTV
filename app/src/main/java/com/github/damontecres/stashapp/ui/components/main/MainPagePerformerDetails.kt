@@ -54,7 +54,7 @@ fun MainPagePerformerDetails(
             Text(
                 modifier = Modifier,
                 text = perf.name,
-                color = Color.LightGray,
+                color = MaterialTheme.colorScheme.onBackground,
                 style =
                     MaterialTheme.typography.displayMedium.copy(
                         shadow =

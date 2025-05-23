@@ -84,6 +84,7 @@ import com.github.damontecres.stashapp.ui.components.createTabFunc
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.ui.performerPreview
 import com.github.damontecres.stashapp.ui.tagPreview
+import com.github.damontecres.stashapp.ui.titleCount
 import com.github.damontecres.stashapp.ui.uiConfigPreview
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
@@ -578,7 +579,7 @@ fun PerformerDetails(
             if (tags.isNotEmpty()) {
                 item {
                     ItemsRow(
-                        title = stringResource(R.string.stashapp_tags),
+                        title = titleCount(R.string.stashapp_tags, tags),
                         items = tags,
                         uiConfig = uiConfig,
                         itemOnClick = itemOnClick,
@@ -590,7 +591,7 @@ fun PerformerDetails(
             if (studios.isNotEmpty()) {
                 item {
                     ItemsRow(
-                        title = stringResource(R.string.stashapp_studios),
+                        title = titleCount(R.string.stashapp_studios, studios),
                         items = studios,
                         uiConfig = uiConfig,
                         itemOnClick = itemOnClick,

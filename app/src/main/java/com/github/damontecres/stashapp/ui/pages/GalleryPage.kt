@@ -18,6 +18,7 @@ import androidx.compose.ui.text.AnnotatedString
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
@@ -61,13 +62,16 @@ fun GalleryPage(
 ) {
     val context = LocalContext.current
     var gallery by remember { mutableStateOf<GalleryData?>(null) }
+    var tags by remember { mutableStateOf<List<TagData>>(listOf()) }
     // Remember separately so we don't have refresh the whole page
     var rating100 by remember { mutableIntStateOf(0) }
     LaunchedEffect(id) {
         try {
-            gallery = QueryEngine(server).getGallery(id)
+            val queryEngine = QueryEngine(server)
+            gallery = queryEngine.getGallery(id)
             gallery?.let {
                 rating100 = it.rating100 ?: 0
+                tags = queryEngine.getTags(it.tags.map { it.slimTagData.id })
             }
         } catch (ex: QueryEngine.QueryException) {
             Log.e(TAG, "No gallery found with ID $id", ex)
@@ -101,6 +105,7 @@ fun GalleryPage(
                         modifier = Modifier.fillMaxSize(),
                         uiConfig = uiConfig,
                         gallery = gallery,
+                        tags = tags,
                         rating100 = rating100,
                         rating100Click = { newRating100 ->
                             val mutationEngine = MutationEngine(server)
@@ -120,6 +125,8 @@ fun GalleryPage(
                                 }
                             }
                         },
+                        itemOnClick = itemOnClick,
+                        longClicker = longClicker,
                     )
                 },
                 createTab(
@@ -141,12 +148,6 @@ fun GalleryPage(
                         override = DataSupplierOverride.GalleryPerformer(gallery.id),
                     ),
                 ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.TAG,
-                        override = DataSupplierOverride.GalleryTag(gallery.id),
-                    ),
-                ),
             ).filter { it.name in uiTabs }
         val title = AnnotatedString(gallery.name ?: "")
         TabPage(title, tabs, modifier)
@@ -156,9 +157,12 @@ fun GalleryPage(
 @Composable
 fun GalleryDetails(
     gallery: GalleryData,
+    tags: List<TagData>,
     uiConfig: ComposeUiConfig,
     rating100: Int,
     rating100Click: (rating100: Int) -> Unit,
+    itemOnClick: ItemOnClicker<Any>,
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
@@ -205,6 +209,9 @@ fun GalleryDetails(
         favoriteClick = null,
         rating100 = rating100,
         rating100Click = rating100Click,
+        tags = tags,
         basicItemInfo = BasicItemInfo(gallery.id, gallery.created_at, gallery.updated_at),
+        itemOnClick = itemOnClick,
+        longClicker = longClicker,
     )
 }

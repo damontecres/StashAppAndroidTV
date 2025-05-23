@@ -33,6 +33,7 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.GroupRelationshipType
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
@@ -46,6 +47,7 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.ItemDetailsFooter
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.StashGridTab
@@ -55,6 +57,7 @@ import com.github.damontecres.stashapp.ui.components.TableRow
 import com.github.damontecres.stashapp.ui.components.TableRowComposable
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.ui.filterArgsSaver
+import com.github.damontecres.stashapp.ui.titleCount
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -81,12 +84,15 @@ fun GroupPage(
     var group by remember { mutableStateOf<GroupData?>(null) }
     // Remember separately so we don't have refresh the whole page
     var rating100 by remember { mutableIntStateOf(0) }
+    var tags by remember { mutableStateOf<List<TagData>>(listOf()) }
     val context = LocalContext.current
     LaunchedEffect(id) {
         try {
-            group = QueryEngine(server).getGroup(id)
+            val queryEngine = QueryEngine(server)
+            group = queryEngine.getGroup(id)
             group?.let {
                 rating100 = it.rating100 ?: 0
+                tags = queryEngine.getTags(it.tags.map { it.slimTagData.id })
             }
         } catch (ex: QueryEngine.QueryException) {
             Log.e(TAG, "No group found with ID $id", ex)
@@ -114,6 +120,7 @@ fun GroupPage(
                     modifier = Modifier.fillMaxSize(),
                     uiConfig = uiConfig,
                     group = group,
+                    tags = tags,
                     rating100 = rating100,
                     rating100Click = { newRating100 ->
                         val mutationEngine = MutationEngine(server)
@@ -133,6 +140,8 @@ fun GroupPage(
                             }
                         }
                     },
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
                 )
             }
 
@@ -203,30 +212,6 @@ fun GroupPage(
                 }
             }
 
-        val tagTab =
-            TabProvider(stringResource(DataType.TAG.pluralStringId)) { positionCallback ->
-                var filter by rememberSaveable(saver = filterArgsSaver) {
-                    mutableStateOf(
-                        FilterArgs(
-                            dataType = DataType.TAG,
-                            override = DataSupplierOverride.GroupTags(group.id),
-                        ),
-                    )
-                }
-                StashGridTab(
-                    name = stringResource(DataType.TAG.pluralStringId),
-                    server = server,
-                    initialFilter = filter,
-                    itemOnClick = itemOnClick,
-                    longClicker = longClicker,
-                    modifier = Modifier,
-                    positionCallback = positionCallback,
-                    composeUiConfig = uiConfig,
-                    subToggleLabel = null,
-                    onFilterChange = { filter = it },
-                )
-            }
-
         // containing groups
         val containingGroupsTab =
             TabProvider(stringResource(R.string.stashapp_containing_groups)) { positionCallback ->
@@ -292,7 +277,7 @@ fun GroupPage(
 
         val uiTabs = getUiTabs(context, DataType.GROUP)
         val tabs =
-            listOf(detailsTab, scenesTab, markersTab, tagTab, containingGroupsTab, subGroupsTab)
+            listOf(detailsTab, scenesTab, markersTab, containingGroupsTab, subGroupsTab)
                 .filter { it.name in uiTabs }
         val title = AnnotatedString(group.name)
         TabPage(title, tabs, modifier)
@@ -302,9 +287,12 @@ fun GroupPage(
 @Composable
 fun GroupDetails(
     group: GroupData,
+    tags: List<TagData>,
     uiConfig: ComposeUiConfig,
     rating100: Int,
     rating100Click: (rating100: Int) -> Unit,
+    itemOnClick: ItemOnClicker<Any>,
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
@@ -392,6 +380,18 @@ fun GroupDetails(
 
         items(rows) { row ->
             TableRowComposable(row)
+        }
+        if (tags.isNotEmpty()) {
+            item {
+                ItemsRow(
+                    title = titleCount(R.string.stashapp_tags, tags),
+                    items = tags,
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+            }
         }
         item {
             ItemDetailsFooter(

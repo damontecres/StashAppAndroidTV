@@ -81,26 +81,7 @@ class SceneDetailsViewModel(
                         galleries.value = queryEngine.getGalleries(scene.galleries.map { it.id })
                     }
                     if (!suggestions.isInitialized || suggestions.value?.isEmpty() == true) {
-                        val filterArgs = createSceneSuggestionFilter(scene)
-                        if (filterArgs != null) {
-                            val pageSize =
-                                PreferenceManager
-                                    .getDefaultSharedPreferences(StashApplication.getApplication())
-                                    .getInt(
-                                        StashApplication
-                                            .getApplication()
-                                            .getString(R.string.pref_key_max_search_results),
-                                        25,
-                                    )
-                            val supplier =
-                                DataSupplierFactory(server.version)
-                                    .create<Query.Data, SlimSceneData, Query.Data>(filterArgs)
-                            suggestions.value =
-                                StashPagingSource<Query.Data, SlimSceneData, SlimSceneData, Query.Data>(
-                                    queryEngine,
-                                    supplier,
-                                ).fetchPage(1, pageSize)
-                        }
+                        refreshSuggestions()
                     }
                 } else {
                     loadingState.value = SceneLoadingState.Error
@@ -110,6 +91,34 @@ class SceneDetailsViewModel(
             }
         }
         return this
+    }
+
+    private fun refreshSuggestions() {
+        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+            scene?.let {
+                suggestions.value = listOf()
+                val filterArgs = createSceneSuggestionFilter(it)
+                if (filterArgs != null) {
+                    val pageSize =
+                        PreferenceManager
+                            .getDefaultSharedPreferences(StashApplication.getApplication())
+                            .getInt(
+                                StashApplication
+                                    .getApplication()
+                                    .getString(R.string.pref_key_max_search_results),
+                                25,
+                            )
+                    val supplier =
+                        DataSupplierFactory(server.version)
+                            .create<Query.Data, SlimSceneData, Query.Data>(filterArgs)
+                    suggestions.value =
+                        StashPagingSource<Query.Data, SlimSceneData, SlimSceneData, Query.Data>(
+                            queryEngine,
+                            supplier,
+                        ).fetchPage(1, pageSize)
+                }
+            }
+        }
     }
 
     fun addPerformer(performerId: String) = mutatePerformers(performerId, AddRemove.ADD)
@@ -138,6 +147,7 @@ class SceneDetailsViewModel(
                 if (op == AddRemove.ADD) {
                     results.firstOrNull { it.id == id }?.let { showAddPerf(it) }
                 }
+                refreshSuggestions()
             }
         }
     }
@@ -168,6 +178,7 @@ class SceneDetailsViewModel(
                 if (op == AddRemove.ADD) {
                     results.firstOrNull { it.id == id }?.let { showAddTag(it) }
                 }
+                refreshSuggestions()
             }
         }
     }
@@ -198,6 +209,7 @@ class SceneDetailsViewModel(
                 if (op == AddRemove.ADD) {
                     results.firstOrNull { it.id == id }?.let { showAddGroup(it) }
                 }
+                refreshSuggestions()
             }
         }
     }
@@ -213,6 +225,7 @@ class SceneDetailsViewModel(
             if (result != null) {
                 showSetStudio(result)
             }
+            refreshSuggestions()
         }
     }
 
