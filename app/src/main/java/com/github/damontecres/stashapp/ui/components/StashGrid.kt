@@ -78,6 +78,7 @@ import com.github.damontecres.stashapp.util.getPreference
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.max
 
 private const val TAG = "StashGrid"
 private const val DEBUG = false
@@ -327,7 +328,8 @@ fun StashGrid(
     val firstFocus = remember { FocusRequester() }
     val zeroFocus = remember { FocusRequester() }
     var previouslyFocusedIndex by rememberSaveable { mutableIntStateOf(0) }
-    var focusedIndex by rememberSaveable { mutableIntStateOf(startPosition) }
+    var focusedIndex by rememberSaveable { mutableIntStateOf(initialPosition) }
+    var focusedIndexOnExit by rememberSaveable { mutableIntStateOf(-1) }
 
     // Tracks whether the very first requestFocus has run, if the caller isn't requesting focus,
     // then the first time will never run
@@ -351,6 +353,7 @@ fun StashGrid(
                         "focus on startPosition=$startPosition, from initialPosition=$initialPosition",
                     )
                 }
+                focusedIndex = startPosition
                 gridState.scrollToItem(startPosition, 0)
                 firstFocus.tryRequestFocus()
             }
@@ -487,7 +490,7 @@ fun StashGrid(
                     }
                 },
     ) {
-        if (showJumpButtons) {
+        if (showJumpButtons && pager.size > 0) {
             JumpButtons(
                 jump1 = jump1,
                 jump2 = jump2,
@@ -508,7 +511,22 @@ fun StashGrid(
                     Modifier
                         .fillMaxSize()
                         .focusGroup()
-                        .focusRequester(gridFocusRequester),
+                        .focusRequester(gridFocusRequester)
+                        .focusProperties {
+                            onExit = {
+                                // Leaving the grid, so "forget" the position
+                                focusedIndexOnExit = focusedIndex
+                                focusedIndex = -1
+                                savedFocusedIndex = -1
+                            }
+                            onEnter = {
+                                focusedIndexOnExit = -1
+                                if (focusedIndex < 0 && gridState.firstVisibleItemIndex <= startPosition) {
+                                    focusedIndex = startPosition
+                                    firstFocus.tryRequestFocus()
+                                }
+                            }
+                        },
             ) {
                 items(pager.size) { index ->
                     val mod =
@@ -603,10 +621,16 @@ fun StashGrid(
                             .align(Alignment.BottomCenter)
                             .background(AppColors.TransparentBlack50),
                 ) {
+                    val index =
+                        if (focusedIndex >= 0) {
+                            focusedIndex + 1
+                        } else {
+                            max(savedFocusedIndex, focusedIndexOnExit) + 1
+                        }
                     Text(
                         modifier = Modifier.padding(4.dp),
                         color = MaterialTheme.colorScheme.onBackground,
-                        text = (if (focusedIndex >= 0) "${focusedIndex + 1}" else "${savedFocusedIndex + 1}") + " / ${pager.size}",
+                        text = "$index / ${pager.size}",
                     )
                 }
             }
