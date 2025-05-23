@@ -146,7 +146,7 @@ fun SceneDetailsHeader(
                 // Title
                 Text(
                     text = scene.titleOrFilename ?: "",
-                    color = Color.LightGray,
+                    color = MaterialTheme.colorScheme.onBackground,
                     style =
                         MaterialTheme.typography.displayMedium.copy(
                             shadow =

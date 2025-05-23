@@ -50,7 +50,7 @@ fun MainPageSceneDetails(
             modifier = Modifier.enableMarquee(true),
             text = scene.titleOrFilename ?: "",
 //                        color = MaterialTheme.colorScheme.onBackground,
-            color = Color.LightGray,
+            color = MaterialTheme.colorScheme.onBackground,
             style =
                 MaterialTheme.typography.displayMedium.copy(
                     shadow =
@@ -122,12 +122,6 @@ fun MainPageSceneDetails(
                         modifier =
                             Modifier
                                 .background(bgColor, shape = RoundedCornerShape(8.dp)),
-                    )
-                }
-                if (scene.code.isNotNullOrBlank()) {
-                    TitleValueText(
-                        stringResource(R.string.stashapp_scene_code),
-                        scene.code,
                     )
                 }
                 if (scene.director.isNotNullOrBlank()) {

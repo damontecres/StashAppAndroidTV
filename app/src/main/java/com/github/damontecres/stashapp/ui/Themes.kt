@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.ui
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -300,3 +301,9 @@ data class AppColorScheme(
 ) {
     val tvColorScheme = colorScheme.tvColorScheme(border)
 }
+
+@Composable
+fun titleCount(
+    @StringRes stringId: Int,
+    items: List<Any>,
+) = stringResource(stringId) + " (${items.size})"

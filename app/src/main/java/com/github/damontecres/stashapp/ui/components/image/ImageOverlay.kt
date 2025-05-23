@@ -40,6 +40,7 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.pages.SearchForParams
+import com.github.damontecres.stashapp.ui.titleCount
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashServer
 
@@ -214,7 +215,7 @@ fun ImageOverlay(
         if (performers.isNotEmpty()) {
             item {
                 ItemsRow(
-                    title = stringResource(R.string.stashapp_performers),
+                    title = titleCount(R.string.stashapp_performers, performers),
                     items = performers,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
@@ -226,7 +227,7 @@ fun ImageOverlay(
         if (tags.isNotEmpty()) {
             item {
                 ItemsRow(
-                    title = stringResource(R.string.stashapp_tags),
+                    title = titleCount(R.string.stashapp_tags, tags),
                     items = tags,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
