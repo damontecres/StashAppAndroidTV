@@ -102,5 +102,16 @@ data class TableRow(
             } else {
                 null
             }
+
+        fun from(
+            key: String,
+            value: String?,
+            onClick: (() -> Unit)? = null,
+        ): TableRow? =
+            if (value.isNotNullOrBlank()) {
+                TableRow(key, value, onClick)
+            } else {
+                null
+            }
     }
 }

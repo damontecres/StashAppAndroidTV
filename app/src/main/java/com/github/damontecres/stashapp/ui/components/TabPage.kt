@@ -30,8 +30,6 @@ import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.api.type.StashDataFilter
-import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -44,7 +42,6 @@ import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.delay
-import kotlin.reflect.full.createInstance
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -164,63 +161,6 @@ fun createTabFunc(
         }
     }
 
-data class TabWithSubItems<T : StashDataFilter>(
-    val dataType: DataType,
-    val findFilter: StashFindFilter?,
-    val filterBuilder: (includeSubTags: Boolean, objectFilter: T) -> T,
-) {
-    fun toTabProvider(
-        server: StashServer,
-        composeUiConfig: ComposeUiConfig,
-        itemOnClick: ItemOnClicker<Any>,
-        longClicker: LongClicker<Any>,
-        subToggleLabel: String?,
-        includeSubTags: Boolean,
-    ): TabProvider {
-        val name =
-            StashApplication.getApplication().getString(dataType.pluralStringId)
-        return TabProvider(name) { positionCallback ->
-            var checked by rememberSaveable(this@TabWithSubItems) { mutableStateOf(includeSubTags) }
-            var filterArgs by rememberSaveable(
-                this@TabWithSubItems,
-                saver = filterArgsSaver,
-            ) {
-                mutableStateOf(
-                    FilterArgs(
-                        dataType = dataType,
-                        findFilter = findFilter,
-                        objectFilter =
-                            filterBuilder.invoke(
-                                checked,
-                                dataType.filterType.createInstance() as T,
-                            ),
-                    ).withResolvedRandom(),
-                )
-            }
-            StashGridTab(
-                name = name,
-                server = server,
-                initialFilter = filterArgs,
-                itemOnClick = itemOnClick,
-                longClicker = longClicker,
-                modifier = Modifier,
-                positionCallback = positionCallback,
-                subToggleLabel = subToggleLabel,
-                onSubToggleCheck = {
-                    checked = it
-                    filterArgs =
-                        filterArgs.copy(
-                            objectFilter = filterBuilder.invoke(it, filterArgs.objectFilter as T),
-                        )
-                },
-                subToggleChecked = checked,
-                composeUiConfig = composeUiConfig,
-                onFilterChange = { filterArgs = it },
-            )
-        }
-    }
-}
-
 @Composable
 fun StashGridTab(
     name: String,
@@ -246,6 +186,7 @@ fun StashGridTab(
         StashGridControls(
             server = server,
             pager = newPager,
+            initialPosition = -1,
             itemOnClick = itemOnClick,
             longClicker = longClicker,
             filterUiMode = FilterUiMode.CREATE_FILTER,
