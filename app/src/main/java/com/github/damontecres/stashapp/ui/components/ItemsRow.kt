@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.ui.components
 
 import android.os.Parcelable
 import android.util.Log
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,7 +21,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -37,7 +35,7 @@ import kotlinx.parcelize.Parcelize
 
 @Composable
 fun <T : StashData> ItemsRow(
-    @StringRes title: Int,
+    title: String,
     items: List<T>,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
@@ -47,7 +45,7 @@ fun <T : StashData> ItemsRow(
     focusPair: FocusPair? = null,
     additionalContent: (LazyListScope.() -> Unit)? = null,
 ) = ItemsRow(
-    title = stringResource(title),
+    title = title,
     items = items,
     uiConfig = uiConfig,
     itemOnClick = itemOnClick,

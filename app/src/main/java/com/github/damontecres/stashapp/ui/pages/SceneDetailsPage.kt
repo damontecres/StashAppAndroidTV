@@ -88,6 +88,7 @@ import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeader
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsViewModel
 import com.github.damontecres.stashapp.ui.components.scene.SceneLoadingState
+import com.github.damontecres.stashapp.ui.titleCount
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashServer
@@ -505,7 +506,7 @@ fun SceneDetails(
         if (markers.isNotEmpty()) {
             item {
                 ItemsRow(
-                    title = R.string.stashapp_markers,
+                    title = titleCount(R.string.stashapp_markers, markers),
                     items = markers,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
@@ -521,7 +522,7 @@ fun SceneDetails(
         if (groups.isNotEmpty()) {
             item {
                 ItemsRow(
-                    title = R.string.stashapp_groups,
+                    title = titleCount(R.string.stashapp_groups, groups),
                     items = groups,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
@@ -537,7 +538,7 @@ fun SceneDetails(
         if (performers.isNotEmpty()) {
             item {
                 ItemsRow(
-                    title = stringResource(R.string.stashapp_performers),
+                    title = titleCount(R.string.stashapp_performers, performers),
                     items = performers,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
@@ -569,7 +570,7 @@ fun SceneDetails(
         if (tags.isNotEmpty()) {
             item {
                 ItemsRow(
-                    title = R.string.stashapp_tags,
+                    title = titleCount(R.string.stashapp_tags, tags),
                     items = tags,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
@@ -585,7 +586,7 @@ fun SceneDetails(
         if (galleries.isNotEmpty()) {
             item {
                 ItemsRow(
-                    title = R.string.stashapp_galleries,
+                    title = titleCount(R.string.stashapp_galleries, galleries),
                     items = galleries,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
@@ -601,7 +602,7 @@ fun SceneDetails(
         if (suggestions.isNotEmpty()) {
             item {
                 ItemsRow(
-                    title = R.string.suggestions,
+                    title = titleCount(R.string.suggestions, suggestions),
                     items = suggestions,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,

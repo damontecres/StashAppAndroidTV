@@ -19,6 +19,7 @@ import androidx.compose.ui.text.AnnotatedString
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.GroupFilterType
@@ -31,7 +32,6 @@ import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
@@ -71,12 +71,15 @@ fun StudioPage(
     // Remember separately so we don't have refresh the whole page
     var favorite by remember { mutableStateOf(false) }
     var rating100 by remember { mutableIntStateOf(0) }
+    var tags by remember { mutableStateOf<List<TagData>>(listOf()) }
     LaunchedEffect(id) {
         try {
-            studio = QueryEngine(server).getStudio(id)
+            val queryEngine = QueryEngine(server)
+            studio = queryEngine.getStudio(id)
             studio?.let {
                 favorite = it.favorite
                 rating100 = it.rating100 ?: 0
+                tags = queryEngine.getTags(it.tags.map { it.slimTagData.id })
             }
         } catch (ex: QueryEngine.QueryException) {
             Log.e(TAG, "No studio found with ID $id", ex)
@@ -105,6 +108,7 @@ fun StudioPage(
                     modifier = Modifier.fillMaxSize(),
                     uiConfig = uiConfig,
                     studio = studio,
+                    tags = tags,
                     favorite = favorite,
                     favoriteClick = {
                         val mutationEngine = MutationEngine(server)
@@ -146,6 +150,8 @@ fun StudioPage(
                             }
                         }
                     },
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
                 )
             }
 
@@ -339,30 +345,6 @@ fun StudioPage(
                 }
             }
 
-        val tagTab =
-            TabProvider(stringResource(DataType.TAG.pluralStringId)) { positionCallback ->
-                var filter by rememberSaveable(saver = filterArgsSaver) {
-                    mutableStateOf(
-                        FilterArgs(
-                            dataType = DataType.TAG,
-                            override = DataSupplierOverride.StudioTags(studio.id),
-                        ),
-                    )
-                }
-                StashGridTab(
-                    name = stringResource(DataType.TAG.pluralStringId),
-                    server = server,
-                    initialFilter = filter,
-                    itemOnClick = itemOnClick,
-                    longClicker = longClicker,
-                    modifier = Modifier,
-                    positionCallback = positionCallback,
-                    composeUiConfig = uiConfig,
-                    subToggleLabel = null,
-                    onFilterChange = { filter = it },
-                )
-            }
-
         var subStudioFilter by rememberSaveable(saver = filterArgsSaver) {
             mutableStateOf(
                 FilterArgs(
@@ -407,7 +389,6 @@ fun StudioPage(
                 performersTab,
                 groupsTab,
                 markersTab,
-                tagTab,
                 subStudiosTab,
             ).filter { it.name in uiTabs }
         val title = AnnotatedString(studio.name)
@@ -422,7 +403,10 @@ fun StudioDetails(
     favorite: Boolean,
     favoriteClick: () -> Unit,
     rating100: Int,
+    tags: List<TagData>,
     rating100Click: (rating100: Int) -> Unit,
+    itemOnClick: ItemOnClicker<Any>,
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
@@ -458,5 +442,8 @@ fun StudioDetails(
         rating100 = rating100,
         rating100Click = rating100Click,
         basicItemInfo = BasicItemInfo(studio.id, studio.created_at, studio.updated_at),
+        itemOnClick = itemOnClick,
+        longClicker = longClicker,
+        tags = tags,
     )
 }

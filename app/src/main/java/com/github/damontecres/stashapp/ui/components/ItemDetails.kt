@@ -25,8 +25,10 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
+import com.github.damontecres.stashapp.ui.titleCount
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
 @Composable
@@ -34,12 +36,15 @@ fun ItemDetails(
     uiConfig: ComposeUiConfig,
     imageUrl: String?,
     tableRows: List<TableRow>,
+    itemOnClick: ItemOnClicker<Any>,
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
     favorite: Boolean? = null,
     favoriteClick: (() -> Unit)? = null,
     rating100: Int? = null,
     rating100Click: ((rating100: Int) -> Unit)? = null,
     basicItemInfo: BasicItemInfo? = null,
+    tags: List<TagData>? = null,
 ) {
     Row(
         modifier =
@@ -92,6 +97,18 @@ fun ItemDetails(
             }
             items(tableRows) { row ->
                 TableRowComposable(row)
+            }
+            if (!tags.isNullOrEmpty()) {
+                item {
+                    ItemsRow(
+                        title = titleCount(R.string.stashapp_tags, tags),
+                        items = tags,
+                        uiConfig = uiConfig,
+                        itemOnClick = itemOnClick,
+                        longClicker = longClicker,
+                        modifier = Modifier.padding(top = 12.dp),
+                    )
+                }
             }
             basicItemInfo?.let {
                 item {

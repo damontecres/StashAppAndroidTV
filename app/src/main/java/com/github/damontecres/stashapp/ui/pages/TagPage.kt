@@ -122,6 +122,8 @@ fun TagPage(
                                 }
                             }
                         },
+                        itemOnClick = itemOnClick,
+                        longClicker = longClicker,
                     )
                 }
             }
@@ -331,6 +333,8 @@ fun TagDetails(
     tag: TagData,
     favorite: Boolean,
     favoriteClick: () -> Unit,
+    itemOnClick: ItemOnClicker<Any>,
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -362,5 +366,7 @@ fun TagDetails(
         favorite = favorite,
         favoriteClick = favoriteClick,
         basicItemInfo = BasicItemInfo(tag.id, tag.created_at, tag.updated_at),
+        itemOnClick = itemOnClick,
+        longClicker = longClicker,
     )
 }
