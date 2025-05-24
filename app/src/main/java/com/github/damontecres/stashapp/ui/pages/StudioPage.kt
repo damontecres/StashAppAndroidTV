@@ -392,7 +392,7 @@ fun StudioPage(
                 subStudiosTab,
             ).filter { it.name in uiTabs }
         val title = AnnotatedString(studio.name)
-        TabPage(title, tabs, modifier)
+        TabPage(title, tabs, DataType.STUDIO, modifier)
     }
 }
 

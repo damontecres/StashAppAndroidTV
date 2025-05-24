@@ -371,7 +371,7 @@ fun PerformerDetailsPage(
                 }
             }
         }
-    TabPage(title, tabs, modifier)
+    TabPage(title, tabs, DataType.PERFORMER, modifier)
 }
 
 fun stringCriterion(

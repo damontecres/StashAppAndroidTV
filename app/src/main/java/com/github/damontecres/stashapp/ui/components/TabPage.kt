@@ -21,15 +21,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -48,18 +53,30 @@ import kotlin.time.Duration.Companion.milliseconds
 fun TabPage(
     name: AnnotatedString,
     tabs: List<TabProvider>,
+    dataType: DataType,
     modifier: Modifier = Modifier,
 ) {
-    var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
+    val context = LocalContext.current
+    val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+    val rememberTab =
+        preferences.getBoolean(context.getString(R.string.pref_key_ui_remember_tab), false)
+    val rememberTabKey = context.getString(R.string.pref_key_ui_remember_tab) + ".${dataType.name}"
+    val rememberedTabIndex = if (rememberTab) preferences.getInt(rememberTabKey, 0) else 0
+
+    var selectedTabIndex by rememberSaveable { mutableIntStateOf(rememberedTabIndex) }
     val tabRowFocusRequester = remember { FocusRequester() }
     var showTabRowRaw by rememberSaveable { mutableStateOf(true) }
     val showTabRow by remember { derivedStateOf { showTabRowRaw } }
+    val focusRequesters = remember { List(tabs.size) { FocusRequester() } }
 
     var resolvedTabIndex by remember { mutableIntStateOf(selectedTabIndex) }
     LaunchedEffect(selectedTabIndex) {
         // Add a slight delay so if scrolling quickly through tabs, can skip rending the skipped tabs
         delay(200.milliseconds)
         resolvedTabIndex = selectedTabIndex
+        if (rememberTab) {
+            preferences.edit { putInt(rememberTabKey, resolvedTabIndex) }
+        }
     }
 
     OneTimeLaunchedEffect {
@@ -84,7 +101,7 @@ fun TabPage(
                 selectedTabIndex = selectedTabIndex,
                 modifier =
                     Modifier
-                        .focusRestorer()
+                        .focusRestorer(focusRequesters[selectedTabIndex])
                         .focusRequester(tabRowFocusRequester),
             ) {
                 tabs.forEachIndexed { index, tab ->
@@ -94,7 +111,8 @@ fun TabPage(
                             onFocus = { selectedTabIndex = index },
                             modifier =
                                 Modifier
-                                    .align(Alignment.CenterHorizontally),
+                                    .align(Alignment.CenterHorizontally)
+                                    .focusRequester(focusRequesters[index]),
                         ) {
                             ProvideTextStyle(MaterialTheme.typography.titleMedium) {
                                 Text(
