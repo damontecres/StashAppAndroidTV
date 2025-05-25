@@ -323,7 +323,7 @@ fun TagPage(
                 studiosTab,
             ).filter { it.name in uiTabs }
         val title = AnnotatedString(tag.name)
-        TabPage(title, tabs, modifier)
+        TabPage(title, tabs, DataType.TAG, modifier)
     }
 }
 

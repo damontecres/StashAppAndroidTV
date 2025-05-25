@@ -280,7 +280,7 @@ fun GroupPage(
             listOf(detailsTab, scenesTab, markersTab, containingGroupsTab, subGroupsTab)
                 .filter { it.name in uiTabs }
         val title = AnnotatedString(group.name)
-        TabPage(title, tabs, modifier)
+        TabPage(title, tabs, DataType.GROUP, modifier)
     }
 }
 

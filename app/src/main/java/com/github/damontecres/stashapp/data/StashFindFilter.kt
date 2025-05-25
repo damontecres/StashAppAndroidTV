@@ -51,6 +51,13 @@ data class StashFindFilter(
             (sortAndDirection ?: dataType.defaultSort).copy(direction = direction)
         return this.copy(sortAndDirection = newSortAndDirection)
     }
+
+    fun withResolvedRandom(): StashFindFilter =
+        if (sortAndDirection != null && sortAndDirection.isRandom) {
+            copy(sortAndDirection = sortAndDirection.withResolvedRandom())
+        } else {
+            this
+        }
 }
 
 fun FindFilterType.toStashFindFilter(): StashFindFilter =

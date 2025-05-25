@@ -29,8 +29,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -59,7 +61,12 @@ fun SeekBarImpl(
     val animatedIndicatorHeight by animateDpAsState(
         targetValue = 6.dp.times((if (isFocused) 2f else 1f)),
     )
+    var hasSeeked by remember { mutableStateOf(false) }
     var seekProgress by remember { mutableFloatStateOf(progress) }
+    val progressToUse = if (isFocused && hasSeeked) seekProgress else progress
+    LaunchedEffect(isFocused) {
+        if (!isFocused) hasSeeked = false
+    }
 
     val offset = 1f / intervals
 
@@ -71,12 +78,14 @@ fun SeekBarImpl(
             },
             onLeft = {
                 controllerViewState.pulseControls()
-                seekProgress = (seekProgress - offset).coerceAtLeast(0f)
+                seekProgress = (progressToUse - offset).coerceAtLeast(0f)
+                hasSeeked = true
                 onSeek(seekProgress)
             },
             onRight = {
                 controllerViewState.pulseControls()
-                seekProgress = (seekProgress + offset).coerceAtMost(1f)
+                seekProgress = (progressToUse + offset).coerceAtMost(1f)
+                hasSeeked = true
                 onSeek(seekProgress)
             },
         )
@@ -119,7 +128,7 @@ fun SeekBarImpl(
                     end =
                         Offset(
 //                        x = size.width.times(if (isSelected) seekProgress else progress),
-                            x = size.width.times(seekProgress),
+                            x = size.width.times(progressToUse),
                             y = yOffset,
                         ),
                     strokeWidth = size.height,
@@ -128,7 +137,7 @@ fun SeekBarImpl(
                 drawCircle(
                     color = Color.White,
                     radius = size.height + 2,
-                    center = Offset(x = size.width.times(seekProgress), y = yOffset),
+                    center = Offset(x = size.width.times(progressToUse), y = yOffset),
                 )
             },
         )

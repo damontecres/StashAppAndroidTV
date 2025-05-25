@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -285,6 +286,9 @@ fun PlaybackOverlay(
             }
         }
         AnimatedVisibility(seekBarFocused && seekProgress >= 0) {
+            LaunchedEffect(Unit) {
+                seekProgress = playerControls.currentPosition.toFloat() / playerControls.duration
+            }
             val yOffsetDp =
                 180.dp +
                     (if (spriteImageLoaded) (160.dp) else 24.dp) +

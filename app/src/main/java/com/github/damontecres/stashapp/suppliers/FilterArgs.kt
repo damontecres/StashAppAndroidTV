@@ -6,7 +6,6 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.FilterParser
-import com.github.damontecres.stashapp.util.getRandomSort
 import com.github.damontecres.stashapp.util.toReadableString
 import kotlinx.serialization.Serializable
 
@@ -46,7 +45,7 @@ data class FilterArgs(
      */
     fun withResolvedRandom(): FilterArgs =
         if (sortAndDirection.isRandom) {
-            with(sortAndDirection.copy(randomSeed = getRandomSort()))
+            with(sortAndDirection.withResolvedRandom())
         } else {
             this
         }

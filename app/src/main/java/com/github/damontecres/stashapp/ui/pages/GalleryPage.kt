@@ -150,7 +150,7 @@ fun GalleryPage(
                 ),
             ).filter { it.name in uiTabs }
         val title = AnnotatedString(gallery.name ?: "")
-        TabPage(title, tabs, modifier)
+        TabPage(title, tabs, DataType.GALLERY, modifier)
     }
 }
 

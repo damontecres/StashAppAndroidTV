@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.suppliers
 
+import android.util.Log
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.fragment.GroupRelationshipType
 import com.github.damontecres.stashapp.api.fragment.StashData
@@ -21,6 +22,9 @@ class DataSupplierFactory(
      */
     fun <T : Query.Data, D : StashData, C : Query.Data> create(args: FilterArgs): StashPagingSource.DataSupplier<T, D, C> {
         val filterParser = FilterParser(serverVersion)
+        if (!args.sortAndDirection.isRandomResolved) {
+            Log.w(TAG, "Filter has unresolved random sort: $args")
+        }
         if (args.override != null) {
             return when (args.override) {
                 is DataSupplierOverride.PerformerTags -> PerformerTagDataSupplier(args.override.performerId)
@@ -99,6 +103,10 @@ class DataSupplierFactory(
                     )
             } as StashPagingSource.DataSupplier<T, D, C>
         }
+    }
+
+    companion object {
+        private const val TAG = "DataSupplierFactory"
     }
 }
 
