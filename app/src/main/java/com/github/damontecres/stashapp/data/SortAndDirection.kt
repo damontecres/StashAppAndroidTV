@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.data
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.util.getRandomSort
 import kotlinx.serialization.Serializable
 
 /**
@@ -25,6 +26,10 @@ data class SortAndDirection(
      * Is this sorting by random?
      */
     val isRandom get() = sort == SortOption.Random
+
+    val isRandomResolved get() = !isRandom || randomSeed >= 0
+
+    fun withResolvedRandom(): SortAndDirection = if (isRandom) copy(randomSeed = getRandomSort()) else this
 
     val sortKey get() = if (isRandom && randomSeed >= 0) "random_$randomSeed" else sort.key
 

@@ -232,4 +232,8 @@ fun StashGridTab(
 fun tabFindFilter(
     server: StashServer,
     pageFilterKey: PageFilterKey,
-): StashFindFilter? = server.serverPreferences.getDefaultPageFilter(pageFilterKey).findFilter
+): StashFindFilter? =
+    server.serverPreferences
+        .getDefaultPageFilter(pageFilterKey)
+        .findFilter
+        ?.withResolvedRandom()
