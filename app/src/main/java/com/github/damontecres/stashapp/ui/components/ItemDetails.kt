@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,6 +46,7 @@ fun ItemDetails(
     rating100Click: ((rating100: Int) -> Unit)? = null,
     basicItemInfo: BasicItemInfo? = null,
     tags: List<TagData>? = null,
+    bodyContent: (LazyListScope.() -> Unit)? = null,
 ) {
     Row(
         modifier =
@@ -98,6 +100,9 @@ fun ItemDetails(
             items(tableRows) { row ->
                 TableRowComposable(row)
             }
+
+            bodyContent?.invoke(this)
+
             if (!tags.isNullOrEmpty()) {
                 item {
                     ItemsRow(

@@ -390,7 +390,7 @@ fun RightPlaybackButtons(
         Log.v(TAG, "subtitleIndex=$subtitleIndex, options=$options")
         BottomDialog(
             choices = options,
-            currentChoice = if (subtitleIndex != null) options[subtitleIndex] else null,
+            currentChoice = subtitleIndex,
             onDismissRequest = {
                 onControllerInteraction.invoke()
                 showCaptionDialog = false
@@ -423,7 +423,7 @@ fun RightPlaybackButtons(
     if (showAudioDialog) {
         BottomDialog(
             choices = audioOptions,
-            currentChoice = if (audioIndex != null && audioIndex in audioOptions.indices) audioOptions[audioIndex] else null,
+            currentChoice = audioIndex,
             onDismissRequest = {
                 onControllerInteraction.invoke()
                 showAudioDialog = false
@@ -437,7 +437,7 @@ fun RightPlaybackButtons(
     if (showSpeedDialog) {
         BottomDialog(
             choices = speedOptions,
-            currentChoice = playbackSpeed.toString(),
+            currentChoice = speedOptions.indexOf(playbackSpeed.toString()),
             onDismissRequest = {
                 onControllerInteraction.invoke()
                 showSpeedDialog = false
@@ -451,7 +451,7 @@ fun RightPlaybackButtons(
     if (showScaleDialog) {
         BottomDialog(
             choices = playbackScaleOptions.values.toList(),
-            currentChoice = playbackScaleOptions[scale],
+            currentChoice = playbackScaleOptions.keys.toList().indexOf(scale),
             onDismissRequest = {
                 onControllerInteraction.invoke()
                 showScaleDialog = false
@@ -565,7 +565,7 @@ private fun BottomDialog(
     onDismissRequest: () -> Unit,
     onSelectChoice: (Int, String) -> Unit,
     gravity: Int,
-    currentChoice: String? = null,
+    currentChoice: Int? = null,
 ) {
     // TODO enforcing a width ends up ignore the gravity
     Dialog(
@@ -604,13 +604,13 @@ private fun BottomDialog(
                             MaterialTheme.colorScheme.onSurface
                         }
                     ListItem(
-                        selected = choice == currentChoice,
+                        selected = index == currentChoice,
                         onClick = {
                             onDismissRequest()
                             onSelectChoice(index, choice)
                         },
                         leadingContent = {
-                            if (choice == currentChoice) {
+                            if (index == currentChoice) {
                                 Box(
                                     modifier =
                                         Modifier

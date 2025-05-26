@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.ui.pages
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.dp
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.TagData
@@ -26,12 +28,14 @@ import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
+import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridTab
 import com.github.damontecres.stashapp.ui.components.TabPage
@@ -63,12 +67,28 @@ fun TagPage(
     var tag by remember { mutableStateOf<TagData?>(null) }
     // Remember separately so we don't have refresh the whole page
     var favorite by remember { mutableStateOf(false) }
+    var parentTags by remember { mutableStateOf<List<TagData>>(listOf()) }
+    var childTags by remember { mutableStateOf<List<TagData>>(listOf()) }
+
+    val tagsFunc = { includeSubTags: Boolean ->
+        Optional.present(
+            HierarchicalMultiCriterionInput(
+                value = Optional.present(listOf(id)),
+                modifier = CriterionModifier.INCLUDES_ALL,
+                depth = Optional.present(if (includeSubTags) -1 else 0),
+            ),
+        )
+    }
+
     LaunchedEffect(id) {
         try {
-            tag = QueryEngine(server).getTag(id)
+            val queryEngine = QueryEngine(server)
+            tag = queryEngine.getTag(id)
             tag?.let {
                 favorite = it.favorite
             }
+            childTags = queryEngine.findTags(tagFilter = TagFilterType(parents = tagsFunc(false)))
+            parentTags = queryEngine.findTags(tagFilter = TagFilterType(children = tagsFunc(false)))
         } catch (ex: QueryEngine.QueryException) {
             Log.e(TAG, "No tag found with ID $id", ex)
             Toast.makeText(context, "No tag found with ID $id", Toast.LENGTH_LONG).show()
@@ -83,16 +103,6 @@ fun TagPage(
 
         val uiTabs = getUiTabs(context, DataType.TAG)
 
-        val tagsFunc = { includeSubTags: Boolean ->
-            Optional.present(
-                HierarchicalMultiCriterionInput(
-                    value = Optional.present(listOf(tag.id)),
-                    modifier = CriterionModifier.INCLUDES_ALL,
-                    depth = Optional.present(if (includeSubTags) -1 else 0),
-                ),
-            )
-        }
-
         val detailsTab =
             remember {
                 TabProvider(context.getString(R.string.stashapp_details)) {
@@ -100,6 +110,8 @@ fun TagPage(
                         modifier = Modifier.fillMaxSize(),
                         uiConfig = uiConfig,
                         tag = tag,
+                        parentTags = parentTags,
+                        childTags = childTags,
                         favorite = favorite,
                         favoriteClick = {
                             val mutationEngine = MutationEngine(server)
@@ -331,6 +343,8 @@ fun TagPage(
 fun TagDetails(
     uiConfig: ComposeUiConfig,
     tag: TagData,
+    parentTags: List<TagData>,
+    childTags: List<TagData>,
     favorite: Boolean,
     favoriteClick: () -> Unit,
     itemOnClick: ItemOnClicker<Any>,
@@ -368,5 +382,30 @@ fun TagDetails(
         basicItemInfo = BasicItemInfo(tag.id, tag.created_at, tag.updated_at),
         itemOnClick = itemOnClick,
         longClicker = longClicker,
-    )
+    ) {
+        if (parentTags.isNotEmpty()) {
+            item {
+                ItemsRow(
+                    title = stringResource(R.string.stashapp_parent_tags),
+                    items = parentTags,
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+            }
+        }
+        if (childTags.isNotEmpty()) {
+            item {
+                ItemsRow(
+                    title = stringResource(R.string.stashapp_sub_tags),
+                    items = childTags,
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+            }
+        }
+    }
 }
