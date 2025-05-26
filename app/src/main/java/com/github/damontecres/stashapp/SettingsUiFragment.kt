@@ -61,7 +61,7 @@ class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
             if (newValue == true) {
                 ConfirmationDialogFragment.show(
                     childFragmentManager,
-                    "The new UI is still in beta! Do you want to try it?\n\nNote: the app will restart.",
+                    "Do you want to switch to the new UI?\n\nNote: the app will restart.",
                 ) {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                         SettingsFragment.clearCaches(requireContext())

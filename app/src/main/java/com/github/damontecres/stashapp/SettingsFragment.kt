@@ -295,11 +295,9 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             tryComposePref.setOnPreferenceClickListener {
                 val message =
                     """
-                    Want to try the new beta UI based on Android Jetpack Compose?
+                    Want to switch the new UI based on Android Jetpack Compose?
 
-                    Almost every feature is available in the new UI, but you can always switch back in "More UI Settings".
-
-                    See the `StashAppAndroidTV` GitHub for more information and known issues.
+                    See the `StashAppAndroidTV` GitHub for more information.
 
                     Enabling the new UI will restart the app!
                     """.trimIndent()
