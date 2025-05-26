@@ -148,5 +148,6 @@ sealed interface DataSupplierOverride {
         val type: GroupRelationshipType,
     ) : DataSupplierOverride
 
+    @Serializable
     data object Playlist : DataSupplierOverride
 }

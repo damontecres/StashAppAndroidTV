@@ -71,6 +71,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -271,7 +272,8 @@ fun MarkerPageContent(
             ) {
                 TitleValueText(
                     stringResource(R.string.stashapp_resume_time),
-                    marker.seconds.seconds.toString(),
+                    marker.seconds.seconds.inWholeMilliseconds.milliseconds
+                        .toString(),
                 )
                 if (marker.end_seconds != null) {
                     TitleValueText(
