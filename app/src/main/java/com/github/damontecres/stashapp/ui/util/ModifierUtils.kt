@@ -44,6 +44,7 @@ import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 
@@ -226,7 +227,8 @@ fun Modifier.ifElse(
     ifFalseModifier: Modifier = Modifier,
 ): Modifier = then(if (condition) ifTrueModifier.invoke() else ifFalseModifier)
 
-fun getDestinationForItem(
+fun getPlayDestinationForItem(
+    server: StashServer,
     item: Any?,
     filterAndPosition: FilterAndPosition?,
 ): Destination? {
@@ -235,7 +237,11 @@ fun getDestinationForItem(
             is SlimSceneData ->
                 Destination.Playback(
                     item.id,
-                    item.resume_position ?: 0L,
+                    if (server.serverPreferences.alwaysStartFromBeginning) {
+                        0L
+                    } else {
+                        item.resume_position ?: 0L
+                    },
                     PlaybackMode.Choose,
                 )
 

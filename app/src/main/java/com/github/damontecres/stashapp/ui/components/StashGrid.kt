@@ -67,7 +67,7 @@ import com.github.damontecres.stashapp.ui.components.playback.isBackwardButton
 import com.github.damontecres.stashapp.ui.components.playback.isForwardButton
 import com.github.damontecres.stashapp.ui.isPlayKeyUp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
-import com.github.damontecres.stashapp.ui.util.getDestinationForItem
+import com.github.damontecres.stashapp.ui.util.getPlayDestinationForItem
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
@@ -437,7 +437,7 @@ fun StashGrid(
             gridState.scrollToItem(newPosition, 0)
         }
     }
-
+    val server = LocalGlobalContext.current.server
     Row(
 //        horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier =
@@ -469,7 +469,8 @@ fun StashGrid(
                         return@onKeyEvent true
                     } else if (isPlayKeyUp(it)) {
                         val destination =
-                            getDestinationForItem(
+                            getPlayDestinationForItem(
+                                server,
                                 pager[focusedIndex],
                                 FilterAndPosition(pager.filter, focusedIndex),
                             )
