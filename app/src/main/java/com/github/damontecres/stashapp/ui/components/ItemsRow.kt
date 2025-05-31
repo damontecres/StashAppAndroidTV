@@ -30,7 +30,7 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.isPlayKeyUp
-import com.github.damontecres.stashapp.ui.util.getDestinationForItem
+import com.github.damontecres.stashapp.ui.util.getPlayDestinationForItem
 import kotlinx.parcelize.Parcelize
 
 @Composable
@@ -121,6 +121,7 @@ fun <T : StashData> ItemsRow(
     val firstFocus = remember { FocusRequester() }
     var focusedIndex by remember { mutableIntStateOf(focusPair?.column ?: 0) }
     val state = rememberLazyListState()
+    val server = LocalGlobalContext.current.server
     Column(
         modifier = modifier,
     ) {
@@ -136,7 +137,8 @@ fun <T : StashData> ItemsRow(
                     .focusRestorer(focusPair?.focusRequester ?: firstFocus)
                     .onKeyEvent {
                         if (isPlayKeyUp(it)) {
-                            val destination = getDestinationForItem(items[focusedIndex], null)
+                            val destination =
+                                getPlayDestinationForItem(server, items[focusedIndex], null)
                             return@onKeyEvent if (destination != null) {
                                 navigationManager.navigate(destination)
                                 true

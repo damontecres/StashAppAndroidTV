@@ -76,7 +76,7 @@ import com.github.damontecres.stashapp.ui.components.main.MainPageHeader
 import com.github.damontecres.stashapp.ui.isPlayKeyUp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.CrossFadeFactory
-import com.github.damontecres.stashapp.ui.util.getDestinationForItem
+import com.github.damontecres.stashapp.ui.util.getPlayDestinationForItem
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
@@ -346,6 +346,7 @@ fun HomePageRow(
         var focusedIndex by rememberSaveable { mutableIntStateOf(0) }
         val rowModifier =
             if (rowFocusRequester != null) Modifier.focusRequester(rowFocusRequester) else Modifier
+        val server = LocalGlobalContext.current.server
         LazyRow(
             modifier =
                 rowModifier
@@ -359,7 +360,8 @@ fun HomePageRow(
                     .onKeyEvent {
                         if (isPlayKeyUp(it)) {
                             val destination =
-                                getDestinationForItem(
+                                getPlayDestinationForItem(
+                                    server,
                                     row.data[focusedIndex],
                                     FilterAndPosition(row.filter, focusedIndex),
                                 )

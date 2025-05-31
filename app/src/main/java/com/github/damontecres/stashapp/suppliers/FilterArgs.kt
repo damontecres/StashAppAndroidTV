@@ -71,7 +71,7 @@ fun SavedFilter.toFilterArgs(filterParser: FilterParser): FilterArgs {
             )
         } else {
             StashFindFilter(null, dataType.defaultSort)
-        }
+        }.withResolvedRandom()
     val objectFilter = filterParser.convertFilter(dataType, object_filter)
     return FilterArgs(dataType, name.ifBlank { null }, findFilter, objectFilter)
 }
