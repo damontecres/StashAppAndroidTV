@@ -82,6 +82,7 @@ import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
+import com.github.damontecres.stashapp.ui.components.filter.CreateFilterScreen
 import com.github.damontecres.stashapp.ui.pages.ChooseThemePage
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.FilterPage
@@ -441,6 +442,13 @@ fun FragmentContent(
                         navigationManager = navigationManager,
                         uiConfig = composeUiConfig,
                         onChooseTheme = onChangeTheme,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+
+                is Destination.CreateFilter ->
+                    CreateFilterScreen(
+                        dataType = destination.dataType,
+                        initialFilter = destination.startingFilter,
                         modifier = Modifier.fillMaxSize(),
                     )
 
