@@ -117,5 +117,6 @@
     <string name="play_all_markers">Play all markers</string>
     <string name="submit_without_saving">Submit without saving</string>
     <string name="save_and_submit">Save and submit</string>
+    <string name="modifier">Modifier</string>
 
 </resources>
