@@ -10,6 +10,7 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
@@ -64,7 +65,7 @@ class ImageDetailsViewModel : ViewModel() {
     var slideshowDelay by Delegates.notNull<Long>()
 
     val pager = MutableLiveData<ComposePager<ImageData>>()
-    private var position = 0
+    val position = MutableLiveData(0)
 
     private val _image = MutableLiveData<ImageData>()
     val image: LiveData<ImageData> = _image
@@ -72,6 +73,7 @@ class ImageDetailsViewModel : ViewModel() {
     val loadingState = MutableLiveData<ImageLoadingState>(ImageLoadingState.Loading)
     val tags = MutableLiveData<List<TagData>>(listOf())
     val performers = MutableLiveData<List<PerformerData>>(listOf())
+    val galleries = MutableLiveData<List<GalleryData>>(listOf())
 
     val rating100 = MutableLiveData(0)
     val oCount = MutableLiveData(0)
@@ -119,7 +121,7 @@ class ImageDetailsViewModel : ViewModel() {
 
     fun nextImage(): Boolean {
         val size = pager.value?.size
-        val newPosition = position + 1
+        val newPosition = position.value!! + 1
         return if (size != null && newPosition < size) {
             updatePosition(newPosition)
             true
@@ -129,7 +131,7 @@ class ImageDetailsViewModel : ViewModel() {
     }
 
     fun previousImage(): Boolean {
-        val newPosition = position - 1
+        val newPosition = position.value!! - 1
         return if (newPosition >= 0) {
             updatePosition(newPosition)
             true
@@ -145,12 +147,13 @@ class ImageDetailsViewModel : ViewModel() {
                     val image = pager.getBlocking(position)
                     Log.v(TAG, "Got image for $position: ${image != null}")
                     if (image != null) {
-                        this@ImageDetailsViewModel.position = position
+                        this@ImageDetailsViewModel.position.value = position
                         val queryEngine = QueryEngine(server!!)
                         rating100.value = image.rating100 ?: 0
                         oCount.value = image.o_counter ?: 0
                         tags.value = listOf()
                         performers.value = listOf()
+                        galleries.value = listOf()
                         // reset image filter
                         updateImageFilter(VideoFilter())
                         if (saveFilters) {
@@ -189,6 +192,10 @@ class ImageDetailsViewModel : ViewModel() {
                         if (image.performers.isNotEmpty()) {
                             performers.value =
                                 queryEngine.findPerformers(performerIds = image.performers.map { it.id })
+                        }
+                        if (image.galleries.isNotEmpty()) {
+                            galleries.value =
+                                queryEngine.findGalleries(galleryIds = image.galleries.map { it.id })
                         }
                     } else {
                         loadingState.value = ImageLoadingState.Error
