@@ -47,6 +47,7 @@ import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
@@ -145,6 +146,7 @@ fun CreateFilterColumns(
     val objectFilterChoiceFocusRequester = remember { FocusRequester() }
 
     var inputTextAction by remember { mutableStateOf<InputTextAction?>(null) }
+    var inputCriterionModifier by remember { mutableStateOf<InputCriterionModifier?>(null) }
     var selectedFilterOption by remember { mutableStateOf<FilterOption<StashDataFilter, Any>?>(null) }
 
     val focusRequester = remember { FocusRequester() }
@@ -155,7 +157,10 @@ fun CreateFilterColumns(
     LazyRow(
         modifier =
             modifier
-                .ifElse(inputTextAction != null, Modifier.blur(10.dp)),
+                .ifElse(
+                    inputTextAction != null || inputCriterionModifier != null,
+                    Modifier.blur(10.dp),
+                ),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -310,35 +315,100 @@ fun CreateFilterColumns(
             }
             selectedFilterOption?.let { filterOption ->
                 item {
-                    LaunchedEffect(Unit) {
-                        objectFilterChoiceFocusRequester.tryRequestFocus()
-                    }
+                    val initialValue =
+                        remember { filterOption.getter.invoke(objectFilter).getOrNull() }
+                    var value by remember { mutableStateOf(initialValue) }
                     BackHandler {
                         objectFilterFocusRequester.tryRequestFocus()
                         selectedFilterOption = null
                     }
-                    ObjectFilterChooser(
-                        objectFilter = objectFilter,
-                        filterOption = filterOption,
-                        onSave = {
-                            updateObjectFilter.invoke(it)
-                            selectedFilterOption = null
-                            objectFilterFocusRequester.tryRequestFocus()
-                        },
-                        modifier =
-                            Modifier
-                                .width(listWidth)
-                                .animateItem()
-                                .focusRequester(objectFilterChoiceFocusRequester)
-                                .focusProperties {
-                                    onExit = {
-                                        selectedFilterOption = null
+
+                    val saveObjectFilter = { newValue: Any? ->
+                        val newObjectFilter =
+                            filterOption.setter.invoke(
+                                objectFilter,
+                                Optional.presentIfNotNull(newValue),
+                            )
+                        updateObjectFilter(newObjectFilter)
+
+                        selectedFilterOption = null
+                    }
+
+                    if (filterOption.nameStringId == R.string.stashapp_rating) {
+                        // TODO
+                    } else if (filterOption.nameStringId == R.string.stashapp_duration) {
+                        // TODO
+                    } else {
+                        when (filterOption.type) {
+                            StringCriterionInput::class -> {
+                                LaunchedEffect(Unit) {
+                                    objectFilterChoiceFocusRequester.tryRequestFocus()
+                                    if (initialValue == null) {
+                                        value =
+                                            StringCriterionInput(
+                                                value = "",
+                                                modifier = CriterionModifier.EQUALS,
+                                            )
                                     }
-                                }.background(
-                                    color = MaterialTheme.colorScheme.secondaryContainer,
-                                    shape = RoundedCornerShape(16.dp),
-                                ),
-                    )
+                                }
+                                value?.let { input ->
+                                    input as StringCriterionInput
+                                    StringPicker2(
+                                        modifier =
+                                            Modifier
+                                                .width(listWidth)
+                                                .animateItem()
+                                                .focusRequester(objectFilterChoiceFocusRequester)
+                                                .focusProperties {
+                                                    onExit = {
+                                                        selectedFilterOption = null
+                                                    }
+                                                }.background(
+                                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                                    shape = RoundedCornerShape(16.dp),
+                                                ),
+                                        name = stringResource(filterOption.nameStringId),
+                                        value = input,
+                                        removeEnabled = initialValue != null,
+                                        onChangeCriterionModifier = {
+                                            inputCriterionModifier =
+                                                InputCriterionModifier(
+                                                    filterName = context.getString(filterOption.nameStringId),
+                                                    allowedModifiers =
+                                                        filterOption.allowedModifiers
+                                                            ?: listOf(
+                                                                CriterionModifier.EQUALS,
+                                                                CriterionModifier.NOT_EQUALS,
+                                                                CriterionModifier.INCLUDES,
+                                                                CriterionModifier.EXCLUDES,
+                                                                CriterionModifier.IS_NULL,
+                                                                CriterionModifier.NOT_NULL,
+                                                                CriterionModifier.MATCHES_REGEX,
+                                                                CriterionModifier.NOT_MATCHES_REGEX,
+                                                            ),
+                                                    onClick = {
+                                                        value = input.copy(modifier = it)
+                                                    },
+                                                )
+                                        },
+                                        onChangeValue = {
+                                            inputTextAction =
+                                                InputTextAction(
+                                                    title = context.getString(filterOption.nameStringId),
+                                                    value = input.value,
+                                                    keyboardType = KeyboardType.Text,
+                                                    onSubmit = {
+                                                        value = input.copy(value = it)
+                                                    },
+                                                )
+                                        },
+                                        onSave = { saveObjectFilter(value) },
+                                        onRemove = { saveObjectFilter(null) },
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -349,6 +419,14 @@ fun CreateFilterColumns(
             action = it,
         )
     }
+    inputCriterionModifier?.let {
+        CriterionModifierPickerDialog(
+            filterName = it.filterName,
+            allowedModifiers = it.allowedModifiers,
+            onClick = it.onClick,
+            onDismiss = { inputCriterionModifier = null },
+        )
+    }
 }
 
 data class InputTextAction(
@@ -356,6 +434,12 @@ data class InputTextAction(
     val value: String?,
     val keyboardType: KeyboardType,
     val onSubmit: (String) -> Unit,
+)
+
+data class InputCriterionModifier(
+    val filterName: String,
+    val allowedModifiers: List<CriterionModifier>,
+    val onClick: (CriterionModifier) -> Unit,
 )
 
 @Composable
@@ -619,18 +703,21 @@ fun ObjectFilterChooser(
         when (filterOption.type) {
             StringCriterionInput::class -> {
                 filterOption as FilterOption<StashDataFilter, StringCriterionInput>
-                StringPicker(
+                val value = filterOption.getter.invoke(objectFilter).getOrNull()
+
+                StringPicker2(
                     modifier = modifier,
-                    filterOption = filterOption,
-                    initial = filterOption.getter.invoke(objectFilter).getOrNull(),
-                    onSave = {
-                        onSave.invoke(
-                            filterOption.setter.invoke(
-                                objectFilter,
-                                Optional.presentIfNotNull(it),
-                            ),
-                        )
-                    },
+                    name = stringResource(filterOption.nameStringId),
+                    value =
+                        value ?: StringCriterionInput(
+                            value = "",
+                            modifier = CriterionModifier.EQUALS,
+                        ),
+                    removeEnabled = value != null,
+                    onChangeCriterionModifier = {},
+                    onChangeValue = {},
+                    onSave = {},
+                    onRemove = {},
                 )
             }
         }
@@ -638,12 +725,33 @@ fun ObjectFilterChooser(
 }
 
 @Composable
-fun <T : Any> ObjectFilterChooser(
-    value: T,
-    filterOption: FilterOption<StashDataFilter, T>,
+fun ObjectFilterChooser(
+    value: Any,
+    removeEnabled: Boolean,
+    filterOption: FilterOption<StashDataFilter, Any>,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (filterOption.nameStringId == R.string.stashapp_rating) {
+        // TODO
+    } else if (filterOption.nameStringId == R.string.stashapp_duration) {
+        // TODO
+    } else {
+        when (filterOption.type) {
+            StringCriterionInput::class -> {
+                StringPicker2(
+                    modifier = modifier,
+                    name = stringResource(filterOption.nameStringId),
+                    value = value as StringCriterionInput,
+                    removeEnabled = removeEnabled,
+                    onChangeCriterionModifier = {},
+                    onChangeValue = {},
+                    onSave = {},
+                    onRemove = {},
+                )
+            }
+        }
+    }
 }
 
 @Composable
