@@ -470,6 +470,9 @@ fun PlaybackPageContent(
                                         viewModel.changeScene(newTag)
                                         player.replaceMediaItem(currentPosition, newMediaItem)
                                         player.prepare()
+                                        if (startPosition != C.TIME_UNSET) {
+                                            player.seekTo(startPosition)
+                                        }
                                         player.play()
                                         false
                                     } else {
