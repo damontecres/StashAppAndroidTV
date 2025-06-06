@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.ui.components.TitleValueText
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.formatBytes
 
 @Composable
@@ -40,18 +41,24 @@ fun ImageDetailsFooter(
 //        val imageFile = image.visual_files.firstOrNull()?.onImageFile
         val videoFile = image.visual_files.firstOrNull()?.onVideoFile
         videoFile?.let {
-            TitleValueText(
-                stringResource(R.string.stashapp_video_codec),
-                it.video_codec,
-            )
-            TitleValueText(
-                stringResource(R.string.stashapp_audio_codec),
-                it.audio_codec,
-            )
-            TitleValueText(
-                stringResource(R.string.format),
-                it.format,
-            )
+            if (it.video_codec.isNotNullOrBlank()) {
+                TitleValueText(
+                    stringResource(R.string.stashapp_video_codec),
+                    it.video_codec,
+                )
+            }
+            if (it.audio_codec.isNotNullOrBlank()) {
+                TitleValueText(
+                    stringResource(R.string.stashapp_audio_codec),
+                    it.audio_codec,
+                )
+            }
+            if (it.format.isNotNullOrBlank()) {
+                TitleValueText(
+                    stringResource(R.string.format),
+                    it.format,
+                )
+            }
         }
         baseFile?.let {
             TitleValueText(
