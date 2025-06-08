@@ -113,9 +113,12 @@ fun ImagePage(
     val imageState by viewModel.image.observeAsState()
     val tags by viewModel.tags.observeAsState(listOf())
     val performers by viewModel.performers.observeAsState(listOf())
+    val galleries by viewModel.galleries.observeAsState(listOf())
     val rating100 by viewModel.rating100.observeAsState(0)
     val oCount by viewModel.oCount.observeAsState(0)
     val imageFilter by viewModel.imageFilter.observeAsState(VideoFilter())
+    val position by viewModel.position.observeAsState(0)
+    val pager by viewModel.pager.observeAsState()
 
     var zoomFactor by rememberSaveable { mutableFloatStateOf(1f) }
     var rotation by rememberSaveable { mutableIntStateOf(0) }
@@ -405,6 +408,9 @@ fun ImagePage(
                     image = image,
                     tags = tags,
                     performers = performers,
+                    galleries = galleries,
+                    position = position,
+                    count = pager?.size ?: -1,
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
                     onZoom = { zoomFactor = (zoomFactor + it).coerceIn(1f, 5f) },

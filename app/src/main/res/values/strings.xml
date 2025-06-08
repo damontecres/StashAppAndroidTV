@@ -118,5 +118,6 @@
     <string name="submit_without_saving">Submit without saving</string>
     <string name="save_and_submit">Save and submit</string>
     <string name="modifier">Modifier</string>
+    <string name="scenes_together">View scenes together</string>
 
 </resources>

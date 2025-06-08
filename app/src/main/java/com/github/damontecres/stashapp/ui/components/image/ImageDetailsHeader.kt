@@ -66,6 +66,8 @@ import kotlinx.coroutines.launch
 fun ImageDetailsHeader(
     player: Player,
     image: ImageData,
+    position: Int,
+    count: Int,
     rating100: Int,
     oCount: Int,
     uiConfig: ComposeUiConfig,
@@ -253,6 +255,18 @@ fun ImageDetailsHeader(
                                 ),
                             )
                         },
+                    )
+                }
+                if (position >= 0) {
+                    val str =
+                        if (count > 0) {
+                            "${position + 1} of $count"
+                        } else {
+                            "${position + 1}"
+                        }
+                    TitleValueText(
+                        stringResource(R.string.stashapp_image_count),
+                        str,
                     )
                 }
             }

@@ -24,6 +24,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.tv.material3.Icon
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
@@ -51,9 +52,12 @@ fun ImageOverlay(
     player: Player,
     slideshowControls: SlideshowControls,
     slideshowEnabled: Boolean,
+    position: Int,
+    count: Int,
     image: ImageData,
     tags: List<TagData>,
     performers: List<PerformerData>,
+    galleries: List<GalleryData>,
     rating100: Int,
     oCount: Int,
     uiConfig: ComposeUiConfig,
@@ -90,7 +94,7 @@ fun ImageOverlay(
                                     )
                                 },
                             )
-                            if (uiConfig.readOnlyModeDisabled) {
+                            if (uiConfig.readOnlyModeDisabled && item !is GalleryData) {
                                 add(
                                     DialogItem(
                                         onClick = { removeItem(item) },
@@ -140,6 +144,8 @@ fun ImageOverlay(
             ImageDetailsHeader(
                 player = player,
                 image = image,
+                position = position,
+                count = count,
                 rating100 = rating100,
                 oCount = oCount,
                 uiConfig = uiConfig,
@@ -229,6 +235,18 @@ fun ImageOverlay(
                 ItemsRow(
                     title = titleCount(R.string.stashapp_tags, tags),
                     items = tags,
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = removeLongClicker,
+                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
+                )
+            }
+        }
+        if (galleries.isNotEmpty()) {
+            item {
+                ItemsRow(
+                    title = titleCount(R.string.stashapp_galleries, galleries),
+                    items = galleries,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = removeLongClicker,

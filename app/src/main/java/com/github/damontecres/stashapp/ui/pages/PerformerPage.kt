@@ -12,10 +12,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
@@ -29,6 +36,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -55,10 +63,12 @@ import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.GroupFilterType
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
@@ -71,11 +81,14 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.GlobalContext
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.components.DialogItem
+import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemDetailsFooter
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
+import com.github.damontecres.stashapp.ui.components.StashGridTab
 import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
@@ -304,6 +317,8 @@ fun PerformerDetailsPage(
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
+    var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
+
     val performers =
         Optional.present(
             MultiCriterionInput(
@@ -328,6 +343,7 @@ fun PerformerDetailsPage(
                     rating100Click = onRatingChange,
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
+                    onShowDialog = { dialogParams = it },
                 )
             },
             createTab(
@@ -358,6 +374,70 @@ fun PerformerDetailsPage(
                     objectFilter = GroupFilterType(performers = performers),
                 ),
             ),
+            createTab(
+                FilterArgs(
+                    dataType = DataType.MARKER,
+                    findFilter = null,
+                    objectFilter = SceneMarkerFilterType(performers = performers),
+                ),
+            ),
+            TabProvider(stringResource(R.string.stashapp_appears_with)) {
+                val context = LocalContext.current
+                StashGridTab(
+                    name = stringResource(R.string.stashapp_appears_with),
+                    server = server,
+                    initialFilter =
+                        FilterArgs(
+                            dataType = DataType.PERFORMER,
+                            findFilter =
+                                tabFindFilter(
+                                    server,
+                                    PageFilterKey.PERFORMER_APPEARS_WITH,
+                                ),
+                            objectFilter = PerformerFilterType(performers = performers),
+                        ),
+                    itemOnClick = itemOnClick,
+                    longClicker = { item, _ ->
+                        item as PerformerData
+                        val dialogItems =
+                            listOf(
+                                DialogItem(context.getString(R.string.go_to), Icons.Default.Info) {
+                                    itemOnClick.onClick(item, null)
+                                },
+                                DialogItem(
+                                    context.getString(R.string.scenes_together),
+                                    Icons.Default.Person,
+                                ) {
+                                    val performerIds = listOf(perf.id, item.id)
+                                    val name = "${perf.name} & ${item.name}"
+                                    val filter =
+                                        FilterArgs(
+                                            dataType = DataType.SCENE,
+                                            name = name,
+                                            objectFilter =
+                                                SceneFilterType(
+                                                    performers =
+                                                        Optional.present(
+                                                            MultiCriterionInput(
+                                                                value =
+                                                                    Optional.present(
+                                                                        performerIds,
+                                                                    ),
+                                                                modifier = CriterionModifier.INCLUDES_ALL,
+                                                            ),
+                                                        ),
+                                                ),
+                                        )
+                                    itemOnClick.onClick(filter, null)
+                                },
+                            )
+                        dialogParams = DialogParams(true, item.name, dialogItems)
+                    },
+                    composeUiConfig = uiConfig,
+                    onFilterChange = {},
+                    modifier = Modifier,
+                )
+            },
         ).filter { it.name in uiTabs }
     val title =
         buildAnnotatedString {
@@ -372,6 +452,17 @@ fun PerformerDetailsPage(
             }
         }
     TabPage(title, tabs, DataType.PERFORMER, modifier)
+    dialogParams?.let {
+        DialogPopup(
+            showDialog = true,
+            title = it.title,
+            dialogItems = it.items,
+            onDismissRequest = { dialogParams = null },
+            dismissOnClick = true,
+            waitToLoad = true,
+            properties = DialogProperties(),
+        )
+    }
 }
 
 fun stringCriterion(
@@ -396,6 +487,7 @@ fun PerformerDetails(
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    onShowDialog: (DialogParams) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
@@ -595,7 +687,59 @@ fun PerformerDetails(
                         items = studios,
                         uiConfig = uiConfig,
                         itemOnClick = itemOnClick,
-                        longClicker = longClicker,
+                        longClicker = { item, _ ->
+                            item as StudioData
+                            val dialogItems =
+                                listOf(
+                                    DialogItem(
+                                        context.getString(R.string.go_to),
+                                        Icons.Default.Info,
+                                    ) {
+                                        itemOnClick.onClick(item, null)
+                                    },
+                                    DialogItem(
+                                        context.getString(R.string.stashapp_scenes),
+                                        Icons.Default.PlayArrow,
+                                    ) {
+                                        val title = "${item.name} & ${perf.name}"
+                                        val filter =
+                                            FilterArgs(
+                                                dataType = DataType.SCENE,
+                                                name = title,
+                                                findFilter = null,
+                                                objectFilter =
+                                                    SceneFilterType(
+                                                        performers =
+                                                            Optional.present(
+                                                                MultiCriterionInput(
+                                                                    value =
+                                                                        Optional.presentIfNotNull(
+                                                                            listOf(
+                                                                                perf.id,
+                                                                            ),
+                                                                        ),
+                                                                    modifier = CriterionModifier.INCLUDES,
+                                                                ),
+                                                            ),
+                                                        studios =
+                                                            Optional.present(
+                                                                HierarchicalMultiCriterionInput(
+                                                                    value =
+                                                                        Optional.present(
+                                                                            listOf(
+                                                                                item.id,
+                                                                            ),
+                                                                        ),
+                                                                    modifier = CriterionModifier.EQUALS,
+                                                                ),
+                                                            ),
+                                                    ),
+                                            )
+                                        itemOnClick.onClick(filter, null)
+                                    },
+                                )
+                            onShowDialog.invoke(DialogParams(true, item.name, dialogItems))
+                        },
                         modifier = Modifier.padding(top = topPadding),
                     )
                 }
@@ -670,6 +814,7 @@ private fun PerformerDetailsPreview() {
                 uiConfig = uiConfigPreview,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
+                onShowDialog = {},
                 modifier =
                     Modifier
                         .fillMaxSize()
