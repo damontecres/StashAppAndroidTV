@@ -24,11 +24,14 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
+import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
+import com.github.damontecres.stashapp.api.type.ResolutionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterViewModel
 import com.github.damontecres.stashapp.filter.FilterOption
+import com.github.damontecres.stashapp.filter.ResolutionCriterionModifiers
 import com.github.damontecres.stashapp.filter.filterSummary
 import com.github.damontecres.stashapp.filter.getFilterOptions
 import com.github.damontecres.stashapp.ui.tryRequestFocus
@@ -89,6 +92,7 @@ fun ObjectFilterPicker(
     saveObjectFilter: (Any?) -> Unit,
     onInputCriterionModifier: (InputCriterionModifier) -> Unit,
     onInputTextAction: (InputTextAction) -> Unit,
+    onSelectFromListAction: (SelectFromListAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -239,6 +243,49 @@ fun ObjectFilterPicker(
                             ) {
                                 input.copy(value2 = Optional.presentIfNotNull(it.toDoubleOrNull()))
                             },
+                        onSave = { saveObjectFilter(value) },
+                        onRemove = { saveObjectFilter(null) },
+                    )
+                }
+            }
+
+            ResolutionCriterionInput::class -> {
+                LaunchedEffect(Unit) {
+                    if (initialValue == null) {
+                        value =
+                            ResolutionCriterionInput(
+                                value = ResolutionEnum.FULL_HD,
+                                modifier = ResolutionCriterionModifiers[0],
+                            )
+                    }
+                }
+                value?.let { input ->
+                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+                    input as ResolutionCriterionInput
+                    SelectFromListPicker(
+                        modifier = modifier,
+                        name = stringResource(filterOption.nameStringId),
+                        values = listOf(input.value.name),
+                        criterionModifier = input.modifier,
+                        removeEnabled = initialValue != null,
+                        onChangeCriterionModifier =
+                            onChangeCriterionModifier { input.copy(modifier = it) },
+                        onChangeValue = {
+                            onSelectFromListAction.invoke(
+                                SelectFromListAction(
+                                    filterName = context.getString(filterOption.nameStringId),
+                                    options = ResolutionEnum.entries.map { it.name },
+                                    currentOptions = listOf(input.value.name),
+                                    multiSelect = false,
+                                    onSubmit = {
+                                        it.firstOrNull()?.let { idx ->
+                                            value =
+                                                input.copy(value = ResolutionEnum.entries[idx])
+                                        }
+                                    },
+                                ),
+                            )
+                        },
                         onSave = { saveObjectFilter(value) },
                         onRemove = { saveObjectFilter(null) },
                     )

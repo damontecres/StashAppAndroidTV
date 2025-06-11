@@ -148,6 +148,7 @@ fun CreateFilterColumns(
 
     var inputTextAction by remember { mutableStateOf<InputTextAction?>(null) }
     var inputCriterionModifier by remember { mutableStateOf<InputCriterionModifier?>(null) }
+    var selectFromListAction by remember { mutableStateOf<SelectFromListAction?>(null) }
     var selectedFilterOption by remember { mutableStateOf<FilterOption<StashDataFilter, Any>?>(null) }
 
     val focusRequester = remember { FocusRequester() }
@@ -356,6 +357,7 @@ fun CreateFilterColumns(
                         saveObjectFilter = saveObjectFilter,
                         onInputCriterionModifier = { inputCriterionModifier = it },
                         onInputTextAction = { inputTextAction = it },
+                        onSelectFromListAction = { selectFromListAction = it },
                         modifier =
                             Modifier
                                 .width(listWidth)
@@ -388,6 +390,16 @@ fun CreateFilterColumns(
             onDismiss = { inputCriterionModifier = null },
         )
     }
+    selectFromListAction?.let { action ->
+        SelectFromListDialog(
+            action = action,
+            onSubmit = {
+                action.onSubmit.invoke(it)
+                selectFromListAction = null
+            },
+            onDismiss = { selectFromListAction = null },
+        )
+    }
 }
 
 data class InputTextAction(
@@ -401,6 +413,14 @@ data class InputCriterionModifier(
     val filterName: String,
     val allowedModifiers: List<CriterionModifier>,
     val onClick: (CriterionModifier) -> Unit,
+)
+
+data class SelectFromListAction(
+    val filterName: String,
+    val options: List<String>,
+    val currentOptions: List<String>,
+    val multiSelect: Boolean,
+    val onSubmit: (indices: List<Int>) -> Unit,
 )
 
 @Composable
