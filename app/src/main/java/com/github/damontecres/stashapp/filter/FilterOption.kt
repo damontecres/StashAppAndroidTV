@@ -43,7 +43,7 @@ data class FilterOption<FilterType : StashDataFilter, ValueType : Any>(
     val type: KClass<ValueType>,
     val getter: (FilterType) -> Optional<ValueType?>,
     val setter: (FilterType, Optional<ValueType?>) -> FilterType,
-    val allowedModifiers: List<CriterionModifier>? = null,
+    val allowedModifiers: List<CriterionModifier>,
 )
 
 // Derived from files in https://github.com/stashapp/stash/tree/develop/ui/v2.5/src/models/list-filter/criteria
@@ -84,6 +84,38 @@ val IncludesExcludesCriterionModifiers =
         CriterionModifier.NOT_NULL,
     )
 
+val StringCriterionModifiers =
+    listOf(
+        CriterionModifier.EQUALS,
+        CriterionModifier.NOT_EQUALS,
+        CriterionModifier.INCLUDES,
+        CriterionModifier.EXCLUDES,
+        CriterionModifier.IS_NULL,
+        CriterionModifier.NOT_NULL,
+        CriterionModifier.MATCHES_REGEX,
+        CriterionModifier.NOT_MATCHES_REGEX,
+    )
+
+val TwoValueCriterionModifiers =
+    listOf(
+        CriterionModifier.EQUALS,
+        CriterionModifier.NOT_EQUALS,
+        CriterionModifier.GREATER_THAN,
+        CriterionModifier.LESS_THAN,
+        CriterionModifier.BETWEEN,
+        CriterionModifier.NOT_BETWEEN,
+        CriterionModifier.IS_NULL,
+        CriterionModifier.NOT_NULL,
+    )
+
+val ResolutionCriterionModifiers =
+    listOf(
+        CriterionModifier.EQUALS,
+        CriterionModifier.NOT_EQUALS,
+        CriterionModifier.GREATER_THAN,
+        CriterionModifier.LESS_THAN,
+    )
+
 private val SceneFilterOptions =
     listOf(
         FilterOption<SceneFilterType, StringCriterionInput>(
@@ -93,6 +125,7 @@ private val SceneFilterOptions =
             StringCriterionInput::class,
             { it.audio_codec },
             { filter, value -> filter.copy(audio_codec = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<SceneFilterType, DateCriterionInput>(
             "date",
@@ -101,6 +134,7 @@ private val SceneFilterOptions =
             DateCriterionInput::class,
             { filter -> filter.date },
             { filter, value -> filter.copy(date = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<SceneFilterType, StringCriterionInput>(
             "details",
@@ -109,6 +143,7 @@ private val SceneFilterOptions =
             StringCriterionInput::class,
             { it.details },
             { filter, value -> filter.copy(details = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
             "duration",
@@ -117,6 +152,7 @@ private val SceneFilterOptions =
             IntCriterionInput::class,
             { it.duration },
             { filter, value -> filter.copy(duration = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<SceneFilterType, StringCriterionInput>(
             "director",
@@ -125,6 +161,7 @@ private val SceneFilterOptions =
             StringCriterionInput::class,
             { it.director },
             { filter, value -> filter.copy(director = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>(
             "groups",
@@ -142,6 +179,7 @@ private val SceneFilterOptions =
             IntCriterionInput::class,
             { it.o_counter },
             { filter, value -> filter.copy(o_counter = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<SceneFilterType, Boolean>(
             "organized",
@@ -150,6 +188,7 @@ private val SceneFilterOptions =
             Boolean::class,
             { filter -> filter.organized },
             { filter, value -> filter.copy(organized = value) },
+            listOf(),
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
             "performer_age",
@@ -158,6 +197,7 @@ private val SceneFilterOptions =
             IntCriterionInput::class,
             { it.performer_age },
             { filter, value -> filter.copy(performer_age = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
             "performer_count",
@@ -166,6 +206,7 @@ private val SceneFilterOptions =
             IntCriterionInput::class,
             { it.performer_count },
             { filter, value -> filter.copy(performer_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<SceneFilterType, Boolean>(
             "performer_favorite",
@@ -174,6 +215,7 @@ private val SceneFilterOptions =
             Boolean::class,
             { it.performer_favorite },
             { filter, value -> filter.copy(performer_favorite = value) },
+            listOf(),
         ),
         FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>(
             "performer_tags",
@@ -200,6 +242,7 @@ private val SceneFilterOptions =
             IntCriterionInput::class,
             { it.play_count },
             { filter, value -> filter.copy(play_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
             "rating100",
@@ -208,6 +251,7 @@ private val SceneFilterOptions =
             IntCriterionInput::class,
             { it.rating100 },
             { filter, value -> filter.copy(rating100 = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<SceneFilterType, ResolutionCriterionInput>(
             "resolution",
@@ -216,6 +260,7 @@ private val SceneFilterOptions =
             ResolutionCriterionInput::class,
             { it.resolution },
             { filter, value -> filter.copy(resolution = value) },
+            ResolutionCriterionModifiers,
         ),
         FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>(
             "studios",
@@ -242,6 +287,7 @@ private val SceneFilterOptions =
             IntCriterionInput::class,
             { it.tag_count },
             { filter, value -> filter.copy(tag_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<SceneFilterType, StringCriterionInput>(
             "title",
@@ -250,6 +296,7 @@ private val SceneFilterOptions =
             StringCriterionInput::class,
             { it.title },
             { filter, value -> filter.copy(title = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<SceneFilterType, StringCriterionInput>(
             "video_codec",
@@ -258,6 +305,7 @@ private val SceneFilterOptions =
             StringCriterionInput::class,
             { it.video_codec },
             { filter, value -> filter.copy(video_codec = value) },
+            StringCriterionModifiers,
         ),
     )
 
@@ -270,6 +318,7 @@ private val PerformerFilterOptions =
             IntCriterionInput::class,
             { filter -> filter.age },
             { filter, value -> filter.copy(age = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "aliases",
@@ -278,6 +327,7 @@ private val PerformerFilterOptions =
             StringCriterionInput::class,
             { it.aliases },
             { filter, value -> filter.copy(aliases = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, IntCriterionInput>(
             "birth_year",
@@ -286,6 +336,7 @@ private val PerformerFilterOptions =
             IntCriterionInput::class,
             { filter -> filter.birth_year },
             { filter, value -> filter.copy(birth_year = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, DateCriterionInput>(
             "birthdate",
@@ -294,6 +345,7 @@ private val PerformerFilterOptions =
             DateCriterionInput::class,
             { filter -> filter.birthdate },
             { filter, value -> filter.copy(birthdate = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "country",
@@ -302,6 +354,7 @@ private val PerformerFilterOptions =
             StringCriterionInput::class,
             { it.country },
             { filter, value -> filter.copy(country = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, CircumcisionCriterionInput>(
             "circumcised",
@@ -310,6 +363,7 @@ private val PerformerFilterOptions =
             CircumcisionCriterionInput::class,
             { filter -> filter.circumcised },
             { filter, value -> filter.copy(circumcised = value) },
+            RelationshipCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, IntCriterionInput>(
             "death_year",
@@ -318,6 +372,7 @@ private val PerformerFilterOptions =
             IntCriterionInput::class,
             { filter -> filter.death_year },
             { filter, value -> filter.copy(death_year = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, DateCriterionInput>(
             "death_date",
@@ -326,6 +381,7 @@ private val PerformerFilterOptions =
             DateCriterionInput::class,
             { filter -> filter.death_date },
             { filter, value -> filter.copy(death_date = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "details",
@@ -334,6 +390,7 @@ private val PerformerFilterOptions =
             StringCriterionInput::class,
             { it.details },
             { filter, value -> filter.copy(details = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "ethnicity",
@@ -342,6 +399,7 @@ private val PerformerFilterOptions =
             StringCriterionInput::class,
             { it.ethnicity },
             { filter, value -> filter.copy(ethnicity = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "eye_color",
@@ -350,6 +408,7 @@ private val PerformerFilterOptions =
             StringCriterionInput::class,
             { it.eye_color },
             { filter, value -> filter.copy(eye_color = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "fake_tits",
@@ -358,6 +417,7 @@ private val PerformerFilterOptions =
             StringCriterionInput::class,
             { it.fake_tits },
             { filter, value -> filter.copy(fake_tits = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, Boolean>(
             "filter_favorites",
@@ -366,6 +426,7 @@ private val PerformerFilterOptions =
             Boolean::class,
             { filter -> filter.filter_favorites },
             { filter, value -> filter.copy(filter_favorites = value) },
+            listOf(),
         ),
         FilterOption<PerformerFilterType, IntCriterionInput>(
             "gallery_count",
@@ -374,6 +435,7 @@ private val PerformerFilterOptions =
             IntCriterionInput::class,
             { it.gallery_count },
             { filter, value -> filter.copy(gallery_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, GenderCriterionInput>(
             "gender",
@@ -382,6 +444,7 @@ private val PerformerFilterOptions =
             GenderCriterionInput::class,
             { it.gender },
             { filter, value -> filter.copy(gender = value) },
+            RelationshipCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "hair_color",
@@ -390,6 +453,7 @@ private val PerformerFilterOptions =
             StringCriterionInput::class,
             { it.hair_color },
             { filter, value -> filter.copy(hair_color = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, IntCriterionInput>(
             "height",
@@ -398,6 +462,7 @@ private val PerformerFilterOptions =
             IntCriterionInput::class,
             { it.height_cm },
             { filter, value -> filter.copy(height_cm = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, IntCriterionInput>(
             "image_count",
@@ -406,6 +471,7 @@ private val PerformerFilterOptions =
             IntCriterionInput::class,
             { it.image_count },
             { filter, value -> filter.copy(image_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "measurements",
@@ -414,6 +480,7 @@ private val PerformerFilterOptions =
             StringCriterionInput::class,
             { it.measurements },
             { filter, value -> filter.copy(measurements = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "name",
@@ -422,6 +489,7 @@ private val PerformerFilterOptions =
             StringCriterionInput::class,
             { it.name },
             { filter, value -> filter.copy(name = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, IntCriterionInput>(
             "o_counter",
@@ -430,6 +498,7 @@ private val PerformerFilterOptions =
             IntCriterionInput::class,
             { it.o_counter },
             { filter, value -> filter.copy(o_counter = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "piercings",
@@ -438,6 +507,7 @@ private val PerformerFilterOptions =
             StringCriterionInput::class,
             { it.piercings },
             { filter, value -> filter.copy(piercings = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, FloatCriterionInput>(
             "penis_length",
@@ -446,6 +516,7 @@ private val PerformerFilterOptions =
             FloatCriterionInput::class,
             { it.penis_length },
             { filter, value -> filter.copy(penis_length = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, IntCriterionInput>(
             "play_count",
@@ -454,6 +525,7 @@ private val PerformerFilterOptions =
             IntCriterionInput::class,
             { it.play_count },
             { filter, value -> filter.copy(play_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, IntCriterionInput>(
             "rating100",
@@ -462,6 +534,7 @@ private val PerformerFilterOptions =
             IntCriterionInput::class,
             { it.rating100 },
             { filter, value -> filter.copy(rating100 = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, IntCriterionInput>(
             "scene_count",
@@ -470,6 +543,7 @@ private val PerformerFilterOptions =
             IntCriterionInput::class,
             { it.scene_count },
             { filter, value -> filter.copy(scene_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, HierarchicalMultiCriterionInput>(
             "studios",
@@ -496,6 +570,7 @@ private val PerformerFilterOptions =
             IntCriterionInput::class,
             { it.tag_count },
             { filter, value -> filter.copy(tag_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "tattoos",
@@ -504,6 +579,7 @@ private val PerformerFilterOptions =
             StringCriterionInput::class,
             { it.tattoos },
             { filter, value -> filter.copy(tattoos = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, IntCriterionInput>(
             "weight",
@@ -512,6 +588,7 @@ private val PerformerFilterOptions =
             IntCriterionInput::class,
             { it.weight },
             { filter, value -> filter.copy(weight = value) },
+            TwoValueCriterionModifiers,
         ),
     )
 
@@ -533,6 +610,7 @@ private val MarkerFilterOptions =
             DateCriterionInput::class,
             { filter -> filter.scene_date },
             { filter, value -> filter.copy(scene_date = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<SceneMarkerFilterType, HierarchicalMultiCriterionInput>(
             "scene_tags",
@@ -563,6 +641,7 @@ private val ImageFilterOptions =
             DateCriterionInput::class,
             { filter -> filter.date },
             { filter, value -> filter.copy(date = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<ImageFilterType, StringCriterionInput>(
             "details",
@@ -571,6 +650,7 @@ private val ImageFilterOptions =
             StringCriterionInput::class,
             { it.details },
             { filter, value -> filter.copy(details = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<ImageFilterType, MultiCriterionInput>(
             "galleries",
@@ -588,6 +668,7 @@ private val ImageFilterOptions =
             IntCriterionInput::class,
             { it.o_counter },
             { filter, value -> filter.copy(o_counter = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<ImageFilterType, OrientationCriterionInput>(
             "orientation",
@@ -596,6 +677,7 @@ private val ImageFilterOptions =
             OrientationCriterionInput::class,
             { it.orientation },
             { filter, value -> filter.copy(orientation = value) },
+            listOf(),
         ),
         FilterOption<ImageFilterType, IntCriterionInput>(
             "performer_age",
@@ -604,6 +686,7 @@ private val ImageFilterOptions =
             IntCriterionInput::class,
             { it.performer_age },
             { filter, value -> filter.copy(performer_age = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<ImageFilterType, IntCriterionInput>(
             "performer_count",
@@ -612,6 +695,7 @@ private val ImageFilterOptions =
             IntCriterionInput::class,
             { it.performer_count },
             { filter, value -> filter.copy(performer_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<ImageFilterType, Boolean>(
             "performer_favorite",
@@ -620,6 +704,7 @@ private val ImageFilterOptions =
             Boolean::class,
             { it.performer_favorite },
             { filter, value -> filter.copy(performer_favorite = value) },
+            listOf(),
         ),
         FilterOption<ImageFilterType, HierarchicalMultiCriterionInput>(
             "performer_tags",
@@ -646,6 +731,7 @@ private val ImageFilterOptions =
             StringCriterionInput::class,
             { it.photographer },
             { filter, value -> filter.copy(photographer = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<ImageFilterType, IntCriterionInput>(
             "rating100",
@@ -654,6 +740,7 @@ private val ImageFilterOptions =
             IntCriterionInput::class,
             { it.rating100 },
             { filter, value -> filter.copy(rating100 = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<ImageFilterType, ResolutionCriterionInput>(
             "resolution",
@@ -662,6 +749,7 @@ private val ImageFilterOptions =
             ResolutionCriterionInput::class,
             { it.resolution },
             { filter, value -> filter.copy(resolution = value) },
+            ResolutionCriterionModifiers,
         ),
         FilterOption<ImageFilterType, HierarchicalMultiCriterionInput>(
             "studios",
@@ -688,6 +776,7 @@ private val ImageFilterOptions =
             IntCriterionInput::class,
             { it.tag_count },
             { filter, value -> filter.copy(tag_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<ImageFilterType, StringCriterionInput>(
             "title",
@@ -696,6 +785,7 @@ private val ImageFilterOptions =
             StringCriterionInput::class,
             { it.title },
             { filter, value -> filter.copy(title = value) },
+            StringCriterionModifiers,
         ),
     )
 
@@ -708,6 +798,7 @@ private val GalleryFilterOptions =
             ResolutionCriterionInput::class,
             { it.average_resolution },
             { filter, value -> filter.copy(average_resolution = value) },
+            ResolutionCriterionModifiers,
         ),
         FilterOption<GalleryFilterType, DateCriterionInput>(
             "date",
@@ -716,6 +807,7 @@ private val GalleryFilterOptions =
             DateCriterionInput::class,
             { filter -> filter.date },
             { filter, value -> filter.copy(date = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<GalleryFilterType, StringCriterionInput>(
             "details",
@@ -724,6 +816,7 @@ private val GalleryFilterOptions =
             StringCriterionInput::class,
             { it.details },
             { filter, value -> filter.copy(details = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<GalleryFilterType, IntCriterionInput>(
             "image_count",
@@ -732,6 +825,7 @@ private val GalleryFilterOptions =
             IntCriterionInput::class,
             { it.image_count },
             { filter, value -> filter.copy(image_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<GalleryFilterType, IntCriterionInput>(
             "performer_age",
@@ -740,6 +834,7 @@ private val GalleryFilterOptions =
             IntCriterionInput::class,
             { it.performer_age },
             { filter, value -> filter.copy(performer_age = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<GalleryFilterType, IntCriterionInput>(
             "performer_count",
@@ -748,6 +843,7 @@ private val GalleryFilterOptions =
             IntCriterionInput::class,
             { it.performer_count },
             { filter, value -> filter.copy(performer_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<GalleryFilterType, Boolean>(
             "performer_favorite",
@@ -756,6 +852,7 @@ private val GalleryFilterOptions =
             Boolean::class,
             { it.performer_favorite },
             { filter, value -> filter.copy(performer_favorite = value) },
+            listOf(),
         ),
         FilterOption<GalleryFilterType, HierarchicalMultiCriterionInput>(
             "performer_tags",
@@ -782,6 +879,7 @@ private val GalleryFilterOptions =
             StringCriterionInput::class,
             { it.photographer },
             { filter, value -> filter.copy(photographer = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<GalleryFilterType, IntCriterionInput>(
             "rating100",
@@ -790,6 +888,7 @@ private val GalleryFilterOptions =
             IntCriterionInput::class,
             { it.rating100 },
             { filter, value -> filter.copy(rating100 = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<GalleryFilterType, MultiCriterionInput>(
             "scenes",
@@ -825,6 +924,7 @@ private val GalleryFilterOptions =
             StringCriterionInput::class,
             { it.title },
             { filter, value -> filter.copy(title = value) },
+            StringCriterionModifiers,
         ),
     )
 
@@ -837,6 +937,7 @@ private val TagFilterOptions =
             StringCriterionInput::class,
             { it.aliases },
             { filter, value -> filter.copy(aliases = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<TagFilterType, StringCriterionInput>(
             "description",
@@ -845,6 +946,7 @@ private val TagFilterOptions =
             StringCriterionInput::class,
             { it.description },
             { filter, value -> filter.copy(description = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<TagFilterType, Boolean>(
             "favorite",
@@ -853,6 +955,7 @@ private val TagFilterOptions =
             Boolean::class,
             { filter -> filter.favorite },
             { filter, value -> filter.copy(favorite = value) },
+            listOf(),
         ),
         FilterOption<TagFilterType, IntCriterionInput>(
             "image_count",
@@ -861,6 +964,7 @@ private val TagFilterOptions =
             IntCriterionInput::class,
             { it.image_count },
             { filter, value -> filter.copy(image_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<TagFilterType, StringCriterionInput>(
             "name",
@@ -869,6 +973,7 @@ private val TagFilterOptions =
             StringCriterionInput::class,
             { it.name },
             { filter, value -> filter.copy(name = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<TagFilterType, IntCriterionInput>(
             "scene_count",
@@ -877,6 +982,7 @@ private val TagFilterOptions =
             IntCriterionInput::class,
             { it.scene_count },
             { filter, value -> filter.copy(scene_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<TagFilterType, IntCriterionInput>(
             "studio_count",
@@ -885,6 +991,7 @@ private val TagFilterOptions =
             IntCriterionInput::class,
             { it.studio_count },
             { filter, value -> filter.copy(studio_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<TagFilterType, IntCriterionInput>(
             "gallery_count",
@@ -893,6 +1000,7 @@ private val TagFilterOptions =
             IntCriterionInput::class,
             { it.gallery_count },
             { filter, value -> filter.copy(gallery_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<TagFilterType, IntCriterionInput>(
             "marker_count",
@@ -901,6 +1009,7 @@ private val TagFilterOptions =
             IntCriterionInput::class,
             { it.marker_count },
             { filter, value -> filter.copy(marker_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<TagFilterType, IntCriterionInput>(
             "performer_count",
@@ -909,6 +1018,7 @@ private val TagFilterOptions =
             IntCriterionInput::class,
             { it.performer_count },
             { filter, value -> filter.copy(performer_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<TagFilterType, IntCriterionInput>(
             "parent_count",
@@ -917,6 +1027,7 @@ private val TagFilterOptions =
             IntCriterionInput::class,
             { it.parent_count },
             { filter, value -> filter.copy(parent_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<TagFilterType, IntCriterionInput>(
             "child_count",
@@ -925,6 +1036,7 @@ private val TagFilterOptions =
             IntCriterionInput::class,
             { it.child_count },
             { filter, value -> filter.copy(child_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<TagFilterType, HierarchicalMultiCriterionInput>(
             "parents",
@@ -955,6 +1067,7 @@ private val StudioFilterOptions =
             StringCriterionInput::class,
             { it.aliases },
             { filter, value -> filter.copy(aliases = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<StudioFilterType, StringCriterionInput>(
             "details",
@@ -963,6 +1076,7 @@ private val StudioFilterOptions =
             StringCriterionInput::class,
             { it.details },
             { filter, value -> filter.copy(details = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<StudioFilterType, Boolean>(
             "favorite",
@@ -971,6 +1085,7 @@ private val StudioFilterOptions =
             Boolean::class,
             { filter -> filter.favorite },
             { filter, value -> filter.copy(favorite = value) },
+            listOf(),
         ),
         FilterOption<StudioFilterType, IntCriterionInput>(
             "image_count",
@@ -979,6 +1094,7 @@ private val StudioFilterOptions =
             IntCriterionInput::class,
             { it.image_count },
             { filter, value -> filter.copy(image_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<StudioFilterType, IntCriterionInput>(
             "gallery_count",
@@ -987,6 +1103,7 @@ private val StudioFilterOptions =
             IntCriterionInput::class,
             { it.gallery_count },
             { filter, value -> filter.copy(gallery_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<StudioFilterType, StringCriterionInput>(
             "name",
@@ -995,6 +1112,7 @@ private val StudioFilterOptions =
             StringCriterionInput::class,
             { it.name },
             { filter, value -> filter.copy(name = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<StudioFilterType, MultiCriterionInput>(
             "parents",
@@ -1012,6 +1130,7 @@ private val StudioFilterOptions =
             IntCriterionInput::class,
             { it.rating100 },
             { filter, value -> filter.copy(rating100 = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<StudioFilterType, IntCriterionInput>(
             "scene_count",
@@ -1020,6 +1139,7 @@ private val StudioFilterOptions =
             IntCriterionInput::class,
             { it.scene_count },
             { filter, value -> filter.copy(scene_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<StudioFilterType, IntCriterionInput>(
             "child_count",
@@ -1028,6 +1148,7 @@ private val StudioFilterOptions =
             IntCriterionInput::class,
             { it.child_count },
             { filter, value -> filter.copy(child_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<StudioFilterType, HierarchicalMultiCriterionInput>(
             "tags",
@@ -1045,6 +1166,7 @@ private val StudioFilterOptions =
             IntCriterionInput::class,
             { it.tag_count },
             { filter, value -> filter.copy(tag_count = value) },
+            TwoValueCriterionModifiers,
         ),
     )
 
@@ -1066,6 +1188,7 @@ private val GroupFilterOptions =
             IntCriterionInput::class,
             { it.containing_group_count },
             { filter, value -> filter.copy(containing_group_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<GroupFilterType, DateCriterionInput>(
             "date",
@@ -1074,6 +1197,7 @@ private val GroupFilterOptions =
             DateCriterionInput::class,
             { filter -> filter.date },
             { filter, value -> filter.copy(date = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<GroupFilterType, StringCriterionInput>(
             "director",
@@ -1082,6 +1206,7 @@ private val GroupFilterOptions =
             StringCriterionInput::class,
             { it.director },
             { filter, value -> filter.copy(director = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<GroupFilterType, IntCriterionInput>(
             "duration",
@@ -1090,6 +1215,7 @@ private val GroupFilterOptions =
             IntCriterionInput::class,
             { it.duration },
             { filter, value -> filter.copy(duration = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<GroupFilterType, StringCriterionInput>(
             "name",
@@ -1098,6 +1224,7 @@ private val GroupFilterOptions =
             StringCriterionInput::class,
             { it.name },
             { filter, value -> filter.copy(name = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<GroupFilterType, MultiCriterionInput>(
             "performers",
@@ -1115,6 +1242,7 @@ private val GroupFilterOptions =
             IntCriterionInput::class,
             { it.rating100 },
             { filter, value -> filter.copy(rating100 = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<GroupFilterType, HierarchicalMultiCriterionInput>(
             "studios",
@@ -1141,6 +1269,7 @@ private val GroupFilterOptions =
             IntCriterionInput::class,
             { it.sub_group_count },
             { filter, value -> filter.copy(sub_group_count = value) },
+            TwoValueCriterionModifiers,
         ),
         FilterOption<GroupFilterType, StringCriterionInput>(
             "synopsis",
@@ -1149,6 +1278,7 @@ private val GroupFilterOptions =
             StringCriterionInput::class,
             { it.synopsis },
             { filter, value -> filter.copy(synopsis = value) },
+            StringCriterionModifiers,
         ),
         FilterOption<GroupFilterType, HierarchicalMultiCriterionInput>(
             "tags",
@@ -1166,6 +1296,7 @@ private val GroupFilterOptions =
             IntCriterionInput::class,
             { it.tag_count },
             { filter, value -> filter.copy(tag_count = value) },
+            TwoValueCriterionModifiers,
         ),
     )
 
