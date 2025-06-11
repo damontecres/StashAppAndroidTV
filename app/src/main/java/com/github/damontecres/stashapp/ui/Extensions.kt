@@ -34,6 +34,8 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashServer
@@ -129,3 +131,25 @@ inline fun <T> List<T>.indexOfFirstOrNull(predicate: (T) -> Boolean): Int? {
  * Whether the [KeyEvent] is a key up event pressing media play or media play/pause
  */
 fun isPlayKeyUp(key: KeyEvent) = key.type == KeyEventType.KeyUp && (key.key == Key.MediaPlay || key.key == Key.MediaPlayPause)
+
+/**
+ * Whether the [CriterionModifier] is a check for null or not null
+ */
+val CriterionModifier.nullCheck: Boolean
+    get() = this == CriterionModifier.IS_NULL || this == CriterionModifier.NOT_NULL
+
+/**
+ * Whether the [CriterionModifier] is between or not between and requires two input values
+ */
+val CriterionModifier.between: Boolean
+    get() = this == CriterionModifier.BETWEEN || this == CriterionModifier.NOT_BETWEEN
+
+val IntCriterionInput.valid: Boolean
+    get() {
+        if (modifier.between) {
+            val val2 = value2.getOrNull()
+            return val2 != null && value < val2
+        } else {
+            return true
+        }
+    }

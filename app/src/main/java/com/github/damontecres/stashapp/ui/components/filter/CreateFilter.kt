@@ -4,7 +4,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,10 +14,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +35,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -48,6 +57,7 @@ import androidx.tv.material3.surfaceColorAtElevation
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
@@ -137,6 +147,9 @@ fun CreateFilterColumns(
     val findFilterInteractionSource = remember { MutableInteractionSource() }
     val objectFilterInteractionSource = remember { MutableInteractionSource() }
 
+    val findFilterItemFocused = findFilterInteractionSource.collectIsFocusedAsState().value
+    val objectFilterItemFocused = objectFilterInteractionSource.collectIsFocusedAsState().value
+
     var findFilterFocused by remember { mutableStateOf(false) }
     var objectFilterFocused by remember { mutableStateOf(false) }
     var sortByFocused by remember { mutableStateOf(false) }
@@ -144,6 +157,17 @@ fun CreateFilterColumns(
     val sortByFocusRequester = remember { FocusRequester() }
     val objectFilterFocusRequester = remember { FocusRequester() }
     val objectFilterChoiceFocusRequester = remember { FocusRequester() }
+    val objectFilterCount =
+        remember(objectFilter) {
+            getFilterOptions(dataType)
+                .filter {
+                    (it as FilterOption<StashDataFilter, Any>)
+                        .getter
+                        .invoke(
+                            objectFilter,
+                        ).getOrNull() != null
+                }.count()
+        }
 
     var inputTextAction by remember { mutableStateOf<InputTextAction?>(null) }
     var inputCriterionModifier by remember { mutableStateOf<InputCriterionModifier?>(null) }
@@ -174,6 +198,7 @@ fun CreateFilterColumns(
                 resultCount = resultCount,
                 findFilter = findFilter,
                 objectFilter = objectFilter,
+                objectFilterCount = objectFilterCount,
                 onFilterNameClick = {
                     inputTextAction =
                         InputTextAction(
@@ -185,6 +210,8 @@ fun CreateFilterColumns(
                 },
                 findFilterOnClick = { findFilterFocused = true },
                 objectFilterOnClick = { objectFilterFocused = true },
+                findFilterInteractionSource = findFilterInteractionSource,
+                objectFilterInteractionSource = objectFilterInteractionSource,
                 modifier =
                     Modifier
                         .width(listWidth)
@@ -193,7 +220,18 @@ fun CreateFilterColumns(
                         .background(
                             color = MaterialTheme.colorScheme.secondaryContainer,
                             shape = RoundedCornerShape(16.dp),
-                        ),
+                        ).onPreviewKeyEvent {
+                            if (it.type == KeyEventType.KeyUp && it.key == Key.DirectionRight) {
+                                if (findFilterItemFocused) {
+                                    findFilterFocused = true
+                                } else if (objectFilterItemFocused) {
+                                    objectFilterFocused = true
+                                }
+                                true
+                            } else {
+                                false
+                            }
+                        },
             )
         }
         if (findFilterFocused) {
@@ -330,7 +368,7 @@ fun CreateFilterColumns(
                                 Optional.presentIfNotNull(newValue),
                             )
                         updateObjectFilter(newObjectFilter)
-
+                        objectFilterFocusRequester.tryRequestFocus()
                         selectedFilterOption = null
                     }
 
@@ -342,7 +380,6 @@ fun CreateFilterColumns(
                         when (filterOption.type) {
                             StringCriterionInput::class -> {
                                 LaunchedEffect(Unit) {
-                                    objectFilterChoiceFocusRequester.tryRequestFocus()
                                     if (initialValue == null) {
                                         value =
                                             StringCriterionInput(
@@ -352,8 +389,9 @@ fun CreateFilterColumns(
                                     }
                                 }
                                 value?.let { input ->
+                                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
                                     input as StringCriterionInput
-                                    StringPicker2(
+                                    StringPicker(
                                         modifier =
                                             Modifier
                                                 .width(listWidth)
@@ -399,6 +437,96 @@ fun CreateFilterColumns(
                                                     keyboardType = KeyboardType.Text,
                                                     onSubmit = {
                                                         value = input.copy(value = it)
+                                                    },
+                                                )
+                                        },
+                                        onSave = { saveObjectFilter(value) },
+                                        onRemove = { saveObjectFilter(null) },
+                                    )
+                                }
+                            }
+
+                            IntCriterionInput::class -> {
+                                LaunchedEffect(Unit) {
+                                    if (initialValue == null) {
+                                        value =
+                                            IntCriterionInput(
+                                                value = 0,
+                                                value2 = Optional.absent(),
+                                                modifier = CriterionModifier.EQUALS,
+                                            )
+                                    }
+                                }
+                                value?.let { input ->
+                                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+                                    input as IntCriterionInput
+                                    IntPicker(
+                                        modifier =
+                                            Modifier
+                                                .width(listWidth)
+                                                .animateItem()
+                                                .focusRequester(objectFilterChoiceFocusRequester)
+                                                .focusProperties {
+                                                    onExit = {
+                                                        selectedFilterOption = null
+                                                    }
+                                                }.background(
+                                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                                    shape = RoundedCornerShape(16.dp),
+                                                ),
+                                        name = stringResource(filterOption.nameStringId),
+                                        value = input,
+                                        removeEnabled = initialValue != null,
+                                        onChangeCriterionModifier = {
+                                            inputCriterionModifier =
+                                                InputCriterionModifier(
+                                                    filterName = context.getString(filterOption.nameStringId),
+                                                    allowedModifiers =
+                                                        filterOption.allowedModifiers
+                                                            ?: listOf(
+                                                                CriterionModifier.EQUALS,
+                                                                CriterionModifier.NOT_EQUALS,
+                                                                CriterionModifier.BETWEEN,
+                                                                CriterionModifier.NOT_BETWEEN,
+                                                                CriterionModifier.GREATER_THAN,
+                                                                CriterionModifier.LESS_THAN,
+                                                                CriterionModifier.IS_NULL,
+                                                                CriterionModifier.NOT_NULL,
+                                                            ),
+                                                    onClick = {
+                                                        value = input.copy(modifier = it)
+                                                    },
+                                                )
+                                        },
+                                        onChangeValue = { isValue2 ->
+                                            inputTextAction =
+                                                InputTextAction(
+                                                    title = context.getString(filterOption.nameStringId),
+                                                    value =
+                                                        (
+                                                            if (isValue2) {
+                                                                input.value2.getOrNull()
+                                                                    ?: 0
+                                                            } else {
+                                                                input.value
+                                                            }
+                                                        ).toString(),
+                                                    keyboardType = KeyboardType.Number,
+                                                    onSubmit = {
+                                                        val newInt = it.toIntOrNull()
+                                                        if (newInt != null) {
+                                                            value =
+                                                                if (isValue2) {
+                                                                    input.copy(
+                                                                        value2 =
+                                                                            Optional.present(
+                                                                                newInt,
+                                                                            ),
+                                                                    )
+                                                                } else {
+                                                                    input.copy(value = newInt)
+                                                                }
+                                                        }
                                                     },
                                                 )
                                         },
@@ -514,18 +642,22 @@ fun BasicFilterSettings(
     name: String?,
     findFilter: StashFindFilter,
     objectFilter: StashDataFilter,
+    objectFilterCount: Int,
     resultCount: Int,
     onFilterNameClick: () -> Unit,
     findFilterOnClick: () -> Unit,
     objectFilterOnClick: () -> Unit,
+    findFilterInteractionSource: MutableInteractionSource,
+    objectFilterInteractionSource: MutableInteractionSource,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val focusRequester = remember { FocusRequester() }
     LazyColumn(
         modifier =
             modifier
                 .focusGroup()
-                .focusRestorer(),
+                .focusRestorer(focusRequester),
         verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         item {
@@ -534,6 +666,7 @@ fun BasicFilterSettings(
                 subtitle = name,
                 showArrow = false,
                 onClick = onFilterNameClick,
+                modifier = Modifier.focusRequester(focusRequester),
             )
         }
         item {
@@ -542,14 +675,22 @@ fun BasicFilterSettings(
                 subtitle = findFilterSummary(context, dataType, findFilter),
                 showArrow = true,
                 onClick = findFilterOnClick,
+                interactionSource = findFilterInteractionSource,
             )
         }
         item {
             SimpleListItem(
                 title = stringResource(R.string.stashapp_filters),
-                subtitle = null,
+                subtitle =
+                    when (objectFilterCount) {
+                        // TODO i18n for plurals
+                        1 -> "1 " + stringResource(R.string.stashapp_filter)
+                        in 2..Int.MAX_VALUE -> objectFilterCount.toString() + " " + stringResource(R.string.stashapp_filters)
+                        else -> null
+                    },
                 showArrow = true,
                 onClick = objectFilterOnClick,
+                interactionSource = objectFilterInteractionSource,
             )
         }
         item {
@@ -593,11 +734,12 @@ fun FindFilterSettings(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val focusRequester = remember { FocusRequester() }
     LazyColumn(
         modifier =
             modifier
                 .focusGroup()
-                .focusRestorer(),
+                .focusRestorer(focusRequester),
         verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         item {
@@ -606,6 +748,7 @@ fun FindFilterSettings(
                 subtitle = sortAndDirection.sort.getString(context),
                 showArrow = true,
                 onClick = onSortByClick,
+                modifier = Modifier.focusRequester(focusRequester),
             )
         }
         item {
@@ -665,24 +808,38 @@ fun ObjectFilterList(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val focusRequester = remember { FocusRequester() }
     LazyColumn(
         modifier =
             modifier
-                .focusRestorer(),
+                .focusGroup()
+                .focusRestorer(focusRequester),
     ) {
-        items(getFilterOptions(dataType), key = { it.nameStringId }) {
-            it as FilterOption<StashDataFilter, Any>
-            val value = it.getter.invoke(current).getOrNull()
+        itemsIndexed(
+            getFilterOptions(dataType),
+            key = { _, it -> it.nameStringId },
+        ) { index, item ->
+            item as FilterOption<StashDataFilter, Any>
+            val value = item.getter.invoke(current).getOrNull()
             val subtitle =
                 value?.let { _ ->
-                    filterSummary(it.name, dataType, value, idLookup)
+                    filterSummary(item.name, dataType, value, idLookup)
                 }
             SimpleListItem(
-                title = context.getString(it.nameStringId),
+                title = context.getString(item.nameStringId),
                 subtitle = subtitle,
                 showArrow = false,
-                onClick = { onObjectFilterClick.invoke(it) },
-                selected = it == selectedFilterOption,
+                onClick = { onObjectFilterClick.invoke(item) },
+                selected = item == selectedFilterOption,
+                leadingContent = {
+                    if (value != null) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = stringResource(R.string.stashapp_actions_enable),
+                        )
+                    }
+                },
+                modifier = Modifier.ifElse(index == 0, Modifier.focusRequester(focusRequester)),
             )
         }
     }
@@ -705,7 +862,7 @@ fun ObjectFilterChooser(
                 filterOption as FilterOption<StashDataFilter, StringCriterionInput>
                 val value = filterOption.getter.invoke(objectFilter).getOrNull()
 
-                StringPicker2(
+                StringPicker(
                     modifier = modifier,
                     name = stringResource(filterOption.nameStringId),
                     value =
@@ -739,7 +896,7 @@ fun ObjectFilterChooser(
     } else {
         when (filterOption.type) {
             StringCriterionInput::class -> {
-                StringPicker2(
+                StringPicker(
                     modifier = modifier,
                     name = stringResource(filterOption.nameStringId),
                     value = value as StringCriterionInput,
@@ -761,9 +918,10 @@ fun SimpleListItem(
     showArrow: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    interactionSource: MutableInteractionSource = MutableInteractionSource(),
+    interactionSource: MutableInteractionSource? = null,
     enabled: Boolean = true,
     selected: Boolean = false,
+    leadingContent: (@Composable BoxScope.() -> Unit)? = null,
 ) {
     ListItem(
         modifier = modifier,
@@ -771,9 +929,7 @@ fun SimpleListItem(
         enabled = enabled,
         onClick = onClick,
         onLongClick = {},
-        leadingContent = {
-            // TODO
-        },
+        leadingContent = leadingContent,
         headlineContent = {
             Text(
                 text = title,
