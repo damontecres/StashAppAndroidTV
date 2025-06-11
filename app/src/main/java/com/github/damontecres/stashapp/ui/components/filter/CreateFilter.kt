@@ -6,21 +6,12 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,38 +33,26 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.tv.material3.Button
-import androidx.tv.material3.Icon
-import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import androidx.tv.material3.surfaceColorAtElevation
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
-import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.SortAndDirection
-import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.data.flip
 import com.github.damontecres.stashapp.filter.CreateFilterViewModel
 import com.github.damontecres.stashapp.filter.FilterOption
-import com.github.damontecres.stashapp.filter.filterSummary
 import com.github.damontecres.stashapp.filter.findFilterSummary
 import com.github.damontecres.stashapp.filter.getFilterOptions
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.components.CircularProgress
-import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -571,72 +550,6 @@ data class InputCriterionModifier(
 )
 
 @Composable
-fun InputTextDialog(
-    onDismissRequest: () -> Unit,
-    action: InputTextAction,
-    modifier: Modifier = Modifier,
-) {
-    var text by remember { mutableStateOf(action.value ?: "") }
-    Dialog(
-        onDismissRequest = onDismissRequest,
-        properties =
-            DialogProperties(
-                usePlatformDefaultWidth = true,
-            ),
-    ) {
-//        val dialogWindowProvider = LocalView.current.parent as? DialogWindowProvider
-//        dialogWindowProvider?.window?.let { window ->
-//            window.setDimAmount(0f)
-//        }
-        LazyColumn(
-            modifier =
-                modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp),
-                        shape = RoundedCornerShape(16.dp),
-                    ),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            item {
-                Text(
-                    text = action.title,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-            item {
-                EditTextBox(
-                    value = text,
-                    onValueChange = { text = it },
-                    keyboardActions =
-                        KeyboardActions(
-                            onGo = {
-                                action.onSubmit.invoke(text)
-                                onDismissRequest.invoke()
-                            },
-                        ),
-                    keyboardOptions =
-                        KeyboardOptions(
-                            imeAction = ImeAction.Go,
-                            keyboardType = action.keyboardType,
-                        ),
-                )
-            }
-            item {
-                Button(
-                    onClick = {
-                        action.onSubmit.invoke(text)
-                        onDismissRequest.invoke()
-                    },
-                ) {
-                    Text(text = stringResource(R.string.stashapp_actions_submit))
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun BasicFilterSettings(
     dataType: DataType,
     name: String?,
@@ -721,237 +634,4 @@ fun BasicFilterSettings(
             )
         }
     }
-}
-
-@Composable
-fun FindFilterSettings(
-    dataType: DataType,
-    sortAndDirection: SortAndDirection,
-    query: String?,
-    onSortByClick: () -> Unit,
-    onDirectionClick: () -> Unit,
-    onQueryClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val focusRequester = remember { FocusRequester() }
-    LazyColumn(
-        modifier =
-            modifier
-                .focusGroup()
-                .focusRestorer(focusRequester),
-        verticalArrangement = Arrangement.spacedBy(0.dp),
-    ) {
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.sort_by),
-                subtitle = sortAndDirection.sort.getString(context),
-                showArrow = true,
-                onClick = onSortByClick,
-                modifier = Modifier.focusRequester(focusRequester),
-            )
-        }
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.stashapp_config_ui_image_wall_direction),
-                subtitle =
-                    if (sortAndDirection.direction == SortDirectionEnum.ASC) {
-                        stringResource(R.string.stashapp_ascending)
-                    } else {
-                        stringResource(R.string.stashapp_descending)
-                    },
-                showArrow = true,
-                onClick = onDirectionClick,
-            )
-        }
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.stashapp_component_tagger_noun_query),
-                subtitle = query,
-                showArrow = true,
-                onClick = onQueryClick,
-            )
-        }
-    }
-}
-
-@Composable
-fun SortByList(
-    dataType: DataType,
-    currentSort: SortOption,
-    onSortByClick: (SortOption) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    LazyColumn(
-        modifier = modifier,
-    ) {
-        items(dataType.sortOptions, key = { it.key }) {
-            SimpleListItem(
-                title = it.getString(context),
-                subtitle = null,
-                showArrow = false,
-                onClick = { onSortByClick.invoke(it) },
-                selected = it == currentSort,
-            )
-        }
-    }
-}
-
-@Composable
-fun ObjectFilterList(
-    dataType: DataType,
-    current: StashDataFilter,
-    onObjectFilterClick: (FilterOption<StashDataFilter, Any>) -> Unit,
-    idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
-    selectedFilterOption: FilterOption<StashDataFilter, Any>?,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val focusRequester = remember { FocusRequester() }
-    LazyColumn(
-        modifier =
-            modifier
-                .focusGroup()
-                .focusRestorer(focusRequester),
-    ) {
-        itemsIndexed(
-            getFilterOptions(dataType),
-            key = { _, it -> it.nameStringId },
-        ) { index, item ->
-            item as FilterOption<StashDataFilter, Any>
-            val value = item.getter.invoke(current).getOrNull()
-            val subtitle =
-                value?.let { _ ->
-                    filterSummary(item.name, dataType, value, idLookup)
-                }
-            SimpleListItem(
-                title = context.getString(item.nameStringId),
-                subtitle = subtitle,
-                showArrow = false,
-                onClick = { onObjectFilterClick.invoke(item) },
-                selected = item == selectedFilterOption,
-                leadingContent = {
-                    if (value != null) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = stringResource(R.string.stashapp_actions_enable),
-                        )
-                    }
-                },
-                modifier = Modifier.ifElse(index == 0, Modifier.focusRequester(focusRequester)),
-            )
-        }
-    }
-}
-
-@Composable
-fun ObjectFilterChooser(
-    objectFilter: StashDataFilter,
-    filterOption: FilterOption<StashDataFilter, *>,
-    onSave: (StashDataFilter) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    if (filterOption.nameStringId == R.string.stashapp_rating) {
-        // TODO
-    } else if (filterOption.nameStringId == R.string.stashapp_duration) {
-        // TODO
-    } else {
-        when (filterOption.type) {
-            StringCriterionInput::class -> {
-                filterOption as FilterOption<StashDataFilter, StringCriterionInput>
-                val value = filterOption.getter.invoke(objectFilter).getOrNull()
-
-                StringPicker(
-                    modifier = modifier,
-                    name = stringResource(filterOption.nameStringId),
-                    value =
-                        value ?: StringCriterionInput(
-                            value = "",
-                            modifier = CriterionModifier.EQUALS,
-                        ),
-                    removeEnabled = value != null,
-                    onChangeCriterionModifier = {},
-                    onChangeValue = {},
-                    onSave = {},
-                    onRemove = {},
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ObjectFilterChooser(
-    value: Any,
-    removeEnabled: Boolean,
-    filterOption: FilterOption<StashDataFilter, Any>,
-    onSave: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    if (filterOption.nameStringId == R.string.stashapp_rating) {
-        // TODO
-    } else if (filterOption.nameStringId == R.string.stashapp_duration) {
-        // TODO
-    } else {
-        when (filterOption.type) {
-            StringCriterionInput::class -> {
-                StringPicker(
-                    modifier = modifier,
-                    name = stringResource(filterOption.nameStringId),
-                    value = value as StringCriterionInput,
-                    removeEnabled = removeEnabled,
-                    onChangeCriterionModifier = {},
-                    onChangeValue = {},
-                    onSave = {},
-                    onRemove = {},
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun SimpleListItem(
-    title: String,
-    subtitle: String?,
-    showArrow: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    interactionSource: MutableInteractionSource? = null,
-    enabled: Boolean = true,
-    selected: Boolean = false,
-    leadingContent: (@Composable BoxScope.() -> Unit)? = null,
-) {
-    ListItem(
-        modifier = modifier,
-        selected = selected,
-        enabled = enabled,
-        onClick = onClick,
-        onLongClick = {},
-        leadingContent = leadingContent,
-        headlineContent = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        },
-        supportingContent = {
-            if (subtitle.isNotNullOrBlank()) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-        },
-        trailingContent = {
-            if (showArrow) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = null,
-                )
-            }
-        },
-        interactionSource = interactionSource,
-    )
 }
