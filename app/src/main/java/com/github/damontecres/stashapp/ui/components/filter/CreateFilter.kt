@@ -41,9 +41,7 @@ import androidx.tv.material3.Text
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
-import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.data.flip
@@ -334,7 +332,7 @@ fun CreateFilterColumns(
                 item {
                     val initialValue =
                         remember { filterOption.getter.invoke(objectFilter).getOrNull() }
-                    var value by remember { mutableStateOf(initialValue) }
+
                     BackHandler {
                         objectFilterFocusRequester.tryRequestFocus()
                         selectedFilterOption = null
@@ -351,171 +349,27 @@ fun CreateFilterColumns(
                         selectedFilterOption = null
                     }
 
-                    if (filterOption.nameStringId == R.string.stashapp_rating) {
-                        // TODO
-                    } else if (filterOption.nameStringId == R.string.stashapp_duration) {
-                        // TODO
-                    } else {
-                        when (filterOption.type) {
-                            StringCriterionInput::class -> {
-                                LaunchedEffect(Unit) {
-                                    if (initialValue == null) {
-                                        value =
-                                            StringCriterionInput(
-                                                value = "",
-                                                modifier = CriterionModifier.EQUALS,
-                                            )
+                    ObjectFilterPicker(
+                        filterOption = filterOption,
+                        initialValue = initialValue,
+                        objectFilterChoiceFocusRequester = objectFilterChoiceFocusRequester,
+                        saveObjectFilter = saveObjectFilter,
+                        onInputCriterionModifier = { inputCriterionModifier = it },
+                        onInputTextAction = { inputTextAction = it },
+                        modifier =
+                            Modifier
+                                .width(listWidth)
+                                .animateItem()
+                                .focusRequester(objectFilterChoiceFocusRequester)
+                                .focusProperties {
+                                    onExit = {
+                                        selectedFilterOption = null
                                     }
-                                }
-                                value?.let { input ->
-                                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-                                    input as StringCriterionInput
-                                    StringPicker(
-                                        modifier =
-                                            Modifier
-                                                .width(listWidth)
-                                                .animateItem()
-                                                .focusRequester(objectFilterChoiceFocusRequester)
-                                                .focusProperties {
-                                                    onExit = {
-                                                        selectedFilterOption = null
-                                                    }
-                                                }.background(
-                                                    color = MaterialTheme.colorScheme.secondaryContainer,
-                                                    shape = RoundedCornerShape(16.dp),
-                                                ),
-                                        name = stringResource(filterOption.nameStringId),
-                                        value = input,
-                                        removeEnabled = initialValue != null,
-                                        onChangeCriterionModifier = {
-                                            inputCriterionModifier =
-                                                InputCriterionModifier(
-                                                    filterName = context.getString(filterOption.nameStringId),
-                                                    allowedModifiers =
-                                                        filterOption.allowedModifiers
-                                                            ?: listOf(
-                                                                CriterionModifier.EQUALS,
-                                                                CriterionModifier.NOT_EQUALS,
-                                                                CriterionModifier.INCLUDES,
-                                                                CriterionModifier.EXCLUDES,
-                                                                CriterionModifier.IS_NULL,
-                                                                CriterionModifier.NOT_NULL,
-                                                                CriterionModifier.MATCHES_REGEX,
-                                                                CriterionModifier.NOT_MATCHES_REGEX,
-                                                            ),
-                                                    onClick = {
-                                                        value = input.copy(modifier = it)
-                                                    },
-                                                )
-                                        },
-                                        onChangeValue = {
-                                            inputTextAction =
-                                                InputTextAction(
-                                                    title = context.getString(filterOption.nameStringId),
-                                                    value = input.value,
-                                                    keyboardType = KeyboardType.Text,
-                                                    onSubmit = {
-                                                        value = input.copy(value = it)
-                                                    },
-                                                )
-                                        },
-                                        onSave = { saveObjectFilter(value) },
-                                        onRemove = { saveObjectFilter(null) },
-                                    )
-                                }
-                            }
-
-                            IntCriterionInput::class -> {
-                                LaunchedEffect(Unit) {
-                                    if (initialValue == null) {
-                                        value =
-                                            IntCriterionInput(
-                                                value = 0,
-                                                value2 = Optional.absent(),
-                                                modifier = CriterionModifier.EQUALS,
-                                            )
-                                    }
-                                }
-                                value?.let { input ->
-                                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-                                    input as IntCriterionInput
-                                    IntPicker(
-                                        modifier =
-                                            Modifier
-                                                .width(listWidth)
-                                                .animateItem()
-                                                .focusRequester(objectFilterChoiceFocusRequester)
-                                                .focusProperties {
-                                                    onExit = {
-                                                        selectedFilterOption = null
-                                                    }
-                                                }.background(
-                                                    color = MaterialTheme.colorScheme.secondaryContainer,
-                                                    shape = RoundedCornerShape(16.dp),
-                                                ),
-                                        name = stringResource(filterOption.nameStringId),
-                                        value = input,
-                                        removeEnabled = initialValue != null,
-                                        onChangeCriterionModifier = {
-                                            inputCriterionModifier =
-                                                InputCriterionModifier(
-                                                    filterName = context.getString(filterOption.nameStringId),
-                                                    allowedModifiers =
-                                                        filterOption.allowedModifiers
-                                                            ?: listOf(
-                                                                CriterionModifier.EQUALS,
-                                                                CriterionModifier.NOT_EQUALS,
-                                                                CriterionModifier.BETWEEN,
-                                                                CriterionModifier.NOT_BETWEEN,
-                                                                CriterionModifier.GREATER_THAN,
-                                                                CriterionModifier.LESS_THAN,
-                                                                CriterionModifier.IS_NULL,
-                                                                CriterionModifier.NOT_NULL,
-                                                            ),
-                                                    onClick = {
-                                                        value = input.copy(modifier = it)
-                                                    },
-                                                )
-                                        },
-                                        onChangeValue = { isValue2 ->
-                                            inputTextAction =
-                                                InputTextAction(
-                                                    title = context.getString(filterOption.nameStringId),
-                                                    value =
-                                                        (
-                                                            if (isValue2) {
-                                                                input.value2.getOrNull()
-                                                                    ?: 0
-                                                            } else {
-                                                                input.value
-                                                            }
-                                                        ).toString(),
-                                                    keyboardType = KeyboardType.Number,
-                                                    onSubmit = {
-                                                        val newInt = it.toIntOrNull()
-                                                        if (newInt != null) {
-                                                            value =
-                                                                if (isValue2) {
-                                                                    input.copy(
-                                                                        value2 =
-                                                                            Optional.present(
-                                                                                newInt,
-                                                                            ),
-                                                                    )
-                                                                } else {
-                                                                    input.copy(value = newInt)
-                                                                }
-                                                        }
-                                                    },
-                                                )
-                                        },
-                                        onSave = { saveObjectFilter(value) },
-                                        onRemove = { saveObjectFilter(null) },
-                                    )
-                                }
-                            }
-                        }
-                    }
+                                }.background(
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    shape = RoundedCornerShape(16.dp),
+                                ),
+                    )
                 }
             }
         }

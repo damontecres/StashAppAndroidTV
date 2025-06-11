@@ -6,16 +6,24 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.tv.material3.Icon
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
@@ -23,6 +31,7 @@ import com.github.damontecres.stashapp.filter.CreateFilterViewModel
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.filter.filterSummary
 import com.github.damontecres.stashapp.filter.getFilterOptions
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 
 @Composable
@@ -73,49 +82,45 @@ fun ObjectFilterList(
 }
 
 @Composable
-fun ObjectFilterChooser(
-    objectFilter: StashDataFilter,
-    filterOption: FilterOption<StashDataFilter, *>,
-    onSave: (StashDataFilter) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    if (filterOption.nameStringId == R.string.stashapp_rating) {
-        // TODO
-    } else if (filterOption.nameStringId == R.string.stashapp_duration) {
-        // TODO
-    } else {
-        when (filterOption.type) {
-            StringCriterionInput::class -> {
-                filterOption as FilterOption<StashDataFilter, StringCriterionInput>
-                val value = filterOption.getter.invoke(objectFilter).getOrNull()
-
-                StringPicker(
-                    modifier = modifier,
-                    name = stringResource(filterOption.nameStringId),
-                    value =
-                        value ?: StringCriterionInput(
-                            value = "",
-                            modifier = CriterionModifier.EQUALS,
-                        ),
-                    removeEnabled = value != null,
-                    onChangeCriterionModifier = {},
-                    onChangeValue = {},
-                    onSave = {},
-                    onRemove = {},
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ObjectFilterChooser(
-    value: Any,
-    removeEnabled: Boolean,
+fun ObjectFilterPicker(
     filterOption: FilterOption<StashDataFilter, Any>,
-    onSave: () -> Unit,
+    initialValue: Any?,
+    objectFilterChoiceFocusRequester: FocusRequester,
+    saveObjectFilter: (Any?) -> Unit,
+    onInputCriterionModifier: (InputCriterionModifier) -> Unit,
+    onInputTextAction: (InputTextAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    var value by remember { mutableStateOf(initialValue) }
+
+    fun onChangeCriterionModifier(change: (CriterionModifier) -> Any): () -> Unit =
+        {
+            onInputCriterionModifier.invoke(
+                InputCriterionModifier(
+                    filterName = context.getString(filterOption.nameStringId),
+                    allowedModifiers = filterOption.allowedModifiers,
+                    onClick = { value = change.invoke(it) },
+                ),
+            )
+        }
+
+    fun onChangeValue(
+        currentValue: Any?,
+        keyboardType: KeyboardType,
+        change: (String) -> Any?,
+    ): () -> Unit =
+        {
+            onInputTextAction.invoke(
+                InputTextAction(
+                    title = context.getString(filterOption.nameStringId),
+                    value = currentValue?.toString(),
+                    keyboardType = keyboardType,
+                    onSubmit = { value = change.invoke(it) },
+                ),
+            )
+        }
+
     if (filterOption.nameStringId == R.string.stashapp_rating) {
         // TODO
     } else if (filterOption.nameStringId == R.string.stashapp_duration) {
@@ -123,16 +128,121 @@ fun ObjectFilterChooser(
     } else {
         when (filterOption.type) {
             StringCriterionInput::class -> {
-                StringPicker(
-                    modifier = modifier,
-                    name = stringResource(filterOption.nameStringId),
-                    value = value as StringCriterionInput,
-                    removeEnabled = removeEnabled,
-                    onChangeCriterionModifier = {},
-                    onChangeValue = {},
-                    onSave = {},
-                    onRemove = {},
-                )
+                LaunchedEffect(Unit) {
+                    if (initialValue == null) {
+                        value =
+                            StringCriterionInput(
+                                value = "",
+                                modifier = CriterionModifier.EQUALS,
+                            )
+                    }
+                }
+                value?.let { input ->
+                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+                    input as StringCriterionInput
+                    CriterionInputPicker(
+                        modifier = modifier,
+                        name = stringResource(filterOption.nameStringId),
+                        value = SimpleStringCriterionInput(input),
+                        removeEnabled = initialValue != null,
+                        onChangeCriterionModifier =
+                            onChangeCriterionModifier {
+                                input.copy(modifier = it)
+                            },
+                        onChangeValue =
+                            onChangeValue(
+                                input.value,
+                                KeyboardType.Text,
+                            ) {
+                                input.copy(value = it)
+                            },
+                        onChangeValue2 = {},
+                        onSave = { saveObjectFilter(value) },
+                        onRemove = { saveObjectFilter(null) },
+                    )
+                }
+            }
+
+            IntCriterionInput::class -> {
+                LaunchedEffect(Unit) {
+                    if (initialValue == null) {
+                        value =
+                            IntCriterionInput(
+                                value = 0,
+                                value2 = Optional.absent(),
+                                modifier = CriterionModifier.EQUALS,
+                            )
+                    }
+                }
+                value?.let { input ->
+                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+                    input as IntCriterionInput
+                    CriterionInputPicker(
+                        modifier = modifier,
+                        name = stringResource(filterOption.nameStringId),
+                        value = SimpleIntCriterionInput(input),
+                        removeEnabled = initialValue != null,
+                        onChangeCriterionModifier =
+                            onChangeCriterionModifier { input.copy(modifier = it) },
+                        onChangeValue =
+                            onChangeValue(
+                                input.value,
+                                KeyboardType.Number,
+                            ) {
+                                it.toIntOrNull()?.let { input.copy(value = it) }
+                            },
+                        onChangeValue2 =
+                            onChangeValue(
+                                input.value2.getOrNull(),
+                                KeyboardType.Number,
+                            ) {
+                                input.copy(value2 = Optional.presentIfNotNull(it.toIntOrNull()))
+                            },
+                        onSave = { saveObjectFilter(value) },
+                        onRemove = { saveObjectFilter(null) },
+                    )
+                }
+            }
+
+            FloatCriterionInput::class -> {
+                LaunchedEffect(Unit) {
+                    if (initialValue == null) {
+                        value =
+                            FloatCriterionInput(
+                                value = 0.0,
+                                value2 = Optional.absent(),
+                                modifier = CriterionModifier.EQUALS,
+                            )
+                    }
+                }
+                value?.let { input ->
+                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+                    input as FloatCriterionInput
+                    CriterionInputPicker(
+                        modifier = modifier,
+                        name = stringResource(filterOption.nameStringId),
+                        value = SimpleFloatCriterionInput(input),
+                        removeEnabled = initialValue != null,
+                        onChangeCriterionModifier =
+                            onChangeCriterionModifier { input.copy(modifier = it) },
+                        onChangeValue =
+                            onChangeValue(
+                                input.value,
+                                KeyboardType.Decimal,
+                            ) {
+                                it.toDoubleOrNull()?.let { input.copy(value = it) }
+                            },
+                        onChangeValue2 =
+                            onChangeValue(
+                                input.value2.getOrNull(),
+                                KeyboardType.Decimal,
+                            ) {
+                                input.copy(value2 = Optional.presentIfNotNull(it.toDoubleOrNull()))
+                            },
+                        onSave = { saveObjectFilter(value) },
+                        onRemove = { saveObjectFilter(null) },
+                    )
+                }
             }
         }
     }

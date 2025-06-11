@@ -35,6 +35,7 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -145,6 +146,16 @@ val CriterionModifier.between: Boolean
     get() = this == CriterionModifier.BETWEEN || this == CriterionModifier.NOT_BETWEEN
 
 val IntCriterionInput.valid: Boolean
+    get() {
+        if (modifier.between) {
+            val val2 = value2.getOrNull()
+            return val2 != null && value < val2
+        } else {
+            return true
+        }
+    }
+
+val FloatCriterionInput.valid: Boolean
     get() {
         if (modifier.between) {
             val val2 = value2.getOrNull()
