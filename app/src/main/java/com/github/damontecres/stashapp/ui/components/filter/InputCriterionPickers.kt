@@ -204,7 +204,7 @@ class SimpleStringCriterionInput(
 @Composable
 fun GenericCriterionInputPicker(
     name: String,
-    criterionModifier: CriterionModifier,
+    criterionModifier: CriterionModifier?,
     removeEnabled: Boolean,
     isValid: Boolean,
     onChangeCriterionModifier: () -> Unit,
@@ -224,13 +224,15 @@ fun GenericCriterionInputPicker(
                 modifier = Modifier.fillParentMaxWidth(),
             )
         }
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.modifier),
-                subtitle = criterionModifier.getString(context),
-                showArrow = true,
-                onClick = onChangeCriterionModifier,
-            )
+        if (criterionModifier != null) {
+            item {
+                SimpleListItem(
+                    title = stringResource(R.string.modifier),
+                    subtitle = criterionModifier.getString(context),
+                    showArrow = true,
+                    onClick = onChangeCriterionModifier,
+                )
+            }
         }
 
         content.invoke(this)
@@ -323,7 +325,7 @@ fun <T : Comparable<T>> CriterionInputPicker(
 fun SelectFromListPicker(
     name: String,
     values: List<String>,
-    criterionModifier: CriterionModifier,
+    criterionModifier: CriterionModifier?,
     removeEnabled: Boolean,
     onChangeCriterionModifier: () -> Unit,
     onChangeValue: () -> Unit,

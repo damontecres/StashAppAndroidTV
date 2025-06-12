@@ -21,11 +21,18 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.tv.material3.Icon
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
+import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.GenderCriterionInput
+import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
+import com.github.damontecres.stashapp.api.type.OrientationEnum
 import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
@@ -33,12 +40,13 @@ import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterViewModel
 import com.github.damontecres.stashapp.filter.FilterOption
-import com.github.damontecres.stashapp.filter.ResolutionCriterionModifiers
+import com.github.damontecres.stashapp.filter.displayName
 import com.github.damontecres.stashapp.filter.filterSummary
 import com.github.damontecres.stashapp.filter.getFilterOptions
 import com.github.damontecres.stashapp.filter.resolutionName
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
+import com.github.damontecres.stashapp.views.circNameId
 
 @Composable
 fun ObjectFilterList(
@@ -271,7 +279,7 @@ fun ObjectFilterPicker(
                         value =
                             ResolutionCriterionInput(
                                 value = ResolutionEnum.FULL_HD,
-                                modifier = ResolutionCriterionModifiers[0],
+                                modifier = filterOption.allowedModifiers[0],
                             )
                     }
                 }
@@ -301,6 +309,111 @@ fun ObjectFilterPicker(
                                             value =
                                                 input.copy(value = ResolutionEnum.entries[idx])
                                         }
+                                    },
+                                ),
+                            )
+                        },
+                        onSave = { saveObjectFilter(value) },
+                        onRemove = { saveObjectFilter(null) },
+                    )
+                }
+            }
+
+            CircumcisionCriterionInput::class -> {
+                LaunchedEffect(Unit) {
+                    if (initialValue == null) {
+                        value =
+                            CircumcisionCriterionInput(
+                                value = Optional.absent(),
+                                modifier = filterOption.allowedModifiers[0],
+                            )
+                    }
+                }
+                value?.let { input ->
+                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+                    input as CircumcisionCriterionInput
+                    SelectFromListPicker(
+                        modifier = modifier,
+                        name = stringResource(filterOption.nameStringId),
+                        values =
+                            (input.value.getOrNull() ?: listOf()).map {
+                                context.getString(circNameId(it))
+                            },
+                        criterionModifier = input.modifier,
+                        removeEnabled = initialValue != null,
+                        onChangeCriterionModifier =
+                            onChangeCriterionModifier { input.copy(modifier = it) },
+                        onChangeValue = {
+                            onSelectFromListAction.invoke(
+                                SelectFromListAction(
+                                    filterName = context.getString(filterOption.nameStringId),
+                                    options =
+                                        CircumisedEnum.entries
+                                            .filter { it != CircumisedEnum.UNKNOWN__ }
+                                            .map { context.getString(circNameId(it)) },
+                                    currentOptions =
+                                        (input.value.getOrNull() ?: listOf()).map {
+                                            context.getString(circNameId(it))
+                                        },
+                                    multiSelect = true,
+                                    onSubmit = {
+                                        value =
+                                            input.copy(value = Optional.present(it.map { CircumisedEnum.entries[it] }))
+                                    },
+                                ),
+                            )
+                        },
+                        onSave = { saveObjectFilter(value) },
+                        onRemove = { saveObjectFilter(null) },
+                    )
+                }
+            }
+
+            DateCriterionInput::class -> {
+                TODO()
+            }
+
+            GenderCriterionInput::class -> {
+                LaunchedEffect(Unit) {
+                    if (initialValue == null) {
+                        value =
+                            GenderCriterionInput(
+                                value = Optional.absent(),
+                                value_list = Optional.absent(),
+                                modifier = filterOption.allowedModifiers[0],
+                            )
+                    }
+                }
+                value?.let { input ->
+                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+                    input as GenderCriterionInput
+                    SelectFromListPicker(
+                        modifier = modifier,
+                        name = stringResource(filterOption.nameStringId),
+                        values =
+                            (input.value_list.getOrNull() ?: listOf()).map {
+                                displayName(context, it)
+                            },
+                        criterionModifier = input.modifier,
+                        removeEnabled = initialValue != null,
+                        onChangeCriterionModifier =
+                            onChangeCriterionModifier { input.copy(modifier = it) },
+                        onChangeValue = {
+                            onSelectFromListAction.invoke(
+                                SelectFromListAction(
+                                    filterName = context.getString(filterOption.nameStringId),
+                                    options =
+                                        GenderEnum.entries
+                                            .filter { it != GenderEnum.UNKNOWN__ }
+                                            .map { displayName(context, it) },
+                                    currentOptions =
+                                        (input.value_list.getOrNull() ?: listOf()).map {
+                                            displayName(context, it)
+                                        },
+                                    multiSelect = true,
+                                    onSubmit = {
+                                        value =
+                                            input.copy(value_list = Optional.present(it.map { GenderEnum.entries[it] }))
                                     },
                                 ),
                             )
@@ -379,6 +492,48 @@ fun ObjectFilterPicker(
                         onSave = { saveObjectFilter(value) },
                         onRemove = { saveObjectFilter(null) },
                         modifier = modifier,
+                    )
+                }
+            }
+
+            OrientationCriterionInput::class -> {
+                LaunchedEffect(Unit) {
+                    if (initialValue == null) {
+                        value =
+                            OrientationCriterionInput(
+                                value = listOf(),
+                            )
+                    }
+                }
+                value?.let { input ->
+                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+                    input as OrientationCriterionInput
+                    SelectFromListPicker(
+                        modifier = modifier,
+                        name = stringResource(filterOption.nameStringId),
+                        values = input.value.map { displayName(it) },
+                        criterionModifier = null,
+                        removeEnabled = initialValue != null,
+                        onChangeCriterionModifier = {},
+                        onChangeValue = {
+                            onSelectFromListAction.invoke(
+                                SelectFromListAction(
+                                    filterName = context.getString(filterOption.nameStringId),
+                                    options =
+                                        OrientationEnum.entries
+                                            .filter { it != OrientationEnum.UNKNOWN__ }
+                                            .map { displayName(it) },
+                                    currentOptions = input.value.map { displayName(it) },
+                                    multiSelect = true,
+                                    onSubmit = {
+                                        value =
+                                            input.copy(value = it.map { OrientationEnum.entries[it] })
+                                    },
+                                ),
+                            )
+                        },
+                        onSave = { saveObjectFilter(value) },
+                        onRemove = { saveObjectFilter(null) },
                     )
                 }
             }

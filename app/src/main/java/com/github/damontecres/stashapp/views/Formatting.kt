@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.util.StashServer
 import java.time.LocalDate
@@ -170,4 +171,11 @@ fun formatNumber(
         java.text.NumberFormat
             .getNumberInstance()
             .format(number)
+    }
+
+fun circNameId(circ: CircumisedEnum): Int =
+    when (circ) {
+        CircumisedEnum.CUT -> R.string.stashapp_circumcised_types_CUT
+        CircumisedEnum.UNCUT -> R.string.stashapp_circumcised_types_UNCUT
+        CircumisedEnum.UNKNOWN__ -> R.string.stashapp_display_mode_unknown
     }
