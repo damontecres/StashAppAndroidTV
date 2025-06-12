@@ -398,43 +398,45 @@ fun MultiCriterionPicker(
                 onClick = onChangeCriterionModifier,
             )
         }
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.stashapp_criterion_modifier_includes),
-                subtitle = include.joinToString(", "),
-                showArrow = true,
-                onClick = onPickInclude,
-            )
-        }
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.stashapp_criterion_modifier_excludes),
-                subtitle = exclude.joinToString(", "),
-                showArrow = true,
-                onClick = onPickExclude,
-            )
-        }
-        includeSubValues?.let { checked ->
-            val subValueTitle =
-                when (dataType) {
-                    DataType.TAG -> context.getString(R.string.stashapp_include_sub_tags)
-                    DataType.STUDIO -> context.getString(R.string.stashapp_include_sub_studios)
-                    DataType.GROUP -> context.getString(R.string.stashapp_include_sub_groups)
-                    else -> throw IllegalStateException("$dataType not supported")
-                }
+        if (!criterionModifier.nullCheck) {
             item {
                 SimpleListItem(
-                    title = subValueTitle,
-                    subtitle = null,
-                    showArrow = false,
-                    onClick = onIncludeSubValueClick!!,
-                    leadingContent = {
-                        Switch(
-                            checked = checked,
-                            onCheckedChange = {},
-                        )
-                    },
+                    title = stringResource(R.string.stashapp_criterion_modifier_includes),
+                    subtitle = include.joinToString(", "),
+                    showArrow = true,
+                    onClick = onPickInclude,
                 )
+            }
+            item {
+                SimpleListItem(
+                    title = stringResource(R.string.stashapp_criterion_modifier_excludes),
+                    subtitle = exclude.joinToString(", "),
+                    showArrow = true,
+                    onClick = onPickExclude,
+                )
+            }
+            if (includeSubValues != null && onIncludeSubValueClick != null) {
+                val subValueTitle =
+                    when (dataType) {
+                        DataType.TAG -> context.getString(R.string.stashapp_include_sub_tags)
+                        DataType.STUDIO -> context.getString(R.string.stashapp_include_sub_studios)
+                        DataType.GROUP -> context.getString(R.string.stashapp_include_sub_groups)
+                        else -> throw IllegalStateException("$dataType not supported")
+                    }
+                item {
+                    SimpleListItem(
+                        title = subValueTitle,
+                        subtitle = null,
+                        showArrow = false,
+                        onClick = onIncludeSubValueClick,
+                        leadingContent = {
+                            Switch(
+                                checked = includeSubValues,
+                                onCheckedChange = null,
+                            )
+                        },
+                    )
+                }
             }
         }
         item {

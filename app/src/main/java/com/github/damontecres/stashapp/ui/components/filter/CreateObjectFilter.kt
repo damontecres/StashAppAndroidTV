@@ -23,6 +23,7 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
@@ -364,6 +365,85 @@ fun ObjectFilterPicker(
                             )
                         },
                         onIncludeSubValueClick = null,
+                        onSave = { saveObjectFilter(value) },
+                        onRemove = { saveObjectFilter(null) },
+                        modifier = modifier,
+                    )
+                }
+            }
+
+            HierarchicalMultiCriterionInput::class -> {
+                LaunchedEffect(Unit) {
+                    if (initialValue == null) {
+                        value =
+                            HierarchicalMultiCriterionInput(
+                                value = Optional.absent(),
+                                excludes = Optional.absent(),
+                                depth = Optional.absent(),
+                                modifier = filterOption.allowedModifiers[0],
+                            )
+                    }
+                }
+                value?.let { input ->
+                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+                    input as HierarchicalMultiCriterionInput
+                    MultiCriterionPicker(
+                        name = stringResource(filterOption.nameStringId),
+                        dataType = filterOption.dataType!!,
+                        criterionModifier = input.modifier,
+                        include = input.value.getOrNull()?.map(mapIdToName) ?: listOf(),
+                        exclude = input.excludes.getOrNull()?.map(mapIdToName) ?: listOf(),
+                        removeEnabled = initialValue != null,
+                        includeSubValues = input.depth.getOrNull() == -1,
+                        onChangeCriterionModifier = onChangeCriterionModifier { input.copy(modifier = it) },
+                        onPickInclude = {
+                            onMultiCriterionInfo.invoke(
+                                MultiCriterionInfo(
+                                    name = "",
+                                    dataType = filterOption.dataType,
+                                    initialValues =
+                                        input.value.getOrNull()?.map {
+                                            IdName(it, mapIdToName.invoke(it))
+                                        } ?: listOf(),
+                                    onAdd = {
+                                        val list =
+                                            (input.value.getOrNull()?.map { it } ?: listOf())
+                                                .toMutableList()
+                                        list.add(it.id)
+                                        value =
+                                            input.copy(value = Optional.present(list))
+                                    },
+                                    onSave = {
+                                        value =
+                                            input.copy(value = Optional.present(it.map { it.id }))
+                                    },
+                                ),
+                            )
+                        },
+                        onPickExclude = {
+                            onMultiCriterionInfo.invoke(
+                                MultiCriterionInfo(
+                                    name = "",
+                                    dataType = filterOption.dataType,
+                                    initialValues =
+                                        input.excludes.getOrNull()?.map {
+                                            IdName(it, mapIdToName.invoke(it))
+                                        } ?: listOf(),
+                                    onAdd = {},
+                                    onSave = {
+                                        value =
+                                            input.copy(excludes = Optional.present(it.map { it.id }))
+                                    },
+                                ),
+                            )
+                        },
+                        onIncludeSubValueClick = {
+                            if (input.depth.getOrNull() == -1) {
+                                value = input.copy(depth = Optional.absent())
+                            } else {
+                                value = input.copy(depth = Optional.present(-1))
+                            }
+                        },
                         onSave = { saveObjectFilter(value) },
                         onRemove = { saveObjectFilter(null) },
                         modifier = modifier,
