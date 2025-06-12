@@ -44,9 +44,16 @@ import com.github.damontecres.stashapp.filter.displayName
 import com.github.damontecres.stashapp.filter.filterSummary
 import com.github.damontecres.stashapp.filter.getFilterOptions
 import com.github.damontecres.stashapp.filter.resolutionName
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.views.circNameId
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+
+private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
 
 @Composable
 fun ObjectFilterList(
@@ -97,6 +104,7 @@ fun ObjectFilterList(
 
 @Composable
 fun ObjectFilterPicker(
+    uiConfig: ComposeUiConfig,
     filterOption: FilterOption<StashDataFilter, Any>,
     initialValue: Any?,
     objectFilterChoiceFocusRequester: FocusRequester,
@@ -105,6 +113,7 @@ fun ObjectFilterPicker(
     onInputTextAction: (InputTextAction) -> Unit,
     onSelectFromListAction: (SelectFromListAction) -> Unit,
     onMultiCriterionInfo: (MultiCriterionInfo) -> Unit,
+    onInputDateAction: (InputDateAction) -> Unit,
     mapIdToName: (id: String) -> String,
     modifier: Modifier = Modifier,
 ) {
@@ -139,7 +148,54 @@ fun ObjectFilterPicker(
         }
 
     if (filterOption.nameStringId == R.string.stashapp_rating) {
-        // TODO
+        LaunchedEffect(Unit) {
+            if (initialValue == null) {
+                value =
+                    IntCriterionInput(
+                        value = 0,
+                        value2 = Optional.absent(),
+                        modifier = CriterionModifier.EQUALS,
+                    )
+            }
+        }
+        value?.let { input ->
+            LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+            input as IntCriterionInput
+            val keyboardType =
+                if (uiConfig.ratingAsStars) KeyboardType.Decimal else KeyboardType.Number
+            val multiplier = if (uiConfig.ratingAsStars) 20.0 else 10.0
+            CriterionInputPicker(
+                modifier = modifier,
+                name = stringResource(filterOption.nameStringId),
+                value = SimpleRatingCriterionInput(input, uiConfig.ratingAsStars),
+                removeEnabled = initialValue != null,
+                onChangeCriterionModifier =
+                    onChangeCriterionModifier { input.copy(modifier = it) },
+                onChangeValue =
+                    onChangeValue(
+                        input.value / multiplier,
+                        keyboardType,
+                    ) {
+                        it.toDoubleOrNull()?.let { input.copy(value = (it * multiplier).toInt()) }
+                    },
+                onChangeValue2 =
+                    onChangeValue(
+                        input.value2
+                            .getOrNull()
+                            ?.let { it / multiplier },
+                        keyboardType,
+                    ) {
+                        input.copy(
+                            value2 =
+                                Optional.presentIfNotNull(
+                                    (it.toDoubleOrNull()?.times(multiplier))?.toInt(),
+                                ),
+                        )
+                    },
+                onSave = { saveObjectFilter(value) },
+                onRemove = { saveObjectFilter(null) },
+            )
+        }
     } else if (filterOption.nameStringId == R.string.stashapp_duration) {
         // TODO
     } else {
@@ -370,7 +426,71 @@ fun ObjectFilterPicker(
             }
 
             DateCriterionInput::class -> {
-                TODO()
+                val defaultDate =
+                    remember {
+                        if (filterOption.nameStringId == R.string.stashapp_birthdate) {
+                            val cal = Calendar.getInstance()
+                            cal.time = Date()
+                            cal.add(Calendar.YEAR, -18)
+                            cal.time
+                        } else {
+                            Date()
+                        }
+                    }
+                LaunchedEffect(Unit) {
+                    if (initialValue == null) {
+                        value =
+                            DateCriterionInput(
+                                value = dateFormat.format(defaultDate),
+                                value2 = Optional.absent(),
+                                modifier = CriterionModifier.EQUALS,
+                            )
+                    }
+                }
+                value?.let { input ->
+                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+                    input as DateCriterionInput
+                    CriterionInputPicker(
+                        modifier = modifier,
+                        name = stringResource(filterOption.nameStringId),
+                        value = SimpleDateCriterionInput(input),
+                        removeEnabled = initialValue != null,
+                        onChangeCriterionModifier =
+                            onChangeCriterionModifier { input.copy(modifier = it) },
+                        onChangeValue = {
+                            onInputDateAction.invoke(
+                                InputDateAction(
+                                    name = context.getString(filterOption.nameStringId),
+                                    value = dateFormat.parse(input.value)!!,
+                                    onSave = {
+                                        value = input.copy(value = dateFormat.format(it))
+                                    },
+                                ),
+                            )
+                        },
+                        onChangeValue2 = {
+                            onInputDateAction.invoke(
+                                InputDateAction(
+                                    name = context.getString(filterOption.nameStringId),
+                                    value =
+                                        input.value2.getOrNull()?.let { dateFormat.parse(it) }
+                                            ?: defaultDate,
+                                    onSave = {
+                                        value =
+                                            input.copy(
+                                                value2 =
+                                                    Optional.presentIfNotNull(
+                                                        dateFormat.format(it),
+                                                    ),
+                                            )
+                                    },
+                                ),
+                            )
+                        },
+                        onSave = { saveObjectFilter(value) },
+                        onRemove = { saveObjectFilter(null) },
+                    )
+                }
             }
 
             GenderCriterionInput::class -> {

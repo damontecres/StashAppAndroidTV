@@ -56,6 +56,7 @@ import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import java.util.Date
 import kotlin.reflect.full.createInstance
 
 internal const val TAG = "CreateFilter"
@@ -157,6 +158,7 @@ fun CreateFilterColumns(
     var inputCriterionModifier by remember { mutableStateOf<InputCriterionModifier?>(null) }
     var selectFromListAction by remember { mutableStateOf<SelectFromListAction?>(null) }
     var multiCriterionInfo by remember { mutableStateOf<MultiCriterionInfo?>(null) }
+    var inputDateAction by remember { mutableStateOf<InputDateAction?>(null) }
 
     var selectedFilterOption by remember { mutableStateOf<FilterOption<StashDataFilter, Any>?>(null) }
 
@@ -165,11 +167,18 @@ fun CreateFilterColumns(
     val context = LocalContext.current
     val listWidth = 280.dp
 
+    val shouldBlur =
+        inputTextAction != null ||
+            inputCriterionModifier != null ||
+            selectFromListAction != null ||
+            multiCriterionInfo != null ||
+            inputDateAction != null
+
     LazyRow(
         modifier =
             modifier
                 .ifElse(
-                    inputTextAction != null || inputCriterionModifier != null,
+                    shouldBlur,
                     Modifier.blur(10.dp),
                 ),
         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -360,6 +369,7 @@ fun CreateFilterColumns(
                     }
 
                     ObjectFilterPicker(
+                        uiConfig = uiConfig,
                         filterOption = filterOption,
                         initialValue = initialValue,
                         objectFilterChoiceFocusRequester = objectFilterChoiceFocusRequester,
@@ -368,6 +378,7 @@ fun CreateFilterColumns(
                         onInputTextAction = { inputTextAction = it },
                         onSelectFromListAction = { selectFromListAction = it },
                         onMultiCriterionInfo = { multiCriterionInfo = it },
+                        onInputDateAction = { inputDateAction = it },
                         mapIdToName = {
                             // TODO?
                             idLookup.invoke(filterOption.dataType!!, listOf(it))[it]?.name ?: it
@@ -425,6 +436,14 @@ fun CreateFilterColumns(
             idStore = idStore,
         )
     }
+    inputDateAction?.let {
+        DatePickerDialog(
+            name = it.name,
+            value = it.value,
+            onSave = it.onSave,
+            onDismiss = { inputDateAction = null },
+        )
+    }
 }
 
 data class InputTextAction(
@@ -454,6 +473,12 @@ data class MultiCriterionInfo(
     val initialValues: List<IdName>,
     val onAdd: (IdName) -> Unit,
     val onSave: (List<IdName>) -> Unit,
+)
+
+data class InputDateAction(
+    val name: String,
+    val value: Date,
+    val onSave: (Date) -> Unit,
 )
 
 @Composable

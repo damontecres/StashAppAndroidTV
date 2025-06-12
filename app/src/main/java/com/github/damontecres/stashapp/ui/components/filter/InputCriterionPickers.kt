@@ -35,8 +35,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.leanback.widget.picker.DatePicker
 import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
@@ -46,6 +48,7 @@ import androidx.tv.material3.surfaceColorAtElevation
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
@@ -59,6 +62,7 @@ import com.github.damontecres.stashapp.ui.nullCheck
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.views.getString
+import java.util.Date
 
 @Composable
 fun CriterionModifierPickerDialog(
@@ -199,6 +203,41 @@ class SimpleStringCriterionInput(
     override val value: String = input.value
     override val value2: String? = null
     override val modifier: CriterionModifier = input.modifier
+}
+
+class SimpleDateCriterionInput(
+    val input: DateCriterionInput,
+) : SimpleCriterionInput<String> {
+    override val value: String = input.value
+    override val value2: String? = input.value2.getOrNull()
+    override val modifier: CriterionModifier = input.modifier
+}
+
+class SimpleRatingCriterionInput(
+    val input: IntCriterionInput,
+    val ratingAsStar: Boolean,
+) : SimpleCriterionInput<String> {
+    private fun convert(v: Int) = if (ratingAsStar) v / 20.0 else v / 10.0
+
+    override val value: String = (convert(input.value)).toString()
+    override val value2: String? =
+        input.value2
+            .getOrNull()
+            ?.let(::convert)
+            ?.toString()
+    override val modifier: CriterionModifier = input.modifier
+
+    override fun isValid(): Boolean {
+        val range = if (ratingAsStar) 0.0..5.0 else 0.0..10.0
+        if (value.toDouble() !in range) {
+            return false
+        } else if (modifier.between &&
+            (value2 == null || value2.toDouble() !in range || value.toDouble() > value2.toDouble())
+        ) {
+            return false
+        }
+        return true
+    }
 }
 
 @Composable
@@ -620,5 +659,53 @@ fun MultiCriterionPickerDialog(
             allowCreate = false,
             startingSearchQuery = "",
         )
+    }
+}
+
+@Composable
+fun DatePickerDialog(
+    name: String,
+    value: Date,
+    onSave: (Date) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(),
+    ) {
+        LazyColumn(
+            modifier =
+                modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp),
+                        shape = RoundedCornerShape(16.dp),
+                    ),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            stickyHeader {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            item {
+                AndroidView(
+                    factory = {
+                        DatePicker(it, null)
+                    },
+                    update = { picker ->
+                        picker.date = value.time
+                        picker.isActivated = true
+                        picker.setOnClickListener {
+                            onSave.invoke(Date(picker.date))
+                            onDismiss.invoke()
+                        }
+                    },
+                )
+            }
+        }
     }
 }
