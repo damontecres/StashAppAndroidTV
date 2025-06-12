@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -201,19 +202,18 @@ class SimpleStringCriterionInput(
 }
 
 @Composable
-fun <T : Comparable<T>> CriterionInputPicker(
+fun GenericCriterionInputPicker(
     name: String,
-    value: SimpleCriterionInput<T>,
+    criterionModifier: CriterionModifier,
     removeEnabled: Boolean,
+    isValid: Boolean,
     onChangeCriterionModifier: () -> Unit,
-    onChangeValue: () -> Unit,
-    onChangeValue2: () -> Unit,
     onSave: () -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
+    content: LazyListScope.() -> Unit,
 ) {
     val context = LocalContext.current
-
     LazyColumn(modifier = modifier) {
         stickyHeader {
             Text(
@@ -227,11 +227,66 @@ fun <T : Comparable<T>> CriterionInputPicker(
         item {
             SimpleListItem(
                 title = stringResource(R.string.modifier),
-                subtitle = value.modifier.getString(context),
+                subtitle = criterionModifier.getString(context),
                 showArrow = true,
                 onClick = onChangeCriterionModifier,
             )
         }
+
+        content.invoke(this)
+
+        item {
+            SimpleListItem(
+                title = stringResource(R.string.stashapp_actions_save),
+                subtitle = null,
+                showArrow = false,
+                onClick = onSave,
+                enabled = isValid,
+            )
+        }
+        if (removeEnabled) {
+            // If initial value is not null, then show option to remove it
+            item {
+                SimpleListItem(
+                    title = stringResource(R.string.stashapp_actions_remove),
+                    subtitle = null,
+                    showArrow = false,
+                    onClick = onRemove,
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = stringResource(R.string.stashapp_actions_remove),
+                            tint = Color.Red,
+                        )
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun <T : Comparable<T>> CriterionInputPicker(
+    name: String,
+    value: SimpleCriterionInput<T>,
+    removeEnabled: Boolean,
+    onChangeCriterionModifier: () -> Unit,
+    onChangeValue: () -> Unit,
+    onChangeValue2: () -> Unit,
+    onSave: () -> Unit,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    GenericCriterionInputPicker(
+        name = name,
+        criterionModifier = value.modifier,
+        removeEnabled = removeEnabled,
+        isValid = value.isValid(),
+        onChangeCriterionModifier = onChangeCriterionModifier,
+        onSave = onSave,
+        onRemove = onRemove,
+        modifier = modifier,
+    ) {
         if (!value.modifier.nullCheck) {
             item {
                 SimpleListItem(
@@ -261,33 +316,6 @@ fun <T : Comparable<T>> CriterionInputPicker(
                 }
             }
         }
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.stashapp_actions_save),
-                subtitle = null,
-                showArrow = false,
-                onClick = onSave,
-                enabled = value.isValid(),
-            )
-        }
-        if (removeEnabled) {
-            // If initial value is not null, then show option to remove it
-            item {
-                SimpleListItem(
-                    title = stringResource(R.string.stashapp_actions_remove),
-                    subtitle = null,
-                    showArrow = false,
-                    onClick = onRemove,
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.stashapp_actions_remove),
-                            tint = Color.Red,
-                        )
-                    },
-                )
-            }
-        }
     }
 }
 
@@ -303,26 +331,16 @@ fun SelectFromListPicker(
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-
-    LazyColumn(modifier = modifier) {
-        stickyHeader {
-            Text(
-                text = name,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillParentMaxWidth(),
-            )
-        }
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.modifier),
-                subtitle = criterionModifier.getString(context),
-                showArrow = true,
-                onClick = onChangeCriterionModifier,
-            )
-        }
+    GenericCriterionInputPicker(
+        name = name,
+        criterionModifier = criterionModifier,
+        removeEnabled = removeEnabled,
+        isValid = values.isNotEmpty(),
+        onChangeCriterionModifier = onChangeCriterionModifier,
+        onSave = onSave,
+        onRemove = onRemove,
+        modifier = modifier,
+    ) {
         item {
             SimpleListItem(
                 title = stringResource(R.string.stashapp_criterion_value),
@@ -330,33 +348,6 @@ fun SelectFromListPicker(
                 showArrow = true,
                 onClick = onChangeValue,
             )
-        }
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.stashapp_actions_save),
-                subtitle = null,
-                showArrow = false,
-                onClick = onSave,
-                enabled = values.isNotEmpty(),
-            )
-        }
-        if (removeEnabled) {
-            // If initial value is not null, then show option to remove it
-            item {
-                SimpleListItem(
-                    title = stringResource(R.string.stashapp_actions_remove),
-                    subtitle = null,
-                    showArrow = false,
-                    onClick = onRemove,
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.stashapp_actions_remove),
-                            tint = Color.Red,
-                        )
-                    },
-                )
-            }
         }
     }
 }
@@ -378,26 +369,16 @@ fun MultiCriterionPicker(
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-
-    LazyColumn(modifier = modifier) {
-        stickyHeader {
-            Text(
-                text = name,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillParentMaxWidth(),
-            )
-        }
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.modifier),
-                subtitle = criterionModifier.getString(context),
-                showArrow = true,
-                onClick = onChangeCriterionModifier,
-            )
-        }
+    GenericCriterionInputPicker(
+        name = name,
+        criterionModifier = criterionModifier,
+        removeEnabled = removeEnabled,
+        isValid = include.isNotEmpty() || exclude.isNotEmpty(),
+        onChangeCriterionModifier = onChangeCriterionModifier,
+        onSave = onSave,
+        onRemove = onRemove,
+        modifier = modifier,
+    ) {
         if (!criterionModifier.nullCheck) {
             item {
                 SimpleListItem(
@@ -416,14 +397,16 @@ fun MultiCriterionPicker(
                 )
             }
             if (includeSubValues != null && onIncludeSubValueClick != null) {
-                val subValueTitle =
-                    when (dataType) {
-                        DataType.TAG -> context.getString(R.string.stashapp_include_sub_tags)
-                        DataType.STUDIO -> context.getString(R.string.stashapp_include_sub_studios)
-                        DataType.GROUP -> context.getString(R.string.stashapp_include_sub_groups)
-                        else -> throw IllegalStateException("$dataType not supported")
-                    }
                 item {
+                    val subValueTitle =
+                        stringResource(
+                            when (dataType) {
+                                DataType.TAG -> R.string.stashapp_include_sub_tags
+                                DataType.STUDIO -> R.string.stashapp_include_sub_studios
+                                DataType.GROUP -> R.string.stashapp_include_sub_groups
+                                else -> throw IllegalStateException("$dataType not supported")
+                            },
+                        )
                     SimpleListItem(
                         title = subValueTitle,
                         subtitle = null,
@@ -437,33 +420,6 @@ fun MultiCriterionPicker(
                         },
                     )
                 }
-            }
-        }
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.stashapp_actions_save),
-                subtitle = null,
-                showArrow = false,
-                onClick = onSave,
-                enabled = include.isNotEmpty() || exclude.isNotEmpty(),
-            )
-        }
-        if (removeEnabled) {
-            // If initial value is not null, then show option to remove it
-            item {
-                SimpleListItem(
-                    title = stringResource(R.string.stashapp_actions_remove),
-                    subtitle = null,
-                    showArrow = false,
-                    onClick = onRemove,
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.stashapp_actions_remove),
-                            tint = Color.Red,
-                        )
-                    },
-                )
             }
         }
     }
