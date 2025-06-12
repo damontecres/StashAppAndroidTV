@@ -447,6 +447,7 @@ fun FragmentContent(
 
                 is Destination.CreateFilter ->
                     CreateFilterScreen(
+                        uiConfig = composeUiConfig,
                         dataType = destination.dataType,
                         initialFilter = destination.startingFilter,
                         modifier = Modifier.fillMaxSize(),

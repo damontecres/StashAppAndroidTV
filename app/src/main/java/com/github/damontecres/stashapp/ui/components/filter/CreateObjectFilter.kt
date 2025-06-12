@@ -24,6 +24,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
+import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
@@ -34,6 +35,7 @@ import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.filter.ResolutionCriterionModifiers
 import com.github.damontecres.stashapp.filter.filterSummary
 import com.github.damontecres.stashapp.filter.getFilterOptions
+import com.github.damontecres.stashapp.filter.resolutionName
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 
@@ -93,6 +95,8 @@ fun ObjectFilterPicker(
     onInputCriterionModifier: (InputCriterionModifier) -> Unit,
     onInputTextAction: (InputTextAction) -> Unit,
     onSelectFromListAction: (SelectFromListAction) -> Unit,
+    onMultiCriterionInfo: (MultiCriterionInfo) -> Unit,
+    mapIdToName: (id: String) -> String,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -265,7 +269,7 @@ fun ObjectFilterPicker(
                     SelectFromListPicker(
                         modifier = modifier,
                         name = stringResource(filterOption.nameStringId),
-                        values = listOf(input.value.name),
+                        values = listOf(resolutionName(input.value)),
                         criterionModifier = input.modifier,
                         removeEnabled = initialValue != null,
                         onChangeCriterionModifier =
@@ -274,8 +278,11 @@ fun ObjectFilterPicker(
                             onSelectFromListAction.invoke(
                                 SelectFromListAction(
                                     filterName = context.getString(filterOption.nameStringId),
-                                    options = ResolutionEnum.entries.map { it.name },
-                                    currentOptions = listOf(input.value.name),
+                                    options =
+                                        ResolutionEnum.entries
+                                            .filter { it != ResolutionEnum.UNKNOWN__ }
+                                            .map { resolutionName(it) },
+                                    currentOptions = listOf(resolutionName(input.value)),
                                     multiSelect = false,
                                     onSubmit = {
                                         it.firstOrNull()?.let { idx ->
@@ -288,6 +295,78 @@ fun ObjectFilterPicker(
                         },
                         onSave = { saveObjectFilter(value) },
                         onRemove = { saveObjectFilter(null) },
+                    )
+                }
+            }
+
+            MultiCriterionInput::class -> {
+                LaunchedEffect(Unit) {
+                    if (initialValue == null) {
+                        value =
+                            MultiCriterionInput(
+                                value = Optional.absent(),
+                                excludes = Optional.absent(),
+                                modifier = filterOption.allowedModifiers[0],
+                            )
+                    }
+                }
+                value?.let { input ->
+                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+                    input as MultiCriterionInput
+                    MultiCriterionPicker(
+                        name = stringResource(filterOption.nameStringId),
+                        dataType = filterOption.dataType!!,
+                        criterionModifier = input.modifier,
+                        include = input.value.getOrNull()?.map(mapIdToName) ?: listOf(),
+                        exclude = input.excludes.getOrNull()?.map(mapIdToName) ?: listOf(),
+                        removeEnabled = initialValue != null,
+                        includeSubValues = null,
+                        onChangeCriterionModifier = onChangeCriterionModifier { input.copy(modifier = it) },
+                        onPickInclude = {
+                            onMultiCriterionInfo.invoke(
+                                MultiCriterionInfo(
+                                    name = "",
+                                    dataType = filterOption.dataType,
+                                    initialValues =
+                                        input.value.getOrNull()?.map {
+                                            IdName(it, mapIdToName.invoke(it))
+                                        } ?: listOf(),
+                                    onAdd = {
+                                        val list =
+                                            (input.value.getOrNull()?.map { it } ?: listOf())
+                                                .toMutableList()
+                                        list.add(it.id)
+                                        value =
+                                            input.copy(value = Optional.present(list))
+                                    },
+                                    onSave = {
+                                        value =
+                                            input.copy(value = Optional.present(it.map { it.id }))
+                                    },
+                                ),
+                            )
+                        },
+                        onPickExclude = {
+                            onMultiCriterionInfo.invoke(
+                                MultiCriterionInfo(
+                                    name = "",
+                                    dataType = filterOption.dataType,
+                                    initialValues =
+                                        input.excludes.getOrNull()?.map {
+                                            IdName(it, mapIdToName.invoke(it))
+                                        } ?: listOf(),
+                                    onAdd = {},
+                                    onSave = {
+                                        value =
+                                            input.copy(excludes = Optional.present(it.map { it.id }))
+                                    },
+                                ),
+                            )
+                        },
+                        onIncludeSubValueClick = null,
+                        onSave = { saveObjectFilter(value) },
+                        onRemove = { saveObjectFilter(null) },
+                        modifier = modifier,
                     )
                 }
             }

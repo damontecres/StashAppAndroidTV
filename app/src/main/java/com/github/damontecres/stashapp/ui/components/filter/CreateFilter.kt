@@ -40,6 +40,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
@@ -50,14 +51,18 @@ import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.filter.findFilterSummary
 import com.github.damontecres.stashapp.filter.getFilterOptions
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlin.reflect.full.createInstance
 
+internal const val TAG = "CreateFilter"
+
 @Composable
 fun CreateFilterScreen(
+    uiConfig: ComposeUiConfig,
     dataType: DataType,
     initialFilter: FilterArgs?,
     modifier: Modifier = Modifier,
@@ -81,6 +86,7 @@ fun CreateFilterScreen(
         )
         if (ready) {
             CreateFilterColumns(
+                uiConfig = uiConfig,
                 dataType = dataType,
                 name = name,
                 resultCount = resultCount,
@@ -98,6 +104,7 @@ fun CreateFilterScreen(
                     viewModel.updateCount()
                 },
                 idLookup = viewModel::lookupIds,
+                idStore = viewModel::store,
                 modifier =
                     Modifier
                         .fillMaxSize(),
@@ -110,6 +117,7 @@ fun CreateFilterScreen(
 
 @Composable
 fun CreateFilterColumns(
+    uiConfig: ComposeUiConfig,
     dataType: DataType,
     name: String?,
     resultCount: Int,
@@ -119,6 +127,7 @@ fun CreateFilterColumns(
     updateFindFilter: (StashFindFilter) -> Unit,
     updateObjectFilter: (StashDataFilter) -> Unit,
     idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
+    idStore: (DataType, StashData) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val findFilterInteractionSource = remember { MutableInteractionSource() }
@@ -136,19 +145,19 @@ fun CreateFilterColumns(
     val objectFilterChoiceFocusRequester = remember { FocusRequester() }
     val objectFilterCount =
         remember(objectFilter) {
-            getFilterOptions(dataType)
-                .filter {
-                    (it as FilterOption<StashDataFilter, Any>)
-                        .getter
-                        .invoke(
-                            objectFilter,
-                        ).getOrNull() != null
-                }.count()
+            getFilterOptions(dataType).count {
+                (it as FilterOption<StashDataFilter, Any>)
+                    .getter
+                    .invoke(objectFilter)
+                    .getOrNull() != null
+            }
         }
 
     var inputTextAction by remember { mutableStateOf<InputTextAction?>(null) }
     var inputCriterionModifier by remember { mutableStateOf<InputCriterionModifier?>(null) }
     var selectFromListAction by remember { mutableStateOf<SelectFromListAction?>(null) }
+    var multiCriterionInfo by remember { mutableStateOf<MultiCriterionInfo?>(null) }
+
     var selectedFilterOption by remember { mutableStateOf<FilterOption<StashDataFilter, Any>?>(null) }
 
     val focusRequester = remember { FocusRequester() }
@@ -358,6 +367,11 @@ fun CreateFilterColumns(
                         onInputCriterionModifier = { inputCriterionModifier = it },
                         onInputTextAction = { inputTextAction = it },
                         onSelectFromListAction = { selectFromListAction = it },
+                        onMultiCriterionInfo = { multiCriterionInfo = it },
+                        mapIdToName = {
+                            // TODO?
+                            idLookup.invoke(filterOption.dataType!!, listOf(it))[it]?.name ?: it
+                        },
                         modifier =
                             Modifier
                                 .width(listWidth)
@@ -400,6 +414,17 @@ fun CreateFilterColumns(
             onDismiss = { selectFromListAction = null },
         )
     }
+    multiCriterionInfo?.let { info ->
+        MultiCriterionPickerDialog(
+            uiConfig = uiConfig,
+            dataType = info.dataType,
+            name = info.name,
+            initialValues = info.initialValues,
+            onSave = info.onSave,
+            onDismiss = { multiCriterionInfo = null },
+            idStore = idStore,
+        )
+    }
 }
 
 data class InputTextAction(
@@ -421,6 +446,14 @@ data class SelectFromListAction(
     val currentOptions: List<String>,
     val multiSelect: Boolean,
     val onSubmit: (indices: List<Int>) -> Unit,
+)
+
+data class MultiCriterionInfo(
+    val name: String,
+    val dataType: DataType,
+    val initialValues: List<IdName>,
+    val onAdd: (IdName) -> Unit,
+    val onSave: (List<IdName>) -> Unit,
 )
 
 @Composable
