@@ -353,6 +353,78 @@ fun SelectFromListPicker(
 }
 
 @Composable
+fun BooleanPicker(
+    name: String,
+    value: Boolean?,
+    onSave: (Boolean) -> Unit,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(modifier = modifier) {
+        stickyHeader {
+            Text(
+                text = name,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillParentMaxWidth(),
+            )
+        }
+        item {
+            SimpleListItem(
+                title = stringResource(R.string.stashapp_true),
+                subtitle = null,
+                showArrow = false,
+                onClick = { onSave.invoke(true) },
+                leadingContent = {
+                    if (value == true) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = stringResource(R.string.stashapp_true),
+                        )
+                    }
+                },
+            )
+        }
+        item {
+            SimpleListItem(
+                title = stringResource(R.string.stashapp_false),
+                subtitle = null,
+                showArrow = false,
+                onClick = { onSave.invoke(false) },
+                leadingContent = {
+                    if (value == false) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = stringResource(R.string.stashapp_false),
+                        )
+                    }
+                },
+            )
+        }
+
+        if (value != null) {
+            // If initial value is not null, then show option to remove it
+            item {
+                SimpleListItem(
+                    title = stringResource(R.string.stashapp_actions_remove),
+                    subtitle = null,
+                    showArrow = false,
+                    onClick = onRemove,
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = stringResource(R.string.stashapp_actions_remove),
+                            tint = Color.Red,
+                        )
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun MultiCriterionPicker(
     name: String,
     dataType: DataType,

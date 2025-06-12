@@ -254,6 +254,17 @@ fun ObjectFilterPicker(
                 }
             }
 
+            Boolean::class -> {
+                LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+                BooleanPicker(
+                    name = stringResource(filterOption.nameStringId),
+                    value = value as Boolean?,
+                    onSave = { saveObjectFilter(it) },
+                    onRemove = { saveObjectFilter(null) },
+                    modifier = modifier,
+                )
+            }
+
             ResolutionCriterionInput::class -> {
                 LaunchedEffect(Unit) {
                     if (initialValue == null) {
