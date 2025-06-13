@@ -66,6 +66,8 @@ fun ObjectFilterList(
 ) {
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
+    val filterOptions =
+        remember { getFilterOptions(dataType).sortedBy { context.getString(it.nameStringId) } }
     LazyColumn(
         modifier =
             modifier
@@ -73,7 +75,7 @@ fun ObjectFilterList(
                 .focusRestorer(focusRequester),
     ) {
         itemsIndexed(
-            getFilterOptions(dataType),
+            filterOptions,
             key = { _, it -> it.nameStringId },
         ) { index, item ->
             item as FilterOption<StashDataFilter, Any>
@@ -245,6 +247,17 @@ fun ObjectFilterPicker(
             )
         }
     } else {
+        // TODO better titles?
+        val includesTitle =
+            filterOption.dataType?.let {
+                context.getString(filterOption.dataType.pluralStringId) + " " +
+                    context.getString(R.string.stashapp_criterion_modifier_includes)
+            }
+        val excludesTitle =
+            filterOption.dataType?.let {
+                context.getString(filterOption.dataType.pluralStringId) + " " +
+                    context.getString(R.string.stashapp_criterion_modifier_excludes)
+            }
         when (filterOption.type) {
             StringCriterionInput::class -> {
                 LaunchedEffect(Unit) {
@@ -616,7 +629,7 @@ fun ObjectFilterPicker(
                         onPickInclude = {
                             onMultiCriterionInfo.invoke(
                                 MultiCriterionInfo(
-                                    name = "",
+                                    name = includesTitle!!,
                                     dataType = filterOption.dataType,
                                     initialValues =
                                         input.value.getOrNull()?.map {
@@ -640,7 +653,7 @@ fun ObjectFilterPicker(
                         onPickExclude = {
                             onMultiCriterionInfo.invoke(
                                 MultiCriterionInfo(
-                                    name = "",
+                                    name = excludesTitle!!,
                                     dataType = filterOption.dataType,
                                     initialValues =
                                         input.excludes.getOrNull()?.map {
@@ -731,7 +744,7 @@ fun ObjectFilterPicker(
                         onPickInclude = {
                             onMultiCriterionInfo.invoke(
                                 MultiCriterionInfo(
-                                    name = "",
+                                    name = includesTitle!!,
                                     dataType = filterOption.dataType,
                                     initialValues =
                                         input.value.getOrNull()?.map {
@@ -755,7 +768,7 @@ fun ObjectFilterPicker(
                         onPickExclude = {
                             onMultiCriterionInfo.invoke(
                                 MultiCriterionInfo(
-                                    name = "",
+                                    name = excludesTitle!!,
                                     dataType = filterOption.dataType,
                                     initialValues =
                                         input.excludes.getOrNull()?.map {

@@ -248,13 +248,15 @@ class SimpleRatingCriterionInput(
     override val modifier: CriterionModifier = input.modifier
 
     override fun isValid(): Boolean {
-        val range = if (ratingAsStar) 0.0..5.0 else 0.0..10.0
-        if (value.toDouble() !in range) {
-            return false
-        } else if (modifier.between &&
-            (value2 == null || value2.toDouble() !in range || value.toDouble() > value2.toDouble())
-        ) {
-            return false
+        if (!modifier.nullCheck) {
+            val range = if (ratingAsStar) 0.0..5.0 else 0.0..10.0
+            if (value.toDouble() !in range) {
+                return false
+            } else if (modifier.between &&
+                (value2 == null || value2.toDouble() !in range || value.toDouble() > value2.toDouble())
+            ) {
+                return false
+            }
         }
         return true
     }
@@ -396,7 +398,7 @@ fun SelectFromListPicker(
         name = name,
         criterionModifier = criterionModifier,
         removeEnabled = removeEnabled,
-        isValid = values.isNotEmpty(),
+        isValid = values.isNotEmpty() || criterionModifier?.nullCheck == true,
         onChangeCriterionModifier = onChangeCriterionModifier,
         onSave = onSave,
         onRemove = onRemove,
@@ -506,7 +508,7 @@ fun MultiCriterionPicker(
         name = name,
         criterionModifier = criterionModifier,
         removeEnabled = removeEnabled,
-        isValid = include.isNotEmpty() || exclude.isNotEmpty(),
+        isValid = include.isNotEmpty() || exclude.isNotEmpty() || criterionModifier.nullCheck,
         onChangeCriterionModifier = onChangeCriterionModifier,
         onSave = onSave,
         onRemove = onRemove,
