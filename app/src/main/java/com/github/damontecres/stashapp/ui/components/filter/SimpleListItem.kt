@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components.filter
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
@@ -10,6 +11,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
 @Composable
@@ -19,7 +21,7 @@ fun SimpleListItem(
     showArrow: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    interactionSource: MutableInteractionSource? = null,
+    interactionSource: MutableInteractionSource = MutableInteractionSource(),
     enabled: Boolean = true,
     selected: Boolean = false,
     leadingContent: (@Composable BoxScope.() -> Unit)? = null,
@@ -42,6 +44,8 @@ fun SimpleListItem(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    modifier = Modifier.enableMarquee(interactionSource.collectIsFocusedAsState().value),
                 )
             }
         },

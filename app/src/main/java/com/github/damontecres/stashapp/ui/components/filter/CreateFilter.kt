@@ -29,6 +29,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -211,7 +212,11 @@ fun CreateFilterColumns(
             modifier
                 .ifElse(
                     shouldBlur,
-                    Modifier.blur(10.dp),
+                    Modifier
+                        .blur(10.dp)
+                        .graphicsLayer {
+                            alpha = .25f
+                        },
                 ),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
@@ -424,6 +429,7 @@ fun CreateFilterColumns(
                                 .focusRequester(objectFilterChoiceFocusRequester)
                                 .focusProperties {
                                     onExit = {
+                                        // TODO if there are changes, might be good to block this so the user doesn't lose changes accidentally
                                         selectedFilterOption = null
                                     }
                                 }.background(
