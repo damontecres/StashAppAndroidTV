@@ -10,7 +10,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.UpdateAppFragment
-import com.github.damontecres.stashapp.filter.CreateFilterFragment
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.setup.SetupFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
@@ -80,7 +79,7 @@ class NavigationManagerCompose(
 
                 is Destination.UpdateApp -> UpdateAppFragment()
                 is Destination.ManageServers -> ManageServersFragment()
-                is Destination.CreateFilter -> CreateFilterFragment()
+//                is Destination.CreateFilter -> CreateFilterFragment()
                 is Destination.UpdateMarker -> MarkerPickerFragment()
                 is Destination.Fragment -> {
                     fragmentManager.fragmentFactory.instantiate(

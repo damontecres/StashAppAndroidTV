@@ -9,15 +9,11 @@ import androidx.fragment.app.activityViewModels
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
-import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.SaveFilterInput
-import com.github.damontecres.stashapp.data.StashFindFilter
-import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -156,52 +152,19 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
             nextStep(CreateFindFilterFragment(dataType, viewModel.findFilter.value!!))
         } else if (action.id == SUBMIT || action.id == SAVE_SUBMIT) {
             // Ready to load the filter!
-            val filterName = viewModel.filterName.value
-            val objectFilter = viewModel.objectFilter.value!!
-            val filterArgs =
-                FilterArgs(
-                    dataType = dataType,
-                    name = filterName,
-                    findFilter = viewModel.findFilter.value,
-                    objectFilter = objectFilter,
-                ).withResolvedRandom()
+            val filterArgs = viewModel.createFilterArgs()
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 // If there is a name, try to save it to the server
-                if (action.id == SAVE_SUBMIT && filterName.isNotNullOrBlank()) {
-                    val queryEngine = QueryEngine(viewModel.server.value!!)
-                    // Save it
-                    val filterWriter =
-                        FilterWriter(dataType) { dataType, ids ->
-                            queryEngine
-                                .getByIds(dataType, ids)
-                                .associate { it.id to extractTitle(it) }
-                        }
-                    val findFilter =
-                        filterArgs.findFilter ?: StashFindFilter(
-                            null,
-                            filterArgs.dataType.defaultSort,
-                        )
-                    val objectFilterMap = filterWriter.convertFilter(objectFilter)
-                    val existingId = viewModel.getSavedFilterId(filterName)
-                    val newFilterInput =
-                        SaveFilterInput(
-                            id = Optional.presentIfNotNull(existingId),
-                            mode = dataType.filterMode,
-                            name = filterName,
-                            find_filter =
-                                Optional.presentIfNotNull(
-                                    findFilter.toFindFilterType(1, 40),
-                                ),
-                            object_filter = Optional.presentIfNotNull(objectFilterMap),
-                            ui_options = Optional.absent(),
-                        )
+                if (action.id == SAVE_SUBMIT && filterArgs.name.isNotNullOrBlank()) {
+                    val newFilterInput = viewModel.createSaveFilterInput()
+                    val existingId = newFilterInput.id.getOrNull()
                     if (existingId.isNotNullOrBlank()) {
                         // Filter exists, so prompt for confirmation
                         ConfirmationDialogFragment.show(
                             childFragmentManager,
                             getString(
                                 R.string.stashapp_dialogs_overwrite_filter_confirm,
-                                filterName,
+                                filterArgs.name,
                             ),
                         ) {
                             viewLifecycleOwner.lifecycleScope.launch(
