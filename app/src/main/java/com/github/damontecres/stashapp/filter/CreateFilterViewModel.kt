@@ -9,12 +9,15 @@ import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.api.type.SaveFilterInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -176,6 +179,49 @@ class CreateFilterViewModel : ViewModel() {
         val description: String?,
     ) {
         constructor(item: StashData) : this(extractTitle(item), extractDescription(item))
+    }
+
+    fun createFilterArgs(): FilterArgs =
+        FilterArgs(
+            dataType = dataType.value!!,
+            name = filterName.value,
+            findFilter = findFilter.value,
+            objectFilter = objectFilter.value,
+        ).withResolvedRandom()
+
+    suspend fun createSaveFilterInput(): SaveFilterInput {
+        val queryEngine = QueryEngine(server.value!!)
+        // Save it
+        val filterWriter =
+            FilterWriter(dataType.value!!) { dataType, ids ->
+                queryEngine
+                    .getByIds(dataType, ids)
+                    .associate { it.id to extractTitle(it) }
+            }
+        val findFilter =
+            findFilter.value ?: StashFindFilter(
+                null,
+                dataType.value!!.defaultSort,
+            )
+        val objectFilterMap = filterWriter.convertFilter(objectFilter.value!!)
+        val existingId = getSavedFilterId(filterName.value)
+        return SaveFilterInput(
+            id = Optional.presentIfNotNull(existingId),
+            mode = dataType.value!!.filterMode,
+            name = filterName.value!!,
+            find_filter =
+                Optional.presentIfNotNull(
+                    findFilter.toFindFilterType(1, 40),
+                ),
+            object_filter = Optional.presentIfNotNull(objectFilterMap),
+            ui_options = Optional.absent(),
+        )
+    }
+
+    suspend fun saveFilter() {
+        val mutationEngine = MutationEngine(server.value!!)
+        val input = createSaveFilterInput()
+        mutationEngine.saveFilter(input)
     }
 
     companion object {

@@ -450,6 +450,7 @@ fun FragmentContent(
                         uiConfig = composeUiConfig,
                         dataType = destination.dataType,
                         initialFilter = destination.startingFilter,
+                        navigationManager = navigationManager,
                         modifier = Modifier.fillMaxSize(),
                     )
 

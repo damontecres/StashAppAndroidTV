@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -18,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +36,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
@@ -50,12 +53,16 @@ import com.github.damontecres.stashapp.filter.CreateFilterViewModel
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.filter.findFilterSummary
 import com.github.damontecres.stashapp.filter.getFilterOptions
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import kotlinx.coroutines.launch
 import java.util.Date
 import kotlin.reflect.full.createInstance
 
@@ -66,9 +73,12 @@ fun CreateFilterScreen(
     uiConfig: ComposeUiConfig,
     dataType: DataType,
     initialFilter: FilterArgs?,
+    navigationManager: NavigationManager,
     modifier: Modifier = Modifier,
     viewModel: CreateFilterViewModel = viewModel(),
 ) {
+    val scope = rememberCoroutineScope()
+
     val ready by viewModel.ready.observeAsState(false)
     val name by viewModel.filterName.observeAsState()
     val findFilter by viewModel.findFilter.observeAsState(StashFindFilter(sortAndDirection = dataType.defaultSort))
@@ -77,13 +87,16 @@ fun CreateFilterScreen(
 
     LaunchedEffect(initialFilter) {
         viewModel.initialize(dataType, initialFilter)
+        viewModel.updateCount()
     }
 
     Column(modifier = modifier) {
         Text(
-            text = "Create Filter",
+            text = "Create ${stringResource(dataType.stringId)} Filter",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
         )
         if (ready) {
             CreateFilterColumns(
@@ -106,6 +119,18 @@ fun CreateFilterScreen(
                 },
                 idLookup = viewModel::lookupIds,
                 idStore = viewModel::store,
+                onSubmit = { save ->
+                    if (save) {
+                        scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                            viewModel.saveFilter()
+                            navigationManager.goBack()
+                            navigationManager.navigate(Destination.Filter(viewModel.createFilterArgs()))
+                        }
+                    } else {
+                        navigationManager.goBack()
+                        navigationManager.navigate(Destination.Filter(viewModel.createFilterArgs()))
+                    }
+                },
                 modifier =
                     Modifier
                         .fillMaxSize(),
@@ -129,6 +154,7 @@ fun CreateFilterColumns(
     updateObjectFilter: (StashDataFilter) -> Unit,
     idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
     idStore: (DataType, StashData) -> Unit,
+    onSubmit: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val findFilterInteractionSource = remember { MutableInteractionSource() }
@@ -210,6 +236,7 @@ fun CreateFilterColumns(
                 objectFilterOnClick = { objectFilterFocused = true },
                 findFilterInteractionSource = findFilterInteractionSource,
                 objectFilterInteractionSource = objectFilterInteractionSource,
+                onSubmit = onSubmit,
                 modifier =
                     Modifier
                         .width(listWidth)
@@ -511,6 +538,7 @@ fun BasicFilterSettings(
     objectFilterOnClick: () -> Unit,
     findFilterInteractionSource: MutableInteractionSource,
     objectFilterInteractionSource: MutableInteractionSource,
+    onSubmit: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -565,7 +593,7 @@ fun BasicFilterSettings(
                         null
                     },
                 showArrow = false,
-                onClick = {},
+                onClick = { onSubmit.invoke(false) },
             )
         }
         item {
@@ -579,7 +607,7 @@ fun BasicFilterSettings(
                         stringResource(R.string.save_and_submit_no_name_desc)
                     },
                 showArrow = false,
-                onClick = {},
+                onClick = { onSubmit.invoke(true) },
             )
         }
     }
