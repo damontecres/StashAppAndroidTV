@@ -114,6 +114,7 @@ fun ObjectFilterPicker(
     onSelectFromListAction: (SelectFromListAction) -> Unit,
     onMultiCriterionInfo: (MultiCriterionInfo) -> Unit,
     onInputDateAction: (InputDateAction) -> Unit,
+    onInputDurationAction: (InputDurationAction) -> Unit,
     mapIdToName: (id: String) -> String,
     modifier: Modifier = Modifier,
 ) {
@@ -197,7 +198,52 @@ fun ObjectFilterPicker(
             )
         }
     } else if (filterOption.nameStringId == R.string.stashapp_duration) {
-        // TODO
+        LaunchedEffect(Unit) {
+            if (initialValue == null) {
+                value =
+                    IntCriterionInput(
+                        value = 0,
+                        value2 = Optional.absent(),
+                        modifier = filterOption.allowedModifiers[0],
+                    )
+            }
+        }
+        value?.let { input ->
+            LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+            input as IntCriterionInput
+            CriterionInputPicker(
+                modifier = modifier,
+                name = stringResource(filterOption.nameStringId),
+                value = SimpleDurationCriterionInput(input),
+                removeEnabled = initialValue != null,
+                onChangeCriterionModifier =
+                    onChangeCriterionModifier { input.copy(modifier = it) },
+                onChangeValue = {
+                    onInputDurationAction.invoke(
+                        InputDurationAction(
+                            name = context.getString(filterOption.nameStringId),
+                            value = input.value,
+                            onSave = {
+                                value = input.copy(value = it)
+                            },
+                        ),
+                    )
+                },
+                onChangeValue2 = {
+                    onInputDurationAction.invoke(
+                        InputDurationAction(
+                            name = context.getString(filterOption.nameStringId),
+                            value = input.value2.getOrNull(),
+                            onSave = {
+                                value = input.copy(value = it)
+                            },
+                        ),
+                    )
+                },
+                onSave = { saveObjectFilter(value) },
+                onRemove = { saveObjectFilter(null) },
+            )
+        }
     } else {
         when (filterOption.type) {
             StringCriterionInput::class -> {

@@ -159,6 +159,7 @@ fun CreateFilterColumns(
     var selectFromListAction by remember { mutableStateOf<SelectFromListAction?>(null) }
     var multiCriterionInfo by remember { mutableStateOf<MultiCriterionInfo?>(null) }
     var inputDateAction by remember { mutableStateOf<InputDateAction?>(null) }
+    var inputDurationAction by remember { mutableStateOf<InputDurationAction?>(null) }
 
     var selectedFilterOption by remember { mutableStateOf<FilterOption<StashDataFilter, Any>?>(null) }
 
@@ -172,7 +173,8 @@ fun CreateFilterColumns(
             inputCriterionModifier != null ||
             selectFromListAction != null ||
             multiCriterionInfo != null ||
-            inputDateAction != null
+            inputDateAction != null ||
+            inputDurationAction != null
 
     LazyRow(
         modifier =
@@ -379,6 +381,7 @@ fun CreateFilterColumns(
                         onSelectFromListAction = { selectFromListAction = it },
                         onMultiCriterionInfo = { multiCriterionInfo = it },
                         onInputDateAction = { inputDateAction = it },
+                        onInputDurationAction = { inputDurationAction = it },
                         mapIdToName = {
                             // TODO?
                             idLookup.invoke(filterOption.dataType!!, listOf(it))[it]?.name ?: it
@@ -444,6 +447,14 @@ fun CreateFilterColumns(
             onDismiss = { inputDateAction = null },
         )
     }
+    inputDurationAction?.let {
+        DurationPickerDialog(
+            name = it.name,
+            value = it.value,
+            onSave = it.onSave,
+            onDismiss = { inputDurationAction = null },
+        )
+    }
 }
 
 data class InputTextAction(
@@ -479,6 +490,12 @@ data class InputDateAction(
     val name: String,
     val value: Date,
     val onSave: (Date) -> Unit,
+)
+
+data class InputDurationAction(
+    val name: String,
+    val value: Int?,
+    val onSave: (Int) -> Unit,
 )
 
 @Composable

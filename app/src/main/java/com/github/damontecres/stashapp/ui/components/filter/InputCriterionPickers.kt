@@ -61,8 +61,10 @@ import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.nullCheck
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.views.DurationPicker
 import com.github.damontecres.stashapp.views.getString
 import java.util.Date
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun CriterionModifierPickerDialog(
@@ -171,6 +173,11 @@ interface SimpleCriterionInput<T : Comparable<T>> {
     val value2: T?
     val modifier: CriterionModifier
 
+    val readable: String
+        get() = value.toString()
+    val readable2: String?
+        get() = value2?.toString()
+
     fun isValid(): Boolean {
         if (modifier.between) {
             val val2 = value2
@@ -211,6 +218,19 @@ class SimpleDateCriterionInput(
     override val value: String = input.value
     override val value2: String? = input.value2.getOrNull()
     override val modifier: CriterionModifier = input.modifier
+}
+
+class SimpleDurationCriterionInput(
+    val input: IntCriterionInput,
+) : SimpleCriterionInput<Int> {
+    override val value: Int = input.value
+    override val value2: Int? = input.value2.getOrNull()
+    override val modifier: CriterionModifier = input.modifier
+
+    override val readable: String
+        get() = value.seconds.toString()
+    override val readable2: String?
+        get() = value2?.seconds?.toString()
 }
 
 class SimpleRatingCriterionInput(
@@ -339,7 +359,7 @@ fun <T : Comparable<T>> CriterionInputPicker(
                                 R.string.stashapp_criterion_value,
                             )
                         },
-                    subtitle = value.value.toString(),
+                    subtitle = value.readable,
                     showArrow = true,
                     onClick = { onChangeValue() },
                     modifier = Modifier.animateItem(),
@@ -349,7 +369,7 @@ fun <T : Comparable<T>> CriterionInputPicker(
                 item {
                     SimpleListItem(
                         title = stringResource(R.string.stashapp_criterion_modifier_less_than),
-                        subtitle = value.value2?.toString(),
+                        subtitle = value.readable2,
                         showArrow = true,
                         onClick = { onChangeValue2() },
                         modifier = Modifier.animateItem(),
@@ -701,6 +721,54 @@ fun DatePickerDialog(
                         picker.isActivated = true
                         picker.setOnClickListener {
                             onSave.invoke(Date(picker.date))
+                            onDismiss.invoke()
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DurationPickerDialog(
+    name: String,
+    value: Int?,
+    onSave: (Int) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(),
+    ) {
+        LazyColumn(
+            modifier =
+                modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp),
+                        shape = RoundedCornerShape(16.dp),
+                    ),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            stickyHeader {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            item {
+                AndroidView(
+                    factory = {
+                        DurationPicker(it, null)
+                    },
+                    update = { picker ->
+                        picker.duration = value ?: 0
+                        picker.isActivated = true
+                        picker.setOnClickListener {
+                            onSave.invoke(picker.duration)
                             onDismiss.invoke()
                         }
                     },
