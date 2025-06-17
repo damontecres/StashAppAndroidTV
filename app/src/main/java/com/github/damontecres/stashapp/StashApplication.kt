@@ -17,12 +17,8 @@ import com.github.damontecres.stashapp.data.room.MIGRATION_4_TO_5
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.util.AppUpgradeHandler
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.Version
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.acra.ACRA
 import org.acra.ReportField
 import org.acra.config.dialog
@@ -106,13 +102,13 @@ class StashApplication : Application() {
                 putLong(VERSION_CODE_CURRENT_KEY, newVersionCode)
             }
             if (currentVersion != null) {
-                CoroutineScope(Dispatchers.IO + StashCoroutineExceptionHandler()).launch {
-                    AppUpgradeHandler(
-                        this@StashApplication,
-                        Version.fromString(currentVersion),
-                        Version.fromString(pkgInfo.versionName!!),
-                    ).run()
-                }
+//                CoroutineScope(Dispatchers.IO + StashCoroutineExceptionHandler()).launch {
+                AppUpgradeHandler(
+                    this@StashApplication,
+                    Version.fromString(currentVersion),
+                    Version.fromString(pkgInfo.versionName!!),
+                ).run()
+//                }
             }
         }
 

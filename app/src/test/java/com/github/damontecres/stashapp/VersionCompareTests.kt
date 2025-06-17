@@ -15,6 +15,7 @@ class VersionCompareTests {
         val V_0_1_0_7 = Version.fromString("v0.1.0-7-gabc1234")
         val V_0_1_0_6 = Version.fromString("v0.1.0-6-gabc1234")
         val V_0_1_1_4 = Version.fromString("v0.1.1-4-gabc1234")
+        val V_0_1_1_5 = Version.fromString("v0.1.1-5-gabc1234")
     }
 
     @Test
@@ -48,13 +49,25 @@ class VersionCompareTests {
         Assert.assertTrue(V_0_2_0_7.isGreaterThan(V_0_2_0_0))
         Assert.assertTrue(V_0_1_1_4.isGreaterThan(V_0_1_0_6))
         Assert.assertTrue(V_0_1_1_4.isGreaterThan(V_0_1_0))
+        Assert.assertFalse(V_0_1_1_4.isGreaterThan(V_0_1_1_5))
+        Assert.assertTrue(V_0_1_1_5.isGreaterThan(V_0_1_1_4))
     }
 
     @Test
     fun testEqualOrBefore() {
         Assert.assertTrue(V_0_2_0.isEqualOrBefore(V_0_2_0))
         Assert.assertTrue(V_0_1_1.isEqualOrBefore(V_0_2_0))
+        Assert.assertTrue(V_0_1_1_4.isEqualOrBefore(V_0_1_1_5))
 
         Assert.assertFalse(V_0_2_0.isEqualOrBefore(V_0_1_1))
+    }
+
+    @Test
+    fun testLessThan() {
+        Assert.assertFalse(V_0_2_0.isLessThan(V_0_2_0))
+        Assert.assertTrue(V_0_1_1.isLessThan(V_0_2_0))
+        Assert.assertTrue(V_0_1_1_4.isLessThan(V_0_1_1_5))
+
+        Assert.assertFalse(V_0_2_0.isLessThan(V_0_1_1))
     }
 }

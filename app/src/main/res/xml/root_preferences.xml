@@ -11,17 +11,6 @@
             app:summary="" />
     </PreferenceCategory>
 
-    <PreferenceCategory
-        app:key="composeCategory"
-        app:title="New UI"
-        app:isPreferenceVisible="true">
-        <Preference
-            app:key="tryCompose"
-            app:title="Try the new UI?"
-            app:summary="Based on Jetpack Compose"
-            app:isPreferenceVisible="true" />
-    </PreferenceCategory>
-
     <PreferenceCategory app:title="@string/pref_stash_server_header">
         <Preference
             app:key="stashUrl"
