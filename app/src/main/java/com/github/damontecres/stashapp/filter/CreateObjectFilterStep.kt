@@ -84,7 +84,7 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
             )
         return GuidanceStylist.Guidance(
             "Create filter",
-            text,
+            text.joinToString("\n"),
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )

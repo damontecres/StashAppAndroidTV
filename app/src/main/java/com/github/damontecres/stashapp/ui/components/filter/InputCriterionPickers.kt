@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
@@ -210,6 +211,8 @@ class SimpleStringCriterionInput(
     override val value: String = input.value
     override val value2: String? = null
     override val modifier: CriterionModifier = input.modifier
+
+    override fun isValid(): Boolean = modifier.nullCheck || value.isNotBlank()
 }
 
 class SimpleDateCriterionInput(
@@ -607,6 +610,45 @@ fun MultiCriterionPickerDialog(
                     color = MaterialTheme.colorScheme.onSurface,
                 )
             }
+            item {
+                SimpleListItem(
+                    title = stringResource(R.string.stashapp_actions_add),
+                    subtitle = null,
+                    showArrow = true,
+                    onClick = { showSearchFor = true },
+                    modifier = Modifier,
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = stringResource(R.string.stashapp_actions_add),
+                        )
+                    },
+                )
+            }
+            item {
+                SimpleListItem(
+                    title = stringResource(R.string.stashapp_actions_submit) + " (${selectedItems.size})",
+                    subtitle = null,
+                    enabled = true,
+                    showArrow = true,
+                    onClick = {
+                        onSave.invoke(selectedItems)
+                        onDismiss.invoke()
+                    },
+                    modifier = Modifier,
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ArrowForward,
+                            contentDescription = stringResource(R.string.stashapp_actions_add),
+                        )
+                    },
+                )
+            }
+            if (selectedItems.isNotEmpty()) {
+                item {
+                    HorizontalDivider(Modifier.height(16.dp))
+                }
+            }
             items(selectedItems) { item ->
                 ListItem(
                     modifier = Modifier,
@@ -628,37 +670,6 @@ fun MultiCriterionPickerDialog(
                         )
                     },
                     supportingContent = {},
-                )
-            }
-            item {
-                HorizontalDivider(Modifier.height(16.dp))
-            }
-            item {
-                SimpleListItem(
-                    title = stringResource(R.string.stashapp_actions_add),
-                    subtitle = null,
-                    showArrow = true,
-                    onClick = { showSearchFor = true },
-                    modifier = Modifier,
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = stringResource(R.string.stashapp_actions_add),
-                        )
-                    },
-                )
-            }
-            item {
-                SimpleListItem(
-                    title = stringResource(R.string.stashapp_actions_submit),
-                    subtitle = null,
-                    showArrow = true,
-                    onClick = {
-                        onSave.invoke(selectedItems)
-                        onDismiss.invoke()
-                    },
-                    modifier = Modifier,
-                    leadingContent = {},
                 )
             }
         }
