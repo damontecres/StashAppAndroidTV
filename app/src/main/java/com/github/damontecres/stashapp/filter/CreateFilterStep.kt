@@ -39,7 +39,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 viewModel.dataType.value!!.filterType,
                 viewModel.objectFilter.value!!,
                 viewModel::lookupIds,
-            ).ifBlank { "No filters set" }
+            ).joinToString("\n").ifBlank { "No filters set" }
         val typeStr = getString(viewModel.dataType.value!!.stringId)
         return GuidanceStylist.Guidance(
             "Create $typeStr filter",

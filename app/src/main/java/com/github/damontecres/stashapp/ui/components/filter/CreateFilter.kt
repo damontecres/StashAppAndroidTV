@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components.filter
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,6 +55,7 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.data.flip
 import com.github.damontecres.stashapp.filter.CreateFilterViewModel
 import com.github.damontecres.stashapp.filter.FilterOption
+import com.github.damontecres.stashapp.filter.filterSummary
 import com.github.damontecres.stashapp.filter.findFilterSummary
 import com.github.damontecres.stashapp.filter.getFilterOptions
 import com.github.damontecres.stashapp.navigation.Destination
@@ -79,6 +82,7 @@ fun CreateFilterScreen(
     modifier: Modifier = Modifier,
     viewModel: CreateFilterViewModel = viewModel(),
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     val ready by viewModel.ready.observeAsState(false)
@@ -95,13 +99,13 @@ fun CreateFilterScreen(
     Column(modifier = modifier) {
         Text(
             text = "Create ${stringResource(dataType.stringId)} Filter",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.displaySmall,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(8.dp),
         )
         if (ready) {
             CreateFilterColumns(
@@ -207,6 +211,15 @@ fun CreateFilterColumns(
             inputDateAction != null ||
             inputDurationAction != null
 
+    val filterSummaries =
+        filterSummary(
+            context = context,
+            dataType = dataType,
+            type = dataType.filterType,
+            f = objectFilter,
+            idLookup = idLookup,
+        )
+
     LazyRow(
         modifier =
             modifier
@@ -221,6 +234,46 @@ fun CreateFilterColumns(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        item {
+            AnimatedVisibility(
+                visible = !findFilterFocused && !objectFilterFocused,
+            ) {
+                LazyColumn(
+                    modifier = Modifier,
+                ) {
+                    item {
+                        val str =
+                            if (filterSummaries.isEmpty()) {
+                                R.string.no_filters_set
+                            } else {
+                                R.string.stashapp_filters
+                            }
+                        Text(
+                            text = stringResource(str),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            textAlign = TextAlign.Center,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                        )
+                    }
+                    items(filterSummaries) {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            textAlign = TextAlign.Start,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                        )
+                    }
+                }
+            }
+        }
         item {
             LaunchedEffect(Unit) {
                 focusRequester.tryRequestFocus()
