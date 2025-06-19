@@ -49,10 +49,6 @@ import androidx.tv.material3.surfaceColorAtElevation
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.DateCriterionInput
-import com.github.damontecres.stashapp.api.type.FloatCriterionInput
-import com.github.damontecres.stashapp.api.type.IntCriterionInput
-import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -65,7 +61,6 @@ import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.views.DurationPicker
 import com.github.damontecres.stashapp.views.getString
 import java.util.Date
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun CriterionModifierPickerDialog(
@@ -86,183 +81,6 @@ fun CriterionModifierPickerDialog(
         dialogItems = dialogItems,
         waitToLoad = false,
     )
-}
-
-@Composable
-fun SelectFromListDialog(
-    action: SelectFromListAction,
-    onSubmit: (List<Int>) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val selectedIndices =
-        remember {
-            mutableStateListOf(
-                *action.currentOptions
-                    .map { action.options.indexOf(it) }
-                    .toTypedArray(),
-            )
-        }
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(),
-    ) {
-        val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
-        LazyColumn(
-            modifier =
-                Modifier
-                    .graphicsLayer {
-                        this.clip = true
-                        this.shape = RoundedCornerShape(28.0.dp)
-                    }.drawBehind { drawRect(color = elevatedContainerColor) }
-                    .padding(PaddingValues(24.dp)),
-        ) {
-            stickyHeader {
-                Text(
-                    text = action.filterName,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-            itemsIndexed(action.options) { index, item ->
-                SimpleListItem(
-                    title = item,
-                    subtitle = null,
-                    showArrow = false,
-                    onClick = {
-                        if (action.multiSelect) {
-                            if (index in selectedIndices) {
-                                selectedIndices.remove(index)
-                            } else {
-                                selectedIndices.add(index)
-                            }
-                        } else {
-                            onSubmit.invoke(listOf(index))
-                        }
-                    },
-                    modifier = Modifier,
-                    leadingContent = {
-                        if (index in selectedIndices) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = stringResource(R.string.stashapp_actions_enable),
-                            )
-                        }
-                    },
-                )
-            }
-            if (action.multiSelect) {
-                item {
-                    HorizontalDivider(Modifier.height(16.dp))
-                }
-                item {
-                    SimpleListItem(
-                        title = stringResource(R.string.stashapp_actions_submit),
-                        subtitle = null,
-                        showArrow = true,
-                        onClick = { onSubmit.invoke(selectedIndices) },
-                        modifier = Modifier,
-                        leadingContent = {},
-                    )
-                }
-            }
-        }
-    }
-}
-
-interface SimpleCriterionInput<T : Comparable<T>> {
-    val value: T
-    val value2: T?
-    val modifier: CriterionModifier
-
-    val readable: String
-        get() = value.toString()
-    val readable2: String?
-        get() = value2?.toString()
-
-    fun isValid(): Boolean {
-        if (modifier.between) {
-            val val2 = value2
-            return val2 != null && value < val2
-        } else {
-            return true
-        }
-    }
-}
-
-class SimpleIntCriterionInput(
-    val input: IntCriterionInput,
-) : SimpleCriterionInput<Int> {
-    override val value: Int = input.value
-    override val value2: Int? = input.value2.getOrNull()
-    override val modifier: CriterionModifier = input.modifier
-}
-
-class SimpleFloatCriterionInput(
-    val input: FloatCriterionInput,
-) : SimpleCriterionInput<Double> {
-    override val value: Double = input.value
-    override val value2: Double? = input.value2.getOrNull()
-    override val modifier: CriterionModifier = input.modifier
-}
-
-class SimpleStringCriterionInput(
-    val input: StringCriterionInput,
-) : SimpleCriterionInput<String> {
-    override val value: String = input.value
-    override val value2: String? = null
-    override val modifier: CriterionModifier = input.modifier
-
-    override fun isValid(): Boolean = modifier.nullCheck || value.isNotBlank()
-}
-
-class SimpleDateCriterionInput(
-    val input: DateCriterionInput,
-) : SimpleCriterionInput<String> {
-    override val value: String = input.value
-    override val value2: String? = input.value2.getOrNull()
-    override val modifier: CriterionModifier = input.modifier
-}
-
-class SimpleDurationCriterionInput(
-    val input: IntCriterionInput,
-) : SimpleCriterionInput<Int> {
-    override val value: Int = input.value
-    override val value2: Int? = input.value2.getOrNull()
-    override val modifier: CriterionModifier = input.modifier
-
-    override val readable: String
-        get() = value.seconds.toString()
-    override val readable2: String?
-        get() = value2?.seconds?.toString()
-}
-
-class SimpleRatingCriterionInput(
-    val input: IntCriterionInput,
-    val ratingAsStar: Boolean,
-) : SimpleCriterionInput<String> {
-    private fun convert(v: Int) = if (ratingAsStar) v / 20.0 else v / 10.0
-
-    override val value: String = (convert(input.value)).toString()
-    override val value2: String? =
-        input.value2
-            .getOrNull()
-            ?.let(::convert)
-            ?.toString()
-    override val modifier: CriterionModifier = input.modifier
-
-    override fun isValid(): Boolean {
-        if (!modifier.nullCheck) {
-            val range = if (ratingAsStar) 0.0..5.0 else 0.0..10.0
-            if (value.toDouble() !in range) {
-                return false
-            } else if (modifier.between &&
-                (value2 == null || value2.toDouble() !in range || value.toDouble() > value2.toDouble())
-            ) {
-                return false
-            }
-        }
-        return true
-    }
 }
 
 @Composable
@@ -419,6 +237,87 @@ fun SelectFromListPicker(
 }
 
 @Composable
+fun SelectFromListDialog(
+    action: SelectFromListAction,
+    onSubmit: (List<Int>) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val selectedIndices =
+        remember {
+            mutableStateListOf(
+                *action.currentOptions
+                    .map { action.options.indexOf(it) }
+                    .toTypedArray(),
+            )
+        }
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(),
+    ) {
+        val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+        LazyColumn(
+            modifier =
+                Modifier
+                    .graphicsLayer {
+                        this.clip = true
+                        this.shape = RoundedCornerShape(28.0.dp)
+                    }.drawBehind { drawRect(color = elevatedContainerColor) }
+                    .padding(PaddingValues(24.dp)),
+        ) {
+            stickyHeader {
+                Text(
+                    text = action.filterName,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            itemsIndexed(action.options) { index, item ->
+                SimpleListItem(
+                    title = item,
+                    subtitle = null,
+                    showArrow = false,
+                    onClick = {
+                        if (action.multiSelect) {
+                            if (index in selectedIndices) {
+                                selectedIndices.remove(index)
+                            } else {
+                                selectedIndices.add(index)
+                            }
+                        } else {
+                            onSubmit.invoke(listOf(index))
+                        }
+                    },
+                    modifier = Modifier,
+                    leadingContent = {
+                        if (index in selectedIndices) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = stringResource(R.string.stashapp_actions_enable),
+                            )
+                        }
+                    },
+                )
+            }
+            if (action.multiSelect) {
+                item {
+                    HorizontalDivider(Modifier.height(16.dp))
+                }
+                item {
+                    SimpleListItem(
+                        title = stringResource(R.string.stashapp_actions_submit),
+                        subtitle = null,
+                        showArrow = true,
+                        onClick = { onSubmit.invoke(selectedIndices) },
+                        modifier = Modifier,
+                        leadingContent = {},
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun BooleanPicker(
     name: String,
     value: Boolean?,
@@ -562,11 +461,6 @@ fun MultiCriterionPicker(
         }
     }
 }
-
-data class IdName(
-    val id: String,
-    val name: String,
-)
 
 @Composable
 fun MultiCriterionPickerDialog(

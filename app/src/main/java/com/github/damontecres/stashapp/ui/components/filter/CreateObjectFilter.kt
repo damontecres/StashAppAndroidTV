@@ -47,6 +47,7 @@ import com.github.damontecres.stashapp.filter.resolutionName
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.circNameId
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -137,6 +138,7 @@ fun ObjectFilterPicker(
     fun onChangeValue(
         currentValue: Any?,
         keyboardType: KeyboardType,
+        isValid: (String) -> Boolean,
         change: (String) -> Any?,
     ): () -> Unit =
         {
@@ -146,9 +148,17 @@ fun ObjectFilterPicker(
                     value = currentValue?.toString(),
                     keyboardType = keyboardType,
                     onSubmit = { value = change.invoke(it) },
+                    isValid = isValid,
                 ),
             )
         }
+
+    val isIntValid = { str: String ->
+        str.isNotNullOrBlank() && str.toIntOrNull()?.let { it >= 0 } == true
+    }
+    val isFloatValid = { str: String ->
+        str.isNotNullOrBlank() && str.toFloatOrNull()?.let { it >= 0 } == true
+    }
 
     if (filterOption.nameStringId == R.string.stashapp_rating) {
         LaunchedEffect(Unit) {
@@ -162,6 +172,11 @@ fun ObjectFilterPicker(
             }
         }
         value?.let { input ->
+            val isValid = { str: String ->
+                val range = if (uiConfig.ratingAsStars) 0.0..5.0 else 0.0..100.0
+                str.isNotNullOrBlank() && str.toDoubleOrNull()?.let { it in range } == true
+            }
+
             LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
             input as IntCriterionInput
             val keyboardType =
@@ -178,6 +193,7 @@ fun ObjectFilterPicker(
                     onChangeValue(
                         input.value / multiplier,
                         keyboardType,
+                        isValid,
                     ) {
                         it.toDoubleOrNull()?.let { input.copy(value = (it * multiplier).toInt()) }
                     },
@@ -187,6 +203,7 @@ fun ObjectFilterPicker(
                             .getOrNull()
                             ?.let { it / multiplier },
                         keyboardType,
+                        isValid,
                     ) {
                         input.copy(
                             value2 =
@@ -285,6 +302,7 @@ fun ObjectFilterPicker(
                             onChangeValue(
                                 input.value,
                                 KeyboardType.Text,
+                                { it.isNotNullOrBlank() },
                             ) {
                                 input.copy(value = it)
                             },
@@ -320,6 +338,7 @@ fun ObjectFilterPicker(
                             onChangeValue(
                                 input.value,
                                 KeyboardType.Number,
+                                isIntValid,
                             ) {
                                 it.toIntOrNull()?.let { input.copy(value = it) }
                             },
@@ -327,6 +346,7 @@ fun ObjectFilterPicker(
                             onChangeValue(
                                 input.value2.getOrNull(),
                                 KeyboardType.Number,
+                                isIntValid,
                             ) {
                                 input.copy(value2 = Optional.presentIfNotNull(it.toIntOrNull()))
                             },
@@ -361,6 +381,7 @@ fun ObjectFilterPicker(
                             onChangeValue(
                                 input.value,
                                 KeyboardType.Decimal,
+                                isFloatValid,
                             ) {
                                 it.toDoubleOrNull()?.let { input.copy(value = it) }
                             },
@@ -368,6 +389,7 @@ fun ObjectFilterPicker(
                             onChangeValue(
                                 input.value2.getOrNull(),
                                 KeyboardType.Decimal,
+                                isFloatValid,
                             ) {
                                 input.copy(value2 = Optional.presentIfNotNull(it.toDoubleOrNull()))
                             },

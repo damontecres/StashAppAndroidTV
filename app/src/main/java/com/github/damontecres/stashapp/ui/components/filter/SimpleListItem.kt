@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItem
@@ -21,7 +22,7 @@ fun SimpleListItem(
     showArrow: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    interactionSource: MutableInteractionSource = MutableInteractionSource(),
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     enabled: Boolean = true,
     selected: Boolean = false,
     leadingContent: (@Composable BoxScope.() -> Unit)? = null,

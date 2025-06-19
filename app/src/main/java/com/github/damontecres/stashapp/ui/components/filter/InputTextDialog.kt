@@ -63,6 +63,7 @@ fun InputTextDialog(
                 EditTextBox(
                     value = text,
                     onValueChange = { text = it },
+                    isInputValid = action.isValid,
                     keyboardActions =
                         KeyboardActions(
                             onGo = {
@@ -79,6 +80,7 @@ fun InputTextDialog(
             }
             item {
                 Button(
+                    enabled = action.isValid.invoke(text),
                     onClick = {
                         action.onSubmit.invoke(text)
                         onDismissRequest.invoke()
