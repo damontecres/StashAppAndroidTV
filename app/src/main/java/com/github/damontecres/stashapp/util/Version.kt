@@ -12,8 +12,6 @@ data class Version(
 ) {
     /**
      * Is this version at least the given version
-     *
-     * Checks major, minor, & patch only!
      */
     fun isAtLeast(version: Version): Boolean {
         if (this.major > version.major) {
@@ -36,8 +34,6 @@ data class Version(
 
     /**
      * Is this greater than the given version (and not equal to!)
-     *
-     * Checks major, minor, & patch only!
      */
     fun isGreaterThan(version: Version): Boolean {
         if (this.major > version.major) {
@@ -57,6 +53,11 @@ data class Version(
         }
         return false
     }
+
+    /**
+     * Is this less than the given version (and not equal to!)
+     */
+    fun isLessThan(version: Version): Boolean = this != version && isEqualOrBefore(version)
 
     /**
      * Is this equal to or before the specified version

@@ -33,6 +33,7 @@ fun GroupCard(
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
     item?.let {
         dataTypeMap[DataType.SCENE] = item.scene_count
+        dataTypeMap[DataType.PERFORMER] = item.performer_count
         dataTypeMap[DataType.TAG] = item.tags.size
     }
 

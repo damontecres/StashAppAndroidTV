@@ -105,6 +105,16 @@ class AppUpgradeHandler(
                 ),
             )
         }
+
+        if (previousVersion.isLessThan(Version.fromString("v0.7.0"))) {
+            val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+            preferences.ensureSetHas(
+                context,
+                R.string.pref_key_ui_group_tabs,
+                R.array.group_tabs,
+                listOf(context.getString(R.string.stashapp_performers)),
+            )
+        }
     }
 
     private fun SharedPreferences.ensureSetHas(

@@ -157,6 +157,7 @@
     <string-array name="group_tabs">
         <item>@string/stashapp_details</item>
         <item>@string/stashapp_scenes</item>
+        <item>@string/stashapp_performers</item>
         <item>@string/stashapp_markers</item>
         <item>@string/stashapp_tags</item>
         <item>@string/stashapp_containing_groups</item>

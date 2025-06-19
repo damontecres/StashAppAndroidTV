@@ -4,6 +4,8 @@ import com.github.damontecres.stashapp.data.DataType
 
 /**
  * List of keys to look up how to sort items in a tab on a page
+ *
+ * https://github.com/philMorel/stash/blob/develop/ui/v2.5/src/components/List/views.ts
  */
 enum class PageFilterKey(
     val dataType: DataType,
@@ -33,4 +35,5 @@ enum class PageFilterKey(
 
     GROUP_SCENES(DataType.SCENE, "group_scenes"),
     GROUP_SUB_GROUPS(DataType.GROUP, "group_sub_groups"),
+    GROUP_PERFORMERS(DataType.PERFORMER, "group_performers"),
 }
