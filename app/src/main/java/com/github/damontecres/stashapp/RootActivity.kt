@@ -11,6 +11,9 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
@@ -134,6 +137,26 @@ class RootActivity :
                             }
                         }
                     }
+                }
+            }
+
+            serverViewModel.destination.observe(this) { destination ->
+                val windowInsetsController =
+                    WindowCompat.getInsetsController(window, window.decorView)
+                if (destination is Destination.Playback ||
+                    destination is Destination.Playlist ||
+                    destination is Destination.Slideshow ||
+                    destination is Destination.UpdateMarker
+                ) {
+                    Log.v(TAG, "Hiding system bars for $destination")
+                    windowInsetsController.systemBarsBehavior =
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+                } else {
+                    Log.v(TAG, "Showing system bars for $destination")
+                    windowInsetsController.systemBarsBehavior =
+                        WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
+                    windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
                 }
             }
         } else {

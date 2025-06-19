@@ -25,7 +25,7 @@ import dev.olshevski.navigation.reimagined.popUpTo
 
 class NavigationManagerCompose(
     activity: RootActivity,
-    private val serverViewModel: ServerViewModel,
+    val serverViewModel: ServerViewModel,
 ) : NavigationManagerParent(activity) {
     private val navDrawerFragment: NavDrawerFragment
 
