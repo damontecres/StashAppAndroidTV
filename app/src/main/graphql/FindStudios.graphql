@@ -76,3 +76,9 @@ mutation UpdateStudio($input: StudioUpdateInput!){
     ...StudioData
   }
 }
+
+mutation CreateStudio($input: StudioCreateInput!){
+  studioCreate(input: $input){
+    ...StudioData
+  }
+}
