@@ -23,33 +23,35 @@ import kotlin.time.toDuration
 @Composable
 fun MarkerCard(
     uiConfig: ComposeUiConfig,
-    item: MarkerData,
+    item: MarkerData?,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-    dataTypeMap[DataType.TAG] = item.tags.size
+    item?.let { dataTypeMap[DataType.TAG] = item.tags.size }
 
     val title =
-        item.title.ifBlank {
+        item?.title?.ifBlank {
             item.primary_tag.slimTagData.name
-        }
+        } ?: ""
     val startTime =
-        item.seconds
-            .toInt()
-            .toDuration(DurationUnit.SECONDS)
-            .toString()
+        item?.let {
+            item.seconds
+                .toInt()
+                .toDuration(DurationUnit.SECONDS)
+                .toString()
+        }
     val subtitle =
-        if (item.end_seconds != null) {
+        if (item?.end_seconds != null) {
             "$startTime - ${item.end_seconds.toInt().toDuration(DurationUnit.SECONDS)}"
         } else {
             startTime
-        }
+        } ?: ""
 
-    val imageUrl = item.screenshot
-    val videoUrl = item.stream
+    val imageUrl = item?.screenshot
+    val videoUrl = item?.stream
 
     RootCard(
         item = item,
@@ -74,7 +76,7 @@ fun MarkerCard(
                     modifier = Modifier.enableMarquee(it),
                 )
                 Text(
-                    text = item.scene.minimalSceneData.titleOrFilename ?: "",
+                    text = item?.scene?.minimalSceneData?.titleOrFilename ?: "",
                     maxLines = 1,
                     modifier = Modifier.enableMarquee(it),
                 )

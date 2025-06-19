@@ -21,24 +21,26 @@ import java.util.EnumMap
 @Composable
 fun GalleryCard(
     uiConfig: ComposeUiConfig,
-    item: GalleryData,
+    item: GalleryData?,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-    dataTypeMap[DataType.TAG] = item.tags.size
-    dataTypeMap[DataType.PERFORMER] = item.performers.size
-    dataTypeMap[DataType.SCENE] = item.scenes.size
-    dataTypeMap[DataType.IMAGE] = item.image_count
+    item?.let {
+        dataTypeMap[DataType.TAG] = item.tags.size
+        dataTypeMap[DataType.PERFORMER] = item.performers.size
+        dataTypeMap[DataType.SCENE] = item.scenes.size
+        dataTypeMap[DataType.IMAGE] = item.image_count
+    }
 
-    val imageUrl = item.paths.cover
-    val videoUrl = item.paths.preview
+    val imageUrl = item?.paths?.cover
+    val videoUrl = item?.paths?.preview
 
     val details = mutableListOf<String?>()
-    details.add(item.studio?.name)
-    details.add(item.date)
+    details.add(item?.studio?.name)
+    details.add(item?.date)
 
     RootCard(
         item = item,
@@ -54,7 +56,7 @@ fun GalleryCard(
         imageUrl = imageUrl,
         defaultImageDrawableRes = R.drawable.default_gallery,
         videoUrl = videoUrl,
-        title = item.name ?: "",
+        title = item?.name ?: "",
         subtitle = {
             Text(concatIfNotBlank(" - ", details))
         },
@@ -68,7 +70,7 @@ fun GalleryCard(
             )
         },
         imageOverlay = {
-            ImageOverlay(uiConfig.ratingAsStars, rating100 = item.rating100)
+            ImageOverlay(uiConfig.ratingAsStars, rating100 = item?.rating100)
         },
     )
 }

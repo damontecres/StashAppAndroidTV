@@ -95,7 +95,6 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.LocalPlayerContext
-import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.ui.util.playOnClickSound
@@ -526,109 +525,110 @@ fun CardImage(
 @Composable
 fun StashCard(
     uiConfig: ComposeUiConfig,
-    item: Any,
+    item: Any?,
     itemOnClick: (item: Any) -> Unit,
     longClicker: LongClicker<Any>,
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
 ) {
     when (item) {
-        is SlimSceneData ->
+        is SlimSceneData? ->
             SceneCard(
                 uiConfig,
                 item,
-                onClick = { itemOnClick(item) },
-                longClicker,
-                getFilterAndPosition,
-                modifier,
-            )
-        is FullSceneData ->
-            SceneCard(
-                uiConfig,
-                item.asSlimeSceneData,
-                onClick = { itemOnClick(item) },
+                onClick = { item?.let(itemOnClick) },
                 longClicker,
                 getFilterAndPosition,
                 modifier,
             )
 
-        is PerformerData ->
+        is FullSceneData? ->
+            SceneCard(
+                uiConfig,
+                item?.asSlimeSceneData,
+                onClick = { item?.let(itemOnClick) },
+                longClicker,
+                getFilterAndPosition,
+                modifier,
+            )
+
+        is PerformerData? ->
             PerformerCard(
                 uiConfig,
                 item,
-                onClick = { itemOnClick(item) },
+                onClick = { item?.let(itemOnClick) },
                 longClicker,
                 getFilterAndPosition,
                 modifier,
             )
 
-        is ImageData ->
+        is ImageData? ->
             ImageCard(
                 uiConfig,
                 item,
-                onClick = { itemOnClick(item) },
+                onClick = { item?.let(itemOnClick) },
                 longClicker,
                 getFilterAndPosition,
                 modifier,
             )
 
-        is GalleryData ->
+        is GalleryData? ->
             GalleryCard(
                 uiConfig,
                 item,
-                onClick = { itemOnClick(item) },
+                onClick = { item?.let(itemOnClick) },
                 longClicker,
                 getFilterAndPosition,
                 modifier,
             )
 
-        is MarkerData ->
+        is MarkerData? ->
             MarkerCard(
                 uiConfig,
                 item,
-                onClick = { itemOnClick(item) },
+                onClick = { item?.let(itemOnClick) },
                 longClicker,
                 getFilterAndPosition,
                 modifier,
             )
 
-        is GroupData ->
+        is GroupData? ->
             GroupCard(
                 uiConfig,
                 item,
-                onClick = { itemOnClick(item) },
+                onClick = { item?.let(itemOnClick) },
                 longClicker,
                 getFilterAndPosition,
                 modifier,
             )
 
-        is GroupRelationshipData -> {
+        is GroupRelationshipData? -> {
             GroupCard(
                 uiConfig,
-                item.group,
-                onClick = { itemOnClick(item) },
+                item?.group,
+                onClick = { item?.let(itemOnClick) },
                 longClicker,
                 getFilterAndPosition,
                 modifier,
-                subtitle = item.description,
+                subtitle = item?.description,
             )
         }
 
-        is StudioData ->
+        is StudioData? ->
             StudioCard(
                 uiConfig,
                 item,
-                onClick = { itemOnClick(item) },
+                onClick = { item?.let(itemOnClick) },
                 longClicker,
                 getFilterAndPosition,
                 modifier,
             )
 
-        is TagData ->
+        is TagData? ->
             TagCard(
                 uiConfig,
                 item,
-                onClick = { itemOnClick(item) },
+                onClick = { item?.let(itemOnClick) },
                 longClicker,
                 getFilterAndPosition,
                 modifier,
@@ -667,29 +667,6 @@ fun StashCard(
             )
         }
 
-        else -> throw UnsupportedOperationException("Item with class ${item.javaClass} not supported.")
+        else -> throw UnsupportedOperationException("Item with class ${item?.javaClass} not supported.")
     }
-}
-
-@Composable
-fun LoadingCard(
-    dataType: DataType,
-    uiConfig: ComposeUiConfig,
-    modifier: Modifier = Modifier,
-) {
-    RootCard(
-        item = null,
-        title = "Loading...",
-        subtitle = {},
-        uiConfig = uiConfig,
-        imageWidth = dataTypeImageWidth(dataType).dp / 2,
-        imageHeight = dataTypeImageHeight(dataType).dp / 2,
-        imageContent = {
-            CircularProgress(modifier = Modifier.fillMaxSize(.8f))
-        },
-        onClick = {},
-        longClicker = { _, _ -> },
-        getFilterAndPosition = null,
-        modifier = modifier,
-    )
 }

@@ -61,7 +61,6 @@ import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
-import com.github.damontecres.stashapp.ui.cards.LoadingCard
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.playback.isBackwardButton
 import com.github.damontecres.stashapp.ui.components.playback.isForwardButton
@@ -541,67 +540,58 @@ fun StashGrid(
                             Modifier
                         }
                     val item = pager[index]
-                    if (item == null) {
-                        // TODO can't focus initially because items will be null
-                        LoadingCard(
-                            dataType = pager.filter.dataType,
-                            uiConfig = uiConfig,
-                            modifier = mod,
-                        )
-                    } else {
-                        if (!hasRequestFocusRun && requestFocus && initialPosition >= 0) {
-                            // On very first composition, if parent wants to focus on the grid, do so
-                            LaunchedEffect(Unit) {
-                                if (DEBUG) {
-                                    Log.d(
-                                        TAG,
-                                        "non-null focus on startPosition=$startPosition, from initialPosition=$initialPosition",
-                                    )
-                                }
-                                // focus on startPosition
-                                gridState.scrollToItem(startPosition, 0)
-                                firstFocus.tryRequestFocus()
-                                hasRequestFocusRun = true
+                    if (!hasRequestFocusRun && requestFocus && initialPosition >= 0) {
+                        // On very first composition, if parent wants to focus on the grid, do so
+                        LaunchedEffect(Unit) {
+                            if (DEBUG) {
+                                Log.d(
+                                    TAG,
+                                    "non-null focus on startPosition=$startPosition, from initialPosition=$initialPosition",
+                                )
                             }
+                            // focus on startPosition
+                            gridState.scrollToItem(startPosition, 0)
+                            firstFocus.tryRequestFocus()
+                            hasRequestFocusRun = true
                         }
-                        StashCard(
-                            modifier =
-                                mod
-                                    .ifElse(index == 0, Modifier.focusRequester(zeroFocus))
-                                    .onFocusChanged { focusState ->
-                                        if (DEBUG) {
-                                            Log.v(
-                                                TAG,
-                                                "$index isFocused=${focusState.isFocused}",
-                                            )
-                                        }
-                                        if (focusState.isFocused) {
-                                            // Focused, so set that up
-                                            focusOn(index)
-                                            positionCallback?.invoke(columns, index)
-                                        } else if (focusedIndex == index) {
-                                            savedFocusedIndex = index
-                                            // Was focused on this, so mark unfocused
-                                            focusedIndex = -1
-                                        }
-                                    },
-                            uiConfig = uiConfig,
-                            item = item,
-                            itemOnClick = {
-                                itemOnClick.onClick(
-                                    it,
-                                    FilterAndPosition(filterArgs, index),
-                                )
-                            },
-                            longClicker = longClicker,
-                            getFilterAndPosition = {
-                                FilterAndPosition(
-                                    filterArgs,
-                                    index,
-                                )
-                            },
-                        )
                     }
+                    StashCard(
+                        modifier =
+                            mod
+                                .ifElse(index == 0, Modifier.focusRequester(zeroFocus))
+                                .onFocusChanged { focusState ->
+                                    if (DEBUG) {
+                                        Log.v(
+                                            TAG,
+                                            "$index isFocused=${focusState.isFocused}",
+                                        )
+                                    }
+                                    if (focusState.isFocused) {
+                                        // Focused, so set that up
+                                        focusOn(index)
+                                        positionCallback?.invoke(columns, index)
+                                    } else if (focusedIndex == index) {
+                                        savedFocusedIndex = index
+                                        // Was focused on this, so mark unfocused
+                                        focusedIndex = -1
+                                    }
+                                },
+                        uiConfig = uiConfig,
+                        item = item,
+                        itemOnClick = {
+                            itemOnClick.onClick(
+                                it,
+                                FilterAndPosition(filterArgs, index),
+                            )
+                        },
+                        longClicker = longClicker,
+                        getFilterAndPosition = {
+                            FilterAndPosition(
+                                filterArgs,
+                                index,
+                            )
+                        },
+                    )
                 }
             }
             if (pager.size == 0) {

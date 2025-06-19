@@ -23,7 +23,7 @@ import java.util.EnumMap
 @Composable
 fun GroupCard(
     uiConfig: ComposeUiConfig,
-    item: GroupData,
+    item: GroupData?,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
@@ -31,12 +31,14 @@ fun GroupCard(
     subtitle: String? = null,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-    dataTypeMap[DataType.SCENE] = item.scene_count
-    dataTypeMap[DataType.TAG] = item.tags.size
+    item?.let {
+        dataTypeMap[DataType.SCENE] = item.scene_count
+        dataTypeMap[DataType.TAG] = item.tags.size
+    }
 
-    val title = item.name
-    val imageUrl = item.front_image_path
-    val details = subtitle ?: item.date ?: ""
+    val title = item?.name ?: ""
+    val imageUrl = item?.front_image_path
+    val details = subtitle ?: item?.date ?: ""
 
     RootCard(
         item = item,
@@ -56,39 +58,41 @@ fun GroupCard(
         subtitle = {
             Text(details)
         },
-        description = {
-            IconRowText(
-                dataTypeMap,
-                null,
-                Modifier
-                    .enableMarquee(it)
-                    .align(Alignment.Center),
-            ) {
-                if (item.containing_groups.isNotEmpty() || item.sub_group_count > 0) {
-                    if (length > 0) {
-                        append(" ")
-                    }
-                    withStyle(SpanStyle(fontFamily = FontAwesome)) {
-                        append(stringResource(DataType.GROUP.iconStringId))
-                    }
-                    append(" ")
-                    if (item.containing_groups.isNotEmpty()) {
-                        append(item.containing_groups.size.toString())
-                        withStyle(SpanStyle(fontFamily = FontAwesome)) {
-                            append(stringResource(R.string.fa_arrow_up_long))
+        description = { focused ->
+            item?.let {
+                IconRowText(
+                    dataTypeMap,
+                    null,
+                    Modifier
+                        .enableMarquee(focused)
+                        .align(Alignment.Center),
+                ) {
+                    if (item.containing_groups.isNotEmpty() || item.sub_group_count > 0) {
+                        if (length > 0) {
+                            append(" ")
                         }
-                    }
-                    if (item.sub_group_count > 0) {
-                        append(item.sub_group_count.toString())
                         withStyle(SpanStyle(fontFamily = FontAwesome)) {
-                            append(stringResource(R.string.fa_arrow_down_long))
+                            append(stringResource(DataType.GROUP.iconStringId))
+                        }
+                        append(" ")
+                        if (item.containing_groups.isNotEmpty()) {
+                            append(item.containing_groups.size.toString())
+                            withStyle(SpanStyle(fontFamily = FontAwesome)) {
+                                append(stringResource(R.string.fa_arrow_up_long))
+                            }
+                        }
+                        if (item.sub_group_count > 0) {
+                            append(item.sub_group_count.toString())
+                            withStyle(SpanStyle(fontFamily = FontAwesome)) {
+                                append(stringResource(R.string.fa_arrow_down_long))
+                            }
                         }
                     }
                 }
             }
         },
         imageOverlay = {
-            ImageOverlay(uiConfig.ratingAsStars, rating100 = item.rating100)
+            ImageOverlay(uiConfig.ratingAsStars, rating100 = item?.rating100)
         },
     )
 }
