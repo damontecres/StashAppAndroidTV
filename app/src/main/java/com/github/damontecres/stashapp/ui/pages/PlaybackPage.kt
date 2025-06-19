@@ -163,8 +163,8 @@ fun PlaylistPlaybackPage(
 
     LaunchedEffect(server, filterArgs) {
         // TODO switch to single query
-        viewModel.setFilter(server, adjustFilter(filterArgs))
-        playlistViewModel.setFilter(server, filterArgs)
+        viewModel.setFilter(server, adjustFilter(filterArgs), uiConfig.cardSettings.columns)
+        playlistViewModel.setFilter(server, filterArgs, uiConfig.cardSettings.columns)
     }
     val pager by viewModel.pager.observeAsState()
     var playlist by remember(pager) { mutableStateOf<List<MediaItem>>(listOf()) }

@@ -44,7 +44,7 @@ fun FilterPage(
     if (viewModel.currentFilter == null) {
         // If the view model is populated, don't do it again
         LaunchedEffect(server, initialFilter) {
-            viewModel.setFilter(server, initialFilter)
+            viewModel.setFilter(server, initialFilter, uiConfig.cardSettings.columns)
         }
     }
     val pager by viewModel.pager.observeAsState()
@@ -101,7 +101,7 @@ fun FilterPage(
                 longClicker = longClicker,
                 initialPosition = initialPosition,
                 updateFilter = {
-                    viewModel.setFilter(server, it)
+                    viewModel.setFilter(server, it, uiConfig.cardSettings.columns)
                 },
                 letterPosition = viewModel::findLetterPosition,
                 requestFocus = true,

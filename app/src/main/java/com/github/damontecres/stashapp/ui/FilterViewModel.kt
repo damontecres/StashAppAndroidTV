@@ -31,17 +31,19 @@ class FilterViewModel : ViewModel() {
     fun setFilter(
         server: StashServer,
         filterArgs: FilterArgs,
+        columns: Int,
     ) {
         if (pager.value?.filter != filterArgs || server != this.server) {
             job?.cancel()
-            Log.d("FilterPageViewModel", "filterArgs=$filterArgs")
+            Log.d("FilterPageViewModel", "filterArgs=$filterArgs, columns=$columns")
             this.server = server
             val dataSupplierFactory = DataSupplierFactory(server.version)
             val dataSupplier =
                 dataSupplierFactory.create<Query.Data, StashData, Query.Data>(filterArgs)
             val pagingSource =
                 StashPagingSource(QueryEngine(server), dataSupplier) { _, _, item -> item }
-            val pager = ComposePager(filterArgs, pagingSource, viewModelScope)
+            val pager =
+                ComposePager(filterArgs, pagingSource, viewModelScope, pageSize = columns * 10)
             job =
                 viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                     pager.init()

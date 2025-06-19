@@ -20,24 +20,26 @@ import java.util.EnumMap
 @Composable
 fun StudioCard(
     uiConfig: ComposeUiConfig,
-    item: StudioData,
+    item: StudioData?,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-    dataTypeMap[DataType.SCENE] = item.scene_count
-    dataTypeMap[DataType.PERFORMER] = item.performer_count
-    dataTypeMap[DataType.GROUP] = item.group_count
-    dataTypeMap[DataType.IMAGE] = item.image_count
-    dataTypeMap[DataType.GALLERY] = item.gallery_count
-    dataTypeMap[DataType.TAG] = item.tags.size
+    item?.let {
+        dataTypeMap[DataType.SCENE] = item.scene_count
+        dataTypeMap[DataType.PERFORMER] = item.performer_count
+        dataTypeMap[DataType.GROUP] = item.group_count
+        dataTypeMap[DataType.IMAGE] = item.image_count
+        dataTypeMap[DataType.GALLERY] = item.gallery_count
+        dataTypeMap[DataType.TAG] = item.tags.size
+    }
 
-    val title = item.name
-    val imageUrl = item.image_path
+    val title = item?.name ?: ""
+    val imageUrl = item?.image_path
     val details =
-        if (item.parent_studio != null) {
+        if (item?.parent_studio != null) {
             stringResource(R.string.stashapp_part_of, item.parent_studio.name)
         } else {
             ""
@@ -71,11 +73,13 @@ fun StudioCard(
             )
         },
         imageOverlay = {
-            ImageOverlay(
-                uiConfig.ratingAsStars,
-                favorite = item.favorite,
-                rating100 = item.rating100,
-            )
+            item?.let {
+                ImageOverlay(
+                    uiConfig.ratingAsStars,
+                    favorite = item.favorite,
+                    rating100 = item.rating100,
+                )
+            }
         },
     )
 }
