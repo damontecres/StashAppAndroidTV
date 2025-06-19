@@ -1,11 +1,13 @@
 package com.github.damontecres.apollo.compiler
 
+import com.apollographql.apollo.annotations.ApolloExperimental
 import com.apollographql.apollo.compiler.ApolloCompilerPlugin
+import com.apollographql.apollo.compiler.ApolloCompilerPluginEnvironment
+import com.apollographql.apollo.compiler.ApolloCompilerRegistry
 import com.apollographql.apollo.compiler.Transform
 import com.apollographql.apollo.compiler.codegen.kotlin.KotlinOutput
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.DelicateKotlinPoetApi
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterizedTypeName
@@ -17,52 +19,60 @@ import kotlinx.serialization.Serializable
  * An [ApolloCompilerPlugin] to add some extra annotations and interfaces to the classes generated from the graphql schema
  */
 class StashApolloCompilerPlugin : ApolloCompilerPlugin {
-    override fun kotlinOutputTransform(): Transform<KotlinOutput> {
-        return object : Transform<KotlinOutput> {
-            override fun transform(input: KotlinOutput): KotlinOutput {
-                val packageName = "com.github.damontecres.stashapp"
-                val stashDataInterface = ClassName("$packageName.api.fragment", "StashData")
-                val stashFilterInterface = ClassName("$packageName.api.type", "StashDataFilter")
-                val stashFilterFileSpec =
-                    FileSpec
-                        .builder(stashFilterInterface)
-                        .addType(
-                            TypeSpec
-                                .interfaceBuilder(stashFilterInterface)
-                                .addModifiers(KModifier.SEALED)
-                                .addAnnotation(Serializable::class)
-                                .build(),
-                        ).build()
+    @OptIn(ApolloExperimental::class)
+    override fun beforeCompilationStep(
+        environment: ApolloCompilerPluginEnvironment,
+        registry: ApolloCompilerRegistry,
+    ) {
+        val packageName = "com.github.damontecres.stashapp"
+        registry.registerKotlinOutputTransform(
+            packageName,
+            transform =
+                object : Transform<KotlinOutput> {
+                    override fun transform(input: KotlinOutput): KotlinOutput {
+                        val stashDataInterface = ClassName("$packageName.api.fragment", "StashData")
+                        val stashFilterInterface =
+                            ClassName("$packageName.api.type", "StashDataFilter")
+                        val stashFilterFileSpec =
+                            FileSpec
+                                .builder(stashFilterInterface)
+                                .addType(
+                                    TypeSpec
+                                        .interfaceBuilder(stashFilterInterface)
+                                        .addModifiers(KModifier.SEALED)
+                                        .addAnnotation(Serializable::class)
+                                        .build(),
+                                ).build()
 
-                val newFileSpecs =
-                    input.fileSpecs.map { file ->
-                        if (file.name.endsWith("FilterType") &&
-                            file.name !in
-                            setOf(
-                                "FindFilterType",
-                                "SavedFindFilterType",
-                            ) ||
-                            file.name.endsWith("CriterionInput")
-                        ) {
-                            // Modify filter or filter input types
-                            handleFilterInput(file, stashFilterInterface)
-                        } else if (file.name.endsWith("Data")) {
-                            // Modify data types
-                            // Note that fragments for data types by convention are suffixed with "Data"
-                            handleData(file, stashDataInterface)
-                        } else {
-                            file
-                        }
+                        val newFileSpecs =
+                            input.fileSpecs.map { file ->
+                                if (file.name.endsWith("FilterType") &&
+                                    file.name !in
+                                    setOf(
+                                        "FindFilterType",
+                                        "SavedFindFilterType",
+                                    ) ||
+                                    file.name.endsWith("CriterionInput")
+                                ) {
+                                    // Modify filter or filter input types
+                                    handleFilterInput(file, stashFilterInterface)
+                                } else if (file.name.endsWith("Data")) {
+                                    // Modify data types
+                                    // Note that fragments for data types by convention are suffixed with "Data"
+                                    handleData(file, stashDataInterface)
+                                } else {
+                                    file
+                                }
+                            }
+                        return KotlinOutput(
+                            newFileSpecs + stashFilterFileSpec,
+                            input.codegenMetadata,
+                        )
                     }
-                return KotlinOutput(
-                    newFileSpecs + stashFilterFileSpec,
-                    input.codegenMetadata,
-                )
-            }
-        }
+                },
+        )
     }
 
-    @OptIn(DelicateKotlinPoetApi::class)
     private fun handleFilterInput(
         file: FileSpec,
         stashFilterInterface: ClassName,
