@@ -369,7 +369,14 @@ fun SearchForPage(
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
-                        if (allowCreate && uiConfig.readOnlyModeDisabled) {
+                        if (allowCreate &&
+                            uiConfig.readOnlyModeDisabled &&
+                            SearchForFragment.allowCreate(
+                                dataType,
+                                searchQuery,
+                                listOf(),
+                            )
+                        ) {
                             StashCard(
                                 uiConfig = uiConfig,
                                 item = CreateNew(dataType, searchQuery),
@@ -450,6 +457,10 @@ suspend fun handleCreate(
 
                 DataType.GROUP -> {
                     mutationEngine.createGroup(GroupCreateInput(name = name))
+                }
+
+                DataType.STUDIO -> {
+                    mutationEngine.createStudio(name = name)
                 }
 
                 else -> throw IllegalArgumentException("Unsupported datatype $dataType")

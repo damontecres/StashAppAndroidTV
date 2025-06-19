@@ -25,6 +25,7 @@ import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
@@ -144,6 +145,10 @@ class SearchForFragment :
 
                     DataType.GROUP -> {
                         mutationEngine.createGroup(GroupCreateInput(name = name))
+                    }
+
+                    DataType.STUDIO -> {
+                        mutationEngine.createStudio(name = name)
                     }
 
                     else -> throw IllegalArgumentException("Unsupported datatype $dataType")
@@ -466,9 +471,13 @@ class SearchForFragment :
                     items.none { it.name.lowercase() == q || it.aliases.any { it.lowercase() == q } }
                 }
 
+                DataType.STUDIO -> {
+                    items as List<StudioData>
+                    items.none { it.name.lowercase() == q || it.aliases.any { it.lowercase() == q } }
+                }
+
                 DataType.SCENE -> false
                 DataType.MARKER -> false
-                DataType.STUDIO -> false
                 DataType.IMAGE -> false
                 DataType.GALLERY -> false
             }
