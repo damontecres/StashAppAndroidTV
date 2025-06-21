@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.components.image
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.apollographql.apollo.api.Optional
@@ -61,7 +62,7 @@ import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun ImageDetailsHeader(
     player: Player,
@@ -271,8 +272,8 @@ fun ImageDetailsHeader(
                 }
             }
         }
+        val playPauseState = rememberPlayPauseButtonState(player)
         ImageControlsOverlay(
-            player = player,
             isImageClip = image.isImageClip,
             oCount = oCount,
             bringIntoViewRequester = bringIntoViewRequester,
@@ -280,8 +281,11 @@ fun ImageDetailsHeader(
             onRotate = onRotate,
             onReset = onReset,
             moreOnClick = moreOnClick,
+            oCounterEnabled = uiConfig.readOnlyModeDisabled,
             oCounterOnClick = oCounterOnClick,
             oCounterOnLongClick = oCounterOnLongClick,
+            playPauseOnClick = playPauseState::onClick,
+            isPlaying = playPauseState.showPlay,
             modifier =
                 Modifier
                     .fillMaxWidth()

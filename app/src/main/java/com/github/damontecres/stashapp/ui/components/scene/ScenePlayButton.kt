@@ -2,8 +2,8 @@ package com.github.damontecres.stashapp.ui.components.scene
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
@@ -21,8 +21,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
@@ -30,14 +30,14 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.playback.PlaybackMode
-import com.github.damontecres.stashapp.util.resume_position
+import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.components.OCounterButton
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun PlayButtons(
-    scene: FullSceneData,
+    resumePosition: Long,
     oCount: Int,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     editOnClick: () -> Unit,
@@ -51,25 +51,23 @@ fun PlayButtons(
     modifier: Modifier = Modifier,
 ) {
     val firstFocus = remember { FocusRequester() }
-    val resume = scene.resume_position ?: 0
     LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier =
             modifier
-                .padding(top = 24.dp, bottom = 24.dp)
                 .focusGroup()
-                .focusRestorer { firstFocus },
+                .focusRestorer(firstFocus),
     ) {
-        if (resume > 0 && !alwaysStartFromBeginning) {
+        if (resumePosition > 0 && !alwaysStartFromBeginning) {
             item {
 //                LaunchedEffect(Unit) { firstFocus.tryRequestFocus() }
                 PlayButton(
                     R.string.resume,
-                    resume,
+                    resumePosition,
                     Icons.Default.PlayArrow,
                     PlaybackMode.Choose,
                     playOnClick,
                     Modifier
-                        .padding(start = 8.dp, end = 8.dp)
                         .onFocusChanged(buttonOnFocusChanged)
                         .focusRequester(firstFocus)
                         .focusRequester(focusRequester),
@@ -83,7 +81,6 @@ fun PlayButtons(
                     PlaybackMode.Choose,
                     playOnClick,
                     Modifier
-                        .padding(start = 8.dp, end = 8.dp)
                         .onFocusChanged(buttonOnFocusChanged),
                 )
             }
@@ -97,7 +94,6 @@ fun PlayButtons(
                     PlaybackMode.Choose,
                     playOnClick,
                     Modifier
-                        .padding(start = 8.dp, end = 8.dp)
                         .onFocusChanged(buttonOnFocusChanged)
                         .focusRequester(firstFocus)
                         .focusRequester(focusRequester),
@@ -106,27 +102,15 @@ fun PlayButtons(
         }
         // O-Counter
         item {
-            Button(
+            OCounterButton(
+                oCount = oCount,
                 onClick = oCounterOnClick,
                 onLongClick = oCounterOnLongClick,
-                enabled = showEditButton,
                 modifier =
                     Modifier
-                        .padding(start = 8.dp, end = 8.dp)
                         .onFocusChanged(buttonOnFocusChanged),
-                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.sweat_drops),
-                    contentDescription = null,
-                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                )
-                Spacer(Modifier.size(8.dp))
-                Text(
-                    text = oCount.toString(),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-            }
+                enabled = showEditButton,
+            )
         }
         // Edit button
         if (showEditButton) {
@@ -136,7 +120,6 @@ fun PlayButtons(
                     onLongClick = {},
                     modifier =
                         Modifier
-                            .padding(start = 8.dp, end = 8.dp)
                             .onFocusChanged(buttonOnFocusChanged),
                     contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
                 ) {
@@ -160,7 +143,6 @@ fun PlayButtons(
                 onLongClick = {},
                 modifier =
                     Modifier
-                        .padding(start = 8.dp, end = 8.dp)
                         .onFocusChanged(buttonOnFocusChanged),
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
             ) {
@@ -200,6 +182,27 @@ fun PlayButton(
         Text(
             text = stringResource(title),
             style = MaterialTheme.typography.titleSmall,
+        )
+    }
+}
+
+@Preview(widthDp = 800)
+@Composable
+private fun PlayButtonsPreview() {
+    AppTheme {
+        PlayButtons(
+            resumePosition = 1000L,
+            oCount = 10,
+            playOnClick = { _, _ -> },
+            editOnClick = {},
+            moreOnClick = { },
+            oCounterOnClick = { },
+            oCounterOnLongClick = {},
+            buttonOnFocusChanged = {},
+            focusRequester = FocusRequester(),
+            alwaysStartFromBeginning = false,
+            showEditButton = true,
+            modifier = Modifier,
         )
     }
 }
