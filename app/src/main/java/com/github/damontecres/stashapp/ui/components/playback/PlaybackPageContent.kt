@@ -104,6 +104,7 @@ import com.github.damontecres.stashapp.playback.switchToTranscode
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
 import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
@@ -310,6 +311,7 @@ fun PlaybackPageContent(
     markersEnabled: Boolean,
     playlistPager: ComposePager<StashData>?,
     onClickPlaylistItem: ((Int) -> Unit)?,
+    itemOnClick: ItemOnClicker<Any>,
     modifier: Modifier = Modifier,
     controlsEnabled: Boolean = true,
     viewModel: PlaybackViewModel = viewModel(),
@@ -832,6 +834,7 @@ fun PlaybackPageContent(
                         scene = it,
                         performers = performers,
                         uiConfig = uiConfig,
+                        itemOnClick = itemOnClick,
                     )
                 }
             }

@@ -40,6 +40,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.components.CircularProgress
+import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageContent
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
@@ -58,6 +59,7 @@ fun PlaybackPage(
     sceneId: String,
     startPosition: Long,
     playbackMode: PlaybackMode,
+    itemOnClick: ItemOnClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     var scene by remember { mutableStateOf<FullSceneData?>(null) }
@@ -113,6 +115,7 @@ fun PlaybackPage(
             controlsEnabled = true,
             startPosition = startPosition,
             onClickPlaylistItem = null,
+            itemOnClick = itemOnClick,
         )
     }
 }
@@ -158,6 +161,7 @@ fun PlaylistPlaybackPage(
     uiConfig: ComposeUiConfig,
     filterArgs: FilterArgs,
     startIndex: Int,
+    itemOnClick: ItemOnClicker<Any>,
     modifier: Modifier = Modifier,
     clipDuration: Duration = 30.seconds,
     viewModel: FilterViewModel = viewModel(key = "main"),
@@ -240,6 +244,7 @@ fun PlaylistPlaybackPage(
             uiConfig = uiConfig,
             markersEnabled = filterArgs.dataType == DataType.SCENE,
             playlistPager = playlistPager,
+            itemOnClick = itemOnClick,
             onClickPlaylistItem = { index ->
                 if (index < player.mediaItemCount) {
                     player.seekTo(index, C.TIME_UNSET)

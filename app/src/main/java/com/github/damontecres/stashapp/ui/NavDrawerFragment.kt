@@ -410,6 +410,8 @@ fun FragmentContent(
                         startPosition = destination.position,
                         playbackMode = destination.mode,
                         uiConfig = composeUiConfig,
+                        itemOnClick = itemOnClick,
+                        modifier = Modifier,
                     )
                 }
 
@@ -420,6 +422,7 @@ fun FragmentContent(
                         filterArgs = destination.filterArgs,
                         startIndex = destination.position,
                         clipDuration = destination.duration?.milliseconds ?: 30.seconds,
+                        itemOnClick = itemOnClick,
                         modifier = Modifier,
                     )
                 }
