@@ -1,13 +1,11 @@
 package com.github.damontecres.stashapp.ui.components.image
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.OptIn
 import androidx.annotation.StringRes
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -25,34 +23,36 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.FontAwesome
+import com.github.damontecres.stashapp.ui.components.OCounterButton
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import kotlinx.coroutines.launch
 
-@androidx.annotation.OptIn(UnstableApi::class)
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(UnstableApi::class)
 @Composable
 fun ImageControlsOverlay(
-    player: Player,
     isImageClip: Boolean,
     oCount: Int,
     onZoom: (Float) -> Unit,
     onRotate: (Int) -> Unit,
     onReset: () -> Unit,
     moreOnClick: () -> Unit,
+    oCounterEnabled: Boolean,
     oCounterOnClick: () -> Unit,
     oCounterOnLongClick: () -> Unit,
+    isPlaying: Boolean,
+    playPauseOnClick: () -> Unit,
     bringIntoViewRequester: BringIntoViewRequester?,
     modifier: Modifier = Modifier,
 ) {
@@ -67,19 +67,18 @@ fun ImageControlsOverlay(
             scope.launch(StashCoroutineExceptionHandler()) { bringIntoViewRequester.bringIntoView() }
         }
     }
-    val playPauseState = rememberPlayPauseButtonState(player)
+
     LazyRow(
         modifier =
             modifier
-                .focusGroup()
-                .padding(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(20.dp),
+                .focusGroup(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (isImageClip) {
             item {
                 Button(
-                    onClick = playPauseState::onClick,
+                    onClick = playPauseOnClick,
                     modifier =
                         Modifier
                             .focusRequester(focusRequester)
@@ -89,7 +88,7 @@ fun ImageControlsOverlay(
                     Icon(
                         painter =
                             painterResource(
-                                if (playPauseState.showPlay) R.drawable.baseline_play_arrow_24 else R.drawable.baseline_pause_24,
+                                if (isPlaying) R.drawable.baseline_play_arrow_24 else R.drawable.baseline_pause_24,
                             ),
                         contentDescription = null,
                     )
@@ -148,25 +147,13 @@ fun ImageControlsOverlay(
         }
         // O-Counter
         item {
-            Button(
+            OCounterButton(
+                oCount = oCount,
                 onClick = oCounterOnClick,
                 onLongClick = oCounterOnLongClick,
-                modifier =
-                    Modifier
-                        .onFocusChanged(onFocused),
-                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.sweat_drops),
-                    contentDescription = null,
-                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                )
-                Spacer(Modifier.size(8.dp))
-                Text(
-                    text = oCount.toString(),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-            }
+                modifier = Modifier.onFocusChanged(onFocused),
+                enabled = oCounterEnabled,
+            )
         }
         // More button
         item {
@@ -181,6 +168,7 @@ fun ImageControlsOverlay(
                 Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = null,
+                    modifier = Modifier.size(24.dp),
                 )
                 Spacer(Modifier.size(8.dp))
                 Text(
@@ -201,7 +189,6 @@ fun ImageControlButton(
 ) {
     Button(
         onClick = onClick,
-        contentPadding = PaddingValues(8.dp),
         modifier = modifier,
     ) {
         if (stringRes != 0) {
@@ -217,5 +204,27 @@ fun ImageControlButton(
                 modifier = Modifier.size(24.dp),
             )
         }
+    }
+}
+
+@Preview(widthDp = 800)
+@Composable
+private fun ImageControlsOverlayPreview() {
+    AppTheme {
+        ImageControlsOverlay(
+            isImageClip = false,
+            oCount = 10,
+            onZoom = {},
+            onRotate = {},
+            onReset = {},
+            moreOnClick = {},
+            oCounterEnabled = true,
+            oCounterOnClick = {},
+            oCounterOnLongClick = {},
+            isPlaying = false,
+            playPauseOnClick = {},
+            bringIntoViewRequester = null,
+            modifier = Modifier,
+        )
     }
 }

@@ -54,6 +54,16 @@ class RootActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         useCompose = composeEnabled(this)
+        navigationManager =
+            if (useCompose) {
+                NavigationManagerCompose(this, serverViewModel)
+            } else {
+                NavigationManagerLeanback(this)
+            }
+        navigationManager.addListener(this)
+        StashApplication.navigationManager = navigationManager
+        serverViewModel.navigationManager = navigationManager
+
         if (useCompose) {
             setContentView(R.layout.activity_root_compose)
         } else {
@@ -72,17 +82,6 @@ class RootActivity :
         )
 
         val appHasPin = appHasPin()
-
-        navigationManager =
-            if (useCompose) {
-                NavigationManagerCompose(this, serverViewModel)
-            } else {
-                NavigationManagerLeanback(this)
-            }
-        navigationManager.addListener(this)
-        StashApplication.navigationManager = navigationManager
-
-        serverViewModel.navigationManager = navigationManager
 
         if (savedInstanceState != null) {
             navigationManager.previousDestination = savedInstanceState.maybeGetDestination()

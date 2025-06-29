@@ -7,6 +7,7 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.CreateGroupMutation
 import com.github.damontecres.stashapp.api.CreateMarkerMutation
 import com.github.damontecres.stashapp.api.CreatePerformerMutation
+import com.github.damontecres.stashapp.api.CreateStudioMutation
 import com.github.damontecres.stashapp.api.CreateTagMutation
 import com.github.damontecres.stashapp.api.DeleteMarkerMutation
 import com.github.damontecres.stashapp.api.ImageDecrementOMutation
@@ -51,6 +52,7 @@ import com.github.damontecres.stashapp.api.type.SceneGroupInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerCreateInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.api.type.SceneUpdateInput
+import com.github.damontecres.stashapp.api.type.StudioCreateInput
 import com.github.damontecres.stashapp.api.type.StudioUpdateInput
 import com.github.damontecres.stashapp.api.type.TagCreateInput
 import com.github.damontecres.stashapp.api.type.TagUpdateInput
@@ -489,6 +491,12 @@ class MutationEngine(
             )
         val mutation = UpdateStudioMutation(input)
         return executeMutation(mutation).data?.studioUpdate?.studioData
+    }
+
+    suspend fun createStudio(name: String): StudioData? {
+        val input = StudioCreateInput(name = name)
+        val mutation = CreateStudioMutation(input)
+        return executeMutation(mutation).data?.studioCreate?.studioData
     }
 
     suspend fun updateGroup(

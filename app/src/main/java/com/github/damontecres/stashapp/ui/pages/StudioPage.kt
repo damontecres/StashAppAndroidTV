@@ -45,10 +45,10 @@ import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.ui.filterArgsSaver
+import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.showSetRatingToast
@@ -112,7 +112,7 @@ fun StudioPage(
                     favorite = favorite,
                     favoriteClick = {
                         val mutationEngine = MutationEngine(server)
-                        scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                        scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
                             val newStudio =
                                 mutationEngine.updateStudio(
                                     studioId = studio.id,
@@ -134,7 +134,7 @@ fun StudioPage(
                     rating100 = rating100,
                     rating100Click = { newRating100 ->
                         val mutationEngine = MutationEngine(server)
-                        scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                        scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
                             val newStudio =
                                 mutationEngine.updateStudio(
                                     studioId = studio.id,

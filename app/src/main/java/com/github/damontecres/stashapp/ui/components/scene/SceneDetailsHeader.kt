@@ -62,6 +62,7 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
+import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.formatBytes
@@ -160,7 +161,7 @@ fun SceneDetailsHeader(
             )
             // Playback controls
             PlayButtons(
-                scene = scene,
+                resumePosition = scene.resume_position ?: 0,
                 oCount = oCount,
                 playOnClick = playOnClick,
                 editOnClick = editOnClick,
@@ -175,6 +176,7 @@ fun SceneDetailsHeader(
                 },
                 alwaysStartFromBeginning = alwaysStartFromBeginning,
                 showEditButton = showEditButton,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 24.dp),
             )
         }
     }
