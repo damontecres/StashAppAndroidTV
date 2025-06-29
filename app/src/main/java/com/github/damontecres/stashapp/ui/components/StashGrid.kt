@@ -427,7 +427,7 @@ fun StashGrid(
         }
 
     val jump = { jump: Int ->
-        scope.launch(StashCoroutineExceptionHandler()) {
+        scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
             val newPosition =
                 (gridState.firstVisibleItemIndex + jump).coerceIn(0..<pager.size)
             if (DEBUG) Log.d(TAG, "newPosition=$newPosition")

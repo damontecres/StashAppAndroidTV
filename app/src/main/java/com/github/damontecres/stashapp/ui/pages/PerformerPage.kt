@@ -99,10 +99,10 @@ import com.github.damontecres.stashapp.ui.performerPreview
 import com.github.damontecres.stashapp.ui.tagPreview
 import com.github.damontecres.stashapp.ui.titleCount
 import com.github.damontecres.stashapp.ui.uiConfigPreview
+import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.getUiTabs
@@ -121,6 +121,7 @@ class PerformerDetailsViewModel(
 ) : ViewModel() {
     private val queryEngine = QueryEngine(server)
     private val mutationEngine = MutationEngine(server)
+    private val exceptionHandler = LoggingCoroutineExceptionHandler(server, viewModelScope)
 
     private var performer: PerformerData? = null
 
@@ -132,7 +133,7 @@ class PerformerDetailsViewModel(
     val rating100 = MutableLiveData(0)
 
     fun init(): PerformerDetailsViewModel {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(exceptionHandler.with("Error fetching performer")) {
             try {
                 val performer = queryEngine.getPerformer(performerId)
                 if (performer != null) {
@@ -189,7 +190,7 @@ class PerformerDetailsViewModel(
         ids?.let {
             val mutable = it.toMutableList()
             mutator.invoke(mutable)
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            viewModelScope.launch(exceptionHandler) {
                 val newPerformer = mutationEngine.updatePerformer(performerId, tagIds = mutable)
                 if (newPerformer != null) {
                     refresh(newPerformer)
@@ -199,7 +200,7 @@ class PerformerDetailsViewModel(
     }
 
     fun updateRating(rating100: Int) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(exceptionHandler) {
             val newRating =
                 mutationEngine.updatePerformer(performerId, rating100 = rating100)?.rating100 ?: 0
             this@PerformerDetailsViewModel.rating100.value = newRating
@@ -208,7 +209,7 @@ class PerformerDetailsViewModel(
     }
 
     fun toggleFavorite() {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(exceptionHandler) {
             val newFavorite =
                 mutationEngine
                     .updatePerformer(

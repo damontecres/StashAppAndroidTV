@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.pages
 
-import android.widget.Toast
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -55,6 +54,7 @@ import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.FrontPageParser
+import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -123,13 +123,13 @@ class SearchViewModel : ViewModel() {
                     )
 
                 viewModelScope.launch(
-                    StashCoroutineExceptionHandler { ex ->
-                        Toast.makeText(
-                            StashApplication.getApplication(),
-                            "Search for ${StashApplication.getApplication().getString(it.pluralStringId)} failed: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        )
-                    },
+                    LoggingCoroutineExceptionHandler(
+                        server,
+                        viewModelScope,
+                        toastMessage = "Search for ${
+                            StashApplication.getApplication().getString(it.pluralStringId)
+                        } failed",
+                    ),
                 ) {
                     val results = queryEngine.find(it, findFilter)
                     if (results.isNotEmpty()) {

@@ -23,6 +23,7 @@ import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.ComposePager
+import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -42,6 +43,7 @@ import kotlin.properties.Delegates
 class ImageDetailsViewModel : ViewModel() {
     private var server: StashServer? = null
     private var saveFilters = true
+    private lateinit var exceptionHandler: LoggingCoroutineExceptionHandler
 
     private val _slideshow = MutableLiveData(false)
 
@@ -96,6 +98,12 @@ class ImageDetailsViewModel : ViewModel() {
                 throw IllegalArgumentException("Cannot use ${filterArgs.dataType}")
             }
             this.server = server
+            this.exceptionHandler =
+                LoggingCoroutineExceptionHandler(
+                    server,
+                    viewModelScope,
+                    toastMessage = "Error updating image",
+                )
             val dataSupplierFactory = DataSupplierFactory(server.version)
             val dataSupplier =
                 dataSupplierFactory.create<Query.Data, ImageData, Query.Data>(filterArgs)
@@ -103,7 +111,7 @@ class ImageDetailsViewModel : ViewModel() {
                 StashPagingSource(QueryEngine(server), dataSupplier) { _, _, item -> item }
             val pager = ComposePager(filterArgs, pagingSource, viewModelScope)
             Log.v(TAG, "Pager created: filterArgs=$filterArgs")
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            viewModelScope.launch(LoggingCoroutineExceptionHandler(server, viewModelScope)) {
                 pager.init()
                 Log.v(TAG, "Pager size: ${pager.size}")
                 this@ImageDetailsViewModel.pager.value = pager
@@ -202,6 +210,11 @@ class ImageDetailsViewModel : ViewModel() {
                     }
                 } catch (ex: Exception) {
                     loadingState.value = ImageLoadingState.Error
+                    LoggingCoroutineExceptionHandler(
+                        server!!,
+                        viewModelScope,
+                        toastMessage = "Error fetching image",
+                    ).handleException(ex)
                 }
             }
         }
@@ -225,7 +238,7 @@ class ImageDetailsViewModel : ViewModel() {
         ids?.let {
             val mutable = it.toMutableList()
             mutator.invoke(mutable)
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            viewModelScope.launch(exceptionHandler) {
                 val mutationEngine = MutationEngine(server!!)
                 val result = mutationEngine.updateImage(imageId = imageId, tagIds = mutable)
                 if (result != null) {
@@ -253,7 +266,7 @@ class ImageDetailsViewModel : ViewModel() {
         perfs?.let {
             val mutable = it.toMutableList()
             mutator.invoke(mutable)
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            viewModelScope.launch(exceptionHandler) {
                 val mutationEngine = MutationEngine(server!!)
                 val result = mutationEngine.updateImage(imageId = imageId, performerIds = mutable)
                 if (result != null) {
@@ -267,7 +280,7 @@ class ImageDetailsViewModel : ViewModel() {
         imageId: String,
         rating100: Int,
     ) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(exceptionHandler) {
             val mutationEngine = MutationEngine(server!!)
             val newRating =
                 mutationEngine.updateImage(imageId, rating100 = rating100)?.rating100 ?: 0
@@ -277,7 +290,7 @@ class ImageDetailsViewModel : ViewModel() {
     }
 
     fun updateOCount(action: suspend MutationEngine.(String) -> OCounter) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(exceptionHandler) {
             val mutationEngine = MutationEngine(server!!)
             val newOCount = action.invoke(mutationEngine, _image.value!!.id)
             oCount.value = newOCount.count
@@ -341,7 +354,7 @@ class ImageDetailsViewModel : ViewModel() {
     fun saveImageFilter() {
         if (server != null) {
             image.value?.let {
-                viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+                viewModelScope.launchIO(StashCoroutineExceptionHandler(autoToast = true)) {
                     val vf = _imageFilter.value
                     if (vf != null) {
                         StashApplication

@@ -109,6 +109,7 @@ import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.ComposePager
+import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -116,6 +117,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.toLongMilliseconds
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -126,6 +128,7 @@ const val TAG = "PlaybackPageContent"
 
 class PlaybackViewModel : ViewModel() {
     private lateinit var server: StashServer
+    private lateinit var exceptionHandler: CoroutineExceptionHandler
     private var markersEnabled by Delegates.notNull<Boolean>()
     private var saveFilters = true
     private var videoFiltersEnabled = false
@@ -151,6 +154,7 @@ class PlaybackViewModel : ViewModel() {
         this.markersEnabled = markersEnabled
         this.saveFilters = saveFilters
         this.videoFiltersEnabled = videoFiltersEnabled
+        this.exceptionHandler = LoggingCoroutineExceptionHandler(server, viewModelScope)
     }
 
     fun changeScene(tag: PlaylistFragment.MediaItemTag) {
@@ -205,7 +209,7 @@ class PlaybackViewModel : ViewModel() {
 
     private fun refreshScene(sceneId: String) {
         // Fetch o count & markers
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(exceptionHandler) {
             oCount.value = 0
             markers.value = listOf()
             performers.value = listOf()
@@ -232,7 +236,7 @@ class PlaybackViewModel : ViewModel() {
         tagId: String,
     ) {
         mediaItemTag.value?.let {
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            viewModelScope.launch(exceptionHandler) {
                 val mutationEngine = MutationEngine(server)
                 val newMarker = mutationEngine.createMarker(it.item.id, position, tagId)
                 if (newMarker != null) {
@@ -250,7 +254,7 @@ class PlaybackViewModel : ViewModel() {
     }
 
     fun incrementOCount(sceneId: String) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(exceptionHandler) {
             val mutationEngine = MutationEngine(server)
             oCount.value = mutationEngine.incrementOCounter(sceneId).count
         }
@@ -262,7 +266,7 @@ class PlaybackViewModel : ViewModel() {
 
     fun saveVideoFilter() {
         mediaItemTag.value?.item?.let {
-            viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+            viewModelScope.launchIO(StashCoroutineExceptionHandler(autoToast = true)) {
                 val vf = _videoFilter.value
                 if (vf != null) {
                     StashApplication
