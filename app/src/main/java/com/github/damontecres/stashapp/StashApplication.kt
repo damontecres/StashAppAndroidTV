@@ -102,13 +102,15 @@ class StashApplication : Application() {
                 putLong(VERSION_CODE_CURRENT_KEY, newVersionCode)
             }
             if (currentVersion != null) {
-//                CoroutineScope(Dispatchers.IO + StashCoroutineExceptionHandler()).launch {
-                AppUpgradeHandler(
-                    this@StashApplication,
-                    Version.fromString(currentVersion),
-                    Version.fromString(pkgInfo.versionName!!),
-                ).run()
-//                }
+                try {
+                    AppUpgradeHandler(
+                        this@StashApplication,
+                        Version.fromString(currentVersion),
+                        Version.fromString(pkgInfo.versionName!!),
+                    ).run()
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Exception during app upgrade", ex)
+                }
             }
         }
 

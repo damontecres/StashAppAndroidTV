@@ -1117,7 +1117,7 @@ fun getPreference(
     .getDefaultSharedPreferences(context)
     .getString(context.getString(key), default)
 
-fun composeEnabled(context: Context = StashApplication.getApplication()) = getPreference(context, R.string.pref_key_use_compose_ui, false)
+fun composeEnabled(context: Context = StashApplication.getApplication()) = getPreference(context, R.string.pref_key_use_compose_ui, true)
 
 fun View.updateLayoutParams(transform: ViewGroup.LayoutParams.() -> Unit) {
     val lp = layoutParams

@@ -701,7 +701,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             val useCompose =
                 PreferenceManager
                     .getDefaultSharedPreferences(requireContext())
-                    .getBoolean(getString(R.string.pref_key_use_compose_ui), false)
+                    .getBoolean(getString(R.string.pref_key_use_compose_ui), true)
             val composeCacheUsed =
                 if (useCompose) {
                     val diskUsed =

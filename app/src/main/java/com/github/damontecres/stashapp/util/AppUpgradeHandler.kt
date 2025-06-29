@@ -103,7 +103,7 @@ class AppUpgradeHandler(
             )
         }
 
-        if (previousVersion.isLessThan(Version.fromString("0.6.5"))) {
+        if (previousVersion.isLessThan(Version.fromString("0.6.6"))) {
             Log.i(TAG, "Setting new UI to true")
             preferences.edit(true) {
                 putBoolean(context.getString(R.string.pref_key_use_compose_ui), true)

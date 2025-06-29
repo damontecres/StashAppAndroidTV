@@ -82,10 +82,10 @@
     <PreferenceCategory app:title="Compose UI">
         <SwitchPreference
             app:key="@string/pref_key_use_compose_ui"
-            app:title="Use new Compose-based UI"
+            app:title="Use new UI"
             app:summaryOn="Enabled"
             app:summaryOff="Disabled"
-            app:defaultValue="false" />
+            app:defaultValue="true" />
         <SwitchPreference
             app:key="@string/pref_key_ui_grid_jump_controls"
             app:title="Show grid jump buttons"
