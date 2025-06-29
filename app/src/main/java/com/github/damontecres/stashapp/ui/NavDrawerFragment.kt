@@ -368,6 +368,7 @@ fun FragmentContent(
                 server.updateServerPrefs()
                 composeUiConfig = ComposeUiConfig.fromStashServer(context, server)
             }
+            navigationManager.previousDestination = destination
             navigationManager.serverViewModel.setCurrentDestination(destination)
         }
 

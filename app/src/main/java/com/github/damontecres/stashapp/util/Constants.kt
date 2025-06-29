@@ -1101,6 +1101,11 @@ fun Activity.keepScreenOn(keep: Boolean) {
     }
 }
 
+fun Context.getPreference(
+    @StringRes key: Int,
+    default: Boolean,
+) = getPreference(this, key, default)
+
 fun getPreference(
     context: Context,
     @StringRes key: Int,

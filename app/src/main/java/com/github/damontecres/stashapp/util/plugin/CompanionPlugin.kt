@@ -3,12 +3,14 @@ package com.github.damontecres.stashapp.util.plugin
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.RunPluginTaskMutation
 import com.github.damontecres.stashapp.api.type.PackageSpecInput
 import com.github.damontecres.stashapp.api.type.PackageType
 import com.github.damontecres.stashapp.data.JobResult
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -16,6 +18,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.net.Inet4Address
+import java.net.NetworkInterface
 
 /**
  * Class for interacting with the server-side companion plugin
@@ -78,6 +82,7 @@ class CompanionPlugin {
 
         suspend fun sendLogCat(
             context: Context,
+            server: StashServer,
             verbose: Boolean,
         ) = withContext(Dispatchers.IO + StashCoroutineExceptionHandler(autoToast = true)) {
             try {
@@ -85,22 +90,11 @@ class CompanionPlugin {
                 val sb = StringBuilder("** LOGCAT START **\n")
                 sb.append(lines.joinToString("\n"))
                 sb.append("\n** LOGCAT END **")
-                // Avoid individual lines being logged server-side
-                val logcat = sb.replace(Regex("\n"), "<newline>")
 
-                val server = StashServer.requireCurrentServer()
-                val mutationEngine = MutationEngine(server)
-                val mutation =
-                    RunPluginTaskMutation(
-                        plugin_id = PLUGIN_ID,
-                        task_name = LOGCAT_TASK_NAME,
-                        args_map = mapOf(LOGCAT_TASK_NAME to logcat),
-                    )
-                val jobId = mutationEngine.executeMutation(mutation).data?.runPluginTask
-                if (jobId.isNotNullOrBlank()) {
-                    val result = QueryEngine(server).waitForJob(jobId)
-                    withContext(Dispatchers.Main) {
-                        if (result is JobResult.Success) {
+                val result = sendLogMessage(server, sb.toString(), false)
+                withContext(Dispatchers.Main) {
+                    when (result) {
+                        is JobResult.Success -> {
                             val msg =
                                 buildString {
                                     if (verbose) {
@@ -112,9 +106,13 @@ class CompanionPlugin {
                                 }
 
                             Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-                        } else if (result is JobResult.NotFound) {
+                        }
+
+                        is JobResult.NotFound -> {
                             Toast.makeText(context, "Error sending logs", Toast.LENGTH_LONG).show()
-                        } else if (result is JobResult.Failure) {
+                        }
+
+                        is JobResult.Failure -> {
                             Toast
                                 .makeText(
                                     context,
@@ -123,8 +121,6 @@ class CompanionPlugin {
                                 ).show()
                         }
                     }
-                } else {
-                    Toast.makeText(context, "Error sending logs", Toast.LENGTH_LONG).show()
                 }
             } catch (ex: Exception) {
                 Log.e(TAG, "Error sending logs", ex)
@@ -138,5 +134,61 @@ class CompanionPlugin {
                 }
             }
         }
+
+        suspend fun sendLogMessage(
+            server: StashServer,
+            message: String,
+            isError: Boolean,
+            convertNewLines: Boolean = true,
+        ): JobResult =
+            withContext(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+                if (server.serverPreferences.companionPluginInstalled) {
+                    val userAgent = StashClient.createUserAgent(StashApplication.getApplication())
+                    val ips = getIps().joinToString(", ")
+                    val header = "Log from $ips - $userAgent\n"
+                    val msg =
+                        if (convertNewLines) {
+                            (header + message).replace(Regex("\n"), "<br>")
+                        } else {
+                            header + message
+                        }
+
+                    val taskName = if (isError) CRASH_TASK_NAME else LOGCAT_TASK_NAME
+                    val mutationEngine = MutationEngine(server)
+                    val mutation =
+                        RunPluginTaskMutation(
+                            plugin_id = PLUGIN_ID,
+                            task_name = taskName,
+                            args_map = mapOf(taskName to msg),
+                        )
+                    val jobId = mutationEngine.executeMutation(mutation).data?.runPluginTask
+                    return@withContext if (jobId.isNotNullOrBlank()) {
+                        QueryEngine(server).waitForJob(jobId)
+                    } else {
+                        JobResult.NotFound
+                    }
+                } else {
+                    JobResult.Failure("Companion plugin not installed")
+                }
+            }
+
+        private fun getIps(): List<String> =
+            try {
+                val ips = mutableListOf<String>()
+                val interfaces = NetworkInterface.getNetworkInterfaces()
+                while (interfaces.hasMoreElements()) {
+                    val addresses = interfaces.nextElement().inetAddresses
+                    while (addresses.hasMoreElements()) {
+                        val address = addresses.nextElement()
+                        if (address.isSiteLocalAddress && address is Inet4Address && address.hostAddress != null) {
+                            ips.add(address.hostAddress!!)
+                        }
+                    }
+                }
+                ips
+            } catch (ex: Exception) {
+                Log.w(TAG, "Error getting IP address", ex)
+                listOf()
+            }
     }
 }
