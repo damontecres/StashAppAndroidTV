@@ -13,6 +13,7 @@ class LoggingCoroutineExceptionHandler(
     private val server: StashServer,
     private val scope: CoroutineScope,
     private val showToast: Boolean = true,
+    private val toastMessage: String = "Error",
 ) : CoroutineExceptionHandler {
     override val key: CoroutineContext.Key<*>
         get() = CoroutineExceptionHandler
@@ -30,7 +31,7 @@ class LoggingCoroutineExceptionHandler(
 
         val destination = StashApplication.navigationManager.previousDestination
         if (server.serverPreferences.companionPluginInstalled &&
-            context.getPreference(R.string.pref_key_log_to_server, true)
+            getPreference(context, R.string.pref_key_log_to_server, true)
         ) {
             scope.launchIO {
                 val message =
@@ -43,11 +44,13 @@ class LoggingCoroutineExceptionHandler(
             Toast
                 .makeText(
                     context,
-                    "Error: ${exception.localizedMessage.ifBlank { "Unknown error" }}",
+                    "$toastMessage: ${exception.localizedMessage.ifBlank { "Unknown error" }}",
                     Toast.LENGTH_LONG,
                 ).show()
         }
     }
+
+    fun with(toastMessage: String) = LoggingCoroutineExceptionHandler(server, scope, showToast, toastMessage)
 
     companion object {
         const val TAG = "LoggingCoroutineExceptionHandler"

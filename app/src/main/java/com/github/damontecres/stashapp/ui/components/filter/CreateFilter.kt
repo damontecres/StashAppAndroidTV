@@ -60,10 +60,11 @@ import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import kotlin.reflect.full.createInstance
 
@@ -79,6 +80,7 @@ fun CreateFilterScreen(
     viewModel: CreateFilterViewModel = viewModel(),
 ) {
     val context = LocalContext.current
+    val server = LocalGlobalContext.current.server
     val scope = rememberCoroutineScope()
 
     val ready by viewModel.ready.observeAsState(false)
@@ -126,7 +128,13 @@ fun CreateFilterScreen(
                 idStore = viewModel::store,
                 onSubmit = { save ->
                     if (save) {
-                        scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                        scope.launch(
+                            LoggingCoroutineExceptionHandler(
+                                server,
+                                scope,
+                                toastMessage = "Error saving filter",
+                            ),
+                        ) {
                             viewModel.saveFilter()
                             navigationManager.goBack()
                             navigationManager.navigate(Destination.Filter(viewModel.createFilterArgs()))

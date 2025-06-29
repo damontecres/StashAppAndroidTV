@@ -42,8 +42,8 @@ import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageContent
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
+import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -64,7 +64,13 @@ fun PlaybackPage(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     LaunchedEffect(server, sceneId) {
-        scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        scope.launch(
+            LoggingCoroutineExceptionHandler(
+                server,
+                scope,
+                toastMessage = "Error fetching scene",
+            ),
+        ) {
             val fullScene = QueryEngine(server).getScene(sceneId)
             if (fullScene != null) {
                 scene = fullScene
@@ -196,7 +202,7 @@ fun PlaylistPlaybackPage(
                         mediaItem: MediaItem?,
                         reason: Int,
                     ) {
-                        scope.launch(StashCoroutineExceptionHandler()) {
+                        scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
                             mutex.withLock {
                                 val currentIndex = player.currentMediaItemIndex
                                 val count = player.mediaItemCount
@@ -238,7 +244,7 @@ fun PlaylistPlaybackPage(
                 if (index < player.mediaItemCount) {
                     player.seekTo(index, C.TIME_UNSET)
                 } else {
-                    scope.launch(StashCoroutineExceptionHandler()) {
+                    scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
                         mutex.withLock {
                             val count = player.mediaItemCount
                             pager?.let { pager ->

@@ -57,6 +57,7 @@ import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.SearchEditTextBox
 import com.github.damontecres.stashapp.util.CreateNew
+import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -212,7 +213,7 @@ fun SearchForPage(
         job?.cancel()
         if (query.isNotNullOrBlank()) {
             job =
-                scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
                     delay(searchDelay)
                     results = SearchState.Pending
                     Log.v(TAG, "Starting search")

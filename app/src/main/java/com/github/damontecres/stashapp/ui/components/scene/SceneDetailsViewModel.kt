@@ -28,6 +28,7 @@ import com.github.damontecres.stashapp.ui.showAddMarker
 import com.github.damontecres.stashapp.ui.showAddPerf
 import com.github.damontecres.stashapp.ui.showAddTag
 import com.github.damontecres.stashapp.ui.showSetStudio
+import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -44,6 +45,12 @@ class SceneDetailsViewModel(
 ) : ViewModel() {
     private val queryEngine = QueryEngine(server)
     private val mutationEngine = MutationEngine(server)
+    private val exceptionHandler =
+        LoggingCoroutineExceptionHandler(
+            server,
+            viewModelScope,
+            toastMessage = "Error updating scene",
+        )
 
     private var scene: FullSceneData? = null
 
@@ -88,6 +95,11 @@ class SceneDetailsViewModel(
                 }
             } catch (ex: Exception) {
                 loadingState.value = SceneLoadingState.Error
+                LoggingCoroutineExceptionHandler(
+                    server,
+                    viewModelScope,
+                    toastMessage = "Error loading scene",
+                ).handleException(ex)
             }
         }
         return this
@@ -136,7 +148,7 @@ class SceneDetailsViewModel(
                 AddRemove.ADD -> mutable.add(id)
                 AddRemove.REMOVE -> mutable.remove(id)
             }
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            viewModelScope.launch(exceptionHandler) {
                 val results =
                     mutationEngine
                         .setPerformersOnScene(sceneId, mutable)
@@ -167,7 +179,7 @@ class SceneDetailsViewModel(
                 AddRemove.ADD -> mutable.add(id)
                 AddRemove.REMOVE -> mutable.remove(id)
             }
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            viewModelScope.launch(exceptionHandler) {
                 val results =
                     mutationEngine
                         .setTagsOnScene(sceneId, mutable)
@@ -198,7 +210,7 @@ class SceneDetailsViewModel(
                 AddRemove.ADD -> mutable.add(id)
                 AddRemove.REMOVE -> mutable.remove(id)
             }
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            viewModelScope.launch(exceptionHandler) {
                 val results =
                     mutationEngine
                         .setGroupsOnScene(sceneId, mutable)
@@ -219,7 +231,7 @@ class SceneDetailsViewModel(
     fun removeStudio() = mutateStudio(null)
 
     private fun mutateStudio(id: String?) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(exceptionHandler) {
             val result = mutationEngine.setStudioOnScene(sceneId, id)?.studio?.studioData
             studio.value = result
             if (result != null) {
@@ -230,7 +242,7 @@ class SceneDetailsViewModel(
     }
 
     fun addMarker(marker: MarkerData) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(exceptionHandler) {
             val newMarker =
                 mutationEngine.createMarker(
                     sceneId,
@@ -251,7 +263,7 @@ class SceneDetailsViewModel(
     }
 
     fun removeMarker(id: String) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(exceptionHandler) {
             if (mutationEngine.deleteMarker(id)) {
                 markers.value = markers.value?.filter { it.id != id }.orEmpty()
             }
@@ -273,7 +285,7 @@ class SceneDetailsViewModel(
                 AddRemove.ADD -> mutable.add(id)
                 AddRemove.REMOVE -> mutable.remove(id)
             }
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            viewModelScope.launch(exceptionHandler) {
                 val results =
                     mutationEngine
                         .setGalleriesOnScene(sceneId, mutable)
@@ -289,14 +301,14 @@ class SceneDetailsViewModel(
     }
 
     fun updateOCount(action: suspend MutationEngine.(String) -> OCounter) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(exceptionHandler) {
             val newOCount = action.invoke(mutationEngine, sceneId)
             oCount.value = newOCount.count
         }
     }
 
     fun updateRating(rating100: Int) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(exceptionHandler) {
             val newRating =
                 mutationEngine.setRating(sceneId, rating100)?.rating100 ?: 0
             this@SceneDetailsViewModel.rating100.value = newRating
