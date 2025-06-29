@@ -4,6 +4,7 @@ import android.util.Log
 import android.widget.Toast
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -34,9 +35,10 @@ class LoggingCoroutineExceptionHandler(
             if (server.serverPreferences.companionPluginInstalled &&
                 getPreference(context, R.string.pref_key_log_to_server, true)
             ) {
+                val compose = StashApplication.navigationManager is NavigationManagerCompose
                 scope.launchIO {
                     val message =
-                        "Exception: destination=$destination\n${exception.stackTraceToString()}"
+                        "Exception: compose=$compose, destination=$destination\n${exception.stackTraceToString()}"
                     CompanionPlugin.sendLogMessage(server, message, true)
                 }
             }
