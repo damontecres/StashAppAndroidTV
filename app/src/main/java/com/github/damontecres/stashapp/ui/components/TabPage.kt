@@ -197,7 +197,7 @@ fun StashGridTab(
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
     LaunchedEffect(server, initialFilter) {
-        viewModel.setFilter(server, initialFilter)
+        viewModel.setFilter(server, initialFilter, composeUiConfig.cardSettings.columns)
     }
     val pager by viewModel.pager.observeAsState()
     pager?.let { newPager ->

@@ -47,6 +47,7 @@ import com.github.damontecres.stashapp.filter.resolutionName
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.circNameId
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -66,6 +67,8 @@ fun ObjectFilterList(
 ) {
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
+    val filterOptions =
+        remember { getFilterOptions(dataType).sortedBy { context.getString(it.nameStringId) } }
     LazyColumn(
         modifier =
             modifier
@@ -73,7 +76,7 @@ fun ObjectFilterList(
                 .focusRestorer(focusRequester),
     ) {
         itemsIndexed(
-            getFilterOptions(dataType),
+            filterOptions,
             key = { _, it -> it.nameStringId },
         ) { index, item ->
             item as FilterOption<StashDataFilter, Any>
@@ -135,6 +138,7 @@ fun ObjectFilterPicker(
     fun onChangeValue(
         currentValue: Any?,
         keyboardType: KeyboardType,
+        isValid: (String) -> Boolean,
         change: (String) -> Any?,
     ): () -> Unit =
         {
@@ -144,9 +148,17 @@ fun ObjectFilterPicker(
                     value = currentValue?.toString(),
                     keyboardType = keyboardType,
                     onSubmit = { value = change.invoke(it) },
+                    isValid = isValid,
                 ),
             )
         }
+
+    val isIntValid = { str: String ->
+        str.isNotNullOrBlank() && str.toIntOrNull()?.let { it >= 0 } == true
+    }
+    val isFloatValid = { str: String ->
+        str.isNotNullOrBlank() && str.toFloatOrNull()?.let { it >= 0 } == true
+    }
 
     if (filterOption.nameStringId == R.string.stashapp_rating) {
         LaunchedEffect(Unit) {
@@ -160,6 +172,11 @@ fun ObjectFilterPicker(
             }
         }
         value?.let { input ->
+            val isValid = { str: String ->
+                val range = if (uiConfig.ratingAsStars) 0.0..5.0 else 0.0..100.0
+                str.isNotNullOrBlank() && str.toDoubleOrNull()?.let { it in range } == true
+            }
+
             LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
             input as IntCriterionInput
             val keyboardType =
@@ -176,6 +193,7 @@ fun ObjectFilterPicker(
                     onChangeValue(
                         input.value / multiplier,
                         keyboardType,
+                        isValid,
                     ) {
                         it.toDoubleOrNull()?.let { input.copy(value = (it * multiplier).toInt()) }
                     },
@@ -185,6 +203,7 @@ fun ObjectFilterPicker(
                             .getOrNull()
                             ?.let { it / multiplier },
                         keyboardType,
+                        isValid,
                     ) {
                         input.copy(
                             value2 =
@@ -245,6 +264,17 @@ fun ObjectFilterPicker(
             )
         }
     } else {
+        // TODO better titles?
+        val includesTitle =
+            filterOption.dataType?.let {
+                context.getString(filterOption.dataType.pluralStringId) + " " +
+                    context.getString(R.string.stashapp_criterion_modifier_includes)
+            }
+        val excludesTitle =
+            filterOption.dataType?.let {
+                context.getString(filterOption.dataType.pluralStringId) + " " +
+                    context.getString(R.string.stashapp_criterion_modifier_excludes)
+            }
         when (filterOption.type) {
             StringCriterionInput::class -> {
                 LaunchedEffect(Unit) {
@@ -272,6 +302,7 @@ fun ObjectFilterPicker(
                             onChangeValue(
                                 input.value,
                                 KeyboardType.Text,
+                                { it.isNotNullOrBlank() },
                             ) {
                                 input.copy(value = it)
                             },
@@ -307,6 +338,7 @@ fun ObjectFilterPicker(
                             onChangeValue(
                                 input.value,
                                 KeyboardType.Number,
+                                isIntValid,
                             ) {
                                 it.toIntOrNull()?.let { input.copy(value = it) }
                             },
@@ -314,6 +346,7 @@ fun ObjectFilterPicker(
                             onChangeValue(
                                 input.value2.getOrNull(),
                                 KeyboardType.Number,
+                                isIntValid,
                             ) {
                                 input.copy(value2 = Optional.presentIfNotNull(it.toIntOrNull()))
                             },
@@ -348,6 +381,7 @@ fun ObjectFilterPicker(
                             onChangeValue(
                                 input.value,
                                 KeyboardType.Decimal,
+                                isFloatValid,
                             ) {
                                 it.toDoubleOrNull()?.let { input.copy(value = it) }
                             },
@@ -355,6 +389,7 @@ fun ObjectFilterPicker(
                             onChangeValue(
                                 input.value2.getOrNull(),
                                 KeyboardType.Decimal,
+                                isFloatValid,
                             ) {
                                 input.copy(value2 = Optional.presentIfNotNull(it.toDoubleOrNull()))
                             },
@@ -616,7 +651,7 @@ fun ObjectFilterPicker(
                         onPickInclude = {
                             onMultiCriterionInfo.invoke(
                                 MultiCriterionInfo(
-                                    name = "",
+                                    name = includesTitle!!,
                                     dataType = filterOption.dataType,
                                     initialValues =
                                         input.value.getOrNull()?.map {
@@ -640,7 +675,7 @@ fun ObjectFilterPicker(
                         onPickExclude = {
                             onMultiCriterionInfo.invoke(
                                 MultiCriterionInfo(
-                                    name = "",
+                                    name = excludesTitle!!,
                                     dataType = filterOption.dataType,
                                     initialValues =
                                         input.excludes.getOrNull()?.map {
@@ -731,7 +766,7 @@ fun ObjectFilterPicker(
                         onPickInclude = {
                             onMultiCriterionInfo.invoke(
                                 MultiCriterionInfo(
-                                    name = "",
+                                    name = includesTitle!!,
                                     dataType = filterOption.dataType,
                                     initialValues =
                                         input.value.getOrNull()?.map {
@@ -755,7 +790,7 @@ fun ObjectFilterPicker(
                         onPickExclude = {
                             onMultiCriterionInfo.invoke(
                                 MultiCriterionInfo(
-                                    name = "",
+                                    name = excludesTitle!!,
                                     dataType = filterOption.dataType,
                                     initialValues =
                                         input.excludes.getOrNull()?.map {

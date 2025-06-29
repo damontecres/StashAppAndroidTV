@@ -23,29 +23,33 @@ import java.util.EnumMap
 @Composable
 fun ImageCard(
     uiConfig: ComposeUiConfig,
-    item: ImageData,
+    item: ImageData?,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-    dataTypeMap[DataType.TAG] = item.tags.size
-    dataTypeMap[DataType.PERFORMER] = item.performers.size
-    dataTypeMap[DataType.GALLERY] = item.galleries.size
+    item?.let {
+        dataTypeMap[DataType.TAG] = item.tags.size
+        dataTypeMap[DataType.PERFORMER] = item.performers.size
+        dataTypeMap[DataType.GALLERY] = item.galleries.size
+    }
 
     val imageUrl =
-        if (item.paths.thumbnail.isNotNullOrBlank()) {
-            item.paths.thumbnail
-        } else if (item.paths.image.isNotNullOrBlank() && !item.isImageClip) {
-            item.paths.image
-        } else {
-            null
+        item?.let {
+            if (item.paths.thumbnail.isNotNullOrBlank()) {
+                item.paths.thumbnail
+            } else if (item.paths.image.isNotNullOrBlank() && !item.isImageClip) {
+                item.paths.image
+            } else {
+                null
+            }
         }
 
     val details = mutableListOf<String?>()
-    details.add(item.studio?.name)
-    details.add(item.date)
+    details.add(item?.studio?.name)
+    details.add(item?.date)
 
     RootCard(
         item = item,
@@ -60,22 +64,22 @@ fun ImageCard(
         imageHeight = ImagePresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,
         defaultImageDrawableRes = R.drawable.default_image,
-        videoUrl = item.paths.preview,
-        title = item.titleOrFilename ?: "",
+        videoUrl = item?.paths?.preview,
+        title = item?.titleOrFilename ?: "",
         subtitle = {
             Text(concatIfNotBlank(" - ", details))
         },
         description = {
             IconRowText(
                 dataTypeMap,
-                item.o_counter ?: -1,
+                item?.o_counter ?: -1,
                 Modifier
                     .enableMarquee(it)
                     .align(Alignment.Center),
             )
         },
         imageOverlay = {
-            ImageOverlay(uiConfig.ratingAsStars, rating100 = item.rating100)
+            ImageOverlay(uiConfig.ratingAsStars, rating100 = item?.rating100)
         },
     )
 }

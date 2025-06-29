@@ -1,18 +1,21 @@
 package com.github.damontecres.stashapp.ui.components.filter
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,7 +31,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -45,14 +48,13 @@ import androidx.tv.material3.Text
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StashData
-import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.data.flip
 import com.github.damontecres.stashapp.filter.CreateFilterViewModel
 import com.github.damontecres.stashapp.filter.FilterOption
-import com.github.damontecres.stashapp.filter.findFilterSummary
+import com.github.damontecres.stashapp.filter.filterSummary
 import com.github.damontecres.stashapp.filter.getFilterOptions
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
@@ -62,9 +64,7 @@ import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.launch
-import java.util.Date
 import kotlin.reflect.full.createInstance
 
 internal const val TAG = "CreateFilter"
@@ -78,6 +78,7 @@ fun CreateFilterScreen(
     modifier: Modifier = Modifier,
     viewModel: CreateFilterViewModel = viewModel(),
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     val ready by viewModel.ready.observeAsState(false)
@@ -94,13 +95,13 @@ fun CreateFilterScreen(
     Column(modifier = modifier) {
         Text(
             text = "Create ${stringResource(dataType.stringId)} Filter",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.displaySmall,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(8.dp),
         )
         if (ready) {
             CreateFilterColumns(
@@ -206,16 +207,77 @@ fun CreateFilterColumns(
             inputDateAction != null ||
             inputDurationAction != null
 
+    val filterSummaries =
+        filterSummary(
+            context = context,
+            dataType = dataType,
+            type = dataType.filterType,
+            f = objectFilter,
+            idLookup = idLookup,
+        )
+
     LazyRow(
         modifier =
             modifier
                 .ifElse(
                     shouldBlur,
-                    Modifier.blur(10.dp),
+                    Modifier
+                        .blur(10.dp)
+                        .graphicsLayer {
+                            alpha = .25f
+                        },
                 ),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        item {
+            AnimatedVisibility(
+                visible = !findFilterFocused && !objectFilterFocused,
+            ) {
+                LazyColumn(
+                    modifier =
+                        Modifier
+                            .widthIn(min = listWidth)
+//                        .width(listWidth)
+                            .background(
+                                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .75f),
+                                shape = RoundedCornerShape(16.dp),
+                            ),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.Start,
+                    contentPadding = PaddingValues(8.dp),
+                ) {
+                    stickyHeader {
+                        val str =
+                            if (filterSummaries.isEmpty()) {
+                                R.string.no_filters_set
+                            } else {
+                                R.string.stashapp_filters
+                            }
+                        Text(
+                            text = stringResource(str),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            textAlign = TextAlign.Center,
+                            modifier =
+                                Modifier
+                                    .fillParentMaxWidth(),
+                        )
+                    }
+                    items(filterSummaries) {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            textAlign = TextAlign.Start,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+        }
         item {
             LaunchedEffect(Unit) {
                 focusRequester.tryRequestFocus()
@@ -424,6 +486,7 @@ fun CreateFilterColumns(
                                 .focusRequester(objectFilterChoiceFocusRequester)
                                 .focusProperties {
                                     onExit = {
+                                        // TODO if there are changes, might be good to block this so the user doesn't lose changes accidentally
                                         selectedFilterOption = null
                                     }
                                 }.background(
@@ -485,134 +548,5 @@ fun CreateFilterColumns(
             onSave = it.onSave,
             onDismiss = { inputDurationAction = null },
         )
-    }
-}
-
-data class InputTextAction(
-    val title: String,
-    val value: String?,
-    val keyboardType: KeyboardType,
-    val onSubmit: (String) -> Unit,
-)
-
-data class InputCriterionModifier(
-    val filterName: String,
-    val allowedModifiers: List<CriterionModifier>,
-    val onClick: (CriterionModifier) -> Unit,
-)
-
-data class SelectFromListAction(
-    val filterName: String,
-    val options: List<String>,
-    val currentOptions: List<String>,
-    val multiSelect: Boolean,
-    val onSubmit: (indices: List<Int>) -> Unit,
-)
-
-data class MultiCriterionInfo(
-    val name: String,
-    val dataType: DataType,
-    val initialValues: List<IdName>,
-    val onAdd: (IdName) -> Unit,
-    val onSave: (List<IdName>) -> Unit,
-)
-
-data class InputDateAction(
-    val name: String,
-    val value: Date,
-    val onSave: (Date) -> Unit,
-)
-
-data class InputDurationAction(
-    val name: String,
-    val value: Int?,
-    val onSave: (Int) -> Unit,
-)
-
-@Composable
-fun BasicFilterSettings(
-    dataType: DataType,
-    name: String?,
-    findFilter: StashFindFilter,
-    objectFilter: StashDataFilter,
-    objectFilterCount: Int,
-    resultCount: Int,
-    onFilterNameClick: () -> Unit,
-    findFilterOnClick: () -> Unit,
-    objectFilterOnClick: () -> Unit,
-    findFilterInteractionSource: MutableInteractionSource,
-    objectFilterInteractionSource: MutableInteractionSource,
-    onSubmit: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val focusRequester = remember { FocusRequester() }
-    LazyColumn(
-        modifier =
-            modifier
-                .focusGroup()
-                .focusRestorer(focusRequester),
-        verticalArrangement = Arrangement.spacedBy(0.dp),
-    ) {
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.stashapp_filter_name),
-                subtitle = name,
-                showArrow = false,
-                onClick = onFilterNameClick,
-                modifier = Modifier.focusRequester(focusRequester),
-            )
-        }
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.sort_by),
-                subtitle = findFilterSummary(context, dataType, findFilter),
-                showArrow = true,
-                onClick = findFilterOnClick,
-                interactionSource = findFilterInteractionSource,
-            )
-        }
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.stashapp_filters),
-                subtitle =
-                    when (objectFilterCount) {
-                        // TODO i18n for plurals
-                        1 -> "1 " + stringResource(R.string.stashapp_filter)
-                        in 2..Int.MAX_VALUE -> objectFilterCount.toString() + " " + stringResource(R.string.stashapp_filters)
-                        else -> null
-                    },
-                showArrow = true,
-                onClick = objectFilterOnClick,
-                interactionSource = objectFilterInteractionSource,
-            )
-        }
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.submit_without_saving),
-                subtitle =
-                    if (resultCount >= 0) {
-                        resultCount.toString() + " " + stringResource(R.string.results)
-                    } else {
-                        null
-                    },
-                showArrow = false,
-                onClick = { onSubmit.invoke(false) },
-            )
-        }
-        item {
-            SimpleListItem(
-                enabled = name.isNotNullOrBlank(),
-                title = stringResource(R.string.save_and_submit),
-                subtitle =
-                    if (name.isNotNullOrBlank()) {
-                        null
-                    } else {
-                        stringResource(R.string.save_and_submit_no_name_desc)
-                    },
-                showArrow = false,
-                onClick = { onSubmit.invoke(true) },
-            )
-        }
     }
 }

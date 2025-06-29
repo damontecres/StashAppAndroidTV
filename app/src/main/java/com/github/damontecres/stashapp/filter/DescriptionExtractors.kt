@@ -540,7 +540,7 @@ fun filterSummary(
     type: KClass<in StashDataFilter>,
     f: StashDataFilter,
     idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
-): String {
+): List<String> {
     val filterOptionNames = FilterOptions[dataType]!!.associateBy { it.name }
     val params =
         type.declaredMemberProperties
@@ -573,11 +573,7 @@ fun filterSummary(
                     null
                 }
             }.sortedBy { it.first }
-    val text =
-        params.joinToString("\n") {
-            "${it.first} ${it.second}"
-        }
-    return text
+    return params.map { "${it.first} ${it.second}" }
 }
 
 /**

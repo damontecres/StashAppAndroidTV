@@ -119,5 +119,6 @@
     <string name="save_and_submit">Save and submit</string>
     <string name="modifier">Modifier</string>
     <string name="scenes_together">View scenes together</string>
+    <string name="no_filters_set">No filters set</string>
 
 </resources>

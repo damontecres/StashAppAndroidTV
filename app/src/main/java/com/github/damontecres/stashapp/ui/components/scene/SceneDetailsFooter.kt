@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.util.bitRateString
 import com.github.damontecres.stashapp.views.formatBytes
+import java.util.Locale
 
 @Composable
 fun SceneDetailsFooter(
@@ -24,7 +25,7 @@ fun SceneDetailsFooter(
         modifier =
             modifier
                 .fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(20.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (scene.created_at.toString().length >= 10) {
             TitleValueText(
@@ -43,11 +44,11 @@ fun SceneDetailsFooter(
         if (file != null) {
             TitleValueText(
                 stringResource(R.string.stashapp_video_codec),
-                file.video_codec,
+                file.video_codec.ifBlank { stringResource(R.string.stashapp_none) },
             )
             TitleValueText(
                 stringResource(R.string.stashapp_audio_codec),
-                file.audio_codec,
+                file.audio_codec.ifBlank { stringResource(R.string.stashapp_none) },
             )
             TitleValueText(
                 stringResource(R.string.format),
@@ -56,6 +57,10 @@ fun SceneDetailsFooter(
             TitleValueText(
                 stringResource(R.string.stashapp_bitrate),
                 file.bitRateString().toString(),
+            )
+            TitleValueText(
+                stringResource(R.string.stashapp_framerate),
+                String.format(Locale.getDefault(), "%.2f", file.frame_rate),
             )
             TitleValueText(
                 stringResource(R.string.stashapp_filesize),
