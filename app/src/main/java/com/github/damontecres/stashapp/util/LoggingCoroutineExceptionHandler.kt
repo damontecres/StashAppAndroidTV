@@ -26,27 +26,31 @@ class LoggingCoroutineExceptionHandler(
     }
 
     fun handleException(exception: Throwable) {
-        val context = StashApplication.getApplication()
         Log.e(TAG, "Exception in coroutine", exception)
 
-        val destination = StashApplication.navigationManager.previousDestination
-        if (server.serverPreferences.companionPluginInstalled &&
-            getPreference(context, R.string.pref_key_log_to_server, true)
-        ) {
-            scope.launchIO {
-                val message =
-                    "Exception: destination=$destination\n${exception.stackTraceToString()}"
-                CompanionPlugin.sendLogMessage(server, message, true)
+        try {
+            val context = StashApplication.getApplication()
+            val destination = StashApplication.navigationManager.previousDestination
+            if (server.serverPreferences.companionPluginInstalled &&
+                getPreference(context, R.string.pref_key_log_to_server, true)
+            ) {
+                scope.launchIO {
+                    val message =
+                        "Exception: destination=$destination\n${exception.stackTraceToString()}"
+                    CompanionPlugin.sendLogMessage(server, message, true)
+                }
             }
-        }
 
-        if (showToast) {
-            Toast
-                .makeText(
-                    context,
-                    "$toastMessage: ${exception.localizedMessage.ifBlank { "Unknown error" }}",
-                    Toast.LENGTH_LONG,
-                ).show()
+            if (showToast) {
+                Toast
+                    .makeText(
+                        context,
+                        "$toastMessage: ${exception.localizedMessage.ifBlank { "Unknown error" }}",
+                        Toast.LENGTH_LONG,
+                    ).show()
+            }
+        } catch (ex: Exception) {
+            Log.e(TAG, "Error while trying to log to server", ex)
         }
     }
 
