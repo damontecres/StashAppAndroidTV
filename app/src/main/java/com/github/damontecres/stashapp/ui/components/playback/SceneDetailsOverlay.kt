@@ -13,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeaderInfo
@@ -32,12 +31,6 @@ fun SceneDetailsOverlay(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val focusRequester = remember { FocusRequester() }
     val listState = rememberLazyListState()
-    val navigationManager = LocalGlobalContext.current.navigationManager
-    val itemClick =
-        ItemOnClicker<Any> { item, fp ->
-            navigationManager.goBack()
-            itemOnClick.onClick(item, fp)
-        }
     LazyColumn(
         state = listState,
         contentPadding = PaddingValues(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 135.dp),
@@ -50,7 +43,7 @@ fun SceneDetailsOverlay(
                 rating100 = scene.rating100 ?: 0,
                 oCount = scene.o_counter ?: 0,
                 uiConfig = uiConfig.copy(readOnlyModeEnabled = true),
-                itemOnClick = itemClick,
+                itemOnClick = itemOnClick,
                 playOnClick = { _, _ -> },
                 editOnClick = {},
                 moreOnClick = {},
@@ -75,7 +68,7 @@ fun SceneDetailsOverlay(
             markers = listOf(),
             suggestions = listOf(),
             uiConfig = uiConfig,
-            itemOnClick = itemClick,
+            itemOnClick = itemOnClick,
             removeLongClicker = { _, _ -> },
             defaultLongClicker = { _, _ -> },
             cardOnFocus = { _, _, _ -> },
