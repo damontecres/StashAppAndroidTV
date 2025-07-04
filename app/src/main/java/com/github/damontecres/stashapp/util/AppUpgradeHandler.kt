@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.util
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
 import androidx.core.content.edit
@@ -105,8 +106,18 @@ class AppUpgradeHandler(
 
         if (previousVersion.isLessThan(Version.fromString("0.6.6"))) {
             Log.i(TAG, "Setting new UI to true")
+            val key = context.getString(R.string.pref_key_use_compose_ui)
+            if (!preferences.getBoolean(key, true)) {
+                // User turned on new UI and turned it off, so show a Toast
+                Toast
+                    .makeText(
+                        context,
+                        "The new UI is now the default. You can still switch back to the legacy UI in settings.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+            }
             preferences.edit(true) {
-                putBoolean(context.getString(R.string.pref_key_use_compose_ui), true)
+                putBoolean(key, true)
             }
         }
     }

@@ -57,6 +57,7 @@ class VersionCompareTests {
     fun testEqualOrBefore() {
         Assert.assertTrue(V_0_2_0.isEqualOrBefore(V_0_2_0))
         Assert.assertTrue(V_0_1_1.isEqualOrBefore(V_0_2_0))
+        Assert.assertTrue(V_0_1_1.isEqualOrBefore(V_0_1_1_5))
         Assert.assertTrue(V_0_1_1_4.isEqualOrBefore(V_0_1_1_5))
 
         Assert.assertFalse(V_0_2_0.isEqualOrBefore(V_0_1_1))
@@ -66,6 +67,7 @@ class VersionCompareTests {
     fun testLessThan() {
         Assert.assertFalse(V_0_2_0.isLessThan(V_0_2_0))
         Assert.assertTrue(V_0_1_1.isLessThan(V_0_2_0))
+        Assert.assertTrue(V_0_1_1.isLessThan(V_0_1_1_5))
         Assert.assertTrue(V_0_1_1_4.isLessThan(V_0_1_1_5))
 
         Assert.assertFalse(V_0_2_0.isLessThan(V_0_1_1))
