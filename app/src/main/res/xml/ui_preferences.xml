@@ -79,7 +79,7 @@
             />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="Compose UI">
+    <PreferenceCategory app:title="New UI">
         <SwitchPreference
             app:key="@string/pref_key_use_compose_ui"
             app:title="Use new Compose-based UI"
