@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -317,13 +318,16 @@ fun PlaybackPageContent(
     viewModel: PlaybackViewModel = viewModel(),
     startPosition: Long = C.TIME_UNSET,
 ) {
-    if (playlist.isEmpty() || playlist.size < startIndex) {
+    var savedStartPosition by rememberSaveable(startPosition) { mutableLongStateOf(startPosition) }
+    var currentPlaylistIndex by rememberSaveable(startIndex) { mutableIntStateOf(startIndex) }
+    if (playlist.isEmpty() || playlist.size < currentPlaylistIndex) {
         return
     }
+
     val context = LocalContext.current
     val navigationManager = LocalGlobalContext.current.navigationManager
     val currentScene by viewModel.mediaItemTag.observeAsState(
-        playlist[startIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag,
+        playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag,
     )
     val markers by viewModel.markers.observeAsState(listOf())
     val oCount by viewModel.oCount.observeAsState(0)
@@ -336,7 +340,7 @@ fun PlaybackPageContent(
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
     val videoFilter by viewModel.videoFilter.observeAsState()
 
-    var showSceneDetails by remember { mutableStateOf(false) }
+    var showSceneDetails by rememberSaveable { mutableStateOf(false) }
     val scene by viewModel.scene.observeAsState()
     val performers by viewModel.performers.observeAsState(listOf())
 
@@ -345,6 +349,8 @@ fun PlaybackPageContent(
 
     LifecycleStartEffect(Unit) {
         onStopOrDispose {
+            savedStartPosition = player.currentPosition
+            currentPlaylistIndex = player.currentMediaItemIndex
             trackActivityListener?.release(player.currentPosition)
             StashExoPlayer.releasePlayer()
         }
@@ -401,9 +407,9 @@ fun PlaybackPageContent(
 
     LaunchedEffect(Unit) {
         viewModel.init(server, markersEnabled, uiConfig.persistVideoFilters, useVideoFilters)
-        viewModel.changeScene(playlist[startIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
+        viewModel.changeScene(playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
         maybeMuteAudio(context, false, player)
-        player.setMediaItems(playlist, startIndex, startPosition)
+        player.setMediaItems(playlist, startIndex, savedStartPosition)
         if (playlistPager == null) {
             player.setupFinishedBehavior(context, navigationManager) {
                 controllerViewState.showControls()
@@ -441,6 +447,7 @@ fun PlaybackPageContent(
                     }
                     subtitles = null
                     subtitleIndex = null
+                    currentPlaylistIndex = player.currentMediaItemIndex
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
@@ -476,8 +483,8 @@ fun PlaybackPageContent(
                                         viewModel.changeScene(newTag)
                                         player.replaceMediaItem(currentPosition, newMediaItem)
                                         player.prepare()
-                                        if (startPosition != C.TIME_UNSET) {
-                                            player.seekTo(startPosition)
+                                        if (savedStartPosition != C.TIME_UNSET) {
+                                            player.seekTo(savedStartPosition)
                                         }
                                         player.play()
                                         false
@@ -730,9 +737,6 @@ fun PlaybackPageContent(
                             }
 
                             PlaybackAction.ShowSceneDetails -> {
-                                playingBeforeDialog = player.isPlaying
-                                player.pause()
-                                controllerViewState.hideControls()
                                 showSceneDetails = true
                             }
                         }
@@ -815,6 +819,11 @@ fun PlaybackPageContent(
             }
         }
         AnimatedVisibility(showSceneDetails && scene != null) {
+            LaunchedEffect(Unit) {
+                playingBeforeDialog = player.isPlaying
+                player.pause()
+                controllerViewState.hideControls()
+            }
             scene?.let {
                 Dialog(
                     onDismissRequest = {
