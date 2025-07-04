@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -104,11 +105,13 @@ import com.github.damontecres.stashapp.playback.switchToTranscode
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
 import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.ComposePager
+import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -116,7 +119,10 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.toLongMilliseconds
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.properties.Delegates
@@ -126,6 +132,7 @@ const val TAG = "PlaybackPageContent"
 
 class PlaybackViewModel : ViewModel() {
     private lateinit var server: StashServer
+    private lateinit var exceptionHandler: CoroutineExceptionHandler
     private var markersEnabled by Delegates.notNull<Boolean>()
     private var saveFilters = true
     private var videoFiltersEnabled = false
@@ -151,9 +158,13 @@ class PlaybackViewModel : ViewModel() {
         this.markersEnabled = markersEnabled
         this.saveFilters = saveFilters
         this.videoFiltersEnabled = videoFiltersEnabled
+        this.exceptionHandler = LoggingCoroutineExceptionHandler(server, viewModelScope)
     }
 
+    private var sceneJob: Job = Job()
+
     fun changeScene(tag: PlaylistFragment.MediaItemTag) {
+        sceneJob.cancelChildren()
         this.mediaItemTag.value = tag
         this.oCount.value = 0
         this.markers.value = listOf()
@@ -164,7 +175,7 @@ class PlaybackViewModel : ViewModel() {
         if (videoFiltersEnabled) {
             updateVideoFilter(VideoFilter())
             if (saveFilters && videoFiltersEnabled) {
-                viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+                viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler() + Dispatchers.IO) {
                     val vf =
                         StashApplication
                             .getDatabase()
@@ -186,7 +197,7 @@ class PlaybackViewModel : ViewModel() {
         }
 
         // Fetch preview sprites
-        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+        viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler()) {
             val context = StashApplication.getApplication()
             val imageLoader = SingletonImageLoader.get(context)
             if (tag.item.spriteUrl.isNotNullOrBlank()) {
@@ -205,7 +216,7 @@ class PlaybackViewModel : ViewModel() {
 
     private fun refreshScene(sceneId: String) {
         // Fetch o count & markers
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(sceneJob + exceptionHandler) {
             oCount.value = 0
             markers.value = listOf()
             performers.value = listOf()
@@ -232,7 +243,7 @@ class PlaybackViewModel : ViewModel() {
         tagId: String,
     ) {
         mediaItemTag.value?.let {
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            viewModelScope.launch(exceptionHandler) {
                 val mutationEngine = MutationEngine(server)
                 val newMarker = mutationEngine.createMarker(it.item.id, position, tagId)
                 if (newMarker != null) {
@@ -250,7 +261,7 @@ class PlaybackViewModel : ViewModel() {
     }
 
     fun incrementOCount(sceneId: String) {
-        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+        viewModelScope.launch(exceptionHandler) {
             val mutationEngine = MutationEngine(server)
             oCount.value = mutationEngine.incrementOCounter(sceneId).count
         }
@@ -262,7 +273,7 @@ class PlaybackViewModel : ViewModel() {
 
     fun saveVideoFilter() {
         mediaItemTag.value?.item?.let {
-            viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+            viewModelScope.launchIO(StashCoroutineExceptionHandler(autoToast = true)) {
                 val vf = _videoFilter.value
                 if (vf != null) {
                     StashApplication
@@ -306,18 +317,22 @@ fun PlaybackPageContent(
     markersEnabled: Boolean,
     playlistPager: ComposePager<StashData>?,
     onClickPlaylistItem: ((Int) -> Unit)?,
+    itemOnClick: ItemOnClicker<Any>,
     modifier: Modifier = Modifier,
     controlsEnabled: Boolean = true,
     viewModel: PlaybackViewModel = viewModel(),
     startPosition: Long = C.TIME_UNSET,
 ) {
-    if (playlist.isEmpty() || playlist.size < startIndex) {
+    var savedStartPosition by rememberSaveable(startPosition) { mutableLongStateOf(startPosition) }
+    var currentPlaylistIndex by rememberSaveable(startIndex) { mutableIntStateOf(startIndex) }
+    if (playlist.isEmpty() || playlist.size < currentPlaylistIndex) {
         return
     }
+
     val context = LocalContext.current
     val navigationManager = LocalGlobalContext.current.navigationManager
     val currentScene by viewModel.mediaItemTag.observeAsState(
-        playlist[startIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag,
+        playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag,
     )
     val markers by viewModel.markers.observeAsState(listOf())
     val oCount by viewModel.oCount.observeAsState(0)
@@ -330,7 +345,7 @@ fun PlaybackPageContent(
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
     val videoFilter by viewModel.videoFilter.observeAsState()
 
-    var showSceneDetails by remember { mutableStateOf(false) }
+    var showSceneDetails by rememberSaveable { mutableStateOf(false) }
     val scene by viewModel.scene.observeAsState()
     val performers by viewModel.performers.observeAsState(listOf())
 
@@ -339,6 +354,8 @@ fun PlaybackPageContent(
 
     LifecycleStartEffect(Unit) {
         onStopOrDispose {
+            savedStartPosition = player.currentPosition
+            currentPlaylistIndex = player.currentMediaItemIndex
             trackActivityListener?.release(player.currentPosition)
             StashExoPlayer.releasePlayer()
         }
@@ -372,7 +389,24 @@ fun PlaybackPageContent(
                 true,
             )
         }
-    val skipWithLeftRight = remember { prefs.getBoolean("skipWithDpad", true) }
+    val skipWithLeftRight =
+        remember {
+            prefs.getBoolean(
+                context.getString(R.string.pref_key_playback_skip_left_right),
+                true,
+            )
+        }
+    // Enabled if the preference is enabled and playing a playlist of markers
+    val nextWithUpDown =
+        remember {
+            playlistPager != null &&
+                playlistPager.filter.dataType == DataType.MARKER &&
+                playlistPager.size > 1 &&
+                prefs.getBoolean(
+                    context.getString(R.string.pref_key_playback_next_up_down),
+                    false,
+                )
+        }
     val useVideoFilters =
         remember { prefs.getBoolean(context.getString(R.string.pref_key_video_filters), false) }
 
@@ -395,9 +429,9 @@ fun PlaybackPageContent(
 
     LaunchedEffect(Unit) {
         viewModel.init(server, markersEnabled, uiConfig.persistVideoFilters, useVideoFilters)
-        viewModel.changeScene(playlist[startIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
+        viewModel.changeScene(playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
         maybeMuteAudio(context, false, player)
-        player.setMediaItems(playlist, startIndex, startPosition)
+        player.setMediaItems(playlist, startIndex, savedStartPosition)
         if (playlistPager == null) {
             player.setupFinishedBehavior(context, navigationManager) {
                 controllerViewState.showControls()
@@ -435,6 +469,7 @@ fun PlaybackPageContent(
                     }
                     subtitles = null
                     subtitleIndex = null
+                    currentPlaylistIndex = player.currentMediaItemIndex
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
@@ -470,8 +505,8 @@ fun PlaybackPageContent(
                                         viewModel.changeScene(newTag)
                                         player.replaceMediaItem(currentPosition, newMediaItem)
                                         player.prepare()
-                                        if (startPosition != C.TIME_UNSET) {
-                                            player.seekTo(startPosition)
+                                        if (savedStartPosition != C.TIME_UNSET) {
+                                            player.seekTo(savedStartPosition)
                                         }
                                         player.play()
                                         false
@@ -560,6 +595,7 @@ fun PlaybackPageContent(
                 player = player,
                 controlsEnabled = controlsEnabled,
                 skipWithLeftRight = skipWithLeftRight,
+                nextWithUpDown = nextWithUpDown,
                 controllerViewState = controllerViewState,
                 updateSkipIndicator = updateSkipIndicator,
             )
@@ -724,9 +760,6 @@ fun PlaybackPageContent(
                             }
 
                             PlaybackAction.ShowSceneDetails -> {
-                                playingBeforeDialog = player.isPlaying
-                                player.pause()
-                                controllerViewState.hideControls()
                                 showSceneDetails = true
                             }
                         }
@@ -809,6 +842,11 @@ fun PlaybackPageContent(
             }
         }
         AnimatedVisibility(showSceneDetails && scene != null) {
+            LaunchedEffect(Unit) {
+                playingBeforeDialog = player.isPlaying
+                player.pause()
+                controllerViewState.hideControls()
+            }
             scene?.let {
                 Dialog(
                     onDismissRequest = {
@@ -828,6 +866,7 @@ fun PlaybackPageContent(
                         scene = it,
                         performers = performers,
                         uiConfig = uiConfig,
+                        itemOnClick = itemOnClick,
                     )
                 }
             }
@@ -889,6 +928,7 @@ class PlaybackKeyHandler(
     private val player: Player,
     private val controlsEnabled: Boolean,
     private val skipWithLeftRight: Boolean,
+    private val nextWithUpDown: Boolean,
     private val controllerViewState: ControllerViewState,
     private val updateSkipIndicator: (Long) -> Unit,
 ) {
@@ -906,6 +946,10 @@ class PlaybackKeyHandler(
                 } else if (skipWithLeftRight && it.key == Key.DirectionRight) {
                     player.seekForward()
                     updateSkipIndicator(player.seekForwardIncrement)
+                } else if (nextWithUpDown && it.key == Key.DirectionUp) {
+                    player.seekToPreviousMediaItem()
+                } else if (nextWithUpDown && it.key == Key.DirectionDown) {
+                    player.seekToNextMediaItem()
                 } else {
                     controllerViewState.showControls()
                 }
@@ -917,6 +961,7 @@ class PlaybackKeyHandler(
                 Key.MediaPlay -> {
                     Util.handlePlayButtonAction(player)
                 }
+
                 Key.MediaPause -> {
                     Util.handlePauseButtonAction(player)
                     controllerViewState.showControls()
@@ -943,6 +988,8 @@ class PlaybackKeyHandler(
                 Key.MediaPrevious -> if (player.isCommandAvailable(Player.COMMAND_SEEK_TO_PREVIOUS)) player.seekToPrevious()
                 else -> result = false
             }
+        } else if (it.key == Key.Enter && !controllerViewState.controlsVisible) {
+            controllerViewState.showControls()
         } else if (it.key == Key.Back && controllerViewState.controlsVisible) {
             controllerViewState.hideControls()
         } else {

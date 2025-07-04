@@ -80,6 +80,7 @@ import com.github.damontecres.stashapp.ui.util.getPlayDestinationForItem
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
+import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -114,7 +115,7 @@ class MainPageViewModel(
                     filterParser,
                     pageSize,
                 )
-            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            viewModelScope.launch(LoggingCoroutineExceptionHandler(server, viewModelScope)) {
                 val jobs = frontPageParser.parse(frontPageContent)
 
                 jobs.forEach { job ->

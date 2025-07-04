@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.components
 
-import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,9 +17,10 @@ import com.github.damontecres.stashapp.api.fragment.SavedFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
 
@@ -46,16 +46,15 @@ fun SavedFiltersButton(
     val filterParser = FilterParser(StashServer.requireCurrentServer().version)
 
     val context = LocalContext.current
+    val server = LocalGlobalContext.current.server
     val scope = rememberCoroutineScope()
     LaunchedEffect(dataType) {
         scope.launch(
-            StashCoroutineExceptionHandler(makeToast = {
-                Toast.makeText(
-                    context,
-                    "Failed to get saved filters: ${it.localizedMessage}",
-                    Toast.LENGTH_LONG,
-                )
-            }),
+            LoggingCoroutineExceptionHandler(
+                server,
+                scope,
+                toastMessage = "Failed to get saved filters",
+            ),
         ) {
             savedFilters = QueryEngine(StashServer.requireCurrentServer()).getSavedFilters(dataType)
         }

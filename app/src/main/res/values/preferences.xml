@@ -27,6 +27,8 @@
     <string name="pref_key_show_dpad_skip" translatable="false">playback.showDpadSkip</string>
     <string name="pref_key_playback_debug_logging" translatable="false">playback.debug.logging</string>
     <string name="pref_key_playback_http_client" translatable="false">playback.http.client</string>
+    <string name="pref_key_playback_skip_left_right" translatable="false">skipWithDpad</string>
+    <string name="pref_key_playback_next_up_down" translatable="false">playback.nextWithUpDown</string>
     <string name="playback_http_client_default" translatable="false">default</string>
     <string name="playback_http_client_okhttp" translatable="false">okhttp</string>
     <string-array name="playback_http_client">
@@ -58,6 +60,7 @@
     <string name="pref_key_image_loading_threads">image.loadingThreads</string>
     <string name="pref_key_update_last_check" translatable="false">update.lastCheck</string>
     <string name="pref_key_update_last_check_threshold" translatable="false">update.lastCheck.threshold</string>
+    <string name="pref_key_log_to_server" translatable="false">log.to.server</string>
 
     <!-- Compose -->
     <string name="pref_key_use_compose_ui" translatable="false">useComposeUI</string>

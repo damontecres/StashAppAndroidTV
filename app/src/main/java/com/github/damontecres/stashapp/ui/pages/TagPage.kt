@@ -43,10 +43,10 @@ import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.ui.filterArgsSaver
+import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getUiTabs
 import kotlinx.coroutines.launch
@@ -115,7 +115,7 @@ fun TagPage(
                         favorite = favorite,
                         favoriteClick = {
                             val mutationEngine = MutationEngine(server)
-                            scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                            scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
                                 val newTag =
                                     mutationEngine.setTagFavorite(
                                         tagId = tag.id,
