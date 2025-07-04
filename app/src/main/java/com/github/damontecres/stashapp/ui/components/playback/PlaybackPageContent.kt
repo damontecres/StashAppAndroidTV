@@ -121,6 +121,8 @@ import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.properties.Delegates
@@ -159,7 +161,10 @@ class PlaybackViewModel : ViewModel() {
         this.exceptionHandler = LoggingCoroutineExceptionHandler(server, viewModelScope)
     }
 
+    private var sceneJob: Job = Job()
+
     fun changeScene(tag: PlaylistFragment.MediaItemTag) {
+        sceneJob.cancelChildren()
         this.mediaItemTag.value = tag
         this.oCount.value = 0
         this.markers.value = listOf()
@@ -170,7 +175,7 @@ class PlaybackViewModel : ViewModel() {
         if (videoFiltersEnabled) {
             updateVideoFilter(VideoFilter())
             if (saveFilters && videoFiltersEnabled) {
-                viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+                viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler() + Dispatchers.IO) {
                     val vf =
                         StashApplication
                             .getDatabase()
@@ -192,7 +197,7 @@ class PlaybackViewModel : ViewModel() {
         }
 
         // Fetch preview sprites
-        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+        viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler()) {
             val context = StashApplication.getApplication()
             val imageLoader = SingletonImageLoader.get(context)
             if (tag.item.spriteUrl.isNotNullOrBlank()) {
@@ -211,7 +216,7 @@ class PlaybackViewModel : ViewModel() {
 
     private fun refreshScene(sceneId: String) {
         // Fetch o count & markers
-        viewModelScope.launch(exceptionHandler) {
+        viewModelScope.launch(sceneJob + exceptionHandler) {
             oCount.value = 0
             markers.value = listOf()
             performers.value = listOf()
@@ -384,7 +389,24 @@ fun PlaybackPageContent(
                 true,
             )
         }
-    val skipWithLeftRight = remember { prefs.getBoolean("skipWithDpad", true) }
+    val skipWithLeftRight =
+        remember {
+            prefs.getBoolean(
+                context.getString(R.string.pref_key_playback_skip_left_right),
+                true,
+            )
+        }
+    // Enabled if the preference is enabled and playing a playlist of markers
+    val nextWithUpDown =
+        remember {
+            playlistPager != null &&
+                playlistPager.filter.dataType == DataType.MARKER &&
+                playlistPager.size > 1 &&
+                prefs.getBoolean(
+                    context.getString(R.string.pref_key_playback_next_up_down),
+                    false,
+                )
+        }
     val useVideoFilters =
         remember { prefs.getBoolean(context.getString(R.string.pref_key_video_filters), false) }
 
@@ -573,6 +595,7 @@ fun PlaybackPageContent(
                 player = player,
                 controlsEnabled = controlsEnabled,
                 skipWithLeftRight = skipWithLeftRight,
+                nextWithUpDown = nextWithUpDown,
                 controllerViewState = controllerViewState,
                 updateSkipIndicator = updateSkipIndicator,
             )
@@ -905,6 +928,7 @@ class PlaybackKeyHandler(
     private val player: Player,
     private val controlsEnabled: Boolean,
     private val skipWithLeftRight: Boolean,
+    private val nextWithUpDown: Boolean,
     private val controllerViewState: ControllerViewState,
     private val updateSkipIndicator: (Long) -> Unit,
 ) {
@@ -922,6 +946,10 @@ class PlaybackKeyHandler(
                 } else if (skipWithLeftRight && it.key == Key.DirectionRight) {
                     player.seekForward()
                     updateSkipIndicator(player.seekForwardIncrement)
+                } else if (nextWithUpDown && it.key == Key.DirectionUp) {
+                    player.seekToPreviousMediaItem()
+                } else if (nextWithUpDown && it.key == Key.DirectionDown) {
+                    player.seekToNextMediaItem()
                 } else {
                     controllerViewState.showControls()
                 }
@@ -933,6 +961,7 @@ class PlaybackKeyHandler(
                 Key.MediaPlay -> {
                     Util.handlePlayButtonAction(player)
                 }
+
                 Key.MediaPause -> {
                     Util.handlePauseButtonAction(player)
                     controllerViewState.showControls()
@@ -959,6 +988,8 @@ class PlaybackKeyHandler(
                 Key.MediaPrevious -> if (player.isCommandAvailable(Player.COMMAND_SEEK_TO_PREVIOUS)) player.seekToPrevious()
                 else -> result = false
             }
+        } else if (it.key == Key.Enter && !controllerViewState.controlsVisible) {
+            controllerViewState.showControls()
         } else if (it.key == Key.Back && controllerViewState.controlsVisible) {
             controllerViewState.hideControls()
         } else {
