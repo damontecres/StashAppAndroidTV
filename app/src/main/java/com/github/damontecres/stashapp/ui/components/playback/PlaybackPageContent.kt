@@ -121,6 +121,8 @@ import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.properties.Delegates
@@ -159,7 +161,10 @@ class PlaybackViewModel : ViewModel() {
         this.exceptionHandler = LoggingCoroutineExceptionHandler(server, viewModelScope)
     }
 
+    private var sceneJob: Job = Job()
+
     fun changeScene(tag: PlaylistFragment.MediaItemTag) {
+        sceneJob.cancelChildren()
         this.mediaItemTag.value = tag
         this.oCount.value = 0
         this.markers.value = listOf()
@@ -170,7 +175,7 @@ class PlaybackViewModel : ViewModel() {
         if (videoFiltersEnabled) {
             updateVideoFilter(VideoFilter())
             if (saveFilters && videoFiltersEnabled) {
-                viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+                viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler() + Dispatchers.IO) {
                     val vf =
                         StashApplication
                             .getDatabase()
@@ -192,7 +197,7 @@ class PlaybackViewModel : ViewModel() {
         }
 
         // Fetch preview sprites
-        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+        viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler()) {
             val context = StashApplication.getApplication()
             val imageLoader = SingletonImageLoader.get(context)
             if (tag.item.spriteUrl.isNotNullOrBlank()) {
@@ -211,7 +216,7 @@ class PlaybackViewModel : ViewModel() {
 
     private fun refreshScene(sceneId: String) {
         // Fetch o count & markers
-        viewModelScope.launch(exceptionHandler) {
+        viewModelScope.launch(sceneJob + exceptionHandler) {
             oCount.value = 0
             markers.value = listOf()
             performers.value = listOf()
