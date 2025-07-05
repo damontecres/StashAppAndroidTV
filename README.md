@@ -7,7 +7,7 @@ The app supports browsing, searching, and filtering just about everything includ
 The app is not intended to perform administrative functions such as scraping or editing details. Some curation tasks are available though such as adding tags or performers to scenes.
 
 ### Main page
-![0_5_3_main](https://github.com/user-attachments/assets/c8d588b8-455a-4ad2-8dda-a79b68680b19)
+![0_6_6_main](https://github.com/user-attachments/assets/6549ce26-bd8a-4b86-90c7-3447f7de3eef)
 
 ## Setup
 
@@ -62,7 +62,7 @@ You can configure multiple servers in the app. To add, remove, or switch servers
 
 The app strives to be compatible with the latest released version of Stash.
 
-Currently, the minimum supported/tested server version is Stash `0.27.0`.
+Currently, the minimum supported/tested server version is Stash `0.28.0`.
 
 #### Devices
 
@@ -86,15 +86,17 @@ If you plan to submit a pull request, please read the [contributing guide](CONTR
 
 ## Additional screenshots
 
-### Scene list with sorting & filters
+### Scene list
+![0_6_6_scene_grid](https://github.com/user-attachments/assets/10f3d32e-ce04-4456-a992-8bfa13291f14)
 
-![0_5_8_scenes](https://github.com/user-attachments/assets/61b04c1a-26f9-4b47-8d1e-fd88cff2a516)
+### Edit scene details
+![0_6_6_scene_edit](https://github.com/user-attachments/assets/bbf7d0e4-2a93-4dcd-a5ee-59f4100e5ae0)
 
-### Performer page
+### Filtering scenes
+![0_6_6_scene_filter_create](https://github.com/user-attachments/assets/9dc4da09-0398-4eab-be5f-620b04f14b03)
 
-![0_5_8_performer](https://github.com/user-attachments/assets/63db910b-510a-4915-8c58-06ffa7ee1a99)
-![0_5_8_performer_scenes](https://github.com/user-attachments/assets/77f3ef59-8d6b-4a49-97f5-bd7660756ad7)
-
+### Performer details
+![0_6_6_performer](https://github.com/user-attachments/assets/76ffbf8f-9329-4f8a-a11c-881441af75f8)
 
 ### Playlist
-![0_4_0_playlist](https://github.com/user-attachments/assets/f06b0ce3-82fe-4cbd-a8b5-c2213d8c33f7)
+![0_6_6_playlist](https://github.com/user-attachments/assets/b93677d8-c865-4b39-b948-db9c7fa1ab62)
