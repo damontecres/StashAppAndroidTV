@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.util
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
 import androidx.core.content.edit
@@ -22,6 +23,7 @@ class AppUpgradeHandler(
         UpdateChecker.cleanup(context)
 
         Log.i(TAG, "Migrating $previousVersion to $installedVersion")
+        val preferences = PreferenceManager.getDefaultSharedPreferences(context)
 
         // Add mpegts as a default force direct play format
         if (previousVersion.isEqualOrBefore(Version.fromString("0.2.9")) &&
@@ -30,14 +32,13 @@ class AppUpgradeHandler(
             Log.d(TAG, "Checking for mpegts direct play")
             val defaultFormats =
                 context.resources.getStringArray(R.array.default_force_container_formats).toSet()
-            val prefs = PreferenceManager.getDefaultSharedPreferences(context)
             val current =
-                prefs.getStringSet(
+                preferences.getStringSet(
                     context.getString(R.string.pref_key_default_forced_direct_containers),
                     defaultFormats,
                 )!!
             if (!current.contains("mpegts")) {
-                prefs.edit {
+                preferences.edit {
                     val newSet = current.toMutableSet()
                     newSet.add("mpegts")
                     putStringSet(
@@ -49,19 +50,18 @@ class AppUpgradeHandler(
         }
 
         if (previousVersion.isEqualOrBefore(Version.fromString("v0.4.1"))) {
-            val preferences: SharedPreferences =
+            val serverPreferences: SharedPreferences =
                 context.getSharedPreferences(
                     context.packageName + "_server_preferences",
                     Context.MODE_PRIVATE,
                 )
-            preferences.edit(true) {
+            serverPreferences.edit(true) {
                 clear()
             }
         }
 
         if (previousVersion.isEqualOrBefore(Version.fromString("v0.5.2"))) {
             Log.i(TAG, "Migrating tabs for v0.5.2")
-            val preferences = PreferenceManager.getDefaultSharedPreferences(context)
             preferences.ensureSetHas(
                 context,
                 R.string.pref_key_ui_tag_tabs,
@@ -83,7 +83,6 @@ class AppUpgradeHandler(
         }
         if (previousVersion == Version.fromString("v0.5.2-8-gc2c5e6f")) {
             val key = context.getString(R.string.pref_key_read_only_mode_pin)
-            val preferences = PreferenceManager.getDefaultSharedPreferences(context)
             val readOnlyPin = preferences.getInt(key, -1)
             if (readOnlyPin >= 0) {
                 preferences.edit(true) {
@@ -95,7 +94,6 @@ class AppUpgradeHandler(
 
         if (previousVersion.isEqualOrBefore(Version.fromString("v0.5.11-3-gf0cf79e2"))) {
             Log.i(TAG, "Migrating tabs for v0.5.11-3-gf0cf79e2")
-            val preferences = PreferenceManager.getDefaultSharedPreferences(context)
             preferences.ensureSetHas(
                 context,
                 R.string.pref_key_ui_performer_tabs,
@@ -104,6 +102,23 @@ class AppUpgradeHandler(
                     context.getString(R.string.stashapp_studio),
                 ),
             )
+        }
+
+        if (previousVersion.isLessThan(Version.fromString("0.6.6"))) {
+            Log.i(TAG, "Setting new UI to true")
+            val key = context.getString(R.string.pref_key_use_compose_ui)
+            if (!preferences.getBoolean(key, true)) {
+                // User turned on new UI and turned it off, so show a Toast
+                Toast
+                    .makeText(
+                        context,
+                        "The new UI is now the default. You can still switch back to the legacy UI in settings.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+            }
+            preferences.edit(true) {
+                putBoolean(key, true)
+            }
         }
     }
 

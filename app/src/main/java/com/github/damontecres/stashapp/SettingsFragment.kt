@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.DialogInterface
-import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
@@ -12,7 +11,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
-import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.preference.LeanbackEditTextPreferenceDialogFragmentCompat
@@ -27,7 +25,6 @@ import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
-import coil3.SingletonImageLoader
 import coil3.annotation.DelicateCoilApi
 import coil3.imageLoader
 import com.bumptech.glide.Glide
@@ -48,7 +45,6 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.SubscriptionEngine
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
-import com.github.damontecres.stashapp.util.composeEnabled
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
@@ -58,7 +54,6 @@ import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
 import com.github.damontecres.stashapp.views.formatBytes
 import com.github.damontecres.stashapp.views.models.ServerViewModel
-import io.noties.markwon.Markwon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -286,42 +281,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 if (it != null) {
                     refresh(it)
                 }
-            }
-
-            val useCompose = composeEnabled()
-            val composeCategoryPef = findPreference<Preference>("composeCategory")!!
-            val tryComposePref = findPreference<Preference>("tryCompose")!!
-            composeCategoryPef.isVisible = !useCompose
-            tryComposePref.setOnPreferenceClickListener {
-                val message =
-                    """
-                    Want to switch the new UI based on Android Jetpack Compose?
-
-                    See the `StashAppAndroidTV` GitHub for more information.
-
-                    Enabling the new UI will restart the app!
-                    """.trimIndent()
-                ConfirmationDialogFragment.show(
-                    childFragmentManager,
-                    Markwon.create(requireContext()).toMarkdown(message),
-                ) {
-                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        clearCaches(requireContext())
-                        PreferenceManager.getDefaultSharedPreferences(requireContext()).edit(true) {
-                            putBoolean(getString(R.string.pref_key_use_compose_ui), true)
-                        }
-                        // Clear coil singleton
-                        SingletonImageLoader.reset()
-//                        requireActivity().finish()
-                        requireActivity().startActivity(
-                            Intent(
-                                requireActivity(),
-                                RootActivity::class.java,
-                            ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
-                        )
-                    }
-                }
-                true
             }
 
             if (PreferenceManager
@@ -750,7 +709,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             val useCompose =
                 PreferenceManager
                     .getDefaultSharedPreferences(requireContext())
-                    .getBoolean(getString(R.string.pref_key_use_compose_ui), false)
+                    .getBoolean(getString(R.string.pref_key_use_compose_ui), true)
             val composeCacheUsed =
                 if (useCompose) {
                     val diskUsed =
