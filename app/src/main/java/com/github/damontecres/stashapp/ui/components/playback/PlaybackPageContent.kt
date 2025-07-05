@@ -118,6 +118,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchIO
+import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
@@ -125,6 +126,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import kotlin.properties.Delegates
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -143,6 +145,7 @@ class PlaybackViewModel : ViewModel() {
     val mediaItemTag = MutableLiveData<PlaylistFragment.MediaItemTag>()
     val markers = MutableLiveData<List<BasicMarker>>(listOf())
     val oCount = MutableLiveData(0)
+    val rating100 = MutableLiveData(0)
     val spriteImageLoaded = MutableLiveData(false)
 
     private val _videoFilter = MutableLiveData<VideoFilter?>(null)
@@ -167,6 +170,7 @@ class PlaybackViewModel : ViewModel() {
         sceneJob.cancelChildren()
         this.mediaItemTag.value = tag
         this.oCount.value = 0
+        this.rating100.value = 0
         this.markers.value = listOf()
         this.spriteImageLoaded.value = false
 
@@ -218,6 +222,7 @@ class PlaybackViewModel : ViewModel() {
         // Fetch o count & markers
         viewModelScope.launch(sceneJob + exceptionHandler) {
             oCount.value = 0
+            rating100.value = 0
             markers.value = listOf()
             performers.value = listOf()
 
@@ -225,14 +230,17 @@ class PlaybackViewModel : ViewModel() {
             val scene = queryEngine.getScene(sceneId)
             if (scene != null) {
                 oCount.value = scene.o_counter ?: 0
+                rating100.value = scene.rating100 ?: 0
                 if (markersEnabled) {
                     markers.value =
                         scene.scene_markers
                             .sortedBy { it.seconds }
                             .map(::BasicMarker)
                 }
-                performers.value =
-                    queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
+                if (scene.performers.isNotEmpty()) {
+                    performers.value =
+                        queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
+                }
             }
             this@PlaybackViewModel.scene.value = scene
         }
@@ -293,6 +301,18 @@ class PlaybackViewModel : ViewModel() {
             }
         }
     }
+
+    fun updateRating(
+        sceneId: String,
+        rating100: Int,
+    ) {
+        viewModelScope.launch(exceptionHandler) {
+            val newRating =
+                MutationEngine(server).setRating(sceneId, rating100)?.rating100 ?: 0
+            this@PlaybackViewModel.rating100.value = newRating
+            showSetRatingToast(StashApplication.getApplication(), newRating)
+        }
+    }
 }
 
 val playbackScaleOptions =
@@ -336,10 +356,12 @@ fun PlaybackPageContent(
     )
     val markers by viewModel.markers.observeAsState(listOf())
     val oCount by viewModel.oCount.observeAsState(0)
+    val rating100 by viewModel.rating100.observeAsState(0)
     val spriteImageLoaded by viewModel.spriteImageLoaded.observeAsState(false)
     var captions by remember { mutableStateOf<List<TrackSupport>>(listOf()) }
     var subtitles by remember { mutableStateOf<List<Cue>?>(null) }
     var subtitleIndex by remember { mutableStateOf<Int?>(null) }
+    var mediaIndexSubtitlesActivated by remember { mutableStateOf<Int>(-1) }
     var audioIndex by remember { mutableStateOf<Int?>(null) }
     var audioOptions by remember { mutableStateOf<List<String>>(listOf()) }
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
@@ -445,7 +467,7 @@ fun PlaybackPageContent(
 //                            .mapNotNull { it.text }
 //                            .joinToString("\n")
 //                    Log.v(TAG, "onCues: \n$cues")
-                    subtitles = if (cueGroup.cues.isNotEmpty()) cueGroup.cues else null
+                    subtitles = cueGroup.cues.ifEmpty { null }
                 }
 
                 override fun onTracksChanged(tracks: Tracks) {
@@ -458,6 +480,24 @@ fun PlaybackPageContent(
                         audioTracks.map { it.labels.joinToString(", ").ifBlank { "Default" } }
                     captions =
                         trackInfo.filter { it.type == TrackType.TEXT && it.supported == TrackSupportReason.HANDLED }
+
+                    val captionsByDefault =
+                        prefs.getBoolean(
+                            context.getString(R.string.pref_key_captions_on_by_default),
+                            true,
+                        )
+                    if (captionsByDefault && captions.isNotEmpty() && mediaIndexSubtitlesActivated != currentPlaylistIndex) {
+                        // Captions will be empty when transitioning to new media item
+                        // Only want to activate subtitles once in case the user turns them off
+                        mediaIndexSubtitlesActivated = currentPlaylistIndex
+                        val languageCode = Locale.getDefault().language
+                        captions.indexOfFirstOrNull { it.format.language == languageCode }?.let {
+                            Log.v(TAG, "Found default subtitle track for $languageCode: $it")
+                            if (toggleSubtitles(player, null, it)) {
+                                subtitleIndex = it
+                            }
+                        }
+                    }
                 }
 
                 override fun onMediaItemTransition(
@@ -847,7 +887,7 @@ fun PlaybackPageContent(
                 player.pause()
                 controllerViewState.hideControls()
             }
-            scene?.let {
+            scene?.let { scene ->
                 Dialog(
                     onDismissRequest = {
                         showSceneDetails = false
@@ -863,10 +903,12 @@ fun PlaybackPageContent(
                                 .fillMaxSize()
                                 .background(MaterialTheme.colorScheme.background.copy(alpha = .75f)),
                         server = server,
-                        scene = it,
+                        scene = scene,
                         performers = performers,
                         uiConfig = uiConfig,
                         itemOnClick = itemOnClick,
+                        rating100 = rating100,
+                        onRatingChange = { viewModel.updateRating(scene.id, it) },
                     )
                 }
             }
@@ -1003,12 +1045,12 @@ class PlaybackKeyHandler(
 @OptIn(UnstableApi::class)
 fun toggleSubtitles(
     player: Player,
-    subtitleIndex: Int?,
+    currentActiveSubtitleIndex: Int?,
     index: Int,
 ): Boolean {
     val subtitleTracks =
         player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT && it.isSupported }
-    if (index !in subtitleTracks.indices || subtitleIndex != null && subtitleIndex == index) {
+    if (index !in subtitleTracks.indices || currentActiveSubtitleIndex != null && currentActiveSubtitleIndex == index) {
         Log.v(
             TAG,
             "Deactivating subtitles",
