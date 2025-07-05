@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -24,8 +25,10 @@ fun SceneDetailsOverlay(
     server: StashServer,
     scene: FullSceneData,
     performers: List<PerformerData>,
+    rating100: Int,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
+    onRatingChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -40,22 +43,22 @@ fun SceneDetailsOverlay(
             SceneDetailsHeaderInfo(
                 scene = scene,
                 studio = scene.studio?.studioData,
-                rating100 = scene.rating100 ?: 0,
+                rating100 = rating100,
                 oCount = scene.o_counter ?: 0,
-                uiConfig = uiConfig.copy(readOnlyModeEnabled = true),
+                uiConfig = uiConfig,
                 itemOnClick = itemOnClick,
                 playOnClick = { _, _ -> },
                 editOnClick = {},
                 moreOnClick = {},
                 oCounterOnClick = {},
                 oCounterOnLongClick = {},
-                onRatingChange = {},
+                onRatingChange = onRatingChange,
                 focusRequester = focusRequester,
                 bringIntoViewRequester = bringIntoViewRequester,
                 removeLongClicker = { _, _ -> },
                 showEditButton = false,
                 alwaysStartFromBeginning = false,
-                modifier = Modifier,
+                modifier = Modifier.padding(bottom = 80.dp),
                 showRatingBar = true,
             )
         }
