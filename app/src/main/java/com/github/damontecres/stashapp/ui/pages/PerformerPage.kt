@@ -736,7 +736,12 @@ fun PerformerDetails(
                                                             ),
                                                     ),
                                             )
-                                        itemOnClick.onClick(filter, null)
+                                        navigationManager.navigate(
+                                            Destination.Filter(
+                                                filterArgs = filter,
+                                                false,
+                                            ),
+                                        )
                                     },
                                 )
                             onShowDialog.invoke(DialogParams(true, item.name, dialogItems))
