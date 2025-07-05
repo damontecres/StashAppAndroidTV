@@ -126,6 +126,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import kotlin.properties.Delegates
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -360,6 +361,7 @@ fun PlaybackPageContent(
     var captions by remember { mutableStateOf<List<TrackSupport>>(listOf()) }
     var subtitles by remember { mutableStateOf<List<Cue>?>(null) }
     var subtitleIndex by remember { mutableStateOf<Int?>(null) }
+    var mediaIndexSubtitlesActivated by remember { mutableStateOf<Int>(-1) }
     var audioIndex by remember { mutableStateOf<Int?>(null) }
     var audioOptions by remember { mutableStateOf<List<String>>(listOf()) }
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
@@ -465,7 +467,7 @@ fun PlaybackPageContent(
 //                            .mapNotNull { it.text }
 //                            .joinToString("\n")
 //                    Log.v(TAG, "onCues: \n$cues")
-                    subtitles = if (cueGroup.cues.isNotEmpty()) cueGroup.cues else null
+                    subtitles = cueGroup.cues.ifEmpty { null }
                 }
 
                 override fun onTracksChanged(tracks: Tracks) {
@@ -478,6 +480,24 @@ fun PlaybackPageContent(
                         audioTracks.map { it.labels.joinToString(", ").ifBlank { "Default" } }
                     captions =
                         trackInfo.filter { it.type == TrackType.TEXT && it.supported == TrackSupportReason.HANDLED }
+
+                    val captionsByDefault =
+                        prefs.getBoolean(
+                            context.getString(R.string.pref_key_captions_on_by_default),
+                            true,
+                        )
+                    if (captionsByDefault && captions.isNotEmpty() && mediaIndexSubtitlesActivated != currentPlaylistIndex) {
+                        // Captions will be empty when transitioning to new media item
+                        // Only want to activate subtitles once in case the user turns them off
+                        mediaIndexSubtitlesActivated = currentPlaylistIndex
+                        val languageCode = Locale.getDefault().language
+                        captions.indexOfFirstOrNull { it.format.language == languageCode }?.let {
+                            Log.v(TAG, "Found default subtitle track for $languageCode: $it")
+                            if (toggleSubtitles(player, null, it)) {
+                                subtitleIndex = it
+                            }
+                        }
+                    }
                 }
 
                 override fun onMediaItemTransition(
@@ -1025,12 +1045,12 @@ class PlaybackKeyHandler(
 @OptIn(UnstableApi::class)
 fun toggleSubtitles(
     player: Player,
-    subtitleIndex: Int?,
+    currentActiveSubtitleIndex: Int?,
     index: Int,
 ): Boolean {
     val subtitleTracks =
         player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT && it.isSupported }
-    if (index !in subtitleTracks.indices || subtitleIndex != null && subtitleIndex == index) {
+    if (index !in subtitleTracks.indices || currentActiveSubtitleIndex != null && currentActiveSubtitleIndex == index) {
         Log.v(
             TAG,
             "Deactivating subtitles",
