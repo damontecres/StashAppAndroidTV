@@ -384,6 +384,7 @@ fun PerformerDetailsPage(
             ),
             TabProvider(stringResource(R.string.stashapp_appears_with)) {
                 val context = LocalContext.current
+                val navigationManager = LocalGlobalContext.current.navigationManager
                 StashGridTab(
                     name = stringResource(R.string.stashapp_appears_with),
                     server = server,
@@ -429,7 +430,12 @@ fun PerformerDetailsPage(
                                                         ),
                                                 ),
                                         )
-                                    itemOnClick.onClick(filter, null)
+                                    navigationManager.navigate(
+                                        Destination.Filter(
+                                            filterArgs = filter,
+                                            false,
+                                        ),
+                                    )
                                 },
                             )
                         dialogParams = DialogParams(true, item.name, dialogItems)
