@@ -27,10 +27,8 @@ class ServerPreferences(
         StashApplication.getApplication().getSharedPreferences(serverKey, Context.MODE_PRIVATE)
     }
 
-    private val _defaultFilters = mutableMapOf<DataType, FilterArgs>()
-    val defaultFilters: Map<DataType, FilterArgs> = _defaultFilters
-    private val _defaultPageFilters = mutableMapOf<PageFilterKey, FilterArgs>()
-    val defaultPageFilters: Map<PageFilterKey, FilterArgs> = _defaultPageFilters
+    private val defaultFilters = mutableMapOf<DataType, FilterArgs>()
+    private val defaultPageFilters = mutableMapOf<PageFilterKey, FilterArgs>()
 
     var uiConfiguration: Map<*, *>? = null
         private set
@@ -226,13 +224,13 @@ class ServerPreferences(
                 } else {
                     FilterArgs(dataType)
                 }
-            _defaultFilters[dataType] = filter
+            this.defaultFilters[dataType] = filter
         }
 
         PageFilterKey.entries.forEach { key ->
             val filterMap =
                 defaultFilters?.getCaseInsensitive(key.prefKey) as Map<String, *>?
-            _defaultPageFilters[key] =
+            defaultPageFilters[key] =
                 if (filterMap != null) {
                     try {
                         filterParser.convertFilterMap(key.dataType, filterMap, false)
@@ -442,5 +440,11 @@ class ServerPreferences(
             }
         }
 
-    fun getDefaultPageFilter(pageKey: PageFilterKey): FilterArgs = defaultPageFilters[pageKey] ?: FilterArgs(pageKey.dataType)
+    fun getDefaultPageFilter(pageKey: PageFilterKey): FilterArgs =
+        (defaultPageFilters[pageKey] ?: FilterArgs(pageKey.dataType))
+            .withResolvedRandom()
+
+    fun getDefaultFilter(dataType: DataType): FilterArgs =
+        (defaultFilters[dataType] ?: FilterArgs(dataType))
+            .withResolvedRandom()
 }
