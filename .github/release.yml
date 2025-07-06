@@ -15,10 +15,6 @@ changelog:
       exclude:
         labels:
           - bug
-          - new ui
-    - title: New UI/UX Changes
-      labels:
-        - new ui
     - title: Bug Fixes
       labels:
         - bug
