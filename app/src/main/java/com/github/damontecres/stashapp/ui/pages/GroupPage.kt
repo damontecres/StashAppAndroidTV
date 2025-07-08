@@ -151,7 +151,7 @@ fun GroupPage(
             mutableStateOf(
                 FilterArgs(
                     DataType.SCENE,
-                    findFilter = tabFindFilter(server, PageFilterKey.TAG_SCENES),
+                    findFilter = tabFindFilter(server, PageFilterKey.GROUP_SCENES),
                     objectFilter = SceneFilterType(groups = groupsFunc(scenesSubTags)),
                 ),
             )
@@ -248,6 +248,7 @@ fun GroupPage(
                     mutableStateOf(
                         FilterArgs(
                             dataType = DataType.GROUP,
+                            findFilter = tabFindFilter(server, PageFilterKey.GROUP_SUB_GROUPS),
                             override =
                                 DataSupplierOverride.GroupRelationship(
                                     group.id,
