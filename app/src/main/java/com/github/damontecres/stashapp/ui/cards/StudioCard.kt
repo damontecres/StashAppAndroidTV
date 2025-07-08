@@ -57,6 +57,7 @@ fun StudioCard(
         imageWidth = StudioPresenter.CARD_WIDTH.dp / 2,
         imageHeight = StudioPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,
+        imagePadding = 8.dp,
         defaultImageDrawableRes = R.drawable.default_studio,
         videoUrl = null,
         title = title,
