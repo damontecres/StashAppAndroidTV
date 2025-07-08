@@ -39,7 +39,11 @@ import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.SortOption
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -151,7 +155,14 @@ fun GroupPage(
             mutableStateOf(
                 FilterArgs(
                     DataType.SCENE,
-                    findFilter = tabFindFilter(server, PageFilterKey.GROUP_SCENES),
+                    findFilter =
+                        tabFindFilter(server, PageFilterKey.GROUP_SCENES)
+                            ?: StashFindFilter(
+                                SortAndDirection(
+                                    SortOption.GroupSceneNumber,
+                                    SortDirectionEnum.ASC,
+                                ),
+                            ),
                     objectFilter = SceneFilterType(groups = groupsFunc(scenesSubTags)),
                 ),
             )
