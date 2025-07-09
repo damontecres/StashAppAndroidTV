@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -38,7 +40,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -54,7 +59,9 @@ import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.transitionFactory
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.StatisticsQuery
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.ImageData
@@ -72,6 +79,7 @@ import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.RowColumn
+import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.ui.components.main.MainPageHeader
 import com.github.damontecres.stashapp.ui.isPlayKeyUp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
@@ -87,15 +95,21 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.views.formatBytes
+import com.github.damontecres.stashapp.views.formatNumber
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "MainPage"
 
 class MainPageViewModel(
-    server: StashServer,
+    val server: StashServer,
 ) : ViewModel() {
     val frontPageRows = mutableStateListOf<FrontPageParser.FrontPageRow.Success>()
+
+    private val _serverStats = MutableLiveData<StatisticsQuery.Stats?>()
+    val serverStats: LiveData<StatisticsQuery.Stats?> = _serverStats
 
     init {
         val queryEngine = QueryEngine(server)
@@ -129,6 +143,13 @@ class MainPageViewModel(
         }
     }
 
+    fun updateStatistics() {
+        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+            val queryEngine = QueryEngine(server)
+            _serverStats.value = queryEngine.executeQuery(StatisticsQuery()).data?.stats
+        }
+    }
+
     companion object {
         val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
         val Factory: ViewModelProvider.Factory =
@@ -159,6 +180,7 @@ fun MainPage(
         )[MainPageViewModel::class]
 
     val frontPageRows = viewModel.frontPageRows // .observeAsState(listOf())
+    val serverStats by viewModel.serverStats.observeAsState()
 
     val focusRequester = remember { FocusRequester() }
     val context = LocalContext.current
@@ -167,6 +189,7 @@ fun MainPage(
         scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
             UpdateChecker.maybeShowUpdateToast(context, false)
         }
+        viewModel.updateStatistics()
     }
     if (frontPageRows.isEmpty()) {
         Box(modifier = modifier.fillMaxSize()) {
@@ -183,6 +206,8 @@ fun MainPage(
         }
         HomePage(
             modifier = modifier.focusRequester(focusRequester),
+            server = server,
+            serverStats = serverStats,
             uiConfig = uiConfig,
             rows = frontPageRows,
             itemOnClick = itemOnClick,
@@ -194,6 +219,8 @@ fun MainPage(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun HomePage(
+    server: StashServer,
+    serverStats: StatisticsQuery.Stats?,
     uiConfig: ComposeUiConfig,
     rows: List<FrontPageParser.FrontPageRow.Success>,
     itemOnClick: ItemOnClicker<Any>,
@@ -299,7 +326,7 @@ fun HomePage(
             LazyColumn(
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 75.dp),
+                contentPadding = PaddingValues(bottom = 72.dp),
                 modifier =
                     Modifier
                         .focusGroup()
@@ -318,6 +345,16 @@ fun HomePage(
                         },
                         rowFocusRequester = if (index == focusedIndex.row) focusRequester else null,
                         modifier = Modifier,
+                    )
+                }
+                item {
+                    ServerStatsRow(
+                        server = server,
+                        serverStats = serverStats,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(top = 24.dp),
                     )
                 }
             }
@@ -433,6 +470,52 @@ fun HomePageRow(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ServerStatsRow(
+    server: StashServer,
+    serverStats: StatisticsQuery.Stats?,
+    modifier: Modifier = Modifier,
+) {
+    serverStats?.let { stats ->
+        Row(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            TitleValueText(
+                stringResource(R.string.stashapp_scenes),
+                formatNumber(stats.scene_count, server.serverPreferences.abbreviateCounters),
+            )
+            TitleValueText(
+                stringResource(R.string.stashapp_stats_scenes_size),
+                formatBytes(stats.scenes_size.toLong()),
+            )
+            TitleValueText(
+                stringResource(R.string.stashapp_images),
+                formatNumber(stats.image_count, server.serverPreferences.abbreviateCounters),
+            )
+            TitleValueText(
+                stringResource(R.string.stashapp_stats_image_size),
+                formatBytes(stats.images_size.toLong()),
+            )
+            TitleValueText(
+                stringResource(R.string.stashapp_stats_total_play_count),
+                formatNumber(stats.total_play_count, server.serverPreferences.abbreviateCounters),
+            )
+            TitleValueText(
+                stringResource(R.string.stashapp_stats_total_play_duration),
+                stats.total_play_duration
+                    .toLong()
+                    .seconds
+                    .toString(),
+            )
+            TitleValueText(
+                stringResource(R.string.stashapp_stats_total_o_count),
+                formatNumber(stats.total_o_count, server.serverPreferences.abbreviateCounters),
+            )
         }
     }
 }

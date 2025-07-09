@@ -7,12 +7,10 @@ import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,7 +34,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -45,9 +42,8 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.MutableLiveData
@@ -67,6 +63,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerControlView
+import androidx.media3.ui.SubtitleView
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
@@ -76,7 +73,6 @@ import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.media3.ui.compose.state.rememberPreviousButtonState
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 import coil3.SingletonImageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
@@ -102,7 +98,6 @@ import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.playback.checkForSupport
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.playback.switchToTranscode
-import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -688,48 +683,24 @@ fun PlaybackPageContent(
         }
 
         if (!controllerViewState.controlsVisible && subtitleIndex != null && skipIndicatorDuration == 0L) {
-            // TODO style
-            subtitles?.let { cues ->
-                val text = cues.mapNotNull { it.text }.joinToString("\n")
-                val bitmaps =
-                    cues.mapNotNull { cue ->
-                        cue.bitmap?.let { Pair(it, cue.bitmapHeight) }
+            AndroidView(
+                factory = {
+                    SubtitleView(context).apply {
+                        setUserDefaultStyle()
+                        setUserDefaultTextSize()
                     }
-                val background =
-                    if (text.isNotNullOrBlank()) {
-                        AppColors.TransparentBlack50
-                    } else {
-                        Color.Transparent
-                    }
-                Box(
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 48.dp)
-                            .background(background),
-                ) {
-                    if (text.isNotNullOrBlank()) {
-                        Text(
-                            text = text,
-                            color = Color.White,
-                            fontSize = 24.sp,
-                            maxLines = 2,
-                            overflow = TextOverflow.Clip,
-                            modifier = Modifier.padding(4.dp),
-                        )
-                    } else if (bitmaps.isNotEmpty()) {
-                        Column {
-                            bitmaps.forEach {
-                                Image(
-                                    bitmap = it.first.asImageBitmap(),
-                                    contentDescription = null,
-//                                    modifier = Modifier.height(100.dp),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+                },
+                update = {
+                    it.setCues(subtitles)
+                },
+                onReset = {
+                    it.setCues(null)
+                },
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Transparent),
+            )
         }
 
         currentScene?.let {
