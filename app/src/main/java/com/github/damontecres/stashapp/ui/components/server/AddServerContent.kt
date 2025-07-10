@@ -36,7 +36,6 @@ import com.github.damontecres.stashapp.ui.components.SwitchWithLabel
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResult
-import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.delay
@@ -78,13 +77,16 @@ fun AddServer(
                 errorMessage = "Duplicate server"
             } else {
                 errorMessage =
-                    when (result?.status) {
-                        TestResultStatus.SUCCESS -> null
-                        TestResultStatus.AUTH_REQUIRED -> null
-                        TestResultStatus.ERROR -> "Error"
-                        TestResultStatus.UNSUPPORTED_VERSION -> "Unsupported server version"
-                        TestResultStatus.SSL_REQUIRED -> "HTTPS may be required"
-                        TestResultStatus.SELF_SIGNED_REQUIRED -> "Trust ssl certificates required"
+                    when (val res = result) {
+                        TestResult.AuthRequired -> "API key is required"
+                        is TestResult.Error ->
+                            res.message ?: res.exception?.localizedMessage
+                                ?: "Error"
+
+                        TestResult.SelfSignedCertRequired -> "Trusting a self-signed certificate is required"
+                        TestResult.SslRequired -> "HTTPS is required"
+                        is TestResult.UnsupportedVersion -> "Server is not supported: ${res.serverVersion}"
+                        is TestResult.Success -> null
                         null -> null
                     }
             }
@@ -131,18 +133,15 @@ fun AddServer(
                     leadingIcon = null,
                     isInputValid = {
                         result == null ||
-                            result?.status in
-                            setOf(
-                                TestResultStatus.SUCCESS,
-                                TestResultStatus.AUTH_REQUIRED,
-                            )
+                            result is TestResult.Success ||
+                            result is TestResult.AuthRequired
                     },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
-        if (result?.status == TestResultStatus.AUTH_REQUIRED ||
-            result?.status == TestResultStatus.SUCCESS &&
+        if (result is TestResult.AuthRequired ||
+            result is TestResult.Success &&
             apiKey.isNotNullOrBlank()
         ) {
             item {
@@ -169,7 +168,7 @@ fun AddServer(
                         keyboardActions = KeyboardActions(),
                         leadingIcon = null,
                         isInputValid = {
-                            result?.status == TestResultStatus.SUCCESS
+                            result is TestResult.Success
                         },
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -207,7 +206,7 @@ fun AddServer(
             ) {
                 Button(
                     onClick = { onSubmit.invoke(StashServer(serverUrl, apiKey?.ifBlank { null })) },
-                    enabled = result?.status == TestResultStatus.SUCCESS && serverUrl !in currentServerUrls,
+                    enabled = result is TestResult.Success && serverUrl !in currentServerUrls,
                     modifier = Modifier,
                 ) {
                     if (checkingConnection) {

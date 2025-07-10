@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.TestResultStatus
+import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.launch
 
@@ -35,13 +35,15 @@ class ManageServersViewModel : ViewModel() {
             )
         // TODO better error messages
         val testResult =
-            when (result.status) {
-                TestResultStatus.SUCCESS -> ServerTestResult.Success
-                TestResultStatus.AUTH_REQUIRED -> ServerTestResult.Error("Auth")
-                TestResultStatus.ERROR -> ServerTestResult.Error("Error")
-                TestResultStatus.UNSUPPORTED_VERSION -> ServerTestResult.Error("Version")
-                TestResultStatus.SSL_REQUIRED -> ServerTestResult.Error("SSL")
-                TestResultStatus.SELF_SIGNED_REQUIRED -> ServerTestResult.Error("Cert")
+            when (result) {
+                TestResult.AuthRequired,
+                is TestResult.Error,
+                TestResult.SelfSignedCertRequired,
+                TestResult.SslRequired,
+                is TestResult.UnsupportedVersion,
+                -> ServerTestResult.Error(result)
+
+                is TestResult.Success -> ServerTestResult.Success
             }
         serverStatus.value = serverStatus.value!!.toMutableMap().apply { put(server, testResult) }
         return testResult
@@ -66,6 +68,6 @@ sealed interface ServerTestResult {
     data object Success : ServerTestResult
 
     data class Error(
-        val message: String,
+        val result: TestResult,
     ) : ServerTestResult
 }

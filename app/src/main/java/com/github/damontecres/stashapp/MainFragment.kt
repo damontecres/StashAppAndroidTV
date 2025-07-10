@@ -30,7 +30,7 @@ import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.TestResultStatus
+import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.maybeStartPlayback
@@ -154,20 +154,20 @@ class MainFragment :
                                 false,
                                 newServer.apolloClient,
                             )
-                        if (result.status == TestResultStatus.SUCCESS) {
+                        if (result is TestResult.Success) {
                             val mainTitleView =
                                 requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
                             mainTitleView.refreshMenuItems(newServer.serverPreferences)
                             fetchData(newServer)
-                        } else if (result.status == TestResultStatus.UNSUPPORTED_VERSION) {
+                        } else if (result is TestResult.UnsupportedVersion) {
                             Log.w(
                                 TAG,
-                                "Server version is not supported: ${result.serverInfo?.version?.version}",
+                                "Server version is not supported: ${result.serverVersion}",
                             )
                             Toast
                                 .makeText(
                                     requireContext(),
-                                    "Server version ${result.serverInfo?.version?.version} is not supported!",
+                                    "Server version ${result.serverVersion} is not supported!",
                                     Toast.LENGTH_LONG,
                                 ).show()
                         } else {
@@ -176,7 +176,7 @@ class MainFragment :
                             Toast
                                 .makeText(
                                     requireContext(),
-                                    "Connection to Stash failed: ${result.status}",
+                                    "Connection to Stash failed: $result",
                                     Toast.LENGTH_LONG,
                                 ).show()
                         }

@@ -304,7 +304,7 @@ fun ServerList(
                             is ServerTestResult.Error -> {
                                 Icon(
                                     imageVector = Icons.Default.Warning,
-                                    contentDescription = status.message,
+                                    contentDescription = status.result.toString(),
                                     tint = Color.Red,
                                 )
                             }
