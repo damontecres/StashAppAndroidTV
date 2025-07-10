@@ -155,7 +155,7 @@ class ConfigureServerStep : SetupGuidedStepSupportFragment() {
                     Toast
                         .makeText(
                             requireContext(),
-                            "Cannot connect to server: $result",
+                            "Cannot connect to server: ${result.message}",
                             Toast.LENGTH_LONG,
                         ).show()
                 }

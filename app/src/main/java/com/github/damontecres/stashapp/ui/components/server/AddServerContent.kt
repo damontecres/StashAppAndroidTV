@@ -57,6 +57,8 @@ fun AddServer(
     var checkingConnection by remember { mutableStateOf(false) }
 
     LaunchedEffect(serverUrl, apiKey) {
+        result = null
+        errorMessage = null
         if (serverUrl.isNotNullOrBlank()) {
             checkingConnection = true
             errorMessage = null
@@ -76,24 +78,15 @@ fun AddServer(
             if (serverUrl in currentServerUrls) {
                 errorMessage = "Duplicate server"
             } else {
-                errorMessage =
-                    when (val res = result) {
-                        TestResult.AuthRequired -> "API key is required"
-                        is TestResult.Error ->
-                            res.message ?: res.exception?.localizedMessage
-                                ?: "Error"
-
-                        TestResult.SelfSignedCertRequired -> "Trusting a self-signed certificate is required"
-                        TestResult.SslRequired -> "HTTPS is required"
-                        is TestResult.UnsupportedVersion -> "Server is not supported: ${res.serverVersion}"
-                        is TestResult.Success -> null
-                        null -> null
-                    }
+                errorMessage = result?.message
             }
-
+            checkingConnection = false
+        } else {
             checkingConnection = false
         }
     }
+
+    val labelWidth = 64.dp
 
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
@@ -118,7 +111,7 @@ fun AddServer(
                     text = "URL:",
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.width(160.dp),
+                    modifier = Modifier.width(labelWidth),
                 )
                 EditTextBox(
                     value = serverUrl,
@@ -141,8 +134,7 @@ fun AddServer(
             }
         }
         if (result is TestResult.AuthRequired ||
-            result is TestResult.Success &&
-            apiKey.isNotNullOrBlank()
+            (result is TestResult.Success && apiKey.isNotNullOrBlank())
         ) {
             item {
                 Row(
@@ -154,7 +146,7 @@ fun AddServer(
                         text = "API Key:",
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.width(160.dp),
+                        modifier = Modifier.width(labelWidth),
                     )
                     EditTextBox(
                         value = apiKey ?: "",

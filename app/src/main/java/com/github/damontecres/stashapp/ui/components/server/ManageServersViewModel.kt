@@ -53,6 +53,7 @@ class ManageServersViewModel : ViewModel() {
         StashServer.removeStashServer(StashApplication.getApplication(), server)
         val servers = StashServer.getAll(StashApplication.getApplication())
         allServers.value = servers
+        serverStatus.value = serverStatus.value!!.toMutableMap().apply { remove(server) }
     }
 
     fun addServer(server: StashServer) {

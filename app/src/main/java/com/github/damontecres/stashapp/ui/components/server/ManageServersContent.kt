@@ -67,6 +67,7 @@ fun ManageServersContent(
     val allServers by viewModel.allServers.observeAsState(listOf())
     val serverStatus by viewModel.serverStatus.observeAsState(mapOf())
     val serversWithOutCurrent = allServers.toMutableList().apply { remove(currentServer) }
+    val serverStatusWithOutCurrent = serverStatus.toMutableMap().apply { remove(currentServer) }
 
     var showSwitchServer by remember { mutableStateOf(false) }
     var showRemoveServer by remember { mutableStateOf(false) }
@@ -114,7 +115,7 @@ fun ManageServersContent(
                         showSwitchServer = false
                     }
                     ServerList(
-                        servers = serverStatus,
+                        servers = serverStatusWithOutCurrent,
                         action = ManageServerAction.Switch,
                         onClick = onSwitchServer,
                         modifier =
@@ -130,7 +131,7 @@ fun ManageServersContent(
                         showRemoveServer = false
                     }
                     ServerList(
-                        servers = serverStatus,
+                        servers = serverStatusWithOutCurrent,
                         action = ManageServerAction.Remove,
                         onClick = {
                             if (allServers.size == 1) {
@@ -294,7 +295,12 @@ fun ServerList(
             val status = servers[server]!!
             SimpleListItem(
                 title = server.url,
-                subtitle = null,
+                subtitle =
+                    if (action == ManageServerAction.Switch && status is ServerTestResult.Error) {
+                        status.result.message
+                    } else {
+                        null
+                    },
                 showArrow = action == ManageServerAction.Switch && status == ServerTestResult.Success,
                 onClick = { onClick.invoke(server) },
                 enabled = action == ManageServerAction.Remove || status == ServerTestResult.Success,
@@ -304,7 +310,7 @@ fun ServerList(
                             is ServerTestResult.Error -> {
                                 Icon(
                                     imageVector = Icons.Default.Warning,
-                                    contentDescription = status.result.toString(),
+                                    contentDescription = status.result.message,
                                     tint = Color.Red,
                                 )
                             }

@@ -162,34 +162,40 @@ fun createGlideUrl(
     return createGlideUrl(url, apiKey)
 }
 
-enum class TestResultStatus {
-    SUCCESS,
-    AUTH_REQUIRED,
-    ERROR,
-    UNSUPPORTED_VERSION,
-    SSL_REQUIRED,
-    SELF_SIGNED_REQUIRED,
-}
-
 sealed interface TestResult {
+    val message: String
+
     data class Success(
         val serverInfo: ServerInfoQuery.Data,
-    ) : TestResult
+    ) : TestResult {
+        override val message: String = ""
+    }
 
-    data object AuthRequired : TestResult
+    data object AuthRequired : TestResult {
+        override val message: String = "API key is required"
+    }
 
     data class Error(
-        val message: String?,
+        val errorMessage: String?,
         val exception: Exception?,
-    ) : TestResult
+    ) : TestResult {
+        override val message: String
+            get() = errorMessage ?: exception?.localizedMessage ?: "Unknown Error"
+    }
 
     data class UnsupportedVersion(
         val serverVersion: String?,
-    ) : TestResult
+    ) : TestResult {
+        override val message: String = "Unsupported server version: $serverVersion"
+    }
 
-    data object SslRequired : TestResult
+    data object SslRequired : TestResult {
+        override val message: String = "HTTPS may be required"
+    }
 
-    data object SelfSignedCertRequired : TestResult
+    data object SelfSignedCertRequired : TestResult {
+        override val message: String = "Possible self signed cert detected"
+    }
 }
 
 /**
