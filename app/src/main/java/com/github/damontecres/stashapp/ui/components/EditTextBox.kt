@@ -53,6 +53,7 @@ fun EditTextBox(
     readOnly: Boolean = false,
     height: Dp = 40.dp,
     isInputValid: (String) -> Boolean = { true },
+    supportingText: @Composable (() -> Unit)? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     Material3AppTheme {
@@ -116,7 +117,7 @@ fun EditTextBox(
                             trailingIcon = null,
                             prefix = null,
                             suffix = null,
-                            supportingText = null,
+                            supportingText = supportingText,
                             shape = CircleShape,
                             singleLine = true,
                             enabled = enabled,

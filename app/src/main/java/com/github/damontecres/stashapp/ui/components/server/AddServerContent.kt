@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
@@ -28,6 +30,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.components.SwitchWithLabel
 import com.github.damontecres.stashapp.util.StashClient
@@ -40,6 +43,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun AddServer(
+    currentServerUrls: List<String>,
     onSubmit: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -49,21 +53,44 @@ fun AddServer(
     var apiKey by remember { mutableStateOf<String?>(null) }
     var showApiKey by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<TestResult?>(null) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    var checkingConnection by remember { mutableStateOf(false) }
 
     LaunchedEffect(serverUrl, apiKey) {
-        delay(1000L)
-        result =
-            if (serverUrl.isNotNullOrBlank()) {
-                val apolloClient =
-                    StashClient.createTestApolloClient(
-                        context,
-                        StashServer(serverUrl, apiKey?.ifBlank { null }),
-                        false, // TODO
-                    )
-                testStashConnection(context, false, apolloClient)
+        if (serverUrl.isNotNullOrBlank()) {
+            checkingConnection = true
+            errorMessage = null
+            delay(500L)
+            result =
+                if (serverUrl.isNotNullOrBlank()) {
+                    val apolloClient =
+                        StashClient.createTestApolloClient(
+                            context,
+                            StashServer(serverUrl, apiKey?.ifBlank { null }),
+                            false, // TODO
+                        )
+                    testStashConnection(context, false, apolloClient)
+                } else {
+                    null
+                }
+            if (serverUrl in currentServerUrls) {
+                errorMessage = "Duplicate server"
             } else {
-                null
+                errorMessage =
+                    when (result?.status) {
+                        TestResultStatus.SUCCESS -> null
+                        TestResultStatus.AUTH_REQUIRED -> null
+                        TestResultStatus.ERROR -> "Error"
+                        TestResultStatus.UNSUPPORTED_VERSION -> "Unsupported server version"
+                        TestResultStatus.SSL_REQUIRED -> "HTTPS may be required"
+                        TestResultStatus.SELF_SIGNED_REQUIRED -> "Trust ssl certificates required"
+                        null -> null
+                    }
             }
+
+            checkingConnection = false
+        }
     }
 
     LazyColumn(
@@ -101,7 +128,7 @@ fun AddServer(
                             keyboardType = KeyboardType.Uri,
                         ),
                     keyboardActions = KeyboardActions(),
-                    leadingIcon = {},
+                    leadingIcon = null,
                     isInputValid = {
                         result == null ||
                             result?.status in
@@ -110,16 +137,13 @@ fun AddServer(
                                 TestResultStatus.AUTH_REQUIRED,
                             )
                     },
-                    modifier = Modifier.fillParentMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
-        if (true ||
-            result?.status in
-            setOf(
-                TestResultStatus.SUCCESS,
-                TestResultStatus.AUTH_REQUIRED,
-            )
+        if (result?.status == TestResultStatus.AUTH_REQUIRED ||
+            result?.status == TestResultStatus.SUCCESS &&
+            apiKey.isNotNullOrBlank()
         ) {
             item {
                 Row(
@@ -143,17 +167,17 @@ fun AddServer(
                                 keyboardType = if (showApiKey) KeyboardType.Ascii else KeyboardType.Password,
                             ),
                         keyboardActions = KeyboardActions(),
-                        leadingIcon = {},
+                        leadingIcon = null,
                         isInputValid = {
                             result?.status == TestResultStatus.SUCCESS
                         },
-                        modifier = Modifier.fillParentMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
             item {
                 Box(
-                    contentAlignment = Alignment.Center,
+                    contentAlignment = Alignment.CenterEnd,
                     modifier =
                         Modifier
                             .fillParentMaxWidth()
@@ -168,20 +192,32 @@ fun AddServer(
                 }
             }
         }
+        errorMessage?.let {
+            item {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
         item {
             Box(
-                contentAlignment = Alignment.CenterEnd,
+                contentAlignment = Alignment.Center,
                 modifier = Modifier.fillParentMaxWidth(),
             ) {
                 Button(
                     onClick = { onSubmit.invoke(StashServer(serverUrl, apiKey?.ifBlank { null })) },
-                    enabled = result?.status == TestResultStatus.SUCCESS,
+                    enabled = result?.status == TestResultStatus.SUCCESS && serverUrl !in currentServerUrls,
                     modifier = Modifier,
                 ) {
-                    Text(
-                        text = stringResource(R.string.stashapp_actions_submit),
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    )
+                    if (checkingConnection) {
+                        CircularProgress(Modifier.size(32.dp), false)
+                    } else {
+                        Text(
+                            text = stringResource(R.string.stashapp_actions_submit),
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                    }
                 }
             }
         }
@@ -193,6 +229,7 @@ fun AddServer(
 private fun AddServerPreview() {
     AppTheme {
         AddServer(
+            currentServerUrls = listOf(),
             onSubmit = {},
             modifier = Modifier,
         )
