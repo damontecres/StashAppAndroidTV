@@ -133,62 +133,63 @@ fun AddServer(
                 )
             }
         }
-        if (result is TestResult.AuthRequired ||
-            (result is TestResult.Success && apiKey.isNotNullOrBlank())
-        ) {
-            item {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.animateItem(),
-                ) {
-                    Text(
-                        text = "API Key:",
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.width(labelWidth),
-                    )
-                    EditTextBox(
-                        value = apiKey ?: "",
-                        onValueChange = { apiKey = it },
-                        keyboardOptions =
-                            KeyboardOptions(
-                                autoCorrectEnabled = false,
-                                capitalization = KeyboardCapitalization.None,
-                                keyboardType = if (showApiKey) KeyboardType.Ascii else KeyboardType.Password,
-                            ),
-                        keyboardActions = KeyboardActions(),
-                        leadingIcon = null,
-                        isInputValid = {
-                            result is TestResult.Success
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
-            item {
-                Box(
-                    contentAlignment = Alignment.CenterEnd,
-                    modifier =
-                        Modifier
-                            .fillParentMaxWidth()
-                            .animateItem(),
-                ) {
-                    SwitchWithLabel(
-                        label = "Show API Key",
-                        checked = showApiKey,
-                        onStateChange = { showApiKey = it },
-                        modifier = Modifier,
-                    )
-                }
+        item {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.animateItem(),
+            ) {
+                Text(
+                    text = "API Key:",
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.width(labelWidth),
+                )
+                EditTextBox(
+                    value = apiKey ?: "",
+                    onValueChange = { apiKey = it },
+                    keyboardOptions =
+                        KeyboardOptions(
+                            autoCorrectEnabled = false,
+                            capitalization = KeyboardCapitalization.None,
+                            keyboardType = if (showApiKey) KeyboardType.Ascii else KeyboardType.Password,
+                        ),
+                    keyboardActions = KeyboardActions(),
+                    leadingIcon = null,
+                    enabled =
+                        result is TestResult.AuthRequired || apiKey.isNotNullOrBlank(),
+                    isInputValid = {
+                        apiKey.isNullOrEmpty() || result is TestResult.Success
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
-        errorMessage?.let {
-            item {
-                Text(
-                    text = it,
-                    color = MaterialTheme.colorScheme.error,
+        item {
+            Box(
+                contentAlignment = Alignment.CenterEnd,
+                modifier =
+                    Modifier
+                        .fillParentMaxWidth()
+                        .animateItem(),
+            ) {
+                SwitchWithLabel(
+                    label = "Show API Key",
+                    checked = showApiKey,
+                    onStateChange = { showApiKey = it },
+                    modifier = Modifier,
                 )
+            }
+        }
+
+        errorMessage?.let {
+            if (it.isNotNullOrBlank()) {
+                item {
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             }
         }
         item {

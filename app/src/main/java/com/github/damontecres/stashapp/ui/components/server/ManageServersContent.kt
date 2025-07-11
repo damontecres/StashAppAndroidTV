@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
@@ -76,7 +77,16 @@ fun ManageServersContent(
     val listWidth = 280.dp
 
     Column(
-        modifier = modifier,
+        modifier =
+            modifier
+                .ifElse(
+                    showAddServer,
+                    Modifier
+                        .blur(10.dp)
+                        .graphicsLayer {
+                            alpha = .25f
+                        },
+                ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
