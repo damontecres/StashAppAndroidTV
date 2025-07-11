@@ -4,9 +4,8 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 
-fun isDpad(event: KeyEvent): Boolean =
-    event.key == Key.DirectionCenter ||
-        event.key == Key.DirectionUp ||
+fun isDirectionalDpad(event: KeyEvent): Boolean =
+    event.key == Key.DirectionUp ||
         event.key == Key.DirectionDown ||
         event.key == Key.DirectionLeft ||
         event.key == Key.DirectionRight ||
@@ -14,6 +13,8 @@ fun isDpad(event: KeyEvent): Boolean =
         event.key == Key.DirectionUpLeft ||
         event.key == Key.DirectionDownRight ||
         event.key == Key.DirectionDownLeft
+
+fun isDpad(event: KeyEvent): Boolean = event.key == Key.DirectionCenter || isDirectionalDpad(event)
 
 fun isMedia(event: KeyEvent): Boolean =
     event.key == Key.MediaPlay ||

@@ -70,7 +70,7 @@ import com.github.damontecres.stashapp.ui.components.image.ImageDetailsViewModel
 import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
 import com.github.damontecres.stashapp.ui.components.image.ImageOverlay
 import com.github.damontecres.stashapp.ui.components.image.SlideshowControls
-import com.github.damontecres.stashapp.ui.components.playback.isDpad
+import com.github.damontecres.stashapp.ui.components.playback.isDirectionalDpad
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
@@ -227,7 +227,7 @@ fun ImagePage(
                     var result = false
                     if (it.type != KeyEventType.KeyUp) {
                         result = false
-                    } else if (!isOverlayShowing && zoomFactor * 100 > 105 && isDpad(it)) {
+                    } else if (!isOverlayShowing && zoomFactor * 100 > 105 && isDirectionalDpad(it)) {
                         // Image is zoomed in
                         when (it.key) {
                             Key.DirectionLeft -> panX += with(density) { 30.dp.toPx() }
