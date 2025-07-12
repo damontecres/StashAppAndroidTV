@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,9 +35,12 @@ import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.components.SwitchWithLabel
 import com.github.damontecres.stashapp.util.StashClient
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResult
+import com.github.damontecres.stashapp.util.getPreference
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.delay
 
@@ -47,6 +51,7 @@ fun AddServer(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var serverUrl by remember { mutableStateOf("") }
     var apiKey by remember { mutableStateOf<String?>(null) }
@@ -56,31 +61,39 @@ fun AddServer(
 
     var checkingConnection by remember { mutableStateOf(false) }
 
+    val trustCerts = remember { getPreference(context, R.string.pref_key_trust_certs, false) }
+
     LaunchedEffect(serverUrl, apiKey) {
         result = null
         errorMessage = null
         if (serverUrl.isNotNullOrBlank()) {
-            checkingConnection = true
-            errorMessage = null
-            delay(500L)
-            result =
-                if (serverUrl.isNotNullOrBlank()) {
-                    val apolloClient =
-                        StashClient.createTestApolloClient(
-                            context,
-                            StashServer(serverUrl, apiKey?.ifBlank { null }),
-                            false, // TODO
-                        )
-                    testStashConnection(context, false, apolloClient)
+            try {
+                checkingConnection = true
+                errorMessage = null
+                delay(500L)
+                if (serverUrl in currentServerUrls) {
+                    errorMessage = "Duplicate server"
                 } else {
-                    null
+                    result =
+                        if (serverUrl.isNotNullOrBlank()) {
+                            val apolloClient =
+                                StashClient.createTestApolloClient(
+                                    context,
+                                    StashServer(serverUrl, apiKey?.ifBlank { null }),
+                                    trustCerts,
+                                )
+                            testStashConnection(context, false, apolloClient)
+                        } else {
+                            null
+                        }
+                    errorMessage = result?.message
                 }
-            if (serverUrl in currentServerUrls) {
-                errorMessage = "Duplicate server"
-            } else {
-                errorMessage = result?.message
+            } catch (ex: Exception) {
+                result = TestResult.Error(ex.localizedMessage, ex)
+                errorMessage = ex.localizedMessage
+            } finally {
+                checkingConnection = false
             }
-            checkingConnection = false
         } else {
             checkingConnection = false
         }
@@ -198,8 +211,33 @@ fun AddServer(
                 modifier = Modifier.fillParentMaxWidth(),
             ) {
                 Button(
-                    onClick = { onSubmit.invoke(StashServer(serverUrl, apiKey?.ifBlank { null })) },
-                    enabled = result is TestResult.Success && serverUrl !in currentServerUrls,
+                    onClick = {
+                        scope.launchIO(StashCoroutineExceptionHandler()) {
+                            try {
+                                checkingConnection = true
+                                val server = StashServer(serverUrl, apiKey?.ifBlank { null })
+                                if (serverUrl.isNotNullOrBlank()) {
+                                    val apolloClient =
+                                        StashClient.createTestApolloClient(
+                                            context,
+                                            server,
+                                            trustCerts,
+                                        )
+                                    if (testStashConnection(
+                                            context,
+                                            false,
+                                            apolloClient,
+                                        ) is TestResult.Success
+                                    ) {
+                                        onSubmit.invoke(server)
+                                    }
+                                }
+                            } finally {
+                                checkingConnection = false
+                            }
+                        }
+                    },
+                    enabled = !checkingConnection && result is TestResult.Success && serverUrl !in currentServerUrls,
                     modifier = Modifier,
                 ) {
                     if (checkingConnection) {

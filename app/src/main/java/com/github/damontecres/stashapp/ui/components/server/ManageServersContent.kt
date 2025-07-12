@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components.server
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,7 +39,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -63,12 +63,10 @@ fun ManageServersContent(
     modifier: Modifier = Modifier,
     viewModel: ManageServersViewModel = viewModel(),
 ) {
-    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val allServers by viewModel.allServers.observeAsState(listOf())
     val serverStatus by viewModel.serverStatus.observeAsState(mapOf())
     val serversWithOutCurrent = allServers.toMutableList().apply { remove(currentServer) }
-    val serverStatusWithOutCurrent = serverStatus.toMutableMap().apply { remove(currentServer) }
 
     var showSwitchServer by remember { mutableStateOf(false) }
     var showRemoveServer by remember { mutableStateOf(false) }
@@ -116,7 +114,13 @@ fun ManageServersContent(
                     onRemoveClick = { showRemoveServer = true },
                     switchSelected = showSwitchServer,
                     removeSelected = showRemoveServer,
-                    modifier = Modifier.width(listWidth),
+                    modifier =
+                        Modifier
+                            .width(listWidth)
+                            .background(
+                                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .75f),
+                                shape = RoundedCornerShape(16.dp),
+                            ),
                 )
             }
             if (showSwitchServer) {
@@ -125,14 +129,19 @@ fun ManageServersContent(
                         showSwitchServer = false
                     }
                     ServerList(
-                        servers = serverStatusWithOutCurrent,
+                        servers = serversWithOutCurrent,
+                        serverStatus = serverStatus,
                         action = ManageServerAction.Switch,
                         onClick = onSwitchServer,
                         modifier =
                             Modifier
                                 .widthIn(min = listWidth, max = listWidth * 2)
                                 .animateItem()
-                                .focusProperties { onExit = { showSwitchServer = false } },
+                                .focusProperties { onExit = { showSwitchServer = false } }
+                                .background(
+                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .75f),
+                                    shape = RoundedCornerShape(16.dp),
+                                ),
                     )
                 }
             } else if (showRemoveServer) {
@@ -141,7 +150,8 @@ fun ManageServersContent(
                         showRemoveServer = false
                     }
                     ServerList(
-                        servers = serverStatusWithOutCurrent,
+                        servers = serversWithOutCurrent,
+                        serverStatus = serverStatus,
                         action = ManageServerAction.Remove,
                         onClick = {
                             if (allServers.size == 1) {
@@ -155,7 +165,11 @@ fun ManageServersContent(
                             Modifier
                                 .widthIn(min = listWidth, max = listWidth * 2)
                                 .animateItem()
-                                .focusProperties { onExit = { showRemoveServer = false } },
+                                .focusProperties { onExit = { showRemoveServer = false } }
+                                .background(
+                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .75f),
+                                    shape = RoundedCornerShape(16.dp),
+                                ),
                     )
                 }
             }
@@ -270,7 +284,8 @@ fun ManageServersButtons(
 
 @Composable
 fun ServerList(
-    servers: Map<StashServer, ServerTestResult>,
+    servers: List<StashServer>,
+    serverStatus: Map<StashServer, ServerTestResult>,
     action: ManageServerAction,
     onClick: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
@@ -301,8 +316,8 @@ fun ServerList(
                 modifier = Modifier.fillParentMaxWidth(),
             )
         }
-        itemsIndexed(servers.keys.toList()) { index, server ->
-            val status = servers[server]!!
+        itemsIndexed(servers) { index, server ->
+            val status = serverStatus[server] ?: ServerTestResult.Pending
             SimpleListItem(
                 title = server.url,
                 subtitle =
