@@ -82,6 +82,7 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.components.filter.CreateFilterScreen
+import com.github.damontecres.stashapp.ui.components.server.ManageServersContent
 import com.github.damontecres.stashapp.ui.pages.ChooseThemePage
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.FilterPage
@@ -202,6 +203,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                     server = currentServer,
                                     navigationManager = navManager,
                                     navController = navController,
+                                    onSwitchServer = { serverViewModel.switchServer(it) },
                                     onChangeTheme = { name ->
                                         try {
                                             colorScheme =
@@ -248,6 +250,7 @@ fun FragmentContent(
     navigationManager: NavigationManagerCompose,
     navController: NavController<Destination>,
     onChangeTheme: (String?) -> Unit,
+    onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -384,6 +387,14 @@ fun FragmentContent(
 //                        preventBack = false,
 //                        modifier = Modifier.fillMaxSize(),
 //                    )
+
+                is Destination.ManageServers -> {
+                    ManageServersContent(
+                        currentServer = server,
+                        onSwitchServer = onSwitchServer,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
 
                 is Destination.Playback -> {
                     PlaybackPage(

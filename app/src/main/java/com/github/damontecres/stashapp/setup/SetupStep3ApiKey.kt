@@ -10,7 +10,7 @@ import androidx.leanback.widget.GuidedActionEditText
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.TestResultStatus
+import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.launch
 
@@ -120,23 +120,24 @@ class SetupStep3ApiKey(
                         apiKey.toString(),
                         setupState.trustCerts,
                     )
-                when (result.status) {
-                    TestResultStatus.AUTH_REQUIRED -> {
+                when (result) {
+                    is TestResult.Error,
+                    TestResult.SslRequired,
+                    TestResult.AuthRequired,
+                    -> {
                         // no-op
                     }
 
-                    TestResultStatus.SELF_SIGNED_REQUIRED -> {
+                    TestResult.SelfSignedCertRequired -> {
                         // This should not happen
                         nextStep(SetupStep2Ssl(setupState))
                     }
 
-                    TestResultStatus.SUCCESS, TestResultStatus.UNSUPPORTED_VERSION -> {
-                        nextStep(SetupStep4Pin(setupState.copy(apiKey = apiKey.toString())))
-                    }
+                    is TestResult.Success,
 
-                    TestResultStatus.ERROR, TestResultStatus.SSL_REQUIRED -> {
-                        // no-op
-                    }
+                    is TestResult.UnsupportedVersion,
+                    ->
+                        nextStep(SetupStep4Pin(setupState.copy(apiKey = apiKey.toString())))
                 }
             }
         }
