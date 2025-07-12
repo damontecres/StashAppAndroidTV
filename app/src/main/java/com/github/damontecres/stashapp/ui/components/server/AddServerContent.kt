@@ -40,9 +40,9 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.getPreference
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun AddServer(
@@ -212,7 +212,7 @@ fun AddServer(
             ) {
                 Button(
                     onClick = {
-                        scope.launchIO(StashCoroutineExceptionHandler()) {
+                        scope.launch(StashCoroutineExceptionHandler()) {
                             try {
                                 checkingConnection = true
                                 val server = StashServer(serverUrl, apiKey?.ifBlank { null })
@@ -223,12 +223,13 @@ fun AddServer(
                                             server,
                                             trustCerts,
                                         )
-                                    if (testStashConnection(
+                                    val testResult =
+                                        testStashConnection(
                                             context,
                                             false,
                                             apolloClient,
-                                        ) is TestResult.Success
-                                    ) {
+                                        )
+                                    if (testResult is TestResult.Success) {
                                         onSubmit.invoke(server)
                                     }
                                 }

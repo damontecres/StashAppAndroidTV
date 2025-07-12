@@ -116,6 +116,7 @@ fun ManageServersContent(
                     removeSelected = showRemoveServer,
                     modifier =
                         Modifier
+                            .animateItem()
                             .width(listWidth)
                             .background(
                                 color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .75f),
@@ -220,14 +221,6 @@ fun ManageServersButtons(
                 .focusGroup()
                 .focusRestorer(focusRequester),
     ) {
-//        stickyHeader {
-//            Text(
-//                text = "Manage servers",
-//                color = MaterialTheme.colorScheme.onPrimaryContainer,
-//                textAlign = TextAlign.Center,
-//                modifier = Modifier.fillMaxWidth(),
-//            )
-//        }
         item {
             SimpleListItem(
                 title = "Switch server",

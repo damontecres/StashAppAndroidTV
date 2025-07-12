@@ -19,7 +19,6 @@ class ManageServersViewModel : ViewModel() {
         allServers.value = servers
         serverStatus.value = servers.associateWith { ServerTestResult.Pending }
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
-            // TODO parallelize?
             servers.forEach { server ->
                 testServer(server)
             }
@@ -33,7 +32,6 @@ class ManageServersViewModel : ViewModel() {
                 false,
                 server.apolloClient,
             )
-        // TODO better error messages
         val testResult =
             when (result) {
                 TestResult.AuthRequired,
