@@ -73,7 +73,6 @@ import com.github.damontecres.stashapp.ui.util.CoilPreviewTransformation
 import com.github.damontecres.stashapp.util.defaultCardHeight
 import com.github.damontecres.stashapp.util.defaultCardWidth
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.views.formatDate
 import com.github.damontecres.stashapp.views.models.CardUiSettings
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
@@ -180,7 +179,7 @@ fun PlaybackOverlay(
         val listState = rememberLazyListState()
         var height = 208.dp
         if (!uiConfig.showTitleDuringPlayback || scene.title.isNullOrBlank()) height -= 24.dp
-        if (!uiConfig.showTitleDuringPlayback || scene.date.isNullOrBlank()) height -= 24.dp
+        if (!uiConfig.showTitleDuringPlayback || scene.subtitle.isNullOrBlank()) height -= 24.dp
         if (markers.isEmpty()) height -= 24.dp
         LazyColumn(
             state = listState,
@@ -213,9 +212,9 @@ fun PlaybackOverlay(
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
-                        if (scene.date.isNotNullOrBlank()) {
+                        if (scene.subtitle.isNotNullOrBlank()) {
                             Text(
-                                text = formatDate(scene.date)!!,
+                                text = scene.subtitle,
                                 color = MaterialTheme.colorScheme.onBackground,
                                 style =
                                     MaterialTheme.typography.titleMedium.copy(
@@ -544,7 +543,7 @@ private fun PlaybackOverlayPreview() {
                 Scene(
                     id = "id",
                     title = "The scene title",
-                    date = "2025-01-01",
+                    subtitle = "2025-01-01",
                     streamUrl = "",
                     screenshotUrl = "",
                     streams = mapOf(),

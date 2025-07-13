@@ -297,7 +297,7 @@ private fun convertToMediaItem(
     } else {
         // Markers
         item as FullMarkerData
-        val scene = Scene.fromVideoSceneData(item.scene.videoSceneData)
+        val scene = Scene.fromMarkerData(item)
         val decision = getStreamDecision(context, scene, PlaybackMode.Choose)
         val mediaItem =
             buildMediaItem(context, decision, scene) {
