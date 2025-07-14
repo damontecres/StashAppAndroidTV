@@ -137,6 +137,7 @@ fun PlaybackOverlay(
     previousEnabled: Boolean,
     nextEnabled: Boolean,
     seekEnabled: Boolean,
+    seekPreviewEnabled: Boolean,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
     onSeekBarChange: (Float) -> Unit,
     showDebugInfo: Boolean,
@@ -284,7 +285,7 @@ fun PlaybackOverlay(
                 }
             }
         }
-        AnimatedVisibility(seekBarFocused && seekProgress >= 0) {
+        AnimatedVisibility(seekPreviewEnabled && seekBarFocused && seekProgress >= 0) {
             LaunchedEffect(Unit) {
                 seekProgress = playerControls.currentPosition.toFloat() / playerControls.duration
             }
@@ -586,6 +587,7 @@ private fun PlaybackOverlayPreview() {
             showDebugInfo = true,
             showPlay = true,
             previousEnabled = true,
+            seekPreviewEnabled = true,
             nextEnabled = true,
             seekEnabled = true,
             spriteImageLoaded = false,

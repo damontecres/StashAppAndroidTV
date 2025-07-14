@@ -444,6 +444,8 @@ fun PlaybackPageContent(
 
     val retryMediaItemIds = remember { mutableSetOf<String>() }
 
+    val isMarkerPlaylist = playlistPager?.filter?.dataType == DataType.MARKER
+
     LaunchedEffect(Unit) {
         viewModel.init(server, markersEnabled, uiConfig.persistVideoFilters, useVideoFilters)
         viewModel.changeScene(playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
@@ -781,6 +783,7 @@ fun PlaybackPageContent(
                     previousEnabled = previousState.isEnabled,
                     nextEnabled = nextState.isEnabled,
                     seekEnabled = seekBarState.isEnabled,
+                    seekPreviewEnabled = !isMarkerPlaylist,
                     showDebugInfo = showDebugInfo,
                     spriteImageLoaded = spriteImageLoaded,
                     moreButtonOptions =
