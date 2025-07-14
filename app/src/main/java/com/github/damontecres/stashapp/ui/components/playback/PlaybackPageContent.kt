@@ -806,6 +806,14 @@ fun PlaybackPageContent(
                     audioOptions = audioOptions,
                     playbackSpeed = playbackSpeed,
                     scale = contentScale,
+                    playlistInfo =
+                        playlistPager?.let {
+                            PlaylistInfo(
+                                currentPlaylistIndex,
+                                it.size,
+                                player.mediaItemCount,
+                            )
+                        },
                 )
             }
         }

@@ -148,6 +148,7 @@ fun PlaybackOverlay(
     audioOptions: List<String>,
     playbackSpeed: Float,
     scale: ContentScale,
+    playlistInfo: PlaylistInfo?,
     modifier: Modifier = Modifier,
     seekPreviewPlaceholder: Painter? = null,
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -167,6 +168,7 @@ fun PlaybackOverlay(
             PlaybackDebugInfo(
                 scene = scene,
                 streamDecision = streamDecision,
+                playlistInfo = playlistInfo,
                 modifier =
                     Modifier
                         .padding(8.dp)
@@ -600,6 +602,7 @@ private fun PlaybackOverlayPreview() {
             audioOptions = listOf(),
             playbackSpeed = 1.0f,
             scale = ContentScale.Fit,
+            playlistInfo = PlaylistInfo(3, 45, 20),
         )
     }
 }
