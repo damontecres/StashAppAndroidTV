@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -179,18 +180,28 @@ fun PlaylistPlaybackPage(
         playlistViewModel.setFilter(server, filterArgs, uiConfig.cardSettings.columns)
     }
     val pager by viewModel.pager.observeAsState()
-    var playlist by remember(pager) { mutableStateOf<List<MediaItem>>(listOf()) }
+//    var playlist by remember(pager) { mutableStateOf<List<MediaItem>>(listOf()) }
+    val playlist = remember(pager) { mutableStateListOf<MediaItem>() }
     val playlistPager by playlistViewModel.pager.observeAsState()
     LaunchedEffect(pager) {
-        playlist = pager?.let {
-            buildList {
-                for (i in 0..<(it.size).coerceAtMost(MAX_PLAYLIST_SIZE)) {
-                    it.getBlocking(i)?.let { item ->
-                        add(convertToMediaItem(context, filterArgs.dataType, clipDuration, item))
+        val items =
+            pager?.let {
+                buildList {
+                    for (i in 0..<(it.size).coerceAtMost(MAX_PLAYLIST_SIZE)) {
+                        it.getBlocking(i)?.let { item ->
+                            add(
+                                convertToMediaItem(
+                                    context,
+                                    filterArgs.dataType,
+                                    clipDuration,
+                                    item,
+                                ),
+                            )
+                        }
                     }
                 }
-            }
-        } ?: listOf()
+            } ?: listOf()
+        playlist.addAll(items)
     }
     if (playlist.isNotEmpty()) {
         val player =
@@ -242,6 +253,7 @@ fun PlaylistPlaybackPage(
                                                     )
                                                 }
                                             }
+                                        playlist.addAll(newMediaItems)
                                         player.addMediaItems(newMediaItems)
                                     }
                                 }
