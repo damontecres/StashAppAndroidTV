@@ -444,6 +444,8 @@ fun PlaybackPageContent(
 
     val retryMediaItemIds = remember { mutableSetOf<String>() }
 
+    val isMarkerPlaylist = playlistPager?.filter?.dataType == DataType.MARKER
+
     LaunchedEffect(Unit) {
         viewModel.init(server, markersEnabled, uiConfig.persistVideoFilters, useVideoFilters)
         viewModel.changeScene(playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
@@ -585,7 +587,7 @@ fun PlaybackPageContent(
                     .getDefaultSharedPreferences(context)
                     .getBoolean(context.getString(R.string.pref_key_playback_track_activity), true)
             trackActivityListener =
-                if (appTracking && server.serverPreferences.trackActivity && markersEnabled) {
+                if (appTracking && server.serverPreferences.trackActivity && !isMarkerPlaylist) {
                     TrackActivityPlaybackListener(
                         context = context,
                         server = server,
@@ -781,6 +783,7 @@ fun PlaybackPageContent(
                     previousEnabled = previousState.isEnabled,
                     nextEnabled = nextState.isEnabled,
                     seekEnabled = seekBarState.isEnabled,
+                    seekPreviewEnabled = !isMarkerPlaylist,
                     showDebugInfo = showDebugInfo,
                     spriteImageLoaded = spriteImageLoaded,
                     moreButtonOptions =
@@ -803,6 +806,14 @@ fun PlaybackPageContent(
                     audioOptions = audioOptions,
                     playbackSpeed = playbackSpeed,
                     scale = contentScale,
+                    playlistInfo =
+                        playlistPager?.let {
+                            PlaylistInfo(
+                                currentPlaylistIndex,
+                                it.size,
+                                player.mediaItemCount,
+                            )
+                        },
                 )
             }
         }

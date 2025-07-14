@@ -137,6 +137,7 @@ fun PlaybackOverlay(
     previousEnabled: Boolean,
     nextEnabled: Boolean,
     seekEnabled: Boolean,
+    seekPreviewEnabled: Boolean,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
     onSeekBarChange: (Float) -> Unit,
     showDebugInfo: Boolean,
@@ -147,6 +148,7 @@ fun PlaybackOverlay(
     audioOptions: List<String>,
     playbackSpeed: Float,
     scale: ContentScale,
+    playlistInfo: PlaylistInfo?,
     modifier: Modifier = Modifier,
     seekPreviewPlaceholder: Painter? = null,
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -166,6 +168,7 @@ fun PlaybackOverlay(
             PlaybackDebugInfo(
                 scene = scene,
                 streamDecision = streamDecision,
+                playlistInfo = playlistInfo,
                 modifier =
                     Modifier
                         .padding(8.dp)
@@ -284,7 +287,7 @@ fun PlaybackOverlay(
                 }
             }
         }
-        AnimatedVisibility(seekBarFocused && seekProgress >= 0) {
+        AnimatedVisibility(seekPreviewEnabled && seekBarFocused && seekProgress >= 0) {
             LaunchedEffect(Unit) {
                 seekProgress = playerControls.currentPosition.toFloat() / playerControls.duration
             }
@@ -586,6 +589,7 @@ private fun PlaybackOverlayPreview() {
             showDebugInfo = true,
             showPlay = true,
             previousEnabled = true,
+            seekPreviewEnabled = true,
             nextEnabled = true,
             seekEnabled = true,
             spriteImageLoaded = false,
@@ -598,6 +602,7 @@ private fun PlaybackOverlayPreview() {
             audioOptions = listOf(),
             playbackSpeed = 1.0f,
             scale = ContentScale.Fit,
+            playlistInfo = PlaylistInfo(3, 45, 20),
         )
     }
 }

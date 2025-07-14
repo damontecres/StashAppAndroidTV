@@ -17,6 +17,7 @@ import com.github.damontecres.stashapp.ui.components.TableRowComposable
 fun PlaybackDebugInfo(
     scene: Scene,
     streamDecision: StreamDecision,
+    playlistInfo: PlaylistInfo?,
     modifier: Modifier = Modifier,
 ) {
     val transcodeText =
@@ -42,6 +43,7 @@ fun PlaybackDebugInfo(
             TableRow.from(R.string.stashapp_video_codec, videoText),
             TableRow.from(R.string.stashapp_audio_codec, audioText),
             TableRow.from(R.string.format, formatText),
+            playlistInfo?.let { TableRow.from("Playlist", it.readable) },
         )
     LazyColumn(
         modifier = modifier,
@@ -55,4 +57,12 @@ fun PlaybackDebugInfo(
             )
         }
     }
+}
+
+data class PlaylistInfo(
+    val position: Int,
+    val totalCount: Int,
+    val loadedCount: Int,
+) {
+    val readable: String = "${position + 1} of $totalCount ($loadedCount)"
 }
