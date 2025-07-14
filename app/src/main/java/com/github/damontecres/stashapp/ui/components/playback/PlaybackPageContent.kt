@@ -587,7 +587,7 @@ fun PlaybackPageContent(
                     .getDefaultSharedPreferences(context)
                     .getBoolean(context.getString(R.string.pref_key_playback_track_activity), true)
             trackActivityListener =
-                if (appTracking && server.serverPreferences.trackActivity && markersEnabled) {
+                if (appTracking && server.serverPreferences.trackActivity && !isMarkerPlaylist) {
                     TrackActivityPlaybackListener(
                         context = context,
                         server = server,
