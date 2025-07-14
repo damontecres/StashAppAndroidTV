@@ -57,7 +57,6 @@ import com.github.damontecres.stashapp.util.toSeconds
 import com.github.damontecres.stashapp.views.ListPopupWindowBuilder
 import com.github.damontecres.stashapp.views.SkipIndicator
 import com.github.damontecres.stashapp.views.durationToString
-import com.github.damontecres.stashapp.views.formatDate
 import com.github.damontecres.stashapp.views.models.PlaybackViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.rubensousa.previewseekbar.PreviewBar
@@ -260,7 +259,7 @@ abstract class PlaybackFragment(
                 .getBoolean("exoShowTitle", true)
         if (showTitle) {
             titleText.text = scene.title
-            dateText.text = formatDate(scene.date)
+            dateText.text = scene.subtitle
             if (dateText.text.isNullOrBlank()) {
                 dateText.visibility = View.GONE
             }
