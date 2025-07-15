@@ -174,6 +174,10 @@ fun ImagePage(
         if (resetRotate) rotation = 0
     }
 
+    fun zoom(factor: Float) {
+        zoomFactor = (zoomFactor + factor).coerceIn(1f, 5f)
+    }
+
     LaunchedEffect(imageState) {
         reset(true)
     }
@@ -216,6 +220,8 @@ fun ImagePage(
         player.repeatMode = if (slideshowEnabled) Player.REPEAT_MODE_OFF else Player.REPEAT_MODE_ONE
     }
 
+    var longPressing by remember { mutableStateOf(false) }
+
     Box(
         modifier =
             modifier
@@ -225,6 +231,27 @@ fun ImagePage(
                 .onKeyEvent {
                     val isOverlayShowing = showOverlay || showFilterDialog
                     var result = false
+                    if (!isOverlayShowing) {
+                        if (longPressing && it.type == KeyEventType.KeyUp) {
+                            // User stopped long pressing, so cancel the zooming action, but still consume the event so it doesn't move the image
+                            longPressing = false
+                            return@onKeyEvent true
+                        }
+                        longPressing =
+                            it.nativeKeyEvent.isLongPress ||
+                            it.nativeKeyEvent.repeatCount > 0
+                        if (longPressing) {
+                            when (it.key) {
+                                Key.DirectionUp -> zoom(.05f)
+                                Key.DirectionDown -> zoom(-.05f)
+
+                                // These work, but feel awkward because Up/Down zoom, so you can't long press them to pan
+                                // Key.DirectionLeft -> panX += with(density) { 15.dp.toPx() }
+                                // Key.DirectionRight -> panX -= with(density) { 15.dp.toPx() }
+                            }
+                            return@onKeyEvent true
+                        }
+                    }
                     if (it.type != KeyEventType.KeyUp) {
                         result = false
                     } else if (!isOverlayShowing && zoomFactor * 100 > 105 && isDirectionalDpad(it)) {
@@ -413,7 +440,7 @@ fun ImagePage(
                     count = pager?.size ?: -1,
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
-                    onZoom = { zoomFactor = (zoomFactor + it).coerceIn(1f, 5f) },
+                    onZoom = ::zoom,
                     onRotate = { rotation += it },
                     onReset = { reset(true) },
                     rating100 = rating100,
