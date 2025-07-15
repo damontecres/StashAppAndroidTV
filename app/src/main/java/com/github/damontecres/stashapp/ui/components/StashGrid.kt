@@ -376,7 +376,10 @@ fun StashGrid(
 
     var alphabetFocus by remember { mutableStateOf(false) }
     val focusOn = { index: Int ->
-        previouslyFocusedIndex = focusedIndex
+        if (DEBUG) Log.v(TAG, "focusOn: focusedIndex=$focusedIndex, index=$index")
+        if (index != focusedIndex) {
+            previouslyFocusedIndex = focusedIndex
+        }
         focusedIndex = index
     }
 
@@ -437,6 +440,8 @@ fun StashGrid(
         }
     }
     val server = LocalGlobalContext.current.server
+
+    var longPressing by remember { mutableStateOf(false) }
     Row(
 //        horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier =
@@ -444,16 +449,27 @@ fun StashGrid(
                 .fillMaxSize()
                 .onKeyEvent {
                     if (DEBUG) Log.d(TAG, "onKeyEvent: ${it.nativeKeyEvent}")
-                    if (it.type != KeyEventType.KeyUp) {
-                        return@onKeyEvent false
-                    } else if (useBackToJump && it.key == Key.Back && it.nativeKeyEvent.isLongPress) {
-                        // TODO doesn't work?
-                        focusOn(previouslyFocusedIndex)
-                        scope.launch(StashCoroutineExceptionHandler()) {
-                            gridState.scrollToItem(previouslyFocusedIndex, -columns)
-                            firstFocus.tryRequestFocus()
+                    if (useBackToJump && it.key == Key.Back && it.nativeKeyEvent.isLongPress) {
+                        longPressing = true
+                        val newPosition = previouslyFocusedIndex
+                        if (DEBUG) Log.d(TAG, "Back long pressed: newPosition=$newPosition")
+                        if (newPosition > 0) {
+                            focusOn(newPosition)
+                            scope.launch(StashCoroutineExceptionHandler()) {
+                                gridState.scrollToItem(newPosition, -columns)
+                                firstFocus.tryRequestFocus()
+                            }
                         }
                         return@onKeyEvent true
+                    } else if (it.type == KeyEventType.KeyUp) {
+                        if (longPressing && it.key == Key.Back) {
+                            longPressing = false
+                            return@onKeyEvent true
+                        }
+                        longPressing = false
+                    }
+                    if (it.type != KeyEventType.KeyUp) {
+                        return@onKeyEvent false
                     } else if (useBackToJump && it.key == Key.Back && focusedIndex > 0) {
                         scope.launch(StashCoroutineExceptionHandler()) {
                             if (focusedIndex < (columns * 6)) {
