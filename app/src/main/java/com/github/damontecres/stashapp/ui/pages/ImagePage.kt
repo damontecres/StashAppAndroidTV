@@ -176,11 +176,26 @@ fun ImagePage(
     val screenHeight = LocalWindowInfo.current.containerSize.height
     val screenWidth = LocalWindowInfo.current.containerSize.width
 
+    val maxPanX = screenWidth * .75f
+    val maxPanY = screenHeight * .75f
+
     fun reset(resetRotate: Boolean) {
         zoomFactor = 1f
         panX = 0f
         panY = 0f
         if (resetRotate) rotation = 0
+    }
+
+    fun pan(
+        xFactor: Int,
+        yFactor: Int,
+    ) {
+        if (xFactor != 0) {
+            panX = (panX + with(density) { xFactor.dp.toPx() }).coerceIn(-maxPanX, maxPanX)
+        }
+        if (yFactor != 0) {
+            panY = (panY + with(density) { yFactor.dp.toPx() }).coerceIn(-maxPanY, maxPanY)
+        }
     }
 
     fun zoom(factor: Float) {
@@ -293,10 +308,10 @@ fun ImagePage(
                     } else if (!isOverlayShowing && isZoomed && isDirectionalDpad(it)) {
                         // Image is zoomed in
                         when (it.key) {
-                            Key.DirectionLeft -> panX += with(density) { 30.dp.toPx() }
-                            Key.DirectionRight -> panX -= with(density) { 30.dp.toPx() }
-                            Key.DirectionUp -> panY += with(density) { 30.dp.toPx() }
-                            Key.DirectionDown -> panY -= with(density) { 30.dp.toPx() }
+                            Key.DirectionLeft -> pan(30, 0)
+                            Key.DirectionRight -> pan(-30, 0)
+                            Key.DirectionUp -> pan(0, 30)
+                            Key.DirectionDown -> pan(0, -30)
                         }
                         result = true
                     } else if (!isOverlayShowing && isZoomed && it.key == Key.Back) {
