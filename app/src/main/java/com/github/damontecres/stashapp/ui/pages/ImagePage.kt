@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import android.annotation.SuppressLint
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -27,6 +28,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorMatrixColorFilter
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -37,6 +39,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -75,9 +78,12 @@ import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import kotlin.math.abs
 
 private const val TAG = "ImagePage"
+private const val DEBUG = false
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 @Composable
 fun ImagePage(
@@ -121,6 +127,7 @@ fun ImagePage(
     val pager by viewModel.pager.observeAsState()
 
     var zoomFactor by rememberSaveable { mutableFloatStateOf(1f) }
+    val isZoomed = zoomFactor * 100 > 102
     var rotation by rememberSaveable { mutableIntStateOf(0) }
     var showOverlay by rememberSaveable { mutableStateOf(false) }
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
@@ -166,6 +173,11 @@ fun ImagePage(
     }
 
     val density = LocalDensity.current
+    val screenHeight = LocalWindowInfo.current.containerSize.height
+    val screenWidth = LocalWindowInfo.current.containerSize.width
+
+    val maxPanX = screenWidth * .75f
+    val maxPanY = screenHeight * .75f
 
     fun reset(resetRotate: Boolean) {
         zoomFactor = 1f
@@ -174,8 +186,47 @@ fun ImagePage(
         if (resetRotate) rotation = 0
     }
 
+    fun pan(
+        xFactor: Int,
+        yFactor: Int,
+    ) {
+        if (xFactor != 0) {
+            panX = (panX + with(density) { xFactor.dp.toPx() }).coerceIn(-maxPanX, maxPanX)
+        }
+        if (yFactor != 0) {
+            panY = (panY + with(density) { yFactor.dp.toPx() }).coerceIn(-maxPanY, maxPanY)
+        }
+    }
+
     fun zoom(factor: Float) {
+        if (factor < 0) {
+            val diffFactor = factor / (zoomFactor - 1f)
+            // zooming out
+            val panXDiff = abs(panX * diffFactor)
+            val panYDiff = abs(panY * diffFactor)
+            if (DEBUG) {
+                Log.d(
+                    TAG,
+                    "zoomFactor=$zoomFactor, factor=$factor, panX=$panX, panY=$panY, panXDiff=$panXDiff, panYDiff=$panYDiff",
+                )
+            }
+            if (panX > 0f) {
+                panX -= panXDiff
+            } else if (panX < 0f) {
+                panX += panXDiff
+            }
+            if (panY > 0f) {
+                panY -= panYDiff
+            } else if (panY < 0f) {
+                panY += panYDiff
+            }
+        }
         zoomFactor = (zoomFactor + factor).coerceIn(1f, 5f)
+        if (!isZoomed) {
+            // Always reset if not zoomed
+            panX = 0f
+            panY = 0f
+        }
     }
 
     LaunchedEffect(imageState) {
@@ -254,16 +305,16 @@ fun ImagePage(
                     }
                     if (it.type != KeyEventType.KeyUp) {
                         result = false
-                    } else if (!isOverlayShowing && zoomFactor * 100 > 105 && isDirectionalDpad(it)) {
+                    } else if (!isOverlayShowing && isZoomed && isDirectionalDpad(it)) {
                         // Image is zoomed in
                         when (it.key) {
-                            Key.DirectionLeft -> panX += with(density) { 30.dp.toPx() }
-                            Key.DirectionRight -> panX -= with(density) { 30.dp.toPx() }
-                            Key.DirectionUp -> panY += with(density) { 30.dp.toPx() }
-                            Key.DirectionDown -> panY -= with(density) { 30.dp.toPx() }
+                            Key.DirectionLeft -> pan(30, 0)
+                            Key.DirectionRight -> pan(-30, 0)
+                            Key.DirectionUp -> pan(0, 30)
+                            Key.DirectionDown -> pan(0, -30)
                         }
                         result = true
-                    } else if (!isOverlayShowing && zoomFactor * 100 > 105 && it.key == Key.Back) {
+                    } else if (!isOverlayShowing && isZoomed && it.key == Key.Back) {
                         reset(false)
                         result = true
                     } else if (!isOverlayShowing && (it.key == Key.DirectionLeft || it.key == Key.DirectionRight)) {
@@ -364,6 +415,19 @@ fun ImagePage(
                                     scaleY = zoomAnimation
                                     translationX = panXAnimation
                                     translationY = panYAnimation
+
+                                    val xTransform =
+                                        (screenWidth - panXAnimation) / (screenWidth * 2)
+                                    val yTransform =
+                                        (screenHeight - panYAnimation) / (screenHeight * 2)
+                                    if (DEBUG) {
+                                        Log.d(
+                                            TAG,
+                                            "graphicsLayer: xTransform=$xTransform, yTransform=$yTransform",
+                                        )
+                                    }
+
+                                    transformOrigin = TransformOrigin(xTransform, yTransform)
                                 }.rotate(rotateAnimation),
                         model =
                             ImageRequest
