@@ -167,6 +167,10 @@ fun AddServer(
         }
 
         item {
+            StatusText(connectionState)
+        }
+
+        item {
             Box(
                 contentAlignment = Alignment.CenterEnd,
                 modifier =
@@ -181,10 +185,6 @@ fun AddServer(
                     modifier = Modifier,
                 )
             }
-        }
-
-        item {
-            StatusText(connectionState)
         }
 
         item {
