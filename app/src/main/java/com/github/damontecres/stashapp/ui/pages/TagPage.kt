@@ -98,8 +98,8 @@ fun TagPage(
     val scope = rememberCoroutineScope()
 
     tag?.let { tag ->
-        val subToggleLabel =
-            if (tag.child_count > 0) stringResource(R.string.stashapp_include_sub_tag_content) else null
+        val subToggleLabel = stringResource(R.string.stashapp_include_sub_tag_content)
+        val subToggleEnabled = tag.child_count > 0
 
         val uiTabs = getUiTabs(context, DataType.TAG)
 
@@ -165,6 +165,7 @@ fun TagPage(
                         subToggleLabel = subToggleLabel,
                         onSubToggleCheck = { scenesSubTags = it },
                         subToggleChecked = scenesSubTags,
+                        subToggleEnabled = subToggleEnabled,
                         composeUiConfig = uiConfig,
                         onFilterChange = { scenesFilter = it },
                     )
@@ -196,6 +197,7 @@ fun TagPage(
                         subToggleLabel = subToggleLabel,
                         onSubToggleCheck = { galleriesSubTags = it },
                         subToggleChecked = galleriesSubTags,
+                        subToggleEnabled = subToggleEnabled,
                         composeUiConfig = uiConfig,
                         onFilterChange = { galleriesFilter = it },
                     )
@@ -226,6 +228,7 @@ fun TagPage(
                         subToggleLabel = subToggleLabel,
                         onSubToggleCheck = { imagesSubTags = it },
                         subToggleChecked = imagesSubTags,
+                        subToggleEnabled = subToggleEnabled,
                         composeUiConfig = uiConfig,
                         onFilterChange = { imagesFilter = it },
                     )
@@ -256,6 +259,7 @@ fun TagPage(
                         subToggleLabel = subToggleLabel,
                         onSubToggleCheck = { markersSubTags = it },
                         subToggleChecked = markersSubTags,
+                        subToggleEnabled = subToggleEnabled,
                         composeUiConfig = uiConfig,
                         onFilterChange = { markersFilter = it },
                     )
@@ -287,6 +291,7 @@ fun TagPage(
                         subToggleLabel = subToggleLabel,
                         onSubToggleCheck = { performersSubTags = it },
                         subToggleChecked = performersSubTags,
+                        subToggleEnabled = subToggleEnabled,
                         composeUiConfig = uiConfig,
                         onFilterChange = { performersFilter = it },
                     )
@@ -318,6 +323,7 @@ fun TagPage(
                         subToggleLabel = subToggleLabel,
                         onSubToggleCheck = { studiosSubTags = it },
                         subToggleChecked = studiosSubTags,
+                        subToggleEnabled = subToggleEnabled,
                         composeUiConfig = uiConfig,
                         onFilterChange = { studiosFilter = it },
                     )

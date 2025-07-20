@@ -112,6 +112,7 @@ fun StashGridControls(
     subToggleLabel: String? = null,
     onSubToggleCheck: ((Boolean) -> Unit)? = null,
     subToggleChecked: Boolean = false,
+    subToggleEnabled: Boolean = true,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -224,6 +225,7 @@ fun StashGridControls(
                             modifier = Modifier.focusProperties { down = gridFocusRequester },
                             label = subToggleLabel,
                             checked = checked,
+                            enabled = subToggleEnabled,
                             onStateChange = { isChecked ->
                                 checked = isChecked
                                 onSubToggleCheck?.invoke(isChecked)
