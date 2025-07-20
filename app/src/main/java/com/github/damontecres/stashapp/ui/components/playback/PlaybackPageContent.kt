@@ -353,6 +353,7 @@ fun PlaybackPageContent(
     val oCount by viewModel.oCount.observeAsState(0)
     val rating100 by viewModel.rating100.observeAsState(0)
     val spriteImageLoaded by viewModel.spriteImageLoaded.observeAsState(false)
+    var currentTracks by remember { mutableStateOf<List<TrackSupport>>(listOf()) }
     var captions by remember { mutableStateOf<List<TrackSupport>>(listOf()) }
     var subtitles by remember { mutableStateOf<List<Cue>?>(null) }
     var subtitleIndex by remember { mutableStateOf<Int?>(null) }
@@ -469,6 +470,7 @@ fun PlaybackPageContent(
 
                 override fun onTracksChanged(tracks: Tracks) {
                     val trackInfo = checkForSupport(tracks)
+                    currentTracks = trackInfo
                     val audioTracks =
                         trackInfo
                             .filter { it.type == TrackType.AUDIO && it.supported == TrackSupportReason.HANDLED }
@@ -720,6 +722,7 @@ fun PlaybackPageContent(
                             .background(Color.Transparent),
                     uiConfig = uiConfig,
                     scene = currentScene.item,
+                    tracks = currentTracks,
                     captions = captions,
                     markers = markers,
                     streamDecision = currentScene.streamDecision,
