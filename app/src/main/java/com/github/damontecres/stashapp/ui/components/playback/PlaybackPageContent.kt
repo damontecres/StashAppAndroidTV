@@ -527,10 +527,11 @@ fun PlaybackPageContent(
                                     val tag =
                                         (current.localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
                                     val id = tag.item.id
-                                    val isTranscoding =
+                                    val isTranscodingOrDirect =
                                         tag.streamDecision.transcodeDecision == TranscodeDecision.Transcode ||
-                                            tag.streamDecision.transcodeDecision is TranscodeDecision.ForcedTranscode
-                                    if (id !in retryMediaItemIds && !isTranscoding) {
+                                            tag.streamDecision.transcodeDecision is TranscodeDecision.ForcedTranscode ||
+                                            tag.streamDecision.transcodeDecision is TranscodeDecision.ForcedDirectPlay
+                                    if (id !in retryMediaItemIds && !isTranscodingOrDirect) {
                                         retryMediaItemIds.add(id)
                                         val newMediaItem = switchToTranscode(context, current)
                                         val newTag =
