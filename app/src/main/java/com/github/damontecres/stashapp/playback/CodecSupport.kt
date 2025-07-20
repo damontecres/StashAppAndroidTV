@@ -34,6 +34,8 @@ data class CodecSupport(
                 put(MediaFormat.MIMETYPE_VIDEO_HEVC, "hevc")
                 put(MediaFormat.MIMETYPE_VIDEO_VP8, "vp8")
                 put(MediaFormat.MIMETYPE_VIDEO_VP9, "vp9")
+                put("video/wvc1", "vc1")
+                put("video/x-ms-wmv", "vc1")
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     put(MediaFormat.MIMETYPE_VIDEO_AV1, "av1")
                 }
