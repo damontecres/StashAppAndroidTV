@@ -51,14 +51,15 @@
 
         <!-- Less common formats -->
         <item>flv1</item>
+        <item>mpeg1video</item>
         <item>rv30</item>
         <item>rv40</item>
         <item>svq3</item>
-        <item>mpeg1video</item>
+        <item>vc1</item>
+        <item>vp6f</item>
         <item>wmv1</item>
         <item>wmv2</item>
         <item>wmv3</item>
-        <item>vp6f</item>
     </string-array>
 
     <string-array name="default_force_video_codecs" translatable="false"></string-array>

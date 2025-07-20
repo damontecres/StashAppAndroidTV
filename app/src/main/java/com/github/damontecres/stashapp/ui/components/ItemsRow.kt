@@ -149,7 +149,7 @@ fun <T : StashData> ItemsRow(
                         return@onKeyEvent false
                     },
             state = state,
-            contentPadding = PaddingValues(8.dp),
+            contentPadding = PaddingValues(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             itemsIndexed(items, key = { _, item -> item.id }) { index, item ->

@@ -194,6 +194,7 @@ fun StashGridTab(
     subToggleLabel: String? = null,
     onSubToggleCheck: ((Boolean) -> Unit)? = null,
     subToggleChecked: Boolean = false,
+    subToggleEnabled: Boolean = true,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
     LaunchedEffect(server, initialFilter) {
@@ -224,6 +225,7 @@ fun StashGridTab(
             subToggleLabel = subToggleLabel,
             onSubToggleCheck = onSubToggleCheck,
             subToggleChecked = subToggleChecked,
+            subToggleEnabled = subToggleEnabled,
             requestFocus = false,
         )
     }
