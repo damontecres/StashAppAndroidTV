@@ -95,7 +95,7 @@ class FilterParser(
             HierarchicalMultiCriterionInput(
                 value = Optional.presentIfNotNull(items),
                 modifier = CriterionModifier.valueOf(it["modifier"]!!.toString()),
-                depth = Optional.presentIfNotNull(values["depth"] as Int?),
+                depth = Optional.presentIfNotNull(values["depth"]?.toString()?.toIntOrNull()),
                 excludes = Optional.presentIfNotNull(excludes),
             )
         } else {
