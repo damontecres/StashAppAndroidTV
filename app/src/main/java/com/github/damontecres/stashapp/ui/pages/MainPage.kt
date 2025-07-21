@@ -412,7 +412,7 @@ fun HomePageRow(
                         }
                         return@onKeyEvent false
                     },
-            contentPadding = PaddingValues(start = 16.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             itemsIndexed(row.data) { index, item ->

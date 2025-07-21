@@ -176,7 +176,7 @@ fun SceneDetailsHeader(
                 },
                 alwaysStartFromBeginning = alwaysStartFromBeginning,
                 showEditButton = showEditButton,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 24.dp),
+                modifier = Modifier.padding(vertical = 16.dp),
             )
         }
     }

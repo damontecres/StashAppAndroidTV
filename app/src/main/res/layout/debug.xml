@@ -75,6 +75,25 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="Device Codec Decoders"
+                android:textAlignment="textStart"
+                android:textSize="22sp" />
+
+            <TableLayout
+                android:id="@+id/codecs_table"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:text="@string/other"
                 android:textAlignment="textStart"
                 android:textSize="22sp" />
