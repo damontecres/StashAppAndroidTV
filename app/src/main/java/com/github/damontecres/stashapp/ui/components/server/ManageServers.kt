@@ -114,24 +114,7 @@ fun ManageServers(
                         shape = RoundedCornerShape(16.dp),
                     ),
         ) {
-            item {
-                SimpleListItem(
-                    title = stringResource(R.string.add_server),
-                    subtitle = null,
-                    showArrow = true,
-                    onClick = { showAddServer = true },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = stringResource(R.string.add_server),
-                            tint = Color.Green.copy(alpha = .5f),
-                        )
-                    },
-                    modifier = Modifier.focusRequester(focusRequester),
-                )
-                HorizontalDivider()
-            }
-            itemsIndexed(serversWithOutCurrent) { _, server ->
+            itemsIndexed(serversWithOutCurrent) { index, server ->
                 val status = serverStatus[server] ?: ServerTestResult.Pending
                 SimpleListItem(
                     title = server.url,
@@ -165,7 +148,29 @@ fun ManageServers(
                             ServerTestResult.Success -> {}
                         }
                     },
-                    modifier = Modifier,
+                    modifier = Modifier.ifElse(index == 0, Modifier.focusRequester(focusRequester)),
+                )
+            }
+
+            item {
+                HorizontalDivider()
+                SimpleListItem(
+                    title = stringResource(R.string.add_server),
+                    subtitle = null,
+                    showArrow = true,
+                    onClick = { showAddServer = true },
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = stringResource(R.string.add_server),
+                            tint = Color.Green.copy(alpha = .5f),
+                        )
+                    },
+                    modifier =
+                        Modifier.ifElse(
+                            serversWithOutCurrent.isEmpty(),
+                            Modifier.focusRequester(focusRequester),
+                        ),
                 )
             }
         }
