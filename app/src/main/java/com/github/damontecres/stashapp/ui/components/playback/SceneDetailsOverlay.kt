@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -13,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeaderInfo
@@ -25,19 +25,15 @@ fun SceneDetailsOverlay(
     server: StashServer,
     scene: FullSceneData,
     performers: List<PerformerData>,
+    rating100: Int,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
+    onRatingChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val focusRequester = remember { FocusRequester() }
     val listState = rememberLazyListState()
-    val navigationManager = LocalGlobalContext.current.navigationManager
-    val itemClick =
-        ItemOnClicker<Any> { item, fp ->
-            navigationManager.goBack()
-            itemOnClick.onClick(item, fp)
-        }
     LazyColumn(
         state = listState,
         contentPadding = PaddingValues(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 135.dp),
@@ -47,22 +43,22 @@ fun SceneDetailsOverlay(
             SceneDetailsHeaderInfo(
                 scene = scene,
                 studio = scene.studio?.studioData,
-                rating100 = scene.rating100 ?: 0,
+                rating100 = rating100,
                 oCount = scene.o_counter ?: 0,
-                uiConfig = uiConfig.copy(readOnlyModeEnabled = true),
-                itemOnClick = itemClick,
+                uiConfig = uiConfig,
+                itemOnClick = itemOnClick,
                 playOnClick = { _, _ -> },
                 editOnClick = {},
                 moreOnClick = {},
                 oCounterOnClick = {},
                 oCounterOnLongClick = {},
-                onRatingChange = {},
+                onRatingChange = onRatingChange,
                 focusRequester = focusRequester,
                 bringIntoViewRequester = bringIntoViewRequester,
                 removeLongClicker = { _, _ -> },
                 showEditButton = false,
                 alwaysStartFromBeginning = false,
-                modifier = Modifier,
+                modifier = Modifier.padding(bottom = 80.dp),
                 showRatingBar = true,
             )
         }
@@ -75,7 +71,7 @@ fun SceneDetailsOverlay(
             markers = listOf(),
             suggestions = listOf(),
             uiConfig = uiConfig,
-            itemOnClick = itemClick,
+            itemOnClick = itemOnClick,
             removeLongClicker = { _, _ -> },
             defaultLongClicker = { _, _ -> },
             cardOnFocus = { _, _, _ -> },

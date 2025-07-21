@@ -90,8 +90,9 @@ fun StudioPage(
     val scope = rememberCoroutineScope()
 
     studio?.let { studio ->
-        val subToggleLabel =
-            if (studio.child_studios.isNotEmpty()) stringResource(R.string.stashapp_include_sub_studio_content) else null
+        val subToggleLabel = stringResource(R.string.stashapp_include_sub_studio_content)
+        val subToggleEnabled = studio.child_studios.isNotEmpty()
+
         val studiosFunc = { includeSubStudios: Boolean ->
             Optional.present(
                 HierarchicalMultiCriterionInput(
@@ -180,6 +181,7 @@ fun StudioPage(
                         subToggleLabel = subToggleLabel,
                         onSubToggleCheck = { scenesSubTags = it },
                         subToggleChecked = scenesSubTags,
+                        subToggleEnabled = subToggleEnabled,
                         composeUiConfig = uiConfig,
                         onFilterChange = { scenesFilter = it },
                     )
@@ -211,6 +213,7 @@ fun StudioPage(
                         subToggleLabel = subToggleLabel,
                         onSubToggleCheck = { galleriesSubTags = it },
                         subToggleChecked = galleriesSubTags,
+                        subToggleEnabled = subToggleEnabled,
                         composeUiConfig = uiConfig,
                         onFilterChange = { galleriesFilter = it },
                     )
@@ -241,6 +244,7 @@ fun StudioPage(
                         subToggleLabel = subToggleLabel,
                         onSubToggleCheck = { imagesSubTags = it },
                         subToggleChecked = imagesSubTags,
+                        subToggleEnabled = subToggleEnabled,
                         composeUiConfig = uiConfig,
                         onFilterChange = { imagesFilter = it },
                     )
@@ -277,6 +281,7 @@ fun StudioPage(
                         subToggleLabel = subToggleLabel,
                         onSubToggleCheck = { markersSubTags = it },
                         subToggleChecked = markersSubTags,
+                        subToggleEnabled = subToggleEnabled,
                         composeUiConfig = uiConfig,
                         onFilterChange = { markersFilter = it },
                     )
@@ -308,6 +313,7 @@ fun StudioPage(
                         subToggleLabel = subToggleLabel,
                         onSubToggleCheck = { performersSubTags = it },
                         subToggleChecked = performersSubTags,
+                        subToggleEnabled = subToggleEnabled,
                         composeUiConfig = uiConfig,
                         onFilterChange = { performersFilter = it },
                     )
@@ -339,6 +345,7 @@ fun StudioPage(
                         subToggleLabel = subToggleLabel,
                         onSubToggleCheck = { groupsSubTags = it },
                         subToggleChecked = groupsSubTags,
+                        subToggleEnabled = subToggleEnabled,
                         composeUiConfig = uiConfig,
                         onFilterChange = { groupsFilter = it },
                     )

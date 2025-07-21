@@ -155,6 +155,7 @@ fun PlaylistItemCompose(
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.enableMarquee(focused),
                     )
                 }
                 if (item.details1.isNotNullOrBlank()) {
@@ -164,6 +165,7 @@ fun PlaylistItemCompose(
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.enableMarquee(focused),
                     )
                 }
                 if (item.details2.isNotNullOrBlank()) {
@@ -173,6 +175,7 @@ fun PlaylistItemCompose(
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.enableMarquee(focused),
                     )
                 }
             }

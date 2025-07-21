@@ -162,20 +162,40 @@ fun createGlideUrl(
     return createGlideUrl(url, apiKey)
 }
 
-enum class TestResultStatus {
-    SUCCESS,
-    AUTH_REQUIRED,
-    ERROR,
-    UNSUPPORTED_VERSION,
-    SSL_REQUIRED,
-    SELF_SIGNED_REQUIRED,
-}
+sealed interface TestResult {
+    val message: String
 
-data class TestResult(
-    val status: TestResultStatus,
-    val serverInfo: ServerInfoQuery.Data?,
-) {
-    constructor(status: TestResultStatus) : this(status, null)
+    data class Success(
+        val serverInfo: ServerInfoQuery.Data,
+    ) : TestResult {
+        override val message: String = ""
+    }
+
+    data object AuthRequired : TestResult {
+        override val message: String = "API key is required"
+    }
+
+    data class Error(
+        val errorMessage: String?,
+        val exception: Exception?,
+    ) : TestResult {
+        override val message: String
+            get() = errorMessage ?: exception?.localizedMessage ?: "Unknown Error"
+    }
+
+    data class UnsupportedVersion(
+        val serverVersion: String?,
+    ) : TestResult {
+        override val message: String = "Unsupported server version: $serverVersion"
+    }
+
+    data object SslRequired : TestResult {
+        override val message: String = "HTTPS may be required"
+    }
+
+    data object SelfSignedCertRequired : TestResult {
+        override val message: String = "Possible self signed cert detected"
+    }
 }
 
 /**
@@ -207,8 +227,8 @@ suspend fun testStashConnection(
             if (info.data != null) {
                 val serverVersion = Version.tryFromString(info.data?.version?.version)
                 if (!Version.isStashVersionSupported(serverVersion)) {
+                    val version = info.data?.version?.version
                     if (showToast) {
-                        val version = info.data?.version?.version
                         Toast
                             .makeText(
                                 context,
@@ -216,7 +236,7 @@ suspend fun testStashConnection(
                                 Toast.LENGTH_SHORT,
                             ).show()
                     }
-                    return TestResult(TestResultStatus.UNSUPPORTED_VERSION, info.data)
+                    return TestResult.UnsupportedVersion(version)
                 } else {
                     if (showToast) {
                         val version = info.data?.version?.version
@@ -228,7 +248,7 @@ suspend fun testStashConnection(
                                 Toast.LENGTH_SHORT,
                             ).show()
                     }
-                    return TestResult(TestResultStatus.SUCCESS, info.data)
+                    return TestResult.Success(info.data!!)
                 }
             } else if (info.exception != null) {
                 when (val ex = info.exception) {
@@ -244,7 +264,7 @@ suspend fun testStashConnection(
                                         Toast.LENGTH_LONG,
                                     ).show()
                             }
-                            return TestResult(TestResultStatus.SSL_REQUIRED)
+                            return TestResult.SslRequired
                         } else if (ex.statusCode == 401 || ex.statusCode == 403) {
                             if (showToast) {
                                 Toast
@@ -254,7 +274,7 @@ suspend fun testStashConnection(
                                         Toast.LENGTH_LONG,
                                     ).show()
                             }
-                            return TestResult(TestResultStatus.AUTH_REQUIRED)
+                            return TestResult.AuthRequired
                         } else {
                             if (showToast) {
                                 Toast
@@ -264,20 +284,20 @@ suspend fun testStashConnection(
                                         Toast.LENGTH_LONG,
                                     ).show()
                             }
-                            return TestResult(TestResultStatus.ERROR)
+                            return TestResult.Error("HTTP ${ex.statusCode}: '${ex.message}'", ex)
                         }
                     }
 
                     is ApolloException -> {
                         Log.e(Constants.TAG, "ApolloException", ex)
+                        val message =
+                            when (val cause = ex.cause) {
+                                is UnknownHostException, is ConnectException -> cause.localizedMessage
+                                is SSLHandshakeException -> "server may be using a self-signed certificate"
+                                is IOException -> cause.localizedMessage
+                                else -> ex.localizedMessage
+                            }
                         if (showToast) {
-                            val message =
-                                when (val cause = ex.cause) {
-                                    is UnknownHostException, is ConnectException -> cause.localizedMessage
-                                    is SSLHandshakeException -> "server may be using a self-signed certificate"
-                                    is IOException -> cause.localizedMessage
-                                    else -> ex.localizedMessage
-                                }
                             Toast
                                 .makeText(
                                     context,
@@ -286,7 +306,9 @@ suspend fun testStashConnection(
                                 ).show()
                         }
                         if (ex.cause is SSLHandshakeException) {
-                            return TestResult(TestResultStatus.SELF_SIGNED_REQUIRED)
+                            return TestResult.SelfSignedCertRequired
+                        } else {
+                            return TestResult.Error(message, ex)
                         }
                     }
 
@@ -300,7 +322,7 @@ suspend fun testStashConnection(
                                     Toast.LENGTH_LONG,
                                 ).show()
                         }
-                        return TestResult(TestResultStatus.ERROR)
+                        return TestResult.Error(null, ex)
                     }
                 }
             } else {
@@ -313,6 +335,7 @@ suspend fun testStashConnection(
                         ).show()
                 }
                 Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
+                return TestResult.Error("Errors: ${info.errors?.joinToString(", ")}", null)
             }
         } catch (ex: Exception) {
             Log.e(Constants.TAG, "Exception", ex)
@@ -324,10 +347,10 @@ suspend fun testStashConnection(
                         Toast.LENGTH_LONG,
                     ).show()
             }
-            return TestResult(TestResultStatus.ERROR)
+            return TestResult.Error(null, ex)
         }
     }
-    return TestResult(TestResultStatus.ERROR)
+    return TestResult.Error("Unknown error", null)
 }
 
 /**
@@ -1117,7 +1140,7 @@ fun getPreference(
     .getDefaultSharedPreferences(context)
     .getString(context.getString(key), default)
 
-fun composeEnabled(context: Context = StashApplication.getApplication()) = getPreference(context, R.string.pref_key_use_compose_ui, false)
+fun composeEnabled(context: Context = StashApplication.getApplication()) = getPreference(context, R.string.pref_key_use_compose_ui, true)
 
 fun View.updateLayoutParams(transform: ViewGroup.LayoutParams.() -> Unit) {
     val lp = layoutParams

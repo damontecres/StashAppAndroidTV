@@ -256,7 +256,7 @@ class FilterParser(
     private fun convertPHashDuplicationCriterionInput(it: Map<String, *>?): PHashDuplicationCriterionInput? =
         if (it != null) {
             PHashDuplicationCriterionInput(
-                duplicated = Optional.presentIfNotNull(it["duplicated"]?.toString()?.toBoolean()),
+                duplicated = Optional.presentIfNotNull(it["value"]?.toString()?.toBoolean()),
                 distance = Optional.presentIfNotNull(it["distance"]?.toString()?.toInt()),
             )
         } else {

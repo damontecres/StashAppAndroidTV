@@ -156,7 +156,7 @@ fun SceneDetailsHeader(
                 removeLongClicker = removeLongClicker,
                 showEditButton = showEditButton,
                 alwaysStartFromBeginning = alwaysStartFromBeginning,
-                modifier = Modifier,
+                modifier = Modifier.padding(start = 16.dp),
                 showRatingBar = showRatingBar,
             )
             // Playback controls
@@ -176,7 +176,7 @@ fun SceneDetailsHeader(
                 },
                 alwaysStartFromBeginning = alwaysStartFromBeginning,
                 showEditButton = showEditButton,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 24.dp),
+                modifier = Modifier.padding(vertical = 16.dp),
             )
         }
     }
@@ -207,7 +207,7 @@ fun SceneDetailsHeaderInfo(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     Column(
-        modifier = Modifier.padding(start = 16.dp),
+        modifier = modifier,
     ) {
         // Title
         Text(

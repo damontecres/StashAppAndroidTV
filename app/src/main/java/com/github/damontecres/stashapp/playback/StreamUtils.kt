@@ -136,6 +136,7 @@ fun buildMediaItem(
                     .setMimeType(MimeTypes.TEXT_VTT)
                     .setLabel(it.displayString(context))
                     .setSelectionFlags(C.SELECTION_FLAG_AUTOSELECT)
+                    .setLanguage(it.language_code)
                     .build()
             }
         Log.v(TAG, "Got ${subtitles.size} subtitle options for scene ${scene.id}")

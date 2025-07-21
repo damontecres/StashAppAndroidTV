@@ -79,13 +79,13 @@
             />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="Compose UI">
+    <PreferenceCategory app:title="New UI">
         <SwitchPreference
             app:key="@string/pref_key_use_compose_ui"
-            app:title="Use new Compose-based UI"
+            app:title="Use new UI"
             app:summaryOn="Enabled"
             app:summaryOff="Disabled"
-            app:defaultValue="false" />
+            app:defaultValue="true" />
         <SwitchPreference
             app:key="@string/pref_key_ui_grid_jump_controls"
             app:title="Show grid jump buttons"
@@ -113,6 +113,17 @@
             app:key="@string/pref_key_movement_sounds"
             app:title="Play movement sound effects"
             app:summary="Applies to Compose UI pages only"
+            app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_playback_next_up_down"
+            app:title="Use Up/Down for Previous/Next"
+            app:summaryOn="Enabled for markers"
+            app:summaryOff="Disabled"
+            app:defaultValue="false" />
+        <SwitchPreference
+            app:key="@string/pref_key_captions_on_by_default"
+            app:title="Turn captions on by default"
+            app:summary="Whether to turn captions for the device's language on by default"
             app:defaultValue="true" />
     </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

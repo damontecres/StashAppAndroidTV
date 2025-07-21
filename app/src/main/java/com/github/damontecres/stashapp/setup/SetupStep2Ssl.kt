@@ -8,7 +8,7 @@ import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.TestResultStatus
+import com.github.damontecres.stashapp.util.TestResult
 import kotlinx.coroutines.launch
 
 class SetupStep2Ssl(
@@ -49,22 +49,20 @@ class SetupStep2Ssl(
             val newState = setupState.copy(trustCerts = true)
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val result = testConnection(newState.serverUrl, null, true)
-                when (result.status) {
-                    TestResultStatus.AUTH_REQUIRED -> {
-                        nextStep(SetupStep3ApiKey(newState))
-                    }
+                when (result) {
+                    TestResult.AuthRequired -> nextStep(SetupStep3ApiKey(newState))
 
-                    TestResultStatus.SELF_SIGNED_REQUIRED -> {
+                    is TestResult.Error,
+                    TestResult.SslRequired,
+                    -> requireActivity().supportFragmentManager.popBackStack()
+
+                    TestResult.SelfSignedCertRequired -> {
                         Log.w(TAG, "Trusting certs, but still error")
                     }
 
-                    TestResultStatus.SUCCESS, TestResultStatus.UNSUPPORTED_VERSION -> {
-                        nextStep(SetupStep4Pin(newState))
-                    }
-
-                    TestResultStatus.ERROR, TestResultStatus.SSL_REQUIRED -> {
-                        requireActivity().supportFragmentManager.popBackStack()
-                    }
+                    is TestResult.Success,
+                    is TestResult.UnsupportedVersion,
+                    -> nextStep(SetupStep4Pin(newState))
                 }
             }
         } else {

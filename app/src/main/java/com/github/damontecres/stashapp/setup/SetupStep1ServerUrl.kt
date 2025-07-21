@@ -10,7 +10,7 @@ import androidx.leanback.widget.GuidedActionEditText
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.TestResultStatus
+import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.launch
 
@@ -83,20 +83,18 @@ class SetupStep1ServerUrl : SetupGuidedStepSupportFragment() {
             val state = SetupState(serverUrl)
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val result = testConnection(serverUrl.toString(), null, false)
-                when (result.status) {
-                    TestResultStatus.AUTH_REQUIRED -> {
-                        nextStep(SetupStep3ApiKey(state))
-                    }
+                when (result) {
+                    TestResult.SelfSignedCertRequired -> nextStep(SetupStep2Ssl(state))
 
-                    TestResultStatus.SELF_SIGNED_REQUIRED -> {
-                        nextStep(SetupStep2Ssl(state))
-                    }
+                    TestResult.AuthRequired -> nextStep(SetupStep3ApiKey(state))
 
-                    TestResultStatus.SUCCESS, TestResultStatus.UNSUPPORTED_VERSION -> {
-                        nextStep(SetupStep4Pin(state))
-                    }
+                    is TestResult.Success,
+                    is TestResult.UnsupportedVersion,
+                    -> nextStep(SetupStep4Pin(state))
 
-                    TestResultStatus.ERROR, TestResultStatus.SSL_REQUIRED -> {
+                    is TestResult.Error,
+                    TestResult.SslRequired,
+                    -> {
                         // no-op
                     }
                 }

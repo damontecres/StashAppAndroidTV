@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -83,6 +82,7 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.components.filter.CreateFilterScreen
+import com.github.damontecres.stashapp.ui.components.server.ManageServersContent
 import com.github.damontecres.stashapp.ui.pages.ChooseThemePage
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.FilterPage
@@ -111,6 +111,7 @@ import dev.olshevski.navigation.reimagined.navigate
 import dev.olshevski.navigation.reimagined.popUpTo
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import okhttp3.Call
 import kotlin.time.Duration.Companion.milliseconds
@@ -202,6 +203,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                     server = currentServer,
                                     navigationManager = navManager,
                                     navController = navController,
+                                    onSwitchServer = { serverViewModel.switchServer(it) },
                                     onChangeTheme = { name ->
                                         try {
                                             colorScheme =
@@ -248,6 +250,7 @@ fun FragmentContent(
     navigationManager: NavigationManagerCompose,
     navController: NavController<Destination>,
     onChangeTheme: (String?) -> Unit,
+    onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -318,44 +321,26 @@ fun FragmentContent(
             ) { dialogParams = it }
         }
 
-    // TODO this works, but sometimes requires restart when changed and going back from settings is awkward
-    val settingsPage =
-        DrawerPage(
-            if (composeUiConfig.readOnlyModeDisabled) Destination.Settings(PreferenceScreenOption.BASIC) else Destination.SettingsPin,
-            R.string.fa_arrow_right_arrow_left, // Ignored
-            R.string.stashapp_settings,
-        )
-
     val pages =
         buildList {
-            add(DrawerPage.SEARCH_PAGE)
-            add(DrawerPage.HOME_PAGE)
-            val serverPrefs = server?.serverPreferences
-            if (serverPrefs != null) {
-                DataType.entries
-                    .mapNotNull { dataType ->
-                        if (serverPrefs.showMenuItem(dataType)) {
-                            val filter =
-                                serverPrefs.defaultFilters[dataType]
-                                    ?: FilterArgs(dataType)
-                            DrawerPage(
-                                Destination.Filter(filter, false),
-                                dataType.iconStringId,
-                                dataType.pluralStringId,
-                            )
-                        } else {
-                            null
-                        }
-                    }.forEach { add(it) }
-            }
+            add(DrawerPage.SearchPage)
+            add(DrawerPage.HomePage)
+            DataType.entries
+                .mapNotNull { dataType ->
+                    if (server.serverPreferences.showMenuItem(dataType)) {
+                        DrawerPage.DataTypePage(dataType)
+                    } else {
+                        null
+                    }
+                }.forEach { add(it) }
 
-            add(settingsPage)
+            add(DrawerPage.SettingPage)
         }
     val visiblePages = remember { mutableMapOf<DrawerPage, Boolean>() }
 
     val initialFocus = remember { FocusRequester() }
     val listState = rememberLazyListState()
-    val defaultSelection: DrawerPage = DrawerPage.HOME_PAGE
+    val defaultSelection: DrawerPage = DrawerPage.HomePage
     var currentScreen by rememberSaveable { mutableStateOf(defaultSelection) }
     var selectedScreen by rememberSaveable { mutableStateOf<DrawerPage?>(defaultSelection) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -402,6 +387,14 @@ fun FragmentContent(
 //                        preventBack = false,
 //                        modifier = Modifier.fillMaxSize(),
 //                    )
+
+                is Destination.ManageServers -> {
+                    ManageServersContent(
+                        currentServer = server,
+                        onSwitchServer = onSwitchServer,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
 
                 is Destination.Playback -> {
                     PlaybackPage(
@@ -465,25 +458,27 @@ fun FragmentContent(
             // Highlight on the nav drawer as user navigates around the app
             selectedScreen =
                 when (destination) {
-                    Destination.Main -> DrawerPage.HOME_PAGE
-                    Destination.Search -> DrawerPage.SEARCH_PAGE
+                    Destination.Main -> DrawerPage.HomePage
+
+                    Destination.Search -> DrawerPage.SearchPage
+
+                    Destination.SettingsPin,
+                    is Destination.Settings,
+                    -> DrawerPage.SettingPage
 
                     is Destination.Item ->
                         pages.firstOrNull {
-                            val dest = it.destination
-                            dest is Destination.Filter && dest.filterArgs.dataType == destination.dataType
+                            it is DrawerPage.DataTypePage && it.dataType == destination.dataType
                         }
 
                     is Destination.MarkerDetails ->
                         pages.firstOrNull {
-                            val dest = it.destination
-                            dest is Destination.Filter && dest.filterArgs.dataType == DataType.MARKER
+                            it is DrawerPage.DataTypePage && it.dataType == DataType.MARKER
                         }
 
                     is Destination.Filter ->
                         pages.firstOrNull {
-                            val dest = it.destination
-                            dest is Destination.Filter && dest.filterArgs.dataType == destination.filterArgs.dataType
+                            it is DrawerPage.DataTypePage && it.dataType == destination.filterArgs.dataType
                         }
 
                     else -> null
@@ -594,29 +589,43 @@ fun FragmentContent(
                                             )
                                         }
                                         val refreshMain =
-                                            selectedScreen == DrawerPage.HOME_PAGE && page == DrawerPage.HOME_PAGE
+                                            selectedScreen == DrawerPage.HomePage && page == DrawerPage.HomePage
                                         currentScreen = page
                                         selectedScreen = page
 
                                         drawerState.setValue(DrawerValue.Closed)
                                         Log.v(
                                             TAG,
-                                            "Navigating to ${page.destination}",
+                                            "Navigating to $page",
                                         )
                                         if (refreshMain) {
                                             navigationManager.goToMain()
                                         } else {
                                             val pageDest =
-                                                if (page.destination is Destination.Filter) {
-                                                    page.destination.copy(filterArgs = page.destination.filterArgs.withResolvedRandom())
-                                                } else {
-                                                    page.destination
+                                                when (page) {
+                                                    DrawerPage.HomePage -> Destination.Main
+                                                    DrawerPage.SearchPage -> Destination.Search
+                                                    DrawerPage.SettingPage ->
+                                                        if (composeUiConfig.readOnlyModeDisabled) {
+                                                            Destination.Settings(
+                                                                PreferenceScreenOption.BASIC,
+                                                            )
+                                                        } else {
+                                                            Destination.SettingsPin
+                                                        }
+
+                                                    is DrawerPage.DataTypePage ->
+                                                        Destination.Filter(
+                                                            server.serverPreferences.getDefaultFilter(
+                                                                page.dataType,
+                                                            ),
+                                                        )
                                                 }
                                             navigationManager.navigateFromNavDrawer(pageDest)
                                         }
                                     },
                                     leadingContent = {
-                                        if (page != settingsPage) {
+                                        if (page != DrawerPage.SettingPage) {
                                             val color =
                                                 if (selectedScreen == page) {
                                                     MaterialTheme.colorScheme.border
@@ -841,21 +850,46 @@ fun NavDrawerContent(
     }
 }
 
-@Parcelize
-data class DrawerPage(
-    val destination: Destination,
-    @StringRes val iconString: Int,
-    @StringRes val name: Int,
-) : Parcelable {
-    companion object {
-        val HOME_PAGE = DrawerPage(Destination.Main, R.string.fa_house, R.string.home)
+sealed interface DrawerPage : Parcelable {
+    val iconString: Int
+    val name: Int
 
-        val SEARCH_PAGE =
-            DrawerPage(
-                Destination.Search,
-                R.string.fa_magnifying_glass_plus,
-                R.string.stashapp_actions_search,
-            )
+    @Parcelize
+    data object HomePage : DrawerPage {
+        @IgnoredOnParcel
+        override val iconString = R.string.fa_house
+
+        @IgnoredOnParcel
+        override val name = R.string.home
+    }
+
+    @Parcelize
+    data object SearchPage : DrawerPage {
+        @IgnoredOnParcel
+        override val iconString = R.string.fa_magnifying_glass_plus
+
+        @IgnoredOnParcel
+        override val name = R.string.stashapp_actions_search
+    }
+
+    @Parcelize
+    data object SettingPage : DrawerPage {
+        // Unused
+        @IgnoredOnParcel
+        override val iconString = R.string.fa_arrow_right_arrow_left
+
+        @IgnoredOnParcel
+        override val name = R.string.stashapp_settings
+    }
+
+    @Parcelize
+    data class DataTypePage(
+        val dataType: DataType,
+    ) : DrawerPage {
+        override val iconString: Int
+            get() = dataType.iconStringId
+        override val name: Int
+            get() = dataType.pluralStringId
     }
 }
 

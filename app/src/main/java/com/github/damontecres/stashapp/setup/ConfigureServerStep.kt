@@ -13,7 +13,7 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.TestResultStatus
+import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
 import kotlinx.coroutines.launch
@@ -105,7 +105,7 @@ class ConfigureServerStep : SetupGuidedStepSupportFragment() {
                         .getDefaultSharedPreferences(requireContext())
                         .getBoolean(getString(R.string.pref_key_trust_certs), false)
                 val result = testConnection(serverUrl, apiKey, trustCerts)
-                if (result.status == TestResultStatus.SELF_SIGNED_REQUIRED && !trustCerts) {
+                if (result is TestResult.SelfSignedCertRequired && !trustCerts) {
                     promptSelfSigned(false)
                 }
             }
@@ -143,19 +143,19 @@ class ConfigureServerStep : SetupGuidedStepSupportFragment() {
                         .getBoolean(getString(R.string.pref_key_trust_certs), false)
                 val result =
                     testConnection(serverUrl, apiKey, trustCerts)
-                if (result.status == TestResultStatus.SUCCESS) {
+                if (result is TestResult.Success) {
                     val server = StashServer(serverUrl, apiKey)
                     // Persist values
                     StashServer.addAndSwitchServer(requireContext(), server)
                     serverViewModel.switchServer(server)
                     finishGuidedStepSupportFragments()
-                } else if (result.status == TestResultStatus.SELF_SIGNED_REQUIRED && !trustCerts) {
+                } else if (result is TestResult.SelfSignedCertRequired && !trustCerts) {
                     promptSelfSigned(true)
                 } else {
                     Toast
                         .makeText(
                             requireContext(),
-                            "Cannot connect to server: ${result.status}",
+                            "Cannot connect to server: ${result.message}",
                             Toast.LENGTH_LONG,
                         ).show()
                 }

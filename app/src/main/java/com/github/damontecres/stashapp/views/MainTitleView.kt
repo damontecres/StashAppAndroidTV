@@ -16,7 +16,6 @@ import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 
@@ -169,7 +168,7 @@ class MainTitleView(
     ) : OnClickListener {
         override fun onClick(v: View) {
             val serverPrefs = serverViewModel.currentServer.value!!.serverPreferences
-            val filter = serverPrefs.defaultFilters[dataType] ?: FilterArgs(dataType)
+            val filter = serverPrefs.getDefaultFilter(dataType)
             serverViewModel.navigationManager.navigate(Destination.Filter(filter, false))
         }
     }

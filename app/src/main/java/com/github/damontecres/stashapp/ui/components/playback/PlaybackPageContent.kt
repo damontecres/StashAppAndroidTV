@@ -7,12 +7,10 @@ import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,7 +34,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -44,9 +42,8 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.MutableLiveData
@@ -66,6 +63,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerControlView
+import androidx.media3.ui.SubtitleView
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
@@ -75,7 +73,6 @@ import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.media3.ui.compose.state.rememberPreviousButtonState
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 import coil3.SingletonImageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
@@ -101,7 +98,6 @@ import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.playback.checkForSupport
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.playback.switchToTranscode
-import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -117,11 +113,15 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchIO
+import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import kotlin.properties.Delegates
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -140,6 +140,7 @@ class PlaybackViewModel : ViewModel() {
     val mediaItemTag = MutableLiveData<PlaylistFragment.MediaItemTag>()
     val markers = MutableLiveData<List<BasicMarker>>(listOf())
     val oCount = MutableLiveData(0)
+    val rating100 = MutableLiveData(0)
     val spriteImageLoaded = MutableLiveData(false)
 
     private val _videoFilter = MutableLiveData<VideoFilter?>(null)
@@ -158,9 +159,13 @@ class PlaybackViewModel : ViewModel() {
         this.exceptionHandler = LoggingCoroutineExceptionHandler(server, viewModelScope)
     }
 
+    private var sceneJob: Job = Job()
+
     fun changeScene(tag: PlaylistFragment.MediaItemTag) {
+        sceneJob.cancelChildren()
         this.mediaItemTag.value = tag
         this.oCount.value = 0
+        this.rating100.value = 0
         this.markers.value = listOf()
         this.spriteImageLoaded.value = false
 
@@ -169,7 +174,7 @@ class PlaybackViewModel : ViewModel() {
         if (videoFiltersEnabled) {
             updateVideoFilter(VideoFilter())
             if (saveFilters && videoFiltersEnabled) {
-                viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+                viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler() + Dispatchers.IO) {
                     val vf =
                         StashApplication
                             .getDatabase()
@@ -191,7 +196,7 @@ class PlaybackViewModel : ViewModel() {
         }
 
         // Fetch preview sprites
-        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+        viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler()) {
             val context = StashApplication.getApplication()
             val imageLoader = SingletonImageLoader.get(context)
             if (tag.item.spriteUrl.isNotNullOrBlank()) {
@@ -210,8 +215,9 @@ class PlaybackViewModel : ViewModel() {
 
     private fun refreshScene(sceneId: String) {
         // Fetch o count & markers
-        viewModelScope.launch(exceptionHandler) {
+        viewModelScope.launch(sceneJob + exceptionHandler) {
             oCount.value = 0
+            rating100.value = 0
             markers.value = listOf()
             performers.value = listOf()
 
@@ -219,14 +225,17 @@ class PlaybackViewModel : ViewModel() {
             val scene = queryEngine.getScene(sceneId)
             if (scene != null) {
                 oCount.value = scene.o_counter ?: 0
+                rating100.value = scene.rating100 ?: 0
                 if (markersEnabled) {
                     markers.value =
                         scene.scene_markers
                             .sortedBy { it.seconds }
                             .map(::BasicMarker)
                 }
-                performers.value =
-                    queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
+                if (scene.performers.isNotEmpty()) {
+                    performers.value =
+                        queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
+                }
             }
             this@PlaybackViewModel.scene.value = scene
         }
@@ -287,6 +296,18 @@ class PlaybackViewModel : ViewModel() {
             }
         }
     }
+
+    fun updateRating(
+        sceneId: String,
+        rating100: Int,
+    ) {
+        viewModelScope.launch(exceptionHandler) {
+            val newRating =
+                MutationEngine(server).setRating(sceneId, rating100)?.rating100 ?: 0
+            this@PlaybackViewModel.rating100.value = newRating
+            showSetRatingToast(StashApplication.getApplication(), newRating)
+        }
+    }
 }
 
 val playbackScaleOptions =
@@ -317,26 +338,32 @@ fun PlaybackPageContent(
     viewModel: PlaybackViewModel = viewModel(),
     startPosition: Long = C.TIME_UNSET,
 ) {
-    if (playlist.isEmpty() || playlist.size < startIndex) {
+    var savedStartPosition by rememberSaveable(startPosition) { mutableLongStateOf(startPosition) }
+    var currentPlaylistIndex by rememberSaveable(startIndex) { mutableIntStateOf(startIndex) }
+    if (playlist.isEmpty() || playlist.size < currentPlaylistIndex) {
         return
     }
+
     val context = LocalContext.current
     val navigationManager = LocalGlobalContext.current.navigationManager
     val currentScene by viewModel.mediaItemTag.observeAsState(
-        playlist[startIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag,
+        playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag,
     )
     val markers by viewModel.markers.observeAsState(listOf())
     val oCount by viewModel.oCount.observeAsState(0)
+    val rating100 by viewModel.rating100.observeAsState(0)
     val spriteImageLoaded by viewModel.spriteImageLoaded.observeAsState(false)
+    var currentTracks by remember { mutableStateOf<List<TrackSupport>>(listOf()) }
     var captions by remember { mutableStateOf<List<TrackSupport>>(listOf()) }
     var subtitles by remember { mutableStateOf<List<Cue>?>(null) }
     var subtitleIndex by remember { mutableStateOf<Int?>(null) }
+    var mediaIndexSubtitlesActivated by remember { mutableStateOf<Int>(-1) }
     var audioIndex by remember { mutableStateOf<Int?>(null) }
     var audioOptions by remember { mutableStateOf<List<String>>(listOf()) }
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
     val videoFilter by viewModel.videoFilter.observeAsState()
 
-    var showSceneDetails by remember { mutableStateOf(false) }
+    var showSceneDetails by rememberSaveable { mutableStateOf(false) }
     val scene by viewModel.scene.observeAsState()
     val performers by viewModel.performers.observeAsState(listOf())
 
@@ -345,6 +372,8 @@ fun PlaybackPageContent(
 
     LifecycleStartEffect(Unit) {
         onStopOrDispose {
+            savedStartPosition = player.currentPosition
+            currentPlaylistIndex = player.currentMediaItemIndex
             trackActivityListener?.release(player.currentPosition)
             StashExoPlayer.releasePlayer()
         }
@@ -378,7 +407,24 @@ fun PlaybackPageContent(
                 true,
             )
         }
-    val skipWithLeftRight = remember { prefs.getBoolean("skipWithDpad", true) }
+    val skipWithLeftRight =
+        remember {
+            prefs.getBoolean(
+                context.getString(R.string.pref_key_playback_skip_left_right),
+                true,
+            )
+        }
+    // Enabled if the preference is enabled and playing a playlist of markers
+    val nextWithUpDown =
+        remember {
+            playlistPager != null &&
+                playlistPager.filter.dataType == DataType.MARKER &&
+                playlistPager.size > 1 &&
+                prefs.getBoolean(
+                    context.getString(R.string.pref_key_playback_next_up_down),
+                    false,
+                )
+        }
     val useVideoFilters =
         remember { prefs.getBoolean(context.getString(R.string.pref_key_video_filters), false) }
 
@@ -399,11 +445,13 @@ fun PlaybackPageContent(
 
     val retryMediaItemIds = remember { mutableSetOf<String>() }
 
+    val isMarkerPlaylist = playlistPager?.filter?.dataType == DataType.MARKER
+
     LaunchedEffect(Unit) {
         viewModel.init(server, markersEnabled, uiConfig.persistVideoFilters, useVideoFilters)
-        viewModel.changeScene(playlist[startIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
+        viewModel.changeScene(playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
         maybeMuteAudio(context, false, player)
-        player.setMediaItems(playlist, startIndex, startPosition)
+        player.setMediaItems(playlist, startIndex, savedStartPosition)
         if (playlistPager == null) {
             player.setupFinishedBehavior(context, navigationManager) {
                 controllerViewState.showControls()
@@ -417,11 +465,12 @@ fun PlaybackPageContent(
 //                            .mapNotNull { it.text }
 //                            .joinToString("\n")
 //                    Log.v(TAG, "onCues: \n$cues")
-                    subtitles = if (cueGroup.cues.isNotEmpty()) cueGroup.cues else null
+                    subtitles = cueGroup.cues.ifEmpty { null }
                 }
 
                 override fun onTracksChanged(tracks: Tracks) {
                     val trackInfo = checkForSupport(tracks)
+                    currentTracks = trackInfo
                     val audioTracks =
                         trackInfo
                             .filter { it.type == TrackType.AUDIO && it.supported == TrackSupportReason.HANDLED }
@@ -430,6 +479,24 @@ fun PlaybackPageContent(
                         audioTracks.map { it.labels.joinToString(", ").ifBlank { "Default" } }
                     captions =
                         trackInfo.filter { it.type == TrackType.TEXT && it.supported == TrackSupportReason.HANDLED }
+
+                    val captionsByDefault =
+                        prefs.getBoolean(
+                            context.getString(R.string.pref_key_captions_on_by_default),
+                            true,
+                        )
+                    if (captionsByDefault && captions.isNotEmpty() && mediaIndexSubtitlesActivated != currentPlaylistIndex) {
+                        // Captions will be empty when transitioning to new media item
+                        // Only want to activate subtitles once in case the user turns them off
+                        mediaIndexSubtitlesActivated = currentPlaylistIndex
+                        val languageCode = Locale.getDefault().language
+                        captions.indexOfFirstOrNull { it.format.language == languageCode }?.let {
+                            Log.v(TAG, "Found default subtitle track for $languageCode: $it")
+                            if (toggleSubtitles(player, null, it)) {
+                                subtitleIndex = it
+                            }
+                        }
+                    }
                 }
 
                 override fun onMediaItemTransition(
@@ -441,6 +508,7 @@ fun PlaybackPageContent(
                     }
                     subtitles = null
                     subtitleIndex = null
+                    currentPlaylistIndex = player.currentMediaItemIndex
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
@@ -461,10 +529,11 @@ fun PlaybackPageContent(
                                     val tag =
                                         (current.localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
                                     val id = tag.item.id
-                                    val isTranscoding =
+                                    val isTranscodingOrDirect =
                                         tag.streamDecision.transcodeDecision == TranscodeDecision.Transcode ||
-                                            tag.streamDecision.transcodeDecision is TranscodeDecision.ForcedTranscode
-                                    if (id !in retryMediaItemIds && !isTranscoding) {
+                                            tag.streamDecision.transcodeDecision is TranscodeDecision.ForcedTranscode ||
+                                            tag.streamDecision.transcodeDecision is TranscodeDecision.ForcedDirectPlay
+                                    if (id !in retryMediaItemIds && !isTranscodingOrDirect) {
                                         retryMediaItemIds.add(id)
                                         val newMediaItem = switchToTranscode(context, current)
                                         val newTag =
@@ -476,8 +545,8 @@ fun PlaybackPageContent(
                                         viewModel.changeScene(newTag)
                                         player.replaceMediaItem(currentPosition, newMediaItem)
                                         player.prepare()
-                                        if (startPosition != C.TIME_UNSET) {
-                                            player.seekTo(startPosition)
+                                        if (savedStartPosition != C.TIME_UNSET) {
+                                            player.seekTo(savedStartPosition)
                                         }
                                         player.play()
                                         false
@@ -521,7 +590,7 @@ fun PlaybackPageContent(
                     .getDefaultSharedPreferences(context)
                     .getBoolean(context.getString(R.string.pref_key_playback_track_activity), true)
             trackActivityListener =
-                if (appTracking && server.serverPreferences.trackActivity && markersEnabled) {
+                if (appTracking && server.serverPreferences.trackActivity && !isMarkerPlaylist) {
                     TrackActivityPlaybackListener(
                         context = context,
                         server = server,
@@ -566,6 +635,7 @@ fun PlaybackPageContent(
                 player = player,
                 controlsEnabled = controlsEnabled,
                 skipWithLeftRight = skipWithLeftRight,
+                nextWithUpDown = nextWithUpDown,
                 controllerViewState = controllerViewState,
                 updateSkipIndicator = updateSkipIndicator,
             )
@@ -618,48 +688,24 @@ fun PlaybackPageContent(
         }
 
         if (!controllerViewState.controlsVisible && subtitleIndex != null && skipIndicatorDuration == 0L) {
-            // TODO style
-            subtitles?.let { cues ->
-                val text = cues.mapNotNull { it.text }.joinToString("\n")
-                val bitmaps =
-                    cues.mapNotNull { cue ->
-                        cue.bitmap?.let { Pair(it, cue.bitmapHeight) }
+            AndroidView(
+                factory = {
+                    SubtitleView(context).apply {
+                        setUserDefaultStyle()
+                        setUserDefaultTextSize()
                     }
-                val background =
-                    if (text.isNotNullOrBlank()) {
-                        AppColors.TransparentBlack50
-                    } else {
-                        Color.Transparent
-                    }
-                Box(
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 48.dp)
-                            .background(background),
-                ) {
-                    if (text.isNotNullOrBlank()) {
-                        Text(
-                            text = text,
-                            color = Color.White,
-                            fontSize = 24.sp,
-                            maxLines = 2,
-                            overflow = TextOverflow.Clip,
-                            modifier = Modifier.padding(4.dp),
-                        )
-                    } else if (bitmaps.isNotEmpty()) {
-                        Column {
-                            bitmaps.forEach {
-                                Image(
-                                    bitmap = it.first.asImageBitmap(),
-                                    contentDescription = null,
-//                                    modifier = Modifier.height(100.dp),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+                },
+                update = {
+                    it.setCues(subtitles)
+                },
+                onReset = {
+                    it.setCues(null)
+                },
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Transparent),
+            )
         }
 
         currentScene?.let {
@@ -676,6 +722,7 @@ fun PlaybackPageContent(
                             .background(Color.Transparent),
                     uiConfig = uiConfig,
                     scene = currentScene.item,
+                    tracks = currentTracks,
                     captions = captions,
                     markers = markers,
                     streamDecision = currentScene.streamDecision,
@@ -730,9 +777,6 @@ fun PlaybackPageContent(
                             }
 
                             PlaybackAction.ShowSceneDetails -> {
-                                playingBeforeDialog = player.isPlaying
-                                player.pause()
-                                controllerViewState.hideControls()
                                 showSceneDetails = true
                             }
                         }
@@ -743,6 +787,7 @@ fun PlaybackPageContent(
                     previousEnabled = previousState.isEnabled,
                     nextEnabled = nextState.isEnabled,
                     seekEnabled = seekBarState.isEnabled,
+                    seekPreviewEnabled = !isMarkerPlaylist,
                     showDebugInfo = showDebugInfo,
                     spriteImageLoaded = spriteImageLoaded,
                     moreButtonOptions =
@@ -765,6 +810,14 @@ fun PlaybackPageContent(
                     audioOptions = audioOptions,
                     playbackSpeed = playbackSpeed,
                     scale = contentScale,
+                    playlistInfo =
+                        playlistPager?.let {
+                            PlaylistInfo(
+                                currentPlaylistIndex,
+                                it.size,
+                                player.mediaItemCount,
+                            )
+                        },
                 )
             }
         }
@@ -815,7 +868,12 @@ fun PlaybackPageContent(
             }
         }
         AnimatedVisibility(showSceneDetails && scene != null) {
-            scene?.let {
+            LaunchedEffect(Unit) {
+                playingBeforeDialog = player.isPlaying
+                player.pause()
+                controllerViewState.hideControls()
+            }
+            scene?.let { scene ->
                 Dialog(
                     onDismissRequest = {
                         showSceneDetails = false
@@ -831,10 +889,12 @@ fun PlaybackPageContent(
                                 .fillMaxSize()
                                 .background(MaterialTheme.colorScheme.background.copy(alpha = .75f)),
                         server = server,
-                        scene = it,
+                        scene = scene,
                         performers = performers,
                         uiConfig = uiConfig,
                         itemOnClick = itemOnClick,
+                        rating100 = rating100,
+                        onRatingChange = { viewModel.updateRating(scene.id, it) },
                     )
                 }
             }
@@ -896,6 +956,7 @@ class PlaybackKeyHandler(
     private val player: Player,
     private val controlsEnabled: Boolean,
     private val skipWithLeftRight: Boolean,
+    private val nextWithUpDown: Boolean,
     private val controllerViewState: ControllerViewState,
     private val updateSkipIndicator: (Long) -> Unit,
 ) {
@@ -913,6 +974,10 @@ class PlaybackKeyHandler(
                 } else if (skipWithLeftRight && it.key == Key.DirectionRight) {
                     player.seekForward()
                     updateSkipIndicator(player.seekForwardIncrement)
+                } else if (nextWithUpDown && it.key == Key.DirectionUp) {
+                    player.seekToPreviousMediaItem()
+                } else if (nextWithUpDown && it.key == Key.DirectionDown) {
+                    player.seekToNextMediaItem()
                 } else {
                     controllerViewState.showControls()
                 }
@@ -924,6 +989,7 @@ class PlaybackKeyHandler(
                 Key.MediaPlay -> {
                     Util.handlePlayButtonAction(player)
                 }
+
                 Key.MediaPause -> {
                     Util.handlePauseButtonAction(player)
                     controllerViewState.showControls()
@@ -950,6 +1016,8 @@ class PlaybackKeyHandler(
                 Key.MediaPrevious -> if (player.isCommandAvailable(Player.COMMAND_SEEK_TO_PREVIOUS)) player.seekToPrevious()
                 else -> result = false
             }
+        } else if (it.key == Key.Enter && !controllerViewState.controlsVisible) {
+            controllerViewState.showControls()
         } else if (it.key == Key.Back && controllerViewState.controlsVisible) {
             controllerViewState.hideControls()
         } else {
@@ -963,12 +1031,12 @@ class PlaybackKeyHandler(
 @OptIn(UnstableApi::class)
 fun toggleSubtitles(
     player: Player,
-    subtitleIndex: Int?,
+    currentActiveSubtitleIndex: Int?,
     index: Int,
 ): Boolean {
     val subtitleTracks =
         player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT && it.isSupported }
-    if (index !in subtitleTracks.indices || subtitleIndex != null && subtitleIndex == index) {
+    if (index !in subtitleTracks.indices || currentActiveSubtitleIndex != null && currentActiveSubtitleIndex == index) {
         Log.v(
             TAG,
             "Deactivating subtitles",

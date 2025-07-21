@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Build
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.fragment.FullMarkerData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.util.StashServer
@@ -12,6 +14,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -179,3 +182,21 @@ fun circNameId(circ: CircumisedEnum): Int =
         CircumisedEnum.UNCUT -> R.string.stashapp_circumcised_types_UNCUT
         CircumisedEnum.UNKNOWN__ -> R.string.stashapp_display_mode_unknown
     }
+
+val FullMarkerData.formatSeconds: String
+    get() =
+        if (end_seconds != null) {
+            seconds.toInt().seconds.toString() + " - " +
+                end_seconds.toInt().seconds.toString()
+        } else {
+            seconds.toInt().seconds.toString()
+        }
+
+val MarkerData.formatSeconds: String
+    get() =
+        if (end_seconds != null) {
+            seconds.toInt().seconds.toString() + " - " +
+                end_seconds.toInt().seconds.toString()
+        } else {
+            seconds.toInt().seconds.toString()
+        }

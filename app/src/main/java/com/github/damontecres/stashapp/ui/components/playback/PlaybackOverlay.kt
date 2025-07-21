@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,6 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.media3.common.Format
 import androidx.media3.common.util.UnstableApi
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -61,6 +63,8 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.StreamDecision
 import com.github.damontecres.stashapp.playback.TrackSupport
+import com.github.damontecres.stashapp.playback.TrackSupportReason
+import com.github.damontecres.stashapp.playback.TrackType
 import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.AppTheme
@@ -73,7 +77,6 @@ import com.github.damontecres.stashapp.ui.util.CoilPreviewTransformation
 import com.github.damontecres.stashapp.util.defaultCardHeight
 import com.github.damontecres.stashapp.util.defaultCardWidth
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.views.formatDate
 import com.github.damontecres.stashapp.views.models.CardUiSettings
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
@@ -128,6 +131,7 @@ class ControllerViewState internal constructor(
 fun PlaybackOverlay(
     uiConfig: ComposeUiConfig,
     scene: Scene,
+    tracks: List<TrackSupport>,
     captions: List<TrackSupport>,
     markers: List<BasicMarker>,
     streamDecision: StreamDecision?,
@@ -138,6 +142,7 @@ fun PlaybackOverlay(
     previousEnabled: Boolean,
     nextEnabled: Boolean,
     seekEnabled: Boolean,
+    seekPreviewEnabled: Boolean,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
     onSeekBarChange: (Float) -> Unit,
     showDebugInfo: Boolean,
@@ -148,6 +153,7 @@ fun PlaybackOverlay(
     audioOptions: List<String>,
     playbackSpeed: Float,
     scale: ContentScale,
+    playlistInfo: PlaylistInfo?,
     modifier: Modifier = Modifier,
     seekPreviewPlaceholder: Painter? = null,
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -164,23 +170,36 @@ fun PlaybackOverlay(
         modifier,
     ) {
         if (showDebugInfo && streamDecision != null) {
-            PlaybackDebugInfo(
-                scene = scene,
-                streamDecision = streamDecision,
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier =
                     Modifier
-                        .padding(8.dp)
-                        .background(AppColors.TransparentBlack50)
                         .align(Alignment.TopStart)
-                        // TODO the width isn't be used correctly
-                        .width(280.dp),
-            )
+                        .padding(8.dp),
+            ) {
+                PlaybackDebugInfo(
+                    scene = scene,
+                    streamDecision = streamDecision,
+                    playlistInfo = playlistInfo,
+                    modifier =
+                        Modifier
+                            .background(AppColors.TransparentBlack50)
+                            // TODO the width isn't be used correctly
+                            .width(248.dp),
+                )
+                PlaybackTrackInfo(
+                    trackSupport = tracks,
+                    modifier =
+                        Modifier
+                            .background(AppColors.TransparentBlack50),
+                )
+            }
         }
         val controlHeight = .4f
         val listState = rememberLazyListState()
         var height = 208.dp
         if (!uiConfig.showTitleDuringPlayback || scene.title.isNullOrBlank()) height -= 24.dp
-        if (!uiConfig.showTitleDuringPlayback || scene.date.isNullOrBlank()) height -= 24.dp
+        if (!uiConfig.showTitleDuringPlayback || scene.subtitle.isNullOrBlank()) height -= 24.dp
         if (markers.isEmpty()) height -= 24.dp
         LazyColumn(
             state = listState,
@@ -213,9 +232,9 @@ fun PlaybackOverlay(
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
-                        if (scene.date.isNotNullOrBlank()) {
+                        if (scene.subtitle.isNotNullOrBlank()) {
                             Text(
-                                text = formatDate(scene.date)!!,
+                                text = scene.subtitle,
                                 color = MaterialTheme.colorScheme.onBackground,
                                 style =
                                     MaterialTheme.typography.titleMedium.copy(
@@ -285,7 +304,7 @@ fun PlaybackOverlay(
                 }
             }
         }
-        AnimatedVisibility(seekBarFocused && seekProgress >= 0) {
+        AnimatedVisibility(seekPreviewEnabled && seekBarFocused && seekProgress >= 0) {
             LaunchedEffect(Unit) {
                 seekProgress = playerControls.currentPosition.toFloat() / playerControls.duration
             }
@@ -512,6 +531,7 @@ fun BasicMarkerCard(
     )
 }
 
+@UnstableApi
 @Preview(device = "spec:parent=tv_1080p", backgroundColor = 0xFF383535)
 @Composable
 private fun PlaybackOverlayPreview() {
@@ -544,7 +564,7 @@ private fun PlaybackOverlayPreview() {
                 Scene(
                     id = "id",
                     title = "The scene title",
-                    date = "2025-01-01",
+                    subtitle = "2025-01-01",
                     streamUrl = "",
                     screenshotUrl = "",
                     streams = mapOf(),
@@ -587,6 +607,7 @@ private fun PlaybackOverlayPreview() {
             showDebugInfo = true,
             showPlay = true,
             previousEnabled = true,
+            seekPreviewEnabled = true,
             nextEnabled = true,
             seekEnabled = true,
             spriteImageLoaded = false,
@@ -599,6 +620,28 @@ private fun PlaybackOverlayPreview() {
             audioOptions = listOf(),
             playbackSpeed = 1.0f,
             scale = ContentScale.Fit,
+            playlistInfo = PlaylistInfo(3, 45, 20),
+            tracks =
+                listOf(
+                    TrackSupport(
+                        "ID1",
+                        type = TrackType.VIDEO,
+                        supported = TrackSupportReason.HANDLED,
+                        selected = true,
+                        labels = listOf("Label1", "Label2"),
+                        codecs = "h264",
+                        format = Format.Builder().build(),
+                    ),
+                    TrackSupport(
+                        "ID1",
+                        type = TrackType.VIDEO,
+                        supported = TrackSupportReason.HANDLED,
+                        selected = false,
+                        labels = listOf("Label1", "Label2"),
+                        codecs = "h264",
+                        format = Format.Builder().build(),
+                    ),
+                ),
         )
     }
 }

@@ -126,6 +126,19 @@ data class StashServer(
             }
         }
 
+        fun addServer(
+            context: Context,
+            newServer: StashServer,
+        ) {
+            val manager = PreferenceManager.getDefaultSharedPreferences(context)
+            val newServerKey = SERVER_PREF_PREFIX + newServer.url
+            val newApiKeyKey = SERVER_APIKEY_PREF_PREFIX + newServer.url
+            manager.edit(true) {
+                putString(newServerKey, newServer.url)
+                putString(newApiKeyKey, newServer.apiKey)
+            }
+        }
+
         fun addAndSwitchServer(
             context: Context,
             newServer: StashServer,

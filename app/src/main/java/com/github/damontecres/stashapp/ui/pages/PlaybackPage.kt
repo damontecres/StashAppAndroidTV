@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -20,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
@@ -45,6 +47,7 @@ import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageConten
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -177,23 +180,47 @@ fun PlaylistPlaybackPage(
         playlistViewModel.setFilter(server, filterArgs, uiConfig.cardSettings.columns)
     }
     val pager by viewModel.pager.observeAsState()
-    var playlist by remember(pager) { mutableStateOf<List<MediaItem>>(listOf()) }
+//    var playlist by remember(pager) { mutableStateOf<List<MediaItem>>(listOf()) }
+    val playlist = remember(pager) { mutableStateListOf<MediaItem>() }
     val playlistPager by playlistViewModel.pager.observeAsState()
     LaunchedEffect(pager) {
-        playlist = pager?.let {
-            buildList {
-                for (i in 0..<(it.size).coerceAtMost(MAX_PLAYLIST_SIZE)) {
-                    it.getBlocking(i)?.let { item ->
-                        add(convertToMediaItem(context, filterArgs.dataType, clipDuration, item))
+        val items =
+            pager?.let {
+                buildList {
+                    for (i in 0..<(it.size).coerceAtMost(MAX_PLAYLIST_SIZE)) {
+                        it.getBlocking(i)?.let { item ->
+                            add(
+                                convertToMediaItem(
+                                    context,
+                                    filterArgs.dataType,
+                                    clipDuration,
+                                    item,
+                                ),
+                            )
+                        }
                     }
                 }
-            }
-        } ?: listOf()
+            } ?: listOf()
+        playlist.addAll(items)
     }
     if (playlist.isNotEmpty()) {
         val player =
             remember {
-                StashExoPlayer.getInstance(context, server).apply {
+                val skipParams =
+                    if (viewModel.dataType == DataType.MARKER) {
+                        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+                        val skipForward = prefs.getInt("skip_forward_time", 30).seconds
+                        val skipBack = prefs.getInt("skip_back_time", 10).seconds
+
+                        // Override the skip forward/back since many users will have default seeking values larger than the duration
+                        SkipParams.Values(
+                            (clipDuration / 4).coerceAtMost(skipForward).inWholeMilliseconds,
+                            (clipDuration / 4).coerceAtMost(skipBack).inWholeMilliseconds,
+                        )
+                    } else {
+                        SkipParams.Default
+                    }
+                StashExoPlayer.getInstance(context, server, skipParams).apply {
                     repeatMode = Player.REPEAT_MODE_OFF
                     playWhenReady = true
                 }
@@ -226,6 +253,7 @@ fun PlaylistPlaybackPage(
                                                     )
                                                 }
                                             }
+                                        playlist.addAll(newMediaItems)
                                         player.addMediaItems(newMediaItems)
                                     }
                                 }
@@ -297,7 +325,7 @@ private fun convertToMediaItem(
     } else {
         // Markers
         item as FullMarkerData
-        val scene = Scene.fromVideoSceneData(item.scene.videoSceneData)
+        val scene = Scene.fromMarkerData(item)
         val decision = getStreamDecision(context, scene, PlaybackMode.Choose)
         val mediaItem =
             buildMediaItem(context, decision, scene) {

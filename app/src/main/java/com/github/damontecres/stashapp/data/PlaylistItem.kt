@@ -4,8 +4,8 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import com.github.damontecres.stashapp.views.formatDate
+import com.github.damontecres.stashapp.views.formatSeconds
 
 /**
  * Represents an item in a playlist/queue
@@ -26,15 +26,15 @@ fun MarkerData.toPlayListItem(index: Int): PlaylistItem {
         }
     val details =
         buildList {
-            add(primary_tag.slimTagData.name)
+            if (title.isNotBlank()) add(primary_tag.slimTagData.name)
             addAll(tags.map { it.slimTagData.name })
         }.joinNotNullOrBlank(", ")
     return PlaylistItem(
         index,
-        title = "$name - ${seconds.toInt().toDuration(DurationUnit.SECONDS)}",
+        title = name,
         subtitle = scene.minimalSceneData.titleOrFilename,
-        details1 = details,
-        details2 = scene.minimalSceneData.date,
+        details1 = formatSeconds,
+        details2 = details,
         imageUrl = screenshot,
     )
 }
@@ -45,6 +45,6 @@ fun SlimSceneData.toPlayListItem(index: Int): PlaylistItem =
         title = titleOrFilename,
         subtitle = studio?.name,
         details1 = performers.map { it.name }.joinNotNullOrBlank(", "),
-        details2 = date,
+        details2 = formatDate(date),
         imageUrl = paths.screenshot,
     )

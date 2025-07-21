@@ -26,6 +26,7 @@ fun SimpleListItem(
     enabled: Boolean = true,
     selected: Boolean = false,
     leadingContent: (@Composable BoxScope.() -> Unit)? = null,
+    trailingContent: @Composable (() -> Unit)? = null,
 ) {
     ListItem(
         modifier = modifier,
@@ -56,6 +57,8 @@ fun SimpleListItem(
                     imageVector = Icons.Default.PlayArrow,
                     contentDescription = null,
                 )
+            } else {
+                trailingContent?.invoke()
             }
         },
         interactionSource = interactionSource,

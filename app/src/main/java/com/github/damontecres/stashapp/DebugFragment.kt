@@ -2,6 +2,8 @@ package com.github.damontecres.stashapp
 
 import android.graphics.Color
 import android.graphics.Typeface
+import android.media.MediaCodecList
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -14,8 +16,11 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
+import com.apollographql.apollo.api.Query
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.playback.CodecSupport
+import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -37,6 +42,7 @@ class DebugFragment : Fragment(R.layout.debug) {
         val prefTable = view.findViewById<TableLayout>(R.id.preferences_table)
         val serverPrefTable = view.findViewById<TableLayout>(R.id.server_prefs_table)
         val formatSupportedTable = view.findViewById<TableLayout>(R.id.supported_formats_table)
+        val codecsTable = view.findViewById<TableLayout>(R.id.codecs_table)
         val otherTable = view.findViewById<TableLayout>(R.id.other_table)
         val logTextView = view.findViewById<TextView>(R.id.logs)
 
@@ -75,6 +81,9 @@ class DebugFragment : Fragment(R.layout.debug) {
             ),
         )
         formatSupportedTable.isStretchAllColumns = true
+
+        populateCodecsTable(codecsTable)
+        codecsTable.isStretchAllColumns = true
 
         otherTable.addView(
             createRow("Build type", BuildConfig.BUILD_TYPE),
@@ -164,7 +173,7 @@ class DebugFragment : Fragment(R.layout.debug) {
     private fun testSavedFilters() {
         val table = requireView().findViewById<TableLayout>(R.id.debug_test_table)
         table.removeAllViews()
-        table.addView(createRow("Data Type", "ID", "Name", "Result"))
+        table.addView(createRow("Data Type", "ID", "Name", "Parsed", "Query"))
 
         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
             try {
@@ -174,26 +183,56 @@ class DebugFragment : Fragment(R.layout.debug) {
                 DataType.entries.forEach { dataType ->
                     val filters = queryEngine.getSavedFilters(dataType)
                     filters.forEach { filter ->
-                        try {
-                            filter.toFilterArgs(filterParser)
-                            table.addView(
-                                createRow(
-                                    dataType.name,
-                                    filter.id,
-                                    filter.name,
-                                    "Success",
-                                ),
-                            )
-                        } catch (ex: Exception) {
-                            Log.w(TAG, "Test saved filter failed: id=${filter.id}", ex)
-                            table.addView(
-                                createRow(
-                                    dataType.name,
-                                    filter.id,
-                                    filter.name,
-                                    ex.message?.ifBlank { ex.cause?.message },
-                                ),
-                            )
+                        val args =
+                            try {
+                                filter.toFilterArgs(filterParser)
+                            } catch (ex: Exception) {
+                                Log.w(TAG, "Test saved filter failed parsing: id=${filter.id}", ex)
+                                table.addView(
+                                    createRow(
+                                        dataType.name,
+                                        filter.id,
+                                        filter.name,
+                                        ex.message?.ifBlank { ex.cause?.message },
+                                        null,
+                                    ),
+                                )
+                                null
+                            }
+                        if (args != null) {
+                            try {
+                                val dataSupplier =
+                                    DataSupplierFactory(server.version).create<Query.Data, StashData, Query.Data>(
+                                        args,
+                                    )
+                                val countQuery = dataSupplier.createCountQuery(null)
+                                val count =
+                                    queryEngine.executeQuery(countQuery).data?.let {
+                                        dataSupplier.parseCountQuery(
+                                            it,
+                                        )
+                                    }
+                                table.addView(
+                                    createRow(
+                                        dataType.name,
+                                        filter.id,
+                                        filter.name,
+                                        "Success",
+                                        count?.toString(),
+                                    ),
+                                )
+                            } catch (ex: Exception) {
+                                Log.w(TAG, "Test saved filter failed query: id=${filter.id}", ex)
+                                table.addView(
+                                    createRow(
+                                        dataType.name,
+                                        filter.id,
+                                        filter.name,
+                                        ex.message?.ifBlank { ex.cause?.message },
+                                        "Error",
+                                    ),
+                                )
+                            }
                         }
                     }
                 }
@@ -254,6 +293,81 @@ class DebugFragment : Fragment(R.layout.debug) {
         }
 
         return row
+    }
+
+    private fun populateCodecsTable(codecsTable: TableLayout) {
+        val androidCodecs = MediaCodecList(MediaCodecList.REGULAR_CODECS)
+        val video = mutableListOf<TableRow>()
+        val audio = mutableListOf<TableRow>()
+        for (codecInfo in androidCodecs.codecInfos.sortedBy { it.name }) {
+            if (!codecInfo.isEncoder) {
+                try {
+                    codecInfo.supportedTypes.forEach { type ->
+                        val caps = codecInfo.getCapabilitiesForType(type)
+                        val videoCaps =
+                            caps.videoCapabilities?.let {
+                                arrayOf(
+                                    it.bitrateRange.toString(),
+                                    it.supportedFrameRates.toString(),
+                                    it.supportedWidths.toString(),
+                                    it.supportedHeights.toString(),
+                                )
+                            } ?: arrayOf("", "", "", "")
+                        val profiles =
+                            caps.profileLevels.joinToString("\n") {
+                                "profile=0x${it.profile.toString(16)}, level=0x${
+                                    it.level.toString(
+                                        16,
+                                    )
+                                }"
+                            }
+                        val isSoftware =
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                codecInfo.isSoftwareOnly
+                            } else {
+                                null
+                            }?.toString()
+                        val isHardware =
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                codecInfo.isHardwareAccelerated
+                            } else {
+                                null
+                            }?.toString()
+
+                        val row =
+                            createRow(
+                                codecInfo.name,
+                                type,
+                                isSoftware,
+                                isHardware,
+                                profiles,
+                                *videoCaps,
+                            )
+                        if (caps.videoCapabilities != null) {
+                            video.add(row)
+                        } else {
+                            audio.add(row)
+                        }
+                    }
+                } catch (_: Exception) {
+                }
+            }
+        }
+        codecsTable.addView(
+            createRow(
+                "Name",
+                "Type",
+                "SW",
+                "HW Acc",
+                "Profiles",
+                "Bit rates",
+                "Frame rates",
+                "Widths",
+                "Heights",
+            ),
+        )
+        audio.forEach(codecsTable::addView)
+        video.forEach(codecsTable::addView)
     }
 
     companion object {

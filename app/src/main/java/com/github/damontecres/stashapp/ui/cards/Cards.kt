@@ -249,6 +249,7 @@ fun RootCard(
     glow: CardGlow = CardDefaults.glow(),
     contentPadding: PaddingValues = PaddingValues(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    imagePadding: Dp = 0.dp,
 ) = RootCard(
     item,
     onClick,
@@ -273,6 +274,7 @@ fun RootCard(
     glow,
     contentPadding,
     interactionSource,
+    imagePadding,
 )
 
 /**
@@ -304,6 +306,7 @@ fun RootCard(
     glow: CardGlow = CardDefaults.glow(),
     contentPadding: PaddingValues = PaddingValues(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    imagePadding: Dp = 0.dp,
 ) {
     val context = LocalContext.current
     val videoDelay =
@@ -426,7 +429,7 @@ fun RootCard(
                                         .background(Color.Black),
                                 )
                             },
-                        modifier = Modifier,
+                        modifier = Modifier.padding(imagePadding),
                     )
                 }
             } else {
@@ -435,7 +438,7 @@ fun RootCard(
                     imageUrl = imageUrl,
                     defaultImageDrawableRes = defaultImageDrawableRes,
                     imageContent = imageContent,
-                    modifier = Modifier,
+                    modifier = Modifier.padding(imagePadding),
                 )
             }
             this@Card.AnimatedVisibility(
@@ -495,8 +498,7 @@ fun CardImage(
             modifier
                 .height(imageHeight)
 //                .fillMaxHeight()
-                .fillMaxWidth()
-                .padding(0.dp),
+                .fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
         if (imageUrl.isDefaultUrl && defaultImageDrawableRes != null) {
