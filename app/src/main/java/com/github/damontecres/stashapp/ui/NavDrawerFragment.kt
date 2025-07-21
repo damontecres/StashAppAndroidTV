@@ -82,7 +82,7 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.components.filter.CreateFilterScreen
-import com.github.damontecres.stashapp.ui.components.server.ManageServersContent
+import com.github.damontecres.stashapp.ui.components.server.ManageServers
 import com.github.damontecres.stashapp.ui.pages.ChooseThemePage
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.FilterPage
@@ -389,7 +389,7 @@ fun FragmentContent(
 //                    )
 
                 is Destination.ManageServers -> {
-                    ManageServersContent(
+                    ManageServers(
                         currentServer = server,
                         onSwitchServer = onSwitchServer,
                         modifier = Modifier.fillMaxSize(),
