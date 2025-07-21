@@ -82,6 +82,7 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.components.filter.CreateFilterScreen
+import com.github.damontecres.stashapp.ui.components.server.InitialSetup
 import com.github.damontecres.stashapp.ui.components.server.ManageServers
 import com.github.damontecres.stashapp.ui.pages.ChooseThemePage
 import com.github.damontecres.stashapp.ui.pages.DialogParams
@@ -189,6 +190,12 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                 }
                                 navController.navigate(cmd.destination)
                             }
+                        }
+                        if (server == null && serverViewModel.destination.value is Destination.Setup) {
+                            InitialSetup(
+                                onServerConfigure = { serverViewModel.switchServer(it) },
+                                modifier = Modifier.fillMaxSize(),
+                            )
                         }
                         server?.let { currentServer ->
                             Log.v(TAG, "currentServer=$currentServer")

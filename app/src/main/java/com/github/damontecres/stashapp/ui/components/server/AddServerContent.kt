@@ -1,13 +1,17 @@
 package com.github.damontecres.stashapp.ui.components.server
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
@@ -20,6 +24,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -28,7 +34,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.preference.PreferenceManager
 import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -46,7 +55,7 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.launch
 
-private const val TAG = "AddServerContent"
+private const val TAG = "AddServer"
 
 @Composable
 fun AddServer(
@@ -60,12 +69,28 @@ fun AddServer(
     var serverUrl by remember { mutableStateOf("") }
     var apiKey by remember { mutableStateOf<String?>(null) }
     var showApiKey by remember { mutableStateOf(false) }
-    val trustCerts = remember { getPreference(context, R.string.pref_key_trust_certs, false) }
+    var trustCerts by remember {
+        mutableStateOf(
+            getPreference(
+                context,
+                R.string.pref_key_trust_certs,
+                false,
+            ),
+        )
+    }
 
     val connectionState by viewModel.connectionState.observeAsState(ConnectionState.Inactive)
 
-    LaunchedEffect(serverUrl, apiKey) {
+    var showTrustDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(serverUrl, apiKey, trustCerts) {
         viewModel.testServer(serverUrl, apiKey, trustCerts)
+    }
+    LaunchedEffect(connectionState) {
+        showTrustDialog =
+            connectionState.let {
+                it is ConnectionState.Result && it.testResult is TestResult.SelfSignedCertRequired
+            }
     }
 
     val labelWidth = 64.dp
@@ -203,6 +228,17 @@ fun AddServer(
             }
         }
     }
+    AnimatedVisibility(showTrustDialog) {
+        AllowSelfSignedCertsDialog(
+            onDismissRequest = { showTrustDialog = false },
+            onEnableTrust = {
+                PreferenceManager.getDefaultSharedPreferences(context).edit(true) {
+                    putBoolean(context.getString(R.string.pref_key_trust_certs), true)
+                }
+                trustCerts = true
+            },
+        )
+    }
 }
 
 @Composable
@@ -288,14 +324,72 @@ fun StatusText(
     }
 }
 
+@Composable
+fun AllowSelfSignedCertsDialog(
+    onDismissRequest: () -> Unit,
+    onEnableTrust: () -> Unit,
+) {
+    val focusRequester = remember { FocusRequester() }
+    Dialog(
+        onDismissRequest = onDismissRequest,
+    ) {
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(16.dp),
+            modifier =
+                Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = RoundedCornerShape(16.dp),
+                    ),
+        ) {
+            item {
+                Text(
+                    text =
+                        "The server may be using a self-signed certificate. Do you want to trust self-signed certificates?\n\n" +
+                            "Note: if enabled, the app must be restarted/force stopped after completing setup!",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier,
+                )
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier =
+                        Modifier
+                            .padding(top = 16.dp)
+                            .fillMaxWidth(),
+                ) {
+                    Button(
+                        onClick = onDismissRequest,
+                        modifier = Modifier.focusRequester(focusRequester),
+                    ) {
+                        Text(
+                            text = "No, go back",
+                        )
+                    }
+                    Button(
+                        onClick = {
+                            onDismissRequest.invoke()
+                            onEnableTrust.invoke()
+                        },
+                        modifier = Modifier,
+                    ) {
+                        Text(
+                            text = "Yes",
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Preview
 @Composable
 private fun AddServerPreview() {
     AppTheme {
-        AddServer(
-            currentServerUrls = listOf(),
-            onSubmit = {},
-            modifier = Modifier,
+        AllowSelfSignedCertsDialog(
+            {},
+            {},
         )
     }
 }
