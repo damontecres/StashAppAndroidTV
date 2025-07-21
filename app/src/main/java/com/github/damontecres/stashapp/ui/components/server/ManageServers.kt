@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.server
 
+import android.view.Gravity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -32,11 +33,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItemDefaults
@@ -181,6 +184,9 @@ fun ManageServers(
             onDismissRequest = { showAddServer = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
         ) {
+            val dialogWindowProvider = LocalView.current.parent as? DialogWindowProvider
+            dialogWindowProvider?.window?.setGravity(Gravity.TOP)
+
             val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
             AddServer(
                 currentServerUrls = allServers.map { it.url },
