@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.cards
 
+import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -54,9 +55,10 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.PlayerSurface
-import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
+import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.preference.PreferenceManager
@@ -102,6 +104,7 @@ import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
 import com.github.damontecres.stashapp.util.CreateNew
 import com.github.damontecres.stashapp.util.asSlimeSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 import kotlinx.coroutines.delay
 import java.util.EnumMap
@@ -307,6 +310,8 @@ fun RootCard(
     contentPadding: PaddingValues = PaddingValues(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     imagePadding: Dp = 0.dp,
+    videoUrls: List<String> = listOfNotNullOrBlank(videoUrl),
+    videoUrlsAsImages: Boolean = false,
 ) {
     val context = LocalContext.current
     val videoDelay =
@@ -382,7 +387,7 @@ fun RootCard(
                     .fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
-            if (focusedAfterDelay && playVideoPreviews && videoUrl.isNotNullOrBlank()) {
+            if (focusedAfterDelay && playVideoPreviews && videoUrls.isNotEmpty()) {
                 val player =
                     LocalPlayerContext.current.player(
                         context,
@@ -390,15 +395,24 @@ fun RootCard(
                     )
                 LaunchedEffect(player) {
                     maybeMuteAudio(context, true, player)
-                    val mediaItem =
-                        MediaItem
-                            .Builder()
-                            .setUri(videoUrl.toUri())
-                            .setMimeType(MimeTypes.VIDEO_MP4)
-                            .build()
-
-                    player.setMediaItem(mediaItem, C.TIME_UNSET)
+                    Log.i("CARDS", "videoUrls=$videoUrls")
+                    val mediaItems =
+                        videoUrls.filter { it.isNotNullOrBlank() }.map {
+                            MediaItem
+                                .Builder()
+                                .apply {
+                                    setUri(it.toUri())
+                                    if (videoUrlsAsImages) {
+                                        setMimeType(MimeTypes.VIDEO_MP4)
+                                    } else {
+                                        setImageDurationMs(1000L)
+                                        setMimeType(MimeTypes.IMAGE_JPEG)
+                                    }
+                                }.build()
+                        }
+                    player.setMediaItems(mediaItems, 0, C.TIME_UNSET)
                     player.playWhenReady = true
+                    player.repeatMode = Player.REPEAT_MODE_ALL
                     player.prepare()
                 }
                 LifecycleStartEffect(Unit) {
@@ -413,20 +427,20 @@ fun RootCard(
 
                 PlayerSurface(
                     player = player,
-                    surfaceType = SURFACE_TYPE_TEXTURE_VIEW, // TODO more investigation needed for why this works
+                    surfaceType = SURFACE_TYPE_SURFACE_VIEW, // TODO more investigation needed for why this works
                     modifier = scaledModifier,
                 )
                 if (!focusedAfterDelay || presentationState.coverSurface) {
                     CardImage(
                         imageHeight = height,
-                        imageUrl = imageUrl,
+                        imageUrl = null, // imageUrl,
                         defaultImageDrawableRes = defaultImageDrawableRes,
                         imageContent =
                             imageContent ?: {
                                 Box(
                                     Modifier
                                         .matchParentSize()
-                                        .background(Color.Black),
+                                        .background(Color.Red),
                                 )
                             },
                         modifier = Modifier.padding(imagePadding),

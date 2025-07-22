@@ -1,20 +1,37 @@
 package com.github.damontecres.stashapp.ui.cards
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.ImageFilterType
+import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
+import com.github.damontecres.stashapp.util.PageFilterKey
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.concatIfNotBlank
+import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import java.util.EnumMap
 
@@ -36,11 +53,39 @@ fun GalleryCard(
     }
 
     val imageUrl = item?.paths?.cover
-    val videoUrl = item?.paths?.preview
+    var videoUrls by remember(item) { mutableStateOf(listOfNotNullOrBlank(item?.paths?.preview)) }
 
     val details = mutableListOf<String?>()
     details.add(item?.studio?.name)
     details.add(item?.date)
+
+    val interactionSource = remember { MutableInteractionSource() }
+    if (item != null && interactionSource.collectIsFocusedAsState().value) {
+        val server = LocalGlobalContext.current.server
+        LaunchedEffect(Unit) {
+            val findFilter =
+                (
+                    server.serverPreferences.getDefaultPageFilter(PageFilterKey.GALLERY_IMAGES).findFilter
+                        ?: StashFindFilter()
+                ).toFindFilterType(perPage = 100)
+            val queryEngine = QueryEngine(server)
+            val images =
+                queryEngine.findImages(
+                    findFilter = findFilter,
+                    imageFilter =
+                        ImageFilterType(
+                            galleries =
+                                Optional.present(
+                                    MultiCriterionInput(
+                                        value = Optional.present(listOf(item.id)),
+                                        modifier = CriterionModifier.INCLUDES,
+                                    ),
+                                ),
+                        ),
+                )
+            videoUrls = images.mapNotNull { it.paths.thumbnail }
+        }
+    }
 
     RootCard(
         item = item,
@@ -55,8 +100,8 @@ fun GalleryCard(
         imageHeight = GalleryPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,
         defaultImageDrawableRes = R.drawable.default_gallery,
-        videoUrl = videoUrl,
-        title = item?.name ?: "",
+        videoUrl = null,
+        title = AnnotatedString(item?.name ?: ""),
         subtitle = {
             Text(concatIfNotBlank(" - ", details))
         },
@@ -72,5 +117,8 @@ fun GalleryCard(
         imageOverlay = {
             ImageOverlay(uiConfig.ratingAsStars, rating100 = item?.rating100)
         },
+        interactionSource = interactionSource,
+        videoUrls = videoUrls,
+        videoUrlsAsImages = true,
     )
 }
