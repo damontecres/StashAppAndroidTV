@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.cards
 
-import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -23,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,10 +55,9 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.PlayerSurface
-import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
+import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.preference.PreferenceManager
@@ -104,7 +103,6 @@ import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
 import com.github.damontecres.stashapp.util.CreateNew
 import com.github.damontecres.stashapp.util.asSlimeSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 import kotlinx.coroutines.delay
 import java.util.EnumMap
@@ -310,8 +308,7 @@ fun RootCard(
     contentPadding: PaddingValues = PaddingValues(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     imagePadding: Dp = 0.dp,
-    videoUrls: List<String> = listOfNotNullOrBlank(videoUrl),
-    videoUrlsAsImages: Boolean = false,
+    extraImageUrls: List<String> = listOf(),
 ) {
     val context = LocalContext.current
     val videoDelay =
@@ -387,7 +384,7 @@ fun RootCard(
                     .fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
-            if (focusedAfterDelay && playVideoPreviews && videoUrls.isNotEmpty()) {
+            if (focusedAfterDelay && playVideoPreviews && videoUrl.isNotNullOrBlank()) {
                 val player =
                     LocalPlayerContext.current.player(
                         context,
@@ -395,24 +392,15 @@ fun RootCard(
                     )
                 LaunchedEffect(player) {
                     maybeMuteAudio(context, true, player)
-                    Log.i("CARDS", "videoUrls=$videoUrls")
-                    val mediaItems =
-                        videoUrls.filter { it.isNotNullOrBlank() }.map {
-                            MediaItem
-                                .Builder()
-                                .apply {
-                                    setUri(it.toUri())
-                                    if (videoUrlsAsImages) {
-                                        setMimeType(MimeTypes.VIDEO_MP4)
-                                    } else {
-                                        setImageDurationMs(1000L)
-                                        setMimeType(MimeTypes.IMAGE_JPEG)
-                                    }
-                                }.build()
-                        }
-                    player.setMediaItems(mediaItems, 0, C.TIME_UNSET)
+                    val mediaItem =
+                        MediaItem
+                            .Builder()
+                            .setUri(videoUrl.toUri())
+                            .setMimeType(MimeTypes.VIDEO_MP4)
+                            .build()
+
+                    player.setMediaItem(mediaItem, C.TIME_UNSET)
                     player.playWhenReady = true
-                    player.repeatMode = Player.REPEAT_MODE_ALL
                     player.prepare()
                 }
                 LifecycleStartEffect(Unit) {
@@ -427,31 +415,47 @@ fun RootCard(
 
                 PlayerSurface(
                     player = player,
-                    surfaceType = SURFACE_TYPE_SURFACE_VIEW, // TODO more investigation needed for why this works
+                    surfaceType = SURFACE_TYPE_TEXTURE_VIEW, // TODO more investigation needed for why this works
                     modifier = scaledModifier,
                 )
                 if (!focusedAfterDelay || presentationState.coverSurface) {
                     CardImage(
                         imageHeight = height,
-                        imageUrl = null, // imageUrl,
+                        imageUrl = imageUrl,
                         defaultImageDrawableRes = defaultImageDrawableRes,
                         imageContent =
                             imageContent ?: {
                                 Box(
                                     Modifier
                                         .matchParentSize()
-                                        .background(Color.Red),
+                                        .background(Color.Black),
                                 )
                             },
                         modifier = Modifier.padding(imagePadding),
                     )
                 }
             } else {
+                var extraImageUrl by remember { mutableStateOf(if (extraImageUrls.isNotEmpty()) extraImageUrls[0] else imageUrl) }
+                if (focusedAfterDelay && extraImageUrls.isNotEmpty()) {
+                    LaunchedEffect(Unit) {
+                        var idx = 0
+                        while (true) {
+                            delay(1000L)
+                            idx++
+                            if (idx >= extraImageUrls.size) idx = 0
+                            extraImageUrl = extraImageUrls[idx]
+                        }
+                    }
+                    DisposableEffect(Unit) {
+                        onDispose { extraImageUrl = imageUrl }
+                    }
+                }
                 CardImage(
                     imageHeight = height,
-                    imageUrl = imageUrl,
+                    imageUrl = extraImageUrl,
                     defaultImageDrawableRes = defaultImageDrawableRes,
                     imageContent = imageContent,
+                    crossFade = false,
                     modifier = Modifier.padding(imagePadding),
                 )
             }
@@ -506,6 +510,7 @@ fun CardImage(
     @DrawableRes defaultImageDrawableRes: Int?,
     imageContent: @Composable (BoxScope.() -> Unit)?,
     modifier: Modifier = Modifier,
+    crossFade: Boolean = true,
 ) {
     Box(
         modifier =
@@ -527,7 +532,7 @@ fun CardImage(
                     ImageRequest
                         .Builder(LocalContext.current)
                         .data(imageUrl)
-                        .crossfade(true)
+                        .crossfade(crossFade)
                         .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,

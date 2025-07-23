@@ -31,7 +31,6 @@ import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.concatIfNotBlank
-import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import java.util.EnumMap
 
@@ -53,7 +52,7 @@ fun GalleryCard(
     }
 
     val imageUrl = item?.paths?.cover
-    var videoUrls by remember(item) { mutableStateOf(listOfNotNullOrBlank(item?.paths?.preview)) }
+    var extraImageUrls by remember(item) { mutableStateOf<List<String>>(listOf()) }
 
     val details = mutableListOf<String?>()
     details.add(item?.studio?.name)
@@ -66,7 +65,7 @@ fun GalleryCard(
             val findFilter =
                 (
                     server.serverPreferences.getDefaultPageFilter(PageFilterKey.GALLERY_IMAGES).findFilter
-                        ?: StashFindFilter()
+                        ?: StashFindFilter(sortAndDirection = DataType.IMAGE.defaultSort)
                 ).toFindFilterType(perPage = 100)
             val queryEngine = QueryEngine(server)
             val images =
@@ -78,12 +77,12 @@ fun GalleryCard(
                                 Optional.present(
                                     MultiCriterionInput(
                                         value = Optional.present(listOf(item.id)),
-                                        modifier = CriterionModifier.INCLUDES,
+                                        modifier = CriterionModifier.INCLUDES_ALL,
                                     ),
                                 ),
                         ),
                 )
-            videoUrls = images.mapNotNull { it.paths.thumbnail }
+            extraImageUrls = images.mapNotNull { it.paths.thumbnail }
         }
     }
 
@@ -118,7 +117,6 @@ fun GalleryCard(
             ImageOverlay(uiConfig.ratingAsStars, rating100 = item?.rating100)
         },
         interactionSource = interactionSource,
-        videoUrls = videoUrls,
-        videoUrlsAsImages = true,
+        extraImageUrls = extraImageUrls,
     )
 }
