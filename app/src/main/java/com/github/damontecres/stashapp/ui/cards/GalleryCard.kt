@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.cards
 
+import android.util.Log
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.padding
@@ -34,6 +35,8 @@ import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.name
 import java.util.EnumMap
 
+private const val TAG = "GalleryCard"
+
 @Composable
 fun GalleryCard(
     uiConfig: ComposeUiConfig,
@@ -62,27 +65,31 @@ fun GalleryCard(
     if (item != null && interactionSource.collectIsFocusedAsState().value) {
         val server = LocalGlobalContext.current.server
         LaunchedEffect(Unit) {
-            val findFilter =
-                (
-                    server.serverPreferences.getDefaultPageFilter(PageFilterKey.GALLERY_IMAGES).findFilter
-                        ?: StashFindFilter(sortAndDirection = DataType.IMAGE.defaultSort)
-                ).toFindFilterType(perPage = 120)
-            val queryEngine = QueryEngine(server)
-            val images =
-                queryEngine.findSlimImages(
-                    findFilter = findFilter,
-                    imageFilter =
-                        ImageFilterType(
-                            galleries =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(item.id)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
+            try {
+                val findFilter =
+                    (
+                        server.serverPreferences.getDefaultPageFilter(PageFilterKey.GALLERY_IMAGES).findFilter
+                            ?: StashFindFilter(sortAndDirection = DataType.IMAGE.defaultSort)
+                    ).toFindFilterType(perPage = 120)
+                val queryEngine = QueryEngine(server)
+                val images =
+                    queryEngine.findSlimImages(
+                        findFilter = findFilter,
+                        imageFilter =
+                            ImageFilterType(
+                                galleries =
+                                    Optional.present(
+                                        MultiCriterionInput(
+                                            value = Optional.present(listOf(item.id)),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                        ),
                                     ),
-                                ),
-                        ),
-                )
-            extraImageUrls = images.mapNotNull { it.paths.thumbnail }
+                            ),
+                    )
+                extraImageUrls = images.mapNotNull { it.paths.thumbnail }
+            } catch (ex: Exception) {
+                Log.e(TAG, "Exception while fetching gallery (${item.id}) images", ex)
+            }
         }
     }
 
