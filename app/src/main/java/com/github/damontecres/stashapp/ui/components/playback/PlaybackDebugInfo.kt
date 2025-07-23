@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -64,6 +65,7 @@ fun PlaybackDebugInfo(
                 row,
                 keyWeight = 1f,
                 valueWeight = 1f,
+                textStyle = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onBackground),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -77,6 +79,8 @@ fun PlaybackTrackInfo(
 ) {
     val selectedWeight = .5f
     val weights = listOf(.25f, .4f, .5f, 1f, 1f)
+    val textStyle =
+        MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onBackground)
 
     LazyColumn(
         modifier = modifier,
@@ -100,8 +104,7 @@ fun PlaybackTrackInfo(
                 ) {
                     Text(
                         text = "Selected",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        style = textStyle,
                     )
                 }
                 texts.forEachIndexed { index, text ->
@@ -111,8 +114,7 @@ fun PlaybackTrackInfo(
                     ) {
                         Text(
                             text = text,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
+                            style = textStyle,
                         )
                     }
                 }
@@ -140,12 +142,12 @@ fun PlaybackTrackInfo(
                             imageVector = Icons.Default.Check,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(12.dp),
                         )
                     } else {
                         Text(
                             text = "-",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
+                            style = textStyle,
                         )
                     }
                 }
@@ -156,8 +158,7 @@ fun PlaybackTrackInfo(
                     ) {
                         Text(
                             text = text,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
+                            style = textStyle,
                         )
                     }
                 }
