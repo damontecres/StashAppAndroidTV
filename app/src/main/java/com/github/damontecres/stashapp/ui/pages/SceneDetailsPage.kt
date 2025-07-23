@@ -49,6 +49,7 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MinimalSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.SlimImageData
 import com.github.damontecres.stashapp.api.fragment.SlimPerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimTagData
@@ -164,7 +165,7 @@ fun SceneDetailsPage(
                         is MarkerData -> viewModel.addMarker(item)
 
                         is FullMarkerData -> throw UnsupportedOperationException()
-                        is ImageData, is ExtraImageData -> throw UnsupportedOperationException()
+                        is ImageData, is ExtraImageData, is SlimImageData -> throw UnsupportedOperationException()
                         is SlimSceneData, is FullSceneData, is VideoSceneData, is MinimalSceneData -> throw UnsupportedOperationException()
                     }
                 },
@@ -177,7 +178,7 @@ fun SceneDetailsPage(
                         is StudioData -> viewModel.removeStudio()
                         is MarkerData, is FullMarkerData -> viewModel.removeMarker(item.id)
 
-                        is ImageData, is ExtraImageData -> throw UnsupportedOperationException()
+                        is ImageData, is ExtraImageData, is SlimImageData -> throw UnsupportedOperationException()
                         is SlimSceneData, is FullSceneData, is VideoSceneData, is MinimalSceneData -> throw UnsupportedOperationException()
                     }
                 },

@@ -6,6 +6,14 @@ query FindImages($filter: FindFilterType, $image_filter: ImageFilterType, $ids: 
   }
 }
 
+query FindSlimImages($filter: FindFilterType, $image_filter: ImageFilterType, $ids: [ID!]) {
+  findImages(filter: $filter, image_filter: $image_filter, ids: $ids) {
+    images {
+      ...SlimImageData
+    }
+  }
+}
+
 query CountImages($filter: FindFilterType, $image_filter: ImageFilterType) {
   findImages(filter: $filter, image_filter: $image_filter) {
     count
@@ -89,5 +97,14 @@ fragment ExtraImageData on Image {
   }
   studio {
     ...StudioData
+  }
+}
+
+fragment SlimImageData on Image {
+  id
+  paths {
+    thumbnail
+    preview
+    image
   }
 }

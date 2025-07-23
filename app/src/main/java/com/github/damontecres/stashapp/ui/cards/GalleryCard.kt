@@ -66,10 +66,10 @@ fun GalleryCard(
                 (
                     server.serverPreferences.getDefaultPageFilter(PageFilterKey.GALLERY_IMAGES).findFilter
                         ?: StashFindFilter(sortAndDirection = DataType.IMAGE.defaultSort)
-                ).toFindFilterType(perPage = 100)
+                ).toFindFilterType(perPage = 120)
             val queryEngine = QueryEngine(server)
             val images =
-                queryEngine.findImages(
+                queryEngine.findSlimImages(
                     findFilter = findFilter,
                     imageFilter =
                         ImageFilterType(
