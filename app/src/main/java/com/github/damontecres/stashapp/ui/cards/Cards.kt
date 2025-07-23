@@ -440,7 +440,7 @@ fun RootCard(
                     LaunchedEffect(Unit) {
                         var idx = 0
                         while (true) {
-                            delay(1000L)
+                            delay(2000L)
                             idx++
                             if (idx >= extraImageUrls.size) idx = 0
                             extraImageUrl = extraImageUrls[idx]
