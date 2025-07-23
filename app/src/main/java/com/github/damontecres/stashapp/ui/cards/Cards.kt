@@ -435,7 +435,9 @@ fun RootCard(
                     )
                 }
             } else {
-                var extraImageUrl by remember { mutableStateOf(if (extraImageUrls.isNotEmpty()) extraImageUrls[0] else imageUrl) }
+                var extraImageUrl by remember(imageUrl, extraImageUrls) {
+                    mutableStateOf(if (extraImageUrls.isNotEmpty()) extraImageUrls[0] else imageUrl)
+                }
                 if (focusedAfterDelay && extraImageUrls.isNotEmpty()) {
                     LaunchedEffect(Unit) {
                         var idx = 0
