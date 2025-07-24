@@ -151,7 +151,7 @@ class HierarchicalMultiCriterionFragment(
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val subValuesAction = findActionById(INCLUDE_SUB_VALUES)
+            val subValuesAction = findActionById(INCLUDE_SUB_VALUES)!!
             curVal =
                 if (subValuesAction.isChecked) {
                     curVal.copy(depth = Optional.present(-1))
@@ -169,7 +169,7 @@ class HierarchicalMultiCriterionFragment(
         items: List<String>,
         include: Boolean,
     ) {
-        val action = findActionById(if (include) INCLUDE_LIST else EXCLUDE_LIST)
+        val action = findActionById(if (include) INCLUDE_LIST else EXCLUDE_LIST)!!
         action.subActions = createItemList(items, include)
         action.description = "${items.size} ${getString(dataType.pluralStringId)}"
         notifyActionChanged(findActionPositionById(if (include) INCLUDE_LIST else EXCLUDE_LIST))
@@ -180,7 +180,7 @@ class HierarchicalMultiCriterionFragment(
             // Update the modifier
             val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
             curVal = curVal.copy(modifier = newModifier)
-            findActionById(MODIFIER).description = newModifier.getString(requireContext())
+            findActionById(MODIFIER)!!.description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
         } else if (action.id >= EXCLUDE_OFFSET) {
             // Item was clicked, so remove it

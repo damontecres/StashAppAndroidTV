@@ -85,12 +85,12 @@ class ResolutionPickerFragment(
         if (action.id >= MODIFIER_OFFSET) {
             val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
             curVal = curVal.copy(modifier = newModifier)
-            findActionById(MODIFIER).description = newModifier.getString(requireContext())
+            findActionById(MODIFIER)!!.description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
         } else if (action.id >= RESOLUTION_OFFSET) {
             val newResolution = ResolutionEnum.entries[(action.id - RESOLUTION_OFFSET).toInt()]
             curVal = curVal.copy(value = newResolution)
-            findActionById(RESOLUTION).description = resolutionName(newResolution)
+            findActionById(RESOLUTION)!!.description = resolutionName(newResolution)
             notifyActionChanged(findActionPositionById(RESOLUTION))
         }
         return true

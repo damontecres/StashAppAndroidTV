@@ -14,6 +14,6 @@ class NullPresenterSelector(
         if (item == null) {
             nullPresenter
         } else {
-            presenterSelector.getPresenter(item)
+            presenterSelector.getPresenter(item)!!
         }
 }

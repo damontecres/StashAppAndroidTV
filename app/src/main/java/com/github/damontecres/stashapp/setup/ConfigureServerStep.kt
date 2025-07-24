@@ -79,7 +79,7 @@ class ConfigureServerStep : SetupGuidedStepSupportFragment() {
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
-        val guidedActionsServerApiKey = findActionById(SetupFragment.ACTION_SERVER_API_KEY)
+        val guidedActionsServerApiKey = findActionById(SetupFragment.ACTION_SERVER_API_KEY)!!
         if (action.id == SetupFragment.ACTION_SERVER_URL) {
             guidedActionsServerApiKey.editDescription = ""
             guidedActionsServerApiKey.description = "API key not set"
@@ -95,8 +95,9 @@ class ConfigureServerStep : SetupGuidedStepSupportFragment() {
             notifyActionChanged(findActionPositionById(action.id))
         }
 
-        val serverUrl = findActionById(SetupFragment.ACTION_SERVER_URL).description?.toString()
-        val apiKey = findActionById(SetupFragment.ACTION_SERVER_API_KEY).editDescription?.toString()
+        val serverUrl = findActionById(SetupFragment.ACTION_SERVER_URL)!!.description?.toString()
+        val apiKey =
+            findActionById(SetupFragment.ACTION_SERVER_API_KEY)!!.editDescription?.toString()
 
         if (serverUrl.isNotNullOrBlank()) {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
@@ -132,9 +133,9 @@ class ConfigureServerStep : SetupGuidedStepSupportFragment() {
     }
 
     private fun testAndSubmit() {
-        val serverUrl = findActionById(SetupFragment.ACTION_SERVER_URL).description?.toString()
+        val serverUrl = findActionById(SetupFragment.ACTION_SERVER_URL)!!.description?.toString()
         val apiKey =
-            findActionById(SetupFragment.ACTION_SERVER_API_KEY).editDescription?.toString()
+            findActionById(SetupFragment.ACTION_SERVER_API_KEY)!!.editDescription?.toString()
         if (serverUrl.isNotNullOrBlank()) {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val trustCerts =

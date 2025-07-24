@@ -67,10 +67,10 @@ class ReadOnlyPinConfigFragment : GuidedStepSupportFragment() {
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
-        val okAction = findActionById(GuidedAction.ACTION_ID_OK)
+        val okAction = findActionById(GuidedAction.ACTION_ID_OK)!!
         if (action.id == ACTION_PIN) {
             if (action.editDescription.isNotNullOrBlank()) {
-                val confirmAction = findActionById(ACTION_CONFIRM_PIN)
+                val confirmAction = findActionById(ACTION_CONFIRM_PIN)!!
                 confirmAction.isEnabled = true
                 confirmAction.isFocusable = true
                 notifyActionChanged(findActionPositionById(ACTION_CONFIRM_PIN))
@@ -78,7 +78,8 @@ class ReadOnlyPinConfigFragment : GuidedStepSupportFragment() {
             }
         } else if (action.id == ACTION_CONFIRM_PIN) {
             if (action.editDescription.isNotNullOrBlank()) {
-                val pinCode = findActionById(ACTION_PIN).editDescription.toString().ifBlank { null }
+                val pinCode =
+                    findActionById(ACTION_PIN)!!.editDescription?.toString()?.ifBlank { null }
                 val confirmPin = action.editDescription.toString().ifBlank { null }
 
                 if (pinCode == null || pinCode != confirmPin) {
@@ -100,9 +101,9 @@ class ReadOnlyPinConfigFragment : GuidedStepSupportFragment() {
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
-            val pin = findActionById(ACTION_PIN).editDescription.toString().ifBlank { null }
+            val pin = findActionById(ACTION_PIN)!!.editDescription?.toString()?.ifBlank { null }
             val confirmPin =
-                findActionById(ACTION_CONFIRM_PIN).editDescription.toString().ifBlank { null }
+                findActionById(ACTION_CONFIRM_PIN)!!.editDescription?.toString()?.ifBlank { null }
             if (pin == confirmPin && pin != null) {
                 PreferenceManager.getDefaultSharedPreferences(requireContext()).edit(true) {
                     putString(getString(R.string.pref_key_read_only_mode_pin), pin)

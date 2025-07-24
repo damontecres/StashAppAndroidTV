@@ -55,7 +55,8 @@ class SettingsPinEntryFragment : GuidedStepSupportFragment() {
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
             val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            val enteredPIN = findActionById(ACTION_PIN).editDescription.toString().ifBlank { null }
+            val enteredPIN =
+                findActionById(ACTION_PIN)!!.editDescription?.toString()?.ifBlank { null }
             val pin = preferences.getString(getString(R.string.pref_key_read_only_mode_pin), null)
             if (enteredPIN != null && pin == enteredPIN) {
                 finishGuidedStepSupportFragments()

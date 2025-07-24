@@ -64,10 +64,10 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
         viewModel.resultCount.observe(viewLifecycleOwner) { count ->
             val countStr = formatNumber(count, viewModel.abbreviateCounters)
             if (count >= 0) {
-                findButtonActionById(SUBMIT).description = "$countStr results"
+                findButtonActionById(SUBMIT)!!.description = "$countStr results"
                 notifyButtonActionChanged(findButtonActionPositionById(SUBMIT))
             } else {
-                findButtonActionById(SUBMIT).description = "Querying..."
+                findButtonActionById(SUBMIT)!!.description = "Querying..."
                 notifyButtonActionChanged(findButtonActionPositionById(SUBMIT))
             }
         }
