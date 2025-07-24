@@ -131,11 +131,6 @@
             app:defaultValue="@string/transcode_options_disabled"
             app:entries="@array/transcode_options"
             app:entryValues="@array/transcode_options"/>
-        <SwitchPreference
-            app:key="@string/pref_key_playback_tunneling"
-            app:title="Use tunneled video playback"
-            app:summary="Enabling may improve 4K &amp; high FPS playback"
-            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Scene Video Filters">
