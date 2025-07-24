@@ -115,12 +115,7 @@ class StashExoPlayer private constructor() {
             trackSelector.parameters =
                 trackSelector
                     .buildUponParameters()
-                    .setTunnelingEnabled(
-                        preferences.getBoolean(
-                            context.getString(R.string.pref_key_playback_tunneling),
-                            true,
-                        ),
-                    ).setAudioOffloadPreferences(
+                    .setAudioOffloadPreferences(
                         TrackSelectionParameters.AudioOffloadPreferences
                             .Builder()
                             .setAudioOffloadMode(TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED)
