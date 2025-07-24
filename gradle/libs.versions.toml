@@ -18,7 +18,6 @@ desugar_jdk_libs = "2.1.5"
 markwon-core = "4.6.2"
 core-ktx = "1.16.0"
 glide = "4.16.0"
-glide-compose = "1.0.0-beta01"
 junit = "4.13.2"
 kotlin = "2.2.0"
 kotlinx-coroutines-android = "1.10.2"
@@ -118,7 +117,6 @@ androidx-tv-foundation = { module = "androidx.tv:tv-foundation", version.ref = "
 androidx-tv-material = { module = "androidx.tv:tv-material", version.ref = "tv-material" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 androidx-ui-viewbinding = { module = "androidx.compose.ui:ui-viewbinding", version.ref = "compose-runtime" }
-glide-compose = { module = "com.github.bumptech.glide:compose", version.ref = "glide-compose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "android-application" }
