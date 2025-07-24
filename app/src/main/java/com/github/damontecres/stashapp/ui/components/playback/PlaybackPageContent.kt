@@ -62,6 +62,7 @@ import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.SubtitleView
 import androidx.media3.ui.compose.PlayerSurface
@@ -575,6 +576,34 @@ fun PlaybackPageContent(
                                 Toast.LENGTH_LONG,
                             ).show()
                     }
+                }
+            },
+        )
+
+        StashExoPlayer.addListener(
+            object : AnalyticsListener {
+                override fun onAudioDecoderInitialized(
+                    eventTime: AnalyticsListener.EventTime,
+                    decoderName: String,
+                    initializedTimestampMs: Long,
+                    initializationDurationMs: Long,
+                ) {
+                    Log.v(
+                        TAG,
+                        "onAudioDecoderInitialized (id=${currentScene.item.id}): $decoderName",
+                    )
+                }
+
+                override fun onVideoDecoderInitialized(
+                    eventTime: AnalyticsListener.EventTime,
+                    decoderName: String,
+                    initializedTimestampMs: Long,
+                    initializationDurationMs: Long,
+                ) {
+                    Log.v(
+                        TAG,
+                        "onVideoDecoderInitialized (id=${currentScene.item.id}): $decoderName",
+                    )
                 }
             },
         )

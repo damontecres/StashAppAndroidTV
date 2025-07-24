@@ -198,4 +198,28 @@
     </string-array>
     <string name="transcode_options_disabled" translatable="false">Disabled</string>
 
+
+    <string-array name="default_prefer_software" translatable="false"></string-array>
+
+    <string-array name="prefer_software_keys" translatable="false">
+        <item>av1</item>
+        <item>h263</item>
+        <item>h264</item>
+        <item>hevc</item>
+        <item>mpeg2video</item>
+        <item>vp8</item>
+        <item>vp9</item>
+    </string-array>
+
+    <!-- This should be mimetypes, see android.media.MediaFormat -->
+    <string-array name="prefer_software_values" translatable="false">
+        <item>video/av01</item>
+        <item>video/3gpp</item>
+        <item>video/avc</item>
+        <item>video/hevc</item>
+        <item>video/mpeg2</item>
+        <item>video/x-vnd.on2.vp8</item>
+        <item>video/x-vnd.on2.vp9</item>
+    </string-array>
+
 </resources>

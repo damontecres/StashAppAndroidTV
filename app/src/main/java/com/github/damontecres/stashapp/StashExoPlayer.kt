@@ -10,10 +10,12 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.util.EventLogger
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.playback.StashMediaCodecSelector
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.StashClient
@@ -29,6 +31,7 @@ class StashExoPlayer private constructor() {
         private const val TAG = "StashExoPlayer"
 
         private val listeners: MutableList<Player.Listener> = mutableListOf()
+        private val analyticsListeners: MutableList<AnalyticsListener> = mutableListOf()
 
         @Volatile
         private var instance: ExoPlayer? = null // Volatile modifier is necessary
@@ -146,7 +149,15 @@ class StashExoPlayer private constructor() {
                 ).setRenderersFactory(
                     DefaultRenderersFactory(context)
                         .setEnableDecoderFallback(true)
-                        .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON),
+                        .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+                        .setMediaCodecSelector(
+                            StashMediaCodecSelector(
+                                preferences.getStringSet(
+                                    context.getString(R.string.pref_key_playback_prefer_software),
+                                    null,
+                                ) ?: setOf(),
+                            ),
+                        ),
                 ).setSeekBackIncrementMs(skipBack)
                 .setSeekForwardIncrementMs(skipForward)
                 .setTrackSelector(trackSelector)
@@ -194,12 +205,29 @@ class StashExoPlayer private constructor() {
             }
         }
 
+        fun addListener(listener: AnalyticsListener) {
+            if (instance == null) {
+                Log.w(TAG, "Cannot add listener to null instance: $listener")
+            } else if (analyticsListeners.contains(listener)) {
+                Log.w(TAG, "AnalyticsListener already added: $listener")
+            } else {
+                Log.v(TAG, "Added AnalyticsListener: $listener")
+                analyticsListeners.add(listener)
+                instance?.addAnalyticsListener(listener)
+            }
+        }
+
         fun removeListeners() {
-            Log.v(TAG, "Removing ${listeners.size} listeners")
+            Log.v(TAG, "Removing ${listeners.size}/${analyticsListeners.size} listeners")
             listeners.forEach {
                 instance?.removeListener(it)
             }
             listeners.clear()
+
+            analyticsListeners.forEach {
+                instance?.removeAnalyticsListener(it)
+            }
+            analyticsListeners.clear()
         }
 
         fun removeListener(listener: Player.Listener) {
