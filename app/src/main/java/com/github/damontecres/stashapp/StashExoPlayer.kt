@@ -4,12 +4,14 @@ import android.content.Context
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.util.EventLogger
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.util.Constants
@@ -98,24 +100,27 @@ class StashExoPlayer private constructor() {
                     else -> throw IllegalArgumentException("Unknown HTTP client: $httpClientChoice")
                 }
             Log.d(TAG, "createInstance")
+            val preferences = PreferenceManager.getDefaultSharedPreferences(context)
             val skipForward =
                 when (skipParams) {
-                    is SkipParams.Default ->
-                        PreferenceManager
-                            .getDefaultSharedPreferences(context)
-                            .getInt("skip_forward_time", 30) * 1000L
-
+                    is SkipParams.Default -> preferences.getInt("skip_forward_time", 30) * 1000L
                     is SkipParams.Values -> skipParams.skipForward
                 }
             val skipBack =
                 when (skipParams) {
-                    is SkipParams.Default ->
-                        PreferenceManager
-                            .getDefaultSharedPreferences(context)
-                            .getInt("skip_back_time", 10) * 1000L
-
+                    is SkipParams.Default -> preferences.getInt("skip_back_time", 10) * 1000L
                     is SkipParams.Values -> skipParams.skipBack
                 }
+            val trackSelector = DefaultTrackSelector(context)
+            trackSelector.parameters =
+                trackSelector
+                    .buildUponParameters()
+                    .setAudioOffloadPreferences(
+                        TrackSelectionParameters.AudioOffloadPreferences
+                            .Builder()
+                            .setAudioOffloadMode(TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED)
+                            .build(),
+                    ).build()
             return ExoPlayer
                 .Builder(context)
 //                .setLoadControl(
@@ -139,6 +144,7 @@ class StashExoPlayer private constructor() {
                         .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON),
                 ).setSeekBackIncrementMs(skipBack)
                 .setSeekForwardIncrementMs(skipForward)
+                .setTrackSelector(trackSelector)
                 .build()
                 .also {
                     if (getPreference(

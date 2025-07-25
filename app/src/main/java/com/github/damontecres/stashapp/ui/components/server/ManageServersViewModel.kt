@@ -25,26 +25,30 @@ class ManageServersViewModel : ViewModel() {
         }
     }
 
-    private suspend fun testServer(server: StashServer): ServerTestResult {
-        val result =
-            testStashConnection(
-                StashApplication.getApplication(),
-                false,
-                server.apolloClient,
-            )
-        val testResult =
-            when (result) {
-                TestResult.AuthRequired,
-                is TestResult.Error,
-                TestResult.SelfSignedCertRequired,
-                TestResult.SslRequired,
-                is TestResult.UnsupportedVersion,
-                -> ServerTestResult.Error(result)
+    fun testServer(server: StashServer) {
+        viewModelScope.launch {
+            serverStatus.value =
+                serverStatus.value!!.toMutableMap().apply { put(server, ServerTestResult.Pending) }
+            val result =
+                testStashConnection(
+                    StashApplication.getApplication(),
+                    false,
+                    server.apolloClient,
+                )
+            val testResult =
+                when (result) {
+                    TestResult.AuthRequired,
+                    is TestResult.Error,
+                    TestResult.SelfSignedCertRequired,
+                    TestResult.SslRequired,
+                    is TestResult.UnsupportedVersion,
+                    -> ServerTestResult.Error(result)
 
-                is TestResult.Success -> ServerTestResult.Success
-            }
-        serverStatus.value = serverStatus.value!!.toMutableMap().apply { put(server, testResult) }
-        return testResult
+                    is TestResult.Success -> ServerTestResult.Success
+                }
+            serverStatus.value =
+                serverStatus.value!!.toMutableMap().apply { put(server, testResult) }
+        }
     }
 
     fun removeServer(server: StashServer) {

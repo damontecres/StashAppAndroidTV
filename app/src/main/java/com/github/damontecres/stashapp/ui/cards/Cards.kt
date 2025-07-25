@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -307,6 +308,7 @@ fun RootCard(
     contentPadding: PaddingValues = PaddingValues(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     imagePadding: Dp = 0.dp,
+    extraImageUrls: List<String> = listOf(),
 ) {
     val context = LocalContext.current
     val videoDelay =
@@ -433,11 +435,26 @@ fun RootCard(
                     )
                 }
             } else {
+                var extraImageUrl by remember(imageUrl) { mutableStateOf(imageUrl) }
+                if (playVideoPreviews && focusedAfterDelay && extraImageUrls.isNotEmpty()) {
+                    LaunchedEffect(Unit) {
+                        var idx = 0
+                        while (true) {
+                            extraImageUrl = extraImageUrls[idx]
+                            if (++idx >= extraImageUrls.size) idx = 0
+                            delay(2000L)
+                        }
+                    }
+                    DisposableEffect(Unit) {
+                        onDispose { extraImageUrl = imageUrl }
+                    }
+                }
                 CardImage(
                     imageHeight = height,
-                    imageUrl = imageUrl,
+                    imageUrl = extraImageUrl,
                     defaultImageDrawableRes = defaultImageDrawableRes,
                     imageContent = imageContent,
+                    crossFade = false,
                     modifier = Modifier.padding(imagePadding),
                 )
             }
@@ -492,6 +509,7 @@ fun CardImage(
     @DrawableRes defaultImageDrawableRes: Int?,
     imageContent: @Composable (BoxScope.() -> Unit)?,
     modifier: Modifier = Modifier,
+    crossFade: Boolean = true,
 ) {
     Box(
         modifier =
@@ -513,7 +531,7 @@ fun CardImage(
                     ImageRequest
                         .Builder(LocalContext.current)
                         .data(imageUrl)
-                        .crossfade(true)
+                        .crossfade(crossFade)
                         .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,

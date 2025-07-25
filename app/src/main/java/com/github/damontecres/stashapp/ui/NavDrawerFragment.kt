@@ -82,7 +82,7 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.components.filter.CreateFilterScreen
-import com.github.damontecres.stashapp.ui.components.server.ManageServersContent
+import com.github.damontecres.stashapp.ui.components.server.ManageServers
 import com.github.damontecres.stashapp.ui.pages.ChooseThemePage
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.FilterPage
@@ -116,13 +116,14 @@ import kotlinx.parcelize.Parcelize
 import okhttp3.Call
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 class NavDrawerFragment : Fragment(R.layout.compose_frame) {
     private val serverViewModel: ServerViewModel by activityViewModels()
 
     var navController: NavController<Destination>? = null
 
-    @OptIn(ExperimentalCoilApi::class)
+    @OptIn(ExperimentalCoilApi::class, ExperimentalTime::class)
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
@@ -389,7 +390,7 @@ fun FragmentContent(
 //                    )
 
                 is Destination.ManageServers -> {
-                    ManageServersContent(
+                    ManageServers(
                         currentServer = server,
                         onSwitchServer = onSwitchServer,
                         modifier = Modifier.fillMaxSize(),

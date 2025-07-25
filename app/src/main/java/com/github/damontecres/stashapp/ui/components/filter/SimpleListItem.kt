@@ -27,13 +27,14 @@ fun SimpleListItem(
     selected: Boolean = false,
     leadingContent: (@Composable BoxScope.() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
 ) {
     ListItem(
         modifier = modifier,
         selected = selected,
         enabled = enabled,
         onClick = onClick,
-        onLongClick = {},
+        onLongClick = onLongClick,
         leadingContent = leadingContent,
         headlineContent = {
             Text(

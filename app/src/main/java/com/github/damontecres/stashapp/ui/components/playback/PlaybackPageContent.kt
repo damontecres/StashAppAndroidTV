@@ -519,9 +519,12 @@ fun PlaybackPageContent(
                     )
                     val showError =
                         when (error.errorCode) {
+                            PlaybackException.ERROR_CODE_DECODER_INIT_FAILED,
                             PlaybackException.ERROR_CODE_DECODING_FAILED,
                             PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES,
                             PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED,
+                            PlaybackException.ERROR_CODE_AUDIO_TRACK_INIT_FAILED,
+                            PlaybackException.ERROR_CODE_AUDIO_TRACK_OFFLOAD_INIT_FAILED,
                             -> {
                                 val current = player.currentMediaItem
                                 val currentPosition = player.currentMediaItemIndex
@@ -554,6 +557,10 @@ fun PlaybackPageContent(
                                         true
                                     }
                                 } else {
+                                    Log.w(
+                                        TAG,
+                                        "No current media item, cannot fallback to transcoding",
+                                    )
                                     true
                                 }
                             }

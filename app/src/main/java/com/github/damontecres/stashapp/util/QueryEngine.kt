@@ -18,6 +18,7 @@ import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.FindSavedFiltersQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
+import com.github.damontecres.stashapp.api.FindSlimImagesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
 import com.github.damontecres.stashapp.api.GetExtraImageQuery
@@ -37,6 +38,7 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilter
+import com.github.damontecres.stashapp.api.fragment.SlimImageData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.StashJob
@@ -319,6 +321,28 @@ class QueryEngine(
             ?.findImages
             ?.images
             ?.map { it.imageData }
+            .orEmpty()
+    }
+
+    suspend fun findSlimImages(
+        findFilter: FindFilterType? = null,
+        imageFilter: ImageFilterType? = null,
+        ids: List<String>? = null,
+        useRandom: Boolean = true,
+    ): List<SlimImageData> {
+        val query =
+            client.query(
+                FindSlimImagesQuery(
+                    filter = updateFilter(findFilter, useRandom),
+                    image_filter = imageFilter,
+                    ids = ids,
+                ),
+            )
+        return executeQuery(query)
+            .data
+            ?.findImages
+            ?.images
+            ?.map { it.slimImageData }
             .orEmpty()
     }
 
