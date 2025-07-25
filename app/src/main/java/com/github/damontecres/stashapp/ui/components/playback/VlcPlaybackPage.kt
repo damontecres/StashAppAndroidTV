@@ -110,7 +110,7 @@ fun VlcPlaybackPage(
             }
         }
 
-    val libVlc = remember { LibVLC(context, listOf("-v")) }
+    val libVlc = remember { LibVLC(context, mutableListOf("-v")) }
     val mediaPlayer = remember(libVlc) { MediaPlayer(libVlc) }
 
     var isPlaying by remember { mutableStateOf(false) }
@@ -120,10 +120,9 @@ fun VlcPlaybackPage(
             object : MediaPlayer.EventListener {
                 override fun onEvent(event: MediaPlayer.Event) {
                     Log.v(TAG, "onEvent: 0x${event.type.toString(16)}")
-                    if (event.type == MediaPlayer.Event.Playing) {
-                        isPlaying = true
-                    } else if (event.type == MediaPlayer.Event.Paused) {
-                        isPlaying = false
+                    when (event.type) {
+                        MediaPlayer.Event.Playing -> isPlaying = true
+                        MediaPlayer.Event.Paused -> isPlaying = false
                     }
                 }
             },
@@ -174,14 +173,17 @@ fun VlcPlaybackPage(
         ) {
             AndroidView(
                 factory = {
-                    VLCVideoLayout(it)
-                },
-                update = { vlcLayout ->
+                    val vlcLayout = VLCVideoLayout(it)
                     mediaPlayer.attachViews(vlcLayout, null, true, false)
+                    vlcLayout
+                },
+                update = {
                     mediaPlayer.media = media
                     media.release()
-                    if (startPosition > 0) mediaPlayer.time = startPosition
                     mediaPlayer.play()
+
+                    // TODO this doesn't work?
+                    if (startPosition > 0) mediaPlayer.time = startPosition
                 },
                 modifier = Modifier.fillMaxSize(),
             )
@@ -266,7 +268,7 @@ fun VlcPlaybackPage(
                         onSeekBarChange = {
                         },
                         controllerViewState = controllerViewState,
-                        showPlay = isPlaying,
+                        showPlay = !isPlaying,
                         previousEnabled = false,
                         nextEnabled = false,
                         seekEnabled = mediaPlayer.isSeekable,

@@ -269,7 +269,7 @@ dependencies {
     implementation(libs.navigation.reimagined)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
-    implementation("org.videolan.android:libvlc-all:4.0.0-eap20")
+    implementation(libs.libvlc)
 
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.junit)
