@@ -10,10 +10,10 @@ class NullPresenterSelector(
     private val presenterSelector: PresenterSelector,
     private val nullPresenter: Presenter,
 ) : PresenterSelector() {
-    override fun getPresenter(item: Any?): Presenter =
+    override fun getPresenter(item: Any?): Presenter? =
         if (item == null) {
             nullPresenter
         } else {
-            presenterSelector.getPresenter(item)!!
+            presenterSelector.getPresenter(item)
         }
 }
