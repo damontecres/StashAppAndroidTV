@@ -435,17 +435,14 @@ fun RootCard(
                     )
                 }
             } else {
-                var extraImageUrl by remember(imageUrl, extraImageUrls) {
-                    mutableStateOf(if (extraImageUrls.isNotEmpty()) extraImageUrls[0] else imageUrl)
-                }
-                if (focusedAfterDelay && extraImageUrls.isNotEmpty()) {
+                var extraImageUrl by remember(imageUrl) { mutableStateOf(imageUrl) }
+                if (playVideoPreviews && focusedAfterDelay && extraImageUrls.isNotEmpty()) {
                     LaunchedEffect(Unit) {
                         var idx = 0
                         while (true) {
-                            delay(2000L)
-                            idx++
-                            if (idx >= extraImageUrls.size) idx = 0
                             extraImageUrl = extraImageUrls[idx]
+                            if (++idx >= extraImageUrls.size) idx = 0
+                            delay(2000L)
                         }
                     }
                     DisposableEffect(Unit) {
