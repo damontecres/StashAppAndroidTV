@@ -41,6 +41,8 @@ import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
+private const val TAG = "PlaylistList"
+
 @Composable
 fun PlaylistList(
     mediaItemCount: Int,

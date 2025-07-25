@@ -82,6 +82,7 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.components.filter.CreateFilterScreen
+import com.github.damontecres.stashapp.ui.components.playback.VlcPlaybackPage
 import com.github.damontecres.stashapp.ui.components.server.ManageServers
 import com.github.damontecres.stashapp.ui.pages.ChooseThemePage
 import com.github.damontecres.stashapp.ui.pages.DialogParams
@@ -92,7 +93,6 @@ import com.github.damontecres.stashapp.ui.pages.ImagePage
 import com.github.damontecres.stashapp.ui.pages.MainPage
 import com.github.damontecres.stashapp.ui.pages.MarkerPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
-import com.github.damontecres.stashapp.ui.pages.PlaybackPage
 import com.github.damontecres.stashapp.ui.pages.PlaylistPlaybackPage
 import com.github.damontecres.stashapp.ui.pages.SceneDetailsPage
 import com.github.damontecres.stashapp.ui.pages.SearchPage
@@ -398,14 +398,23 @@ fun FragmentContent(
                 }
 
                 is Destination.Playback -> {
-                    PlaybackPage(
+//                    PlaybackPage(
+//                        server = server,
+//                        sceneId = destination.sceneId,
+//                        startPosition = destination.position,
+//                        playbackMode = destination.mode,
+//                        uiConfig = composeUiConfig,
+//                        itemOnClick = itemOnClick,
+//                        modifier = Modifier,
+//                    )
+                    VlcPlaybackPage(
                         server = server,
                         sceneId = destination.sceneId,
                         startPosition = destination.position,
                         playbackMode = destination.mode,
                         uiConfig = composeUiConfig,
                         itemOnClick = itemOnClick,
-                        modifier = Modifier,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
 
