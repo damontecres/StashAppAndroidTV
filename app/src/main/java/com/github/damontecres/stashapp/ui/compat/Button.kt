@@ -4,6 +4,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.tv.material3.ButtonBorder
 import androidx.tv.material3.ButtonColors
@@ -11,6 +12,8 @@ import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.ButtonGlow
 import androidx.tv.material3.ButtonScale
 import androidx.tv.material3.ButtonShape
+import androidx.tv.material3.LocalContentColor
+import androidx.tv.material3.MaterialTheme
 
 @Composable
 fun Button(
@@ -43,17 +46,30 @@ fun Button(
             content = content,
         )
     } else {
-        androidx.compose.material3.Button(
-            onClick = onClick,
-            modifier = modifier,
-            enabled = enabled,
-            // TODO
+        // TODO this is kind of hack to force tv.Text to use the right color
+        CompositionLocalProvider(
+            LocalContentColor provides MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+        ) {
+            androidx.compose.material3.Button(
+                onClick = onClick,
+                modifier = modifier,
+                enabled = enabled,
+                // TODO tv.ButtonColors' properties are internal, can't copy them, so use defaults
+                colors =
+                    androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
+                        contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    ),
+                // TODO
 //            shape = shape,
 //            colors = colors,
 //            border = border,
-            contentPadding = contentPadding,
-            interactionSource = interactionSource,
-            content = content,
-        )
+                contentPadding = contentPadding,
+                interactionSource = interactionSource,
+                content = content,
+            )
+        }
     }
 }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.tv.material3.CardBorder
 import androidx.tv.material3.CardColors
@@ -12,6 +13,8 @@ import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.CardGlow
 import androidx.tv.material3.CardScale
 import androidx.tv.material3.CardShape
+import androidx.tv.material3.LocalContentColor
+import androidx.tv.material3.MaterialTheme
 
 @Composable
 fun Card(
@@ -40,16 +43,21 @@ fun Card(
             content = content,
         )
     } else {
-        androidx.compose.material3.Card(
-            modifier =
-                modifier
-                    .combinedClickable(
-                        interactionSource = interactionSource,
-                        indication = LocalIndication.current,
-                        onClick = onClick,
-                        onLongClick = onLongClick,
-                    ),
-            content = content,
-        )
+        // TODO this is kind of hack to force tv.Text to use the right color
+        CompositionLocalProvider(
+            LocalContentColor provides MaterialTheme.colorScheme.onSurface,
+        ) {
+            androidx.compose.material3.Card(
+                modifier =
+                    modifier
+                        .combinedClickable(
+                            interactionSource = interactionSource,
+                            indication = LocalIndication.current,
+                            onClick = onClick,
+                            onLongClick = onLongClick,
+                        ),
+                content = content,
+            )
+        }
     }
 }

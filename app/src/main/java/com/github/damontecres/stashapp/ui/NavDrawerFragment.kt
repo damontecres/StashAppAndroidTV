@@ -508,8 +508,12 @@ fun FragmentContent(
                         .focusRequester(drawerFocusRequester)
                         .ifElse(
                             isNotTvDevice,
-                            Modifier.clickable(drawerState.currentValue == DrawerValue.Closed) {
-                                drawerState.setValue(DrawerValue.Open)
+                            Modifier.clickable(true) {
+                                if (drawerState.currentValue == DrawerValue.Open) {
+                                    drawerState.setValue(DrawerValue.Closed)
+                                } else {
+                                    drawerState.setValue(DrawerValue.Open)
+                                }
                             },
                         ),
                 drawerState = drawerState,
@@ -545,6 +549,18 @@ fun FragmentContent(
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             item {
+                                val onClick = {
+                                    if (composeUiConfig.playSoundOnFocus) {
+                                        playOnClickSound(
+                                            context,
+                                        )
+                                    }
+                                    navigationManager.navigate(
+                                        Destination.ManageServers(
+                                            false,
+                                        ),
+                                    )
+                                }
                                 NavigationDrawerItem(
                                     modifier =
                                         Modifier
@@ -552,18 +568,7 @@ fun FragmentContent(
                                                 serverFocused = it.isFocused
                                             }.playSoundOnFocus(composeUiConfig.playSoundOnFocus),
                                     selected = false,
-                                    onClick = {
-                                        if (composeUiConfig.playSoundOnFocus) {
-                                            playOnClickSound(
-                                                context,
-                                            )
-                                        }
-                                        navigationManager.navigate(
-                                            Destination.ManageServers(
-                                                false,
-                                            ),
-                                        )
-                                    },
+                                    onClick = onClick,
                                     leadingContent = {
                                         Icon(
                                             painterResource(id = R.mipmap.stash_logo),
@@ -573,7 +578,12 @@ fun FragmentContent(
                                 ) {
                                     Text(
                                         modifier =
-                                            Modifier.enableMarquee(serverFocused),
+                                            Modifier
+                                                .enableMarquee(serverFocused)
+                                                .ifElse(
+                                                    isNotTvDevice,
+                                                    Modifier.clickable(onClick = onClick),
+                                                ),
                                         text = server.url,
                                         maxLines = 1,
                                     )
@@ -583,6 +593,49 @@ fun FragmentContent(
                                 pages,
                                 key = null,
                             ) { page ->
+                                val onClick = {
+                                    if (composeUiConfig.playSoundOnFocus) {
+                                        playOnClickSound(
+                                            context,
+                                        )
+                                    }
+                                    val refreshMain =
+                                        selectedScreen == DrawerPage.HomePage && page == DrawerPage.HomePage
+                                    currentScreen = page
+                                    selectedScreen = page
+
+                                    drawerState.setValue(DrawerValue.Closed)
+                                    Log.v(
+                                        TAG,
+                                        "Navigating to $page",
+                                    )
+                                    if (refreshMain) {
+                                        navigationManager.goToMain()
+                                    } else {
+                                        val pageDest =
+                                            when (page) {
+                                                DrawerPage.HomePage -> Destination.Main
+                                                DrawerPage.SearchPage -> Destination.Search
+                                                DrawerPage.SettingPage ->
+                                                    if (composeUiConfig.readOnlyModeDisabled) {
+                                                        Destination.Settings(
+                                                            PreferenceScreenOption.BASIC,
+                                                        )
+                                                    } else {
+                                                        Destination.SettingsPin
+                                                    }
+
+                                                is DrawerPage.DataTypePage ->
+                                                    Destination.Filter(
+                                                        server.serverPreferences.getDefaultFilter(
+                                                            page.dataType,
+                                                        ),
+                                                    )
+                                            }
+                                        navigationManager.navigateFromNavDrawer(pageDest)
+                                    }
+                                }
+
                                 NavigationDrawerItem(
                                     modifier =
                                         Modifier
@@ -593,48 +646,7 @@ fun FragmentContent(
                                             ).isElementVisible { visiblePages[page] = it }
                                             .playSoundOnFocus(composeUiConfig.playSoundOnFocus),
                                     selected = selectedScreen == page && drawerState.currentValue == DrawerValue.Open,
-                                    onClick = {
-                                        if (composeUiConfig.playSoundOnFocus) {
-                                            playOnClickSound(
-                                                context,
-                                            )
-                                        }
-                                        val refreshMain =
-                                            selectedScreen == DrawerPage.HomePage && page == DrawerPage.HomePage
-                                        currentScreen = page
-                                        selectedScreen = page
-
-                                        drawerState.setValue(DrawerValue.Closed)
-                                        Log.v(
-                                            TAG,
-                                            "Navigating to $page",
-                                        )
-                                        if (refreshMain) {
-                                            navigationManager.goToMain()
-                                        } else {
-                                            val pageDest =
-                                                when (page) {
-                                                    DrawerPage.HomePage -> Destination.Main
-                                                    DrawerPage.SearchPage -> Destination.Search
-                                                    DrawerPage.SettingPage ->
-                                                        if (composeUiConfig.readOnlyModeDisabled) {
-                                                            Destination.Settings(
-                                                                PreferenceScreenOption.BASIC,
-                                                            )
-                                                        } else {
-                                                            Destination.SettingsPin
-                                                        }
-
-                                                    is DrawerPage.DataTypePage ->
-                                                        Destination.Filter(
-                                                            server.serverPreferences.getDefaultFilter(
-                                                                page.dataType,
-                                                            ),
-                                                        )
-                                                }
-                                            navigationManager.navigateFromNavDrawer(pageDest)
-                                        }
-                                    },
+                                    onClick = onClick,
                                     leadingContent = {
                                         if (page != DrawerPage.SettingPage) {
                                             val color =
@@ -661,7 +673,14 @@ fun FragmentContent(
                                         }
                                     },
                                 ) {
-                                    Text(stringResource(id = page.name))
+                                    Text(
+                                        text = stringResource(id = page.name),
+                                        modifier =
+                                            Modifier.ifElse(
+                                                isNotTvDevice,
+                                                Modifier.clickable(onClick = onClick),
+                                            ),
+                                    )
                                 }
                             }
                         }

@@ -1,11 +1,13 @@
 package com.github.damontecres.stashapp.ui.compat
 
+import android.util.Log
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
@@ -15,6 +17,7 @@ import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.ListItemGlow
 import androidx.tv.material3.ListItemScale
 import androidx.tv.material3.ListItemShape
+import androidx.tv.material3.LocalContentColor
 
 @Composable
 fun ListItem(
@@ -57,42 +60,51 @@ fun ListItem(
             interactionSource = interactionSource,
         )
     } else {
-        androidx.compose.material3.ListItem(
-            headlineContent = headlineContent,
-            modifier =
-                modifier.combinedClickable(
-                    enabled = enabled,
-                    onClick = onClick,
-                    onLongClick = onLongClick,
-                    indication = LocalIndication.current,
-                    interactionSource = interactionSource,
-                ),
-            overlineContent = overlineContent,
-            supportingContent = supportingContent,
-            leadingContent = {
-                leadingContent?.let {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        it.invoke(this)
-                    }
-                }
-            },
-            trailingContent = trailingContent,
-            colors =
-                androidx.compose.material3.ListItemDefaults.colors(
-                    containerColor = colors.containerColor,
-                    headlineColor = colors.contentColor,
-                    leadingIconColor = colors.contentColor,
-                    overlineColor = colors.contentColor,
-                    supportingColor = colors.containerColor,
-                    trailingIconColor = colors.containerColor,
-                    disabledHeadlineColor = colors.disabledContentColor,
-                    disabledLeadingIconColor = colors.disabledContentColor,
-                    disabledTrailingIconColor = colors.disabledContentColor,
-                ),
-            //            tonalElevation = TODO(),
-//            shadowElevation = TODO()
+        Log.v(
+            "ListItem",
+            "colors.=${colors.disabledContentColor}, colors.contentColor=${colors.contentColor}",
         )
+        // TODO this is kind of hack to force tv.Text to use the right color
+        CompositionLocalProvider(
+            LocalContentColor provides colors.contentColor,
+        ) {
+            androidx.compose.material3.ListItem(
+                headlineContent = headlineContent,
+                modifier =
+                    modifier.combinedClickable(
+                        enabled = enabled,
+                        onClick = onClick,
+                        onLongClick = onLongClick,
+                        indication = LocalIndication.current,
+                        interactionSource = interactionSource,
+                    ),
+                overlineContent = overlineContent,
+                supportingContent = supportingContent,
+                leadingContent = {
+                    leadingContent?.let {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            it.invoke(this)
+                        }
+                    }
+                },
+                trailingContent = trailingContent,
+                colors =
+                    androidx.compose.material3.ListItemDefaults.colors(
+                        containerColor = colors.containerColor,
+                        headlineColor = colors.contentColor,
+                        leadingIconColor = colors.contentColor,
+                        overlineColor = colors.contentColor,
+                        supportingColor = colors.contentColor,
+                        trailingIconColor = colors.contentColor,
+                        disabledHeadlineColor = colors.disabledContentColor,
+                        disabledLeadingIconColor = colors.disabledContentColor,
+                        disabledTrailingIconColor = colors.disabledContentColor,
+                    ),
+                //            tonalElevation = TODO(),
+//            shadowElevation = TODO()
+            )
+        }
     }
 }
