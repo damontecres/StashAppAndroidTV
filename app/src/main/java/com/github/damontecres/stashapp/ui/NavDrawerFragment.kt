@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -76,6 +77,7 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.NavDrawerFragment.Companion.TAG
+import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -171,8 +173,8 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
 
                 val isSystemInDarkTheme = isSystemInDarkTheme()
                 var colorScheme by
-                    remember { mutableStateOf(getTheme(requireContext(), false, isSystemInDarkTheme)) }
-                MaterialTheme(colorScheme = colorScheme.tvColorScheme) {
+                    remember { mutableStateOf(getTheme(requireContext(), true, isSystemInDarkTheme)) }
+                AppTheme(colorScheme = colorScheme, forceDark = true) {
                     key(server) {
                         val navController = rememberNavController<Destination>(Destination.Main)
                         this@NavDrawerFragment.navController = navController
@@ -501,7 +503,15 @@ fun FragmentContent(
             // 1. opens drawer (instead of going back to main), 2. back again goes to main
             var serverFocused by remember { mutableStateOf(false) }
             NavigationDrawer(
-                modifier = Modifier.focusRequester(drawerFocusRequester),
+                modifier =
+                    Modifier
+                        .focusRequester(drawerFocusRequester)
+                        .ifElse(
+                            isNotTvDevice,
+                            Modifier.clickable(drawerState.currentValue == DrawerValue.Closed) {
+                                drawerState.setValue(DrawerValue.Open)
+                            },
+                        ),
                 drawerState = drawerState,
                 drawerContent = {
                     Column(

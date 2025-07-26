@@ -100,6 +100,7 @@ import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.playback.switchToTranscode
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
 import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
@@ -657,7 +658,18 @@ fun PlaybackPageContent(
         PlayerSurface(
             player = player,
             surfaceType = SURFACE_TYPE_SURFACE_VIEW,
-            modifier = scaledModifier.clickable(enabled = false) { showControls = !showControls },
+            modifier =
+                scaledModifier.clickable(
+                    enabled = !isTvDevice,
+                    indication = null,
+                    interactionSource = null,
+                ) {
+                    if (controllerViewState.controlsVisible) {
+                        controllerViewState.hideControls()
+                    } else {
+                        controllerViewState.showControls()
+                    }
+                },
         )
         if (presentationState.coverSurface) {
             Box(
