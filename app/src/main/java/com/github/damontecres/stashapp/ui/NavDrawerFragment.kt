@@ -505,17 +505,7 @@ fun FragmentContent(
             NavigationDrawer(
                 modifier =
                     Modifier
-                        .focusRequester(drawerFocusRequester)
-                        .ifElse(
-                            isNotTvDevice,
-                            Modifier.clickable(true) {
-                                if (drawerState.currentValue == DrawerValue.Open) {
-                                    drawerState.setValue(DrawerValue.Closed)
-                                } else {
-                                    drawerState.setValue(DrawerValue.Open)
-                                }
-                            },
-                        ),
+                        .focusRequester(drawerFocusRequester),
                 drawerState = drawerState,
                 drawerContent = {
                     Column(
@@ -544,7 +534,18 @@ fun FragmentContent(
                                         }
                                     }
 //                                    .focusRestorer(initialFocus)
-                                    .selectableGroup(),
+                                    .selectableGroup()
+                                    // TODO can't close on touch
+                                    .ifElse(
+                                        isNotTvDevice,
+                                        Modifier.clickable(true) {
+                                            if (drawerState.currentValue == DrawerValue.Open) {
+                                                drawerState.setValue(DrawerValue.Closed)
+                                            } else {
+                                                drawerState.setValue(DrawerValue.Open)
+                                            }
+                                        },
+                                    ),
                             state = listState,
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
