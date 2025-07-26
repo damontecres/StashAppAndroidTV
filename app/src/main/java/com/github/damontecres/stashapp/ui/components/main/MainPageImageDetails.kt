@@ -27,24 +27,25 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.ui.enableMarquee
-import com.github.damontecres.stashapp.ui.slimScenePreview
+import com.github.damontecres.stashapp.ui.imagePreview
 import com.github.damontecres.stashapp.ui.uiConfigPreview
+import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
-import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.titleOrFilename
-import com.github.damontecres.stashapp.views.durationToString
+import com.github.damontecres.stashapp.util.width
+import com.github.damontecres.stashapp.views.formatBytes
 
 @Composable
-fun MainPageSceneDetails(
-    scene: SlimSceneData,
+fun MainPageImageDetails(
+    image: ImageData,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
@@ -54,8 +55,7 @@ fun MainPageSceneDetails(
         // Title
         Text(
             modifier = Modifier.enableMarquee(true),
-            text = scene.titleOrFilename ?: "",
-//                        color = MaterialTheme.colorScheme.onBackground,
+            text = image.titleOrFilename ?: "",
             color = MaterialTheme.colorScheme.onBackground,
             style =
                 MaterialTheme.typography.displayMedium.copy(
@@ -78,7 +78,7 @@ fun MainPageSceneDetails(
             ) {
                 // Rating
                 Rating100(
-                    rating100 = scene.rating100 ?: 0,
+                    rating100 = image.rating100 ?: 0,
                     uiConfig = uiConfig,
                     onRatingChange = {},
                     enabled = false,
@@ -87,22 +87,27 @@ fun MainPageSceneDetails(
                             .height(24.dp),
                 )
                 // Quick info
-                val file = scene.files.firstOrNull()?.videoFile
+                val file = image.visual_files.firstOrNull()
                 DotSeparatedRow(
                     modifier = Modifier,
                     textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium),
                     texts =
                         listOfNotNullOrBlank(
-                            scene.date,
-                            file?.let { durationToString(it.duration) },
-                            file?.resolutionName(),
+                            image.date,
+                            file?.let { "${it.height}x${it.width}" },
+                            file
+                                ?.onBaseFile
+                                ?.size
+                                ?.toString()
+                                ?.toLongOrNull()
+                                ?.let { formatBytes(it) },
                         ),
                 )
             }
             // Description
-            if (scene.details.isNotNullOrBlank()) {
+            if (image.details.isNotNullOrBlank()) {
                 Text(
-                    text = scene.details,
+                    text = image.details,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground,
                     maxLines = 2,
@@ -118,7 +123,7 @@ fun MainPageSceneDetails(
                         .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                if (scene.studio != null) {
+                if (image.studio != null) {
                     val interactionSource = remember { MutableInteractionSource() }
                     val isFocused = interactionSource.collectIsFocusedAsState().value
                     val bgColor =
@@ -129,34 +134,26 @@ fun MainPageSceneDetails(
                         }
                     TitleValueText(
                         stringResource(R.string.stashapp_studio),
-                        scene.studio.name,
+                        image.studio.name,
                         modifier =
                             Modifier
                                 .background(bgColor, shape = RoundedCornerShape(8.dp)),
                     )
                 }
-                if (scene.director.isNotNullOrBlank()) {
+                if (image.photographer.isNotNullOrBlank()) {
                     TitleValueText(
-                        stringResource(R.string.stashapp_director),
-                        scene.director,
+                        stringResource(R.string.stashapp_photographer),
+                        image.photographer,
                     )
                 }
-                TitleValueText(
-                    stringResource(R.string.stashapp_play_count),
-                    (scene.play_count ?: 0).toString(),
-                )
-                TitleValueText(
-                    stringResource(R.string.stashapp_play_duration),
-                    durationToString(scene.play_duration ?: 0.0),
-                )
-                if (scene.performers.isNotEmpty()) {
+                if (image.performers.isNotEmpty()) {
                     TitleValueText(
-                        if (scene.performers.size == 1) {
+                        if (image.performers.size == 1) {
                             stringResource(R.string.stashapp_performer)
                         } else {
                             stringResource(R.string.stashapp_performers)
                         },
-                        scene.performers.joinToString(", ") { it.name },
+                        image.performers.joinToString(", ") { it.name },
                     )
                 }
             }
@@ -166,10 +163,10 @@ fun MainPageSceneDetails(
 
 @Preview(device = "spec:parent=tv_1080p", backgroundColor = 0xFF383535)
 @Composable
-private fun MainPageSceneDetailsPreview() {
+private fun MainPageImageDetailsPreview() {
     AppTheme {
-        MainPageSceneDetails(
-            scene = slimScenePreview,
+        MainPageImageDetails(
+            image = imagePreview,
             uiConfig = uiConfigPreview,
             modifier =
                 Modifier
