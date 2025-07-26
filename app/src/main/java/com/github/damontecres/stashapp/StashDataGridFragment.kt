@@ -287,7 +287,7 @@ class StashDataGridFragment :
 
                         override fun onBindViewHolder(
                             viewHolder: ViewHolder,
-                            item: Any,
+                            item: Any?,
                         ) {
                             val letter = item as Char
                             (viewHolder.view as Button).text = letter.toString()

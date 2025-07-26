@@ -162,7 +162,8 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             override fun incrementOCounter(counter: OCounter): Unit = throw IllegalStateException()
         }
 
-    override fun onInflateTitleView(
+    @Deprecated("Deprecated in Java")
+    override fun inflateTitle(
         inflater: LayoutInflater?,
         parent: ViewGroup?,
         savedInstanceState: Bundle?,

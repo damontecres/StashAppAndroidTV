@@ -37,7 +37,7 @@ abstract class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
      * The step must define a [GuidedAction] with ID=[GuidedAction.ACTION_ID_FINISH] or this will throw an exception.
      */
     protected fun enableFinish(enabled: Boolean) {
-        findActionById(GuidedAction.ACTION_ID_FINISH).isEnabled = enabled
+        findActionById(GuidedAction.ACTION_ID_FINISH)!!.isEnabled = enabled
         notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_FINISH))
     }
 
