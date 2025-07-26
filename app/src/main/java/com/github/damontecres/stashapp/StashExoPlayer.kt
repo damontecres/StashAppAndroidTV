@@ -14,6 +14,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.util.EventLogger
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.StashExoPlayer.Companion.getInstance
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.StashClient
@@ -81,7 +82,7 @@ class StashExoPlayer private constructor() {
                 ) {
                     context.getString(R.string.playback_http_client_okhttp) -> {
                         OkHttpDataSource
-                            .Factory(server.okHttpClient)
+                            .Factory(server.streamingOkHttpClient)
                     }
 
                     context.getString(R.string.playback_http_client_default) -> {
