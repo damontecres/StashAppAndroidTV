@@ -50,6 +50,7 @@ fragment ImageData on Image {
   }
   performers{
     id
+    name
   }
   studio {
     id
@@ -57,6 +58,7 @@ fragment ImageData on Image {
   }
   tags {
     id
+    name
   }
   galleries {
     id
