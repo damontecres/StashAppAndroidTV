@@ -20,11 +20,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.compat.Button
 
 @Composable
 fun SwitchWithLabel(

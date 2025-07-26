@@ -14,7 +14,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -24,6 +23,7 @@ import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.flip
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.Material3AppTheme
+import com.github.damontecres.stashapp.ui.compat.Button
 
 @Composable
 fun SortByButton(

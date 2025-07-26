@@ -32,13 +32,13 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Button
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.Material3AppTheme
+import com.github.damontecres.stashapp.ui.compat.Button
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
