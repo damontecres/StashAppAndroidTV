@@ -99,8 +99,8 @@ class ImageFragment :
         viewModel.pauseSlideshow()
         childFragmentManager.commitNow {
             setCustomAnimations(
-                androidx.leanback.R.anim.abc_slide_in_bottom,
-                androidx.leanback.R.anim.abc_slide_out_bottom,
+                R.anim.abc_slide_in_bottom,
+                R.anim.abc_slide_out_bottom,
             )
             show(overlayFragment)
         }
@@ -111,8 +111,8 @@ class ImageFragment :
         if (overlayIsVisible) {
             childFragmentManager.commit {
                 setCustomAnimations(
-                    androidx.leanback.R.anim.abc_slide_in_bottom,
-                    androidx.leanback.R.anim.abc_slide_out_bottom,
+                    R.anim.abc_slide_in_bottom,
+                    R.anim.abc_slide_out_bottom,
                 )
                 hide(overlayFragment)
             }
@@ -128,8 +128,8 @@ class ImageFragment :
         viewModel.pauseSlideshow()
         childFragmentManager.commitNow {
             setCustomAnimations(
-                androidx.leanback.R.anim.abc_slide_in_top,
-                androidx.leanback.R.anim.abc_slide_out_top,
+                R.anim.abc_slide_in_top,
+                R.anim.abc_slide_out_top,
             )
             if (videoFiltersFragment.isAdded) {
                 show(videoFiltersFragment)
@@ -144,8 +144,8 @@ class ImageFragment :
         if (filterOverlayIsVisible) {
             childFragmentManager.commit {
                 setCustomAnimations(
-                    androidx.leanback.R.anim.abc_slide_in_top,
-                    androidx.leanback.R.anim.abc_slide_out_top,
+                    R.anim.abc_slide_in_top,
+                    R.anim.abc_slide_out_top,
                 )
                 hide(videoFiltersFragment)
             }

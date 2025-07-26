@@ -60,10 +60,10 @@ class SetupStep4Pin(
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
-        val okAction = findActionById(GuidedAction.ACTION_ID_OK)
+        val okAction = findActionById(GuidedAction.ACTION_ID_OK)!!
         if (action.id == ACTION_PIN) {
             if (action.editDescription.isNotNullOrBlank()) {
-                val confirmAction = findActionById(ACTION_CONFIRM_PIN)
+                val confirmAction = findActionById(ACTION_CONFIRM_PIN)!!
                 confirmAction.isEnabled = true
                 confirmAction.isFocusable = true
                 notifyActionChanged(findActionPositionById(ACTION_CONFIRM_PIN))
@@ -82,7 +82,7 @@ class SetupStep4Pin(
             }
         } else if (action.id == ACTION_CONFIRM_PIN) {
             if (action.editDescription.isNotNullOrBlank()) {
-                val pinCode = findActionById(ACTION_PIN).editDescription.toString().toIntOrNull()
+                val pinCode = findActionById(ACTION_PIN)!!.editDescription.toString().toIntOrNull()
                 val confirmPin = action.editDescription.toString().toIntOrNull()
 
                 if (pinCode != confirmPin) {
@@ -106,9 +106,9 @@ class SetupStep4Pin(
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
-            val pin = findActionById(ACTION_PIN).editDescription.ifBlank { null }?.toString()
+            val pin = findActionById(ACTION_PIN)!!.editDescription?.ifBlank { null }?.toString()
             val confirmPin =
-                findActionById(ACTION_CONFIRM_PIN).editDescription.ifBlank { null }?.toString()
+                findActionById(ACTION_CONFIRM_PIN)!!.editDescription?.ifBlank { null }?.toString()
             if (pin != null && pin.toIntOrNull() == null) {
                 Toast.makeText(requireContext(), "PIN must be a number!", Toast.LENGTH_SHORT).show()
             } else if (pin == confirmPin) {

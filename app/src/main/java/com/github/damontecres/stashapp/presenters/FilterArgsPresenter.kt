@@ -68,8 +68,8 @@ class FilterArgsPresenter(
             }
         }
 
-        cardView.mainImageView.setBackgroundColor(cardView.context.getColor(android.R.color.transparent))
-        cardView.mainImageView.setImageDrawable(
+        cardView.imageView.setBackgroundColor(cardView.context.getColor(android.R.color.transparent))
+        cardView.imageView.setImageDrawable(
             AppCompatResources.getDrawable(
                 cardView.context,
                 R.drawable.baseline_camera_indoor_48,
