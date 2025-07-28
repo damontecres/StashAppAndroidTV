@@ -269,6 +269,8 @@ dependencies {
     implementation(libs.navigation.reimagined)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
+    implementation(libs.libvlc)
+
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)

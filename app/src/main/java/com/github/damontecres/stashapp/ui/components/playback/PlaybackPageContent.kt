@@ -125,7 +125,7 @@ import java.util.Locale
 import kotlin.properties.Delegates
 import kotlin.time.Duration.Companion.milliseconds
 
-const val TAG = "PlaybackPageContent"
+private const val TAG = "PlaybackPageContent"
 
 class PlaybackViewModel : ViewModel() {
     private lateinit var server: StashServer
