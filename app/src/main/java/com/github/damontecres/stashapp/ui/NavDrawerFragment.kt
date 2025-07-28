@@ -542,7 +542,7 @@ fun FragmentContent(
                                     }
 //                                    .focusRestorer(initialFocus)
                                     .selectableGroup()
-                                    // TODO can't close on touch
+                                    .fillMaxHeight()
                                     .ifElse(
                                         isNotTvDevice,
                                         Modifier.clickable(true) {
