@@ -193,47 +193,55 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                 navController.navigate(cmd.destination)
                             }
                         }
-                        server?.let { currentServer ->
-                            Log.v(TAG, "currentServer=$currentServer")
-                            CompositionLocalProvider(
-                                LocalGlobalContext provides
-                                    GlobalContext(
-                                        currentServer,
-                                        navManager,
-                                    ),
-                            ) {
-                                FragmentContent(
-                                    server = currentServer,
-                                    navigationManager = navManager,
-                                    navController = navController,
-                                    onSwitchServer = { serverViewModel.switchServer(it) },
-                                    onChangeTheme = { name ->
-                                        try {
-                                            colorScheme =
-                                                chooseColorScheme(
-                                                    requireContext(),
-                                                    isSystemInDarkTheme,
-                                                    if (name.isNullOrBlank() || name == "default") {
-                                                        defaultColorSchemeSet
-                                                    } else {
-                                                        readThemeJson(requireContext(), name)
-                                                    },
-                                                )
-                                            Log.i(TAG, "Updated theme")
-                                        } catch (ex: Exception) {
-                                            Log.e(TAG, "Exception changing theme", ex)
-                                            Toast
-                                                .makeText(
-                                                    requireContext(),
-                                                    "Error changing theme: ${ex.localizedMessage}",
-                                                    Toast.LENGTH_LONG,
-                                                ).show()
-                                        }
-                                    },
-                                    modifier = Modifier.background(MaterialTheme.colorScheme.background),
-                                    // TODO could use onKeyEvent here to make focus/movement sounds everywhere
-                                    // But it wouldn't know if the focus would actually change
-                                )
+                        if (server == null && navCommand?.destination is Destination.ManageServers) {
+                            ManageServers(
+                                currentServer = null,
+                                onSwitchServer = serverViewModel::switchServer,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        } else {
+                            server?.let { currentServer ->
+                                Log.v(TAG, "currentServer=$currentServer")
+                                CompositionLocalProvider(
+                                    LocalGlobalContext provides
+                                        GlobalContext(
+                                            currentServer,
+                                            navManager,
+                                        ),
+                                ) {
+                                    FragmentContent(
+                                        server = currentServer,
+                                        navigationManager = navManager,
+                                        navController = navController,
+                                        onSwitchServer = { serverViewModel.switchServer(it) },
+                                        onChangeTheme = { name ->
+                                            try {
+                                                colorScheme =
+                                                    chooseColorScheme(
+                                                        requireContext(),
+                                                        isSystemInDarkTheme,
+                                                        if (name.isNullOrBlank() || name == "default") {
+                                                            defaultColorSchemeSet
+                                                        } else {
+                                                            readThemeJson(requireContext(), name)
+                                                        },
+                                                    )
+                                                Log.i(TAG, "Updated theme")
+                                            } catch (ex: Exception) {
+                                                Log.e(TAG, "Exception changing theme", ex)
+                                                Toast
+                                                    .makeText(
+                                                        requireContext(),
+                                                        "Error changing theme: ${ex.localizedMessage}",
+                                                        Toast.LENGTH_LONG,
+                                                    ).show()
+                                            }
+                                        },
+                                        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+                                        // TODO could use onKeyEvent here to make focus/movement sounds everywhere
+                                        // But it wouldn't know if the focus would actually change
+                                    )
+                                }
                             }
                         }
                     }
@@ -351,11 +359,10 @@ fun FragmentContent(
 
     NavHost(navController, modifier = modifier) { destination ->
         LaunchedEffect(Unit) {
-            scope.launch(StashCoroutineExceptionHandler()) {
-                // Refresh server preferences on each page change
-                server.updateServerPrefs()
-                composeUiConfig = ComposeUiConfig.fromStashServer(context, server)
-            }
+            // Refresh server preferences on each page change
+            navigationManager.serverViewModel.updateServerPreferences()
+            composeUiConfig = ComposeUiConfig.fromStashServer(context, server)
+
             navigationManager.previousDestination = destination
             navigationManager.serverViewModel.setCurrentDestination(destination)
         }
