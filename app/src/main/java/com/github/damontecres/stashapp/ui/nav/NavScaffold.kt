@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -57,16 +58,32 @@ fun NavScaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    selectedScreen?.let { currentPage ->
-                        Text(
-                            text = stringResource(currentPage.name),
-                        )
+                    when (selectedScreen) {
+                        is DrawerPage.HomePage,
+                        is DrawerPage.SearchPage,
+                        ->
+                            Text(
+                                text = stringResource(selectedScreen.name),
+                            )
+
+                        else -> {}
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navigationManager.goBack() }) {
+                    IconButton(onClick = {
+                        if (selectedScreen != DrawerPage.HomePage) {
+                            navigationManager.goBack()
+                        } else {
+                            navigationManager.goToMain()
+                        }
+                    }) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector =
+                                if (selectedScreen != DrawerPage.HomePage) {
+                                    Icons.AutoMirrored.Filled.ArrowBack
+                                } else {
+                                    Icons.Default.Home
+                                },
                             contentDescription = null,
                         )
                     }
