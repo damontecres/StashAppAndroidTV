@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.ui.nav
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
@@ -29,6 +30,7 @@ fun NavDrawerContent(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     when (destination) {
         Destination.Main -> {
@@ -50,6 +52,7 @@ fun NavDrawerContent(
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 uiConfig = composeUiConfig,
+                onUpdateTitle = onUpdateTitle,
                 modifier = modifier,
             )
         }
@@ -71,6 +74,7 @@ fun NavDrawerContent(
                 uiConfig = composeUiConfig,
                 markerId = destination.markerId,
                 itemOnClick = itemOnClick,
+                onUpdateTitle = onUpdateTitle,
             )
 
         is Destination.Item -> {
@@ -91,6 +95,7 @@ fun NavDrawerContent(
                                 ),
                             )
                         },
+                        onUpdateTitle = onUpdateTitle,
                     )
 
                 DataType.PERFORMER ->
@@ -101,6 +106,7 @@ fun NavDrawerContent(
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
+                        onUpdateTitle = onUpdateTitle,
                     )
 
                 DataType.TAG ->
@@ -112,6 +118,7 @@ fun NavDrawerContent(
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
+                        onUpdateTitle = onUpdateTitle,
                     )
 
                 DataType.STUDIO ->
@@ -123,6 +130,7 @@ fun NavDrawerContent(
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
+                        onUpdateTitle = onUpdateTitle,
                     )
 
                 DataType.GALLERY ->
@@ -133,6 +141,7 @@ fun NavDrawerContent(
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
+                        onUpdateTitle = onUpdateTitle,
                     )
 
                 DataType.GROUP ->
@@ -144,6 +153,7 @@ fun NavDrawerContent(
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
+                        onUpdateTitle = onUpdateTitle,
                     )
 
                 DataType.MARKER ->
@@ -152,6 +162,7 @@ fun NavDrawerContent(
                         uiConfig = composeUiConfig,
                         markerId = destination.id,
                         itemOnClick = itemOnClick,
+                        onUpdateTitle = onUpdateTitle,
                     )
 
                 else -> FragmentView(navManager, destination, modifier)

@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components
 
+import android.content.res.Configuration
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -28,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -41,6 +43,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -62,6 +65,7 @@ import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.compat.Button
+import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.playback.isBackwardButton
 import com.github.damontecres.stashapp.ui.components.playback.isForwardButton
 import com.github.damontecres.stashapp.ui.isPlayKeyUp
@@ -155,6 +159,7 @@ fun StashGridControls(
                             if (it.isFocused) rowFocusRequester.tryRequestFocus()
                         }.focusable(true),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 ProvideTextStyle(MaterialTheme.typography.titleMedium) {
                     if (filterUiMode == FilterUiMode.SAVED_FILTERS) {
@@ -318,10 +323,15 @@ fun StashGrid(
     initialPosition: Int = 0,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
 ) {
+    val orientation = LocalConfiguration.current.orientation
     val navigationManager = LocalGlobalContext.current.navigationManager
     val startPosition = initialPosition.coerceIn(0, (pager.size - 1).coerceAtLeast(0))
     val columns =
-        (uiConfig.cardSettings.columns * (ScenePresenter.CARD_WIDTH.toDouble() / pager.filter.dataType.defaultCardWidth)).toInt()
+        (
+            uiConfig.cardSettings.columns * (ScenePresenter.CARD_WIDTH.toDouble() / pager.filter.dataType.defaultCardWidth) +
+                // TODO better sizing
+                if (isNotTvDevice && orientation == Configuration.ORIENTATION_LANDSCAPE) 1 else 0
+        ).toInt()
 
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
@@ -383,6 +393,18 @@ fun StashGrid(
             previouslyFocusedIndex = focusedIndex
         }
         focusedIndex = index
+    }
+
+    if (isNotTvDevice) {
+        // Only focusing invokes positionCallback, so on touch, listen to changes
+        // TODO Maybe can use this for both tv & touch?
+        LaunchedEffect(gridState) {
+            snapshotFlow { gridState.firstVisibleItemIndex }
+                .collect {
+                    positionCallback?.invoke(columns, it)
+                    focusOn.invoke(it)
+                }
+        }
     }
 
     // Wait for a recomposition to focus

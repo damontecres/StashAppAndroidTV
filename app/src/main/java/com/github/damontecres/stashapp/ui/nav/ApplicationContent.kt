@@ -2,47 +2,19 @@ package com.github.damontecres.stashapp.ui.nav
 
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusGroup
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.preference.PreferenceManager
-import androidx.tv.material3.DrawerValue
-import androidx.tv.material3.Icon
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.NavigationDrawer
-import androidx.tv.material3.NavigationDrawerItem
-import androidx.tv.material3.Text
-import androidx.tv.material3.rememberDrawerState
 import com.github.damontecres.stashapp.PreferenceScreenOption
-import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
@@ -51,25 +23,16 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.LocalPlayerContext
 import com.github.damontecres.stashapp.ui.NavDrawerFragment.Companion.TAG
-import com.github.damontecres.stashapp.ui.PlayerContext
-import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
-import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.ui.pages.DialogParams
-import com.github.damontecres.stashapp.ui.tryRequestFocus
-import com.github.damontecres.stashapp.ui.util.ifElse
-import com.github.damontecres.stashapp.ui.util.playOnClickSound
-import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.NavHost
-import kotlinx.coroutines.launch
 
 /**
  * Shows the actual compose content of the application
@@ -164,14 +127,8 @@ fun ApplicationContent(
             )
             add(DrawerPage.SettingPage)
         }
-    val visiblePages = remember { mutableMapOf<DrawerPage, Boolean>() }
-
-    val initialFocus = remember { FocusRequester() }
-    val listState = rememberLazyListState()
     val defaultSelection: DrawerPage = DrawerPage.HomePage
     var selectedScreen by rememberSaveable { mutableStateOf<DrawerPage?>(defaultSelection) }
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
 
     NavHost(navController, modifier = modifier) { destination ->
         LaunchedEffect(Unit) {
@@ -225,179 +182,67 @@ fun ApplicationContent(
                     else -> null
                 }
 
-            // If the page is not currently visible, scroll the list so that it is
-            LaunchedEffect(selectedScreen) {
-                if (visiblePages[selectedScreen] == false) {
-                    listState.animateScrollToItem(pages.indexOf(selectedScreen))
-                }
-            }
-
-            val drawerFocusRequester = remember { FocusRequester() }
-            BackHandler(enabled = (drawerState.currentValue == DrawerValue.Closed && destination == Destination.Main)) {
-                drawerState.setValue(DrawerValue.Open)
-                drawerFocusRequester.requestFocus()
-            }
-            // TODO should each "root" page have a separate back stack so pressing back on the "root" scene filter page does:
-            // 1. opens drawer (instead of going back to main), 2. back again goes to main
-            var serverFocused by remember { mutableStateOf(false) }
-            NavigationDrawer(
-                modifier =
-                    Modifier
-                        .focusRequester(drawerFocusRequester),
-                drawerState = drawerState,
-                drawerContent = {
-                    LazyColumn(
-                        state = listState,
-                        contentPadding = PaddingValues(0.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.SpaceBetween,
-                        modifier =
-                            Modifier
-                                .fillMaxHeight()
-                                .background(MaterialTheme.colorScheme.background)
-                                .focusGroup()
-                                .focusProperties {
-                                    onExit = {
-                                        val selectedIndex = pages.indexOf(selectedScreen)
-                                        if (selectedIndex !in listState.layoutInfo.visibleItemsInfo.map { it.index }) {
-                                            scope.launch(StashCoroutineExceptionHandler()) {
-                                                listState.animateScrollToItem(selectedIndex)
-                                            }
-                                        }
-                                    }
-                                    onEnter = {
-                                        initialFocus.tryRequestFocus()
-                                    }
-                                }
-//                                    .focusRestorer(initialFocus)
-                                .selectableGroup()
-                                .ifElse(
-                                    isNotTvDevice,
-                                    Modifier.clickable(true) {
-                                        if (drawerState.currentValue == DrawerValue.Open) {
-                                            drawerState.setValue(DrawerValue.Closed)
-                                        } else {
-                                            drawerState.setValue(DrawerValue.Open)
-                                        }
-                                    },
-                                ),
-                    ) {
-                        item {
-                            val onClick = {
-                                if (composeUiConfig.playSoundOnFocus) {
-                                    playOnClickSound(
-                                        context,
+            val onSelectScreen = { page: DrawerPage ->
+                val refreshMain =
+                    selectedScreen == DrawerPage.HomePage && page == DrawerPage.HomePage
+                Log.v(
+                    TAG,
+                    "Navigating to $page",
+                )
+                selectedScreen = page
+                if (refreshMain) {
+                    navigationManager.goToMain()
+                } else {
+                    val pageDest =
+                        when (page) {
+                            DrawerPage.HomePage -> Destination.Main
+                            DrawerPage.SearchPage -> Destination.Search
+                            DrawerPage.SettingPage ->
+                                if (composeUiConfig.readOnlyModeDisabled) {
+                                    Destination.Settings(
+                                        PreferenceScreenOption.BASIC,
                                     )
+                                } else {
+                                    Destination.SettingsPin
                                 }
-                                navigationManager.navigate(
-                                    Destination.ManageServers(
-                                        false,
+
+                            is DrawerPage.DataTypePage ->
+                                Destination.Filter(
+                                    server.serverPreferences.getDefaultFilter(
+                                        page.dataType,
                                     ),
                                 )
-                            }
-                            NavigationDrawerItem(
-                                modifier =
-                                    Modifier
-                                        .onFocusChanged {
-                                            serverFocused = it.isFocused
-                                        }.playSoundOnFocus(composeUiConfig.playSoundOnFocus),
-                                selected = false,
-                                onClick = onClick,
-                                leadingContent = {
-                                    Icon(
-                                        painterResource(id = R.mipmap.stash_logo),
-                                        contentDescription = null,
-                                    )
-                                },
-                            ) {
-                                Text(
-                                    modifier =
-                                        Modifier
-                                            .enableMarquee(serverFocused)
-                                            .ifElse(
-                                                isNotTvDevice,
-                                                Modifier.clickable(onClick = onClick),
-                                            ),
-                                    text = server.url,
-                                    maxLines = 1,
-                                )
-                            }
                         }
-                        items(
-                            pages,
-                            key = null,
-                        ) { page ->
-                            val onClick = {
-                                if (composeUiConfig.playSoundOnFocus) {
-                                    playOnClickSound(
-                                        context,
-                                    )
-                                }
-                                val refreshMain =
-                                    selectedScreen == DrawerPage.HomePage && page == DrawerPage.HomePage
-                                selectedScreen = page
-
-                                drawerState.setValue(DrawerValue.Closed)
-                                Log.v(
-                                    TAG,
-                                    "Navigating to $page",
-                                )
-                                if (refreshMain) {
-                                    navigationManager.goToMain()
-                                } else {
-                                    val pageDest =
-                                        when (page) {
-                                            DrawerPage.HomePage -> Destination.Main
-                                            DrawerPage.SearchPage -> Destination.Search
-                                            DrawerPage.SettingPage ->
-                                                if (composeUiConfig.readOnlyModeDisabled) {
-                                                    Destination.Settings(
-                                                        PreferenceScreenOption.BASIC,
-                                                    )
-                                                } else {
-                                                    Destination.SettingsPin
-                                                }
-
-                                            is DrawerPage.DataTypePage ->
-                                                Destination.Filter(
-                                                    server.serverPreferences.getDefaultFilter(
-                                                        page.dataType,
-                                                    ),
-                                                )
-                                        }
-                                    navigationManager.navigateFromNavDrawer(pageDest)
-                                }
-                            }
-                            NavDrawerListItem(
-                                page = page,
-                                selectedScreen = selectedScreen,
-                                initialFocus = initialFocus,
-                                composeUiConfig = composeUiConfig,
-                                drawerOpen = drawerState.currentValue == DrawerValue.Open,
-                                onClick = onClick,
-                                onVisible = { visiblePages[page] = it },
-                                modifier = Modifier,
-                            )
-                        }
-                    }
-                },
-            ) {
-                CompositionLocalProvider(
-                    LocalPlayerContext provides PlayerContext,
-                ) {
-                    NavDrawerContent(
-                        navManager = navigationManager,
-                        server = server,
-                        destination = destination,
-                        composeUiConfig = composeUiConfig,
-                        itemOnClick = itemOnClick,
-                        longClicker = longClicker,
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.background),
-                    )
+                    navigationManager.navigateFromNavDrawer(pageDest)
                 }
+            }
+
+            if (isTvDevice) {
+                NavDrawer(
+                    server = server,
+                    navigationManager = navigationManager,
+                    composeUiConfig = composeUiConfig,
+                    destination = destination,
+                    selectedScreen = selectedScreen,
+                    pages = pages,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                    onSelectScreen = onSelectScreen,
+                    modifier = Modifier,
+                )
+            } else {
+                NavScaffold(
+                    server = server,
+                    navigationManager = navigationManager,
+                    composeUiConfig = composeUiConfig,
+                    destination = destination,
+                    selectedScreen = selectedScreen,
+                    pages = pages,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                    onSelectScreen = onSelectScreen,
+                    modifier = Modifier,
+                )
             }
         }
         dialogParams?.let { params ->

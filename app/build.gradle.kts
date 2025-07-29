@@ -252,6 +252,8 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.material3.android)
+    implementation(libs.androidx.material3.adaptive)
+    implementation(libs.androidx.material3.window.size)
     debugImplementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.tv.foundation)
     implementation(libs.androidx.tv.material)

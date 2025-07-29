@@ -65,6 +65,7 @@ fun StudioPage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var studio by remember { mutableStateOf<StudioData?>(null) }
@@ -399,7 +400,8 @@ fun StudioPage(
                 subStudiosTab,
             ).filter { it.name in uiTabs }
         val title = AnnotatedString(studio.name)
-        TabPage(title, tabs, DataType.STUDIO, modifier)
+        LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
+        TabPage(title, tabs, DataType.STUDIO, modifier, onUpdateTitle == null)
     }
 }
 
