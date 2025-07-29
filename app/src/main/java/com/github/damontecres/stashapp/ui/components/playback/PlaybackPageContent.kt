@@ -46,6 +46,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -100,6 +103,8 @@ import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.playback.switchToTranscode
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
 import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
@@ -111,6 +116,7 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.findActivity
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.showSetRatingToast
@@ -613,6 +619,25 @@ fun PlaybackPageContent(
         }
     }
 
+    val windowInsetsController =
+        remember {
+            context
+                .findActivity()
+                ?.let { WindowCompat.getInsetsController(it.window, it.window.decorView) }
+        }
+
+    if (isNotTvDevice && windowInsetsController != null && controllerViewState.controlsEnabled) {
+        if (controllerViewState.controlsVisible) {
+            windowInsetsController.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
+        } else {
+            windowInsetsController.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
+            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
     var skipIndicatorDuration by remember { mutableLongStateOf(0L) }
     LaunchedEffect(controllerViewState.controlsVisible) {
         // If controller shows/hides, immediately cancel the skip indicator
@@ -657,7 +682,18 @@ fun PlaybackPageContent(
         PlayerSurface(
             player = player,
             surfaceType = SURFACE_TYPE_SURFACE_VIEW,
-            modifier = scaledModifier.clickable(enabled = false) { showControls = !showControls },
+            modifier =
+                scaledModifier.clickable(
+                    enabled = !isTvDevice,
+                    indication = null,
+                    interactionSource = null,
+                ) {
+                    if (controllerViewState.controlsVisible) {
+                        controllerViewState.hideControls()
+                    } else {
+                        controllerViewState.showControls()
+                    }
+                },
         )
         if (presentationState.coverSurface) {
             Box(
@@ -1026,7 +1062,12 @@ class PlaybackKeyHandler(
         } else if (it.key == Key.Enter && !controllerViewState.controlsVisible) {
             controllerViewState.showControls()
         } else if (it.key == Key.Back && controllerViewState.controlsVisible) {
+            // TODO change this to a BackHandler?
             controllerViewState.hideControls()
+            if (isNotTvDevice) {
+                // Allow to propagate up
+                result = false
+            }
         } else {
             controllerViewState.pulseControls()
             result = false

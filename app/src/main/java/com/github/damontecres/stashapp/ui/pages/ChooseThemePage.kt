@@ -38,7 +38,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
-import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -56,6 +55,7 @@ import com.github.damontecres.stashapp.ui.cards.RootCard
 import com.github.damontecres.stashapp.ui.cards.dataTypeImageHeight
 import com.github.damontecres.stashapp.ui.cards.dataTypeImageWidth
 import com.github.damontecres.stashapp.ui.chooseColorScheme
+import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.defaultColorSchemeSet
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.ui.parseThemeJson

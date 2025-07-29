@@ -36,7 +36,8 @@
             android:exported="true"
             android:icon="@mipmap/stash_logo"
             android:logo="@mipmap/stash_logo"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize|screenLayout">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

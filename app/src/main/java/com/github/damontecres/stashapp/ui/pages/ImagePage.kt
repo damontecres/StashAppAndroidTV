@@ -6,7 +6,9 @@ import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -35,6 +37,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -66,6 +69,7 @@ import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -75,6 +79,7 @@ import com.github.damontecres.stashapp.ui.components.image.ImageOverlay
 import com.github.damontecres.stashapp.ui.components.image.SlideshowControls
 import com.github.damontecres.stashapp.ui.components.playback.isDirectionalDpad
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -273,6 +278,35 @@ fun ImagePage(
 
     var longPressing by remember { mutableStateOf(false) }
 
+    var dragXAmount by remember { mutableFloatStateOf(0f) }
+
+    // TODO move content into a function
+    val contentModifier =
+        Modifier.ifElse(
+            isNotTvDevice,
+            Modifier
+                .clickable {
+                    showOverlay = !showOverlay
+                }.pointerInput(Unit) {
+                    // TODO use https://developer.android.com/develop/ui/compose/touch-input/pointer-input/drag-swipe-fling#swiping
+                    detectDragGestures(
+                        onDragStart = { dragXAmount = 0f },
+                        onDragCancel = { dragXAmount = 0f },
+                        onDragEnd = {
+                            if (dragXAmount > 300f) {
+                                viewModel.previousImage()
+                            } else if (dragXAmount < -300f) {
+                                viewModel.nextImage()
+                            }
+                            dragXAmount = 0f
+                        },
+                    ) { change, dragAmount ->
+                        dragXAmount += dragAmount.x
+                        change.consume()
+                    }
+                },
+        )
+
     Box(
         modifier =
             modifier
@@ -384,7 +418,10 @@ fun ImagePage(
                     }
                     val contentScale = ContentScale.Fit
                     val scaledModifier =
-                        Modifier.resizeWithContentScale(contentScale, presentationState.videoSizeDp)
+                        contentModifier.resizeWithContentScale(
+                            contentScale,
+                            presentationState.videoSizeDp,
+                        )
                     PlayerSurface(
                         player = player,
                         surfaceType = SURFACE_TYPE_SURFACE_VIEW,
@@ -408,7 +445,7 @@ fun ImagePage(
                 } else {
                     SubcomposeAsyncImage(
                         modifier =
-                            Modifier
+                            contentModifier
                                 .fillMaxSize()
                                 .graphicsLayer {
                                     scaleX = zoomAnimation
@@ -489,7 +526,7 @@ fun ImagePage(
             AnimatedVisibility(showOverlay) {
                 ImageOverlay(
                     modifier =
-                        Modifier
+                        contentModifier
                             .fillMaxSize()
                             .background(AppColors.TransparentBlack50),
                     server = server,

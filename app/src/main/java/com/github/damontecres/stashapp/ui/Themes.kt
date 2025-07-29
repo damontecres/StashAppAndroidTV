@@ -15,6 +15,7 @@ import androidx.preference.PreferenceManager
 import androidx.tv.material3.ColorScheme
 import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.theme.inversePrimaryDark
 import com.github.damontecres.stashapp.ui.theme.inversePrimaryLight
 import kotlinx.serialization.json.Json
@@ -111,10 +112,22 @@ fun getTheme(
 @Composable
 fun AppTheme(
     forceDark: Boolean = false,
+    colorScheme: AppColorScheme = getTheme(LocalContext.current, forceDark, isSystemInDarkTheme()),
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = getTheme(LocalContext.current, forceDark, isSystemInDarkTheme())
-    MaterialTheme(colorScheme = colorScheme.tvColorScheme, content = content)
+    if (isTvDevice) {
+        MaterialTheme(
+            colorScheme = colorScheme.tvColorScheme,
+            content = content,
+        )
+    } else {
+        MaterialTheme(colorScheme = colorScheme.tvColorScheme) {
+            androidx.compose.material3.MaterialTheme(
+                colorScheme = colorScheme.colorScheme,
+                content = content,
+            )
+        }
+    }
 }
 
 @Composable
