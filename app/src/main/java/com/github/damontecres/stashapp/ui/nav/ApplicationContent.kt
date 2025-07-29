@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -247,144 +246,138 @@ fun ApplicationContent(
                         .focusRequester(drawerFocusRequester),
                 drawerState = drawerState,
                 drawerContent = {
-                    Column(
-                        Modifier
-                            .fillMaxHeight()
-                            .background(MaterialTheme.colorScheme.background),
+                    LazyColumn(
+                        state = listState,
+                        contentPadding = PaddingValues(0.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        LazyColumn(
-                            contentPadding = PaddingValues(0.dp),
-                            modifier =
-                                Modifier
-                                    .focusGroup()
-                                    .focusProperties {
-                                        onExit = {
-                                            val selectedIndex = pages.indexOf(selectedScreen)
-                                            if (selectedIndex !in listState.layoutInfo.visibleItemsInfo.map { it.index }) {
-                                                scope.launch(StashCoroutineExceptionHandler()) {
-                                                    listState.animateScrollToItem(selectedIndex)
-                                                }
+                        modifier =
+                            Modifier
+                                .fillMaxHeight()
+                                .background(MaterialTheme.colorScheme.background)
+                                .focusGroup()
+                                .focusProperties {
+                                    onExit = {
+                                        val selectedIndex = pages.indexOf(selectedScreen)
+                                        if (selectedIndex !in listState.layoutInfo.visibleItemsInfo.map { it.index }) {
+                                            scope.launch(StashCoroutineExceptionHandler()) {
+                                                listState.animateScrollToItem(selectedIndex)
                                             }
                                         }
-                                        onEnter = {
-                                            initialFocus.tryRequestFocus()
-                                        }
                                     }
+                                    onEnter = {
+                                        initialFocus.tryRequestFocus()
+                                    }
+                                }
 //                                    .focusRestorer(initialFocus)
-                                    .selectableGroup()
-                                    .fillMaxHeight()
-                                    .ifElse(
-                                        isNotTvDevice,
-                                        Modifier.clickable(true) {
-                                            if (drawerState.currentValue == DrawerValue.Open) {
-                                                drawerState.setValue(DrawerValue.Closed)
-                                            } else {
-                                                drawerState.setValue(DrawerValue.Open)
-                                            }
-                                        },
-                                    ),
-                            state = listState,
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            item {
-                                val onClick = {
-                                    if (composeUiConfig.playSoundOnFocus) {
-                                        playOnClickSound(
-                                            context,
-                                        )
-                                    }
-                                    navigationManager.navigate(
-                                        Destination.ManageServers(
-                                            false,
-                                        ),
-                                    )
-                                }
-                                NavigationDrawerItem(
-                                    modifier =
-                                        Modifier
-                                            .onFocusChanged {
-                                                serverFocused = it.isFocused
-                                            }.playSoundOnFocus(composeUiConfig.playSoundOnFocus),
-                                    selected = false,
-                                    onClick = onClick,
-                                    leadingContent = {
-                                        Icon(
-                                            painterResource(id = R.mipmap.stash_logo),
-                                            contentDescription = null,
-                                        )
+                                .selectableGroup()
+                                .ifElse(
+                                    isNotTvDevice,
+                                    Modifier.clickable(true) {
+                                        if (drawerState.currentValue == DrawerValue.Open) {
+                                            drawerState.setValue(DrawerValue.Closed)
+                                        } else {
+                                            drawerState.setValue(DrawerValue.Open)
+                                        }
                                     },
-                                ) {
-                                    Text(
-                                        modifier =
-                                            Modifier
-                                                .enableMarquee(serverFocused)
-                                                .ifElse(
-                                                    isNotTvDevice,
-                                                    Modifier.clickable(onClick = onClick),
-                                                ),
-                                        text = server.url,
-                                        maxLines = 1,
+                                ),
+                    ) {
+                        item {
+                            val onClick = {
+                                if (composeUiConfig.playSoundOnFocus) {
+                                    playOnClickSound(
+                                        context,
                                     )
                                 }
-                            }
-                            items(
-                                pages,
-                                key = null,
-                            ) { page ->
-                                val onClick = {
-                                    if (composeUiConfig.playSoundOnFocus) {
-                                        playOnClickSound(
-                                            context,
-                                        )
-                                    }
-                                    val refreshMain =
-                                        selectedScreen == DrawerPage.HomePage && page == DrawerPage.HomePage
-                                    selectedScreen = page
-
-                                    drawerState.setValue(DrawerValue.Closed)
-                                    Log.v(
-                                        TAG,
-                                        "Navigating to $page",
-                                    )
-                                    if (refreshMain) {
-                                        navigationManager.goToMain()
-                                    } else {
-                                        val pageDest =
-                                            when (page) {
-                                                DrawerPage.HomePage -> Destination.Main
-                                                DrawerPage.SearchPage -> Destination.Search
-                                                DrawerPage.SettingPage ->
-                                                    if (composeUiConfig.readOnlyModeDisabled) {
-                                                        Destination.Settings(
-                                                            PreferenceScreenOption.BASIC,
-                                                        )
-                                                    } else {
-                                                        Destination.SettingsPin
-                                                    }
-
-                                                is DrawerPage.DataTypePage ->
-                                                    Destination.Filter(
-                                                        server.serverPreferences.getDefaultFilter(
-                                                            page.dataType,
-                                                        ),
-                                                    )
-                                            }
-                                        navigationManager.navigateFromNavDrawer(pageDest)
-                                    }
-                                }
-                                NavDrawerListItem(
-                                    page = page,
-                                    selectedScreen = selectedScreen,
-                                    initialFocus = initialFocus,
-                                    composeUiConfig = composeUiConfig,
-                                    drawerOpen = drawerState.currentValue == DrawerValue.Open,
-                                    onClick = onClick,
-                                    onVisible = { visiblePages[page] = it },
-                                    modifier = Modifier,
+                                navigationManager.navigate(
+                                    Destination.ManageServers(
+                                        false,
+                                    ),
                                 )
                             }
+                            NavigationDrawerItem(
+                                modifier =
+                                    Modifier
+                                        .onFocusChanged {
+                                            serverFocused = it.isFocused
+                                        }.playSoundOnFocus(composeUiConfig.playSoundOnFocus),
+                                selected = false,
+                                onClick = onClick,
+                                leadingContent = {
+                                    Icon(
+                                        painterResource(id = R.mipmap.stash_logo),
+                                        contentDescription = null,
+                                    )
+                                },
+                            ) {
+                                Text(
+                                    modifier =
+                                        Modifier
+                                            .enableMarquee(serverFocused)
+                                            .ifElse(
+                                                isNotTvDevice,
+                                                Modifier.clickable(onClick = onClick),
+                                            ),
+                                    text = server.url,
+                                    maxLines = 1,
+                                )
+                            }
+                        }
+                        items(
+                            pages,
+                            key = null,
+                        ) { page ->
+                            val onClick = {
+                                if (composeUiConfig.playSoundOnFocus) {
+                                    playOnClickSound(
+                                        context,
+                                    )
+                                }
+                                val refreshMain =
+                                    selectedScreen == DrawerPage.HomePage && page == DrawerPage.HomePage
+                                selectedScreen = page
+
+                                drawerState.setValue(DrawerValue.Closed)
+                                Log.v(
+                                    TAG,
+                                    "Navigating to $page",
+                                )
+                                if (refreshMain) {
+                                    navigationManager.goToMain()
+                                } else {
+                                    val pageDest =
+                                        when (page) {
+                                            DrawerPage.HomePage -> Destination.Main
+                                            DrawerPage.SearchPage -> Destination.Search
+                                            DrawerPage.SettingPage ->
+                                                if (composeUiConfig.readOnlyModeDisabled) {
+                                                    Destination.Settings(
+                                                        PreferenceScreenOption.BASIC,
+                                                    )
+                                                } else {
+                                                    Destination.SettingsPin
+                                                }
+
+                                            is DrawerPage.DataTypePage ->
+                                                Destination.Filter(
+                                                    server.serverPreferences.getDefaultFilter(
+                                                        page.dataType,
+                                                    ),
+                                                )
+                                        }
+                                    navigationManager.navigateFromNavDrawer(pageDest)
+                                }
+                            }
+                            NavDrawerListItem(
+                                page = page,
+                                selectedScreen = selectedScreen,
+                                initialFocus = initialFocus,
+                                composeUiConfig = composeUiConfig,
+                                drawerOpen = drawerState.currentValue == DrawerValue.Open,
+                                onClick = onClick,
+                                onVisible = { visiblePages[page] = it },
+                                modifier = Modifier,
+                            )
                         }
                     }
                 },
