@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.nav
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,13 +34,11 @@ import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
-import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalPlayerContext
-import com.github.damontecres.stashapp.ui.NavDrawerFragment.Companion.TAG
 import com.github.damontecres.stashapp.ui.PlayerContext
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -178,54 +175,21 @@ fun NavDrawer(
                     pages,
                     key = null,
                 ) { page ->
-                    val onClick = {
-                        if (composeUiConfig.playSoundOnFocus) {
-                            playOnClickSound(
-                                context,
-                            )
-                        }
-                        val refreshMain =
-                            selectedScreen == DrawerPage.HomePage && page == DrawerPage.HomePage
-                        onSelectScreen(page)
-
-                        drawerState.setValue(DrawerValue.Closed)
-                        Log.v(
-                            TAG,
-                            "Navigating to $page",
-                        )
-                        if (refreshMain) {
-                            navigationManager.goToMain()
-                        } else {
-                            val pageDest =
-                                when (page) {
-                                    DrawerPage.HomePage -> Destination.Main
-                                    DrawerPage.SearchPage -> Destination.Search
-                                    DrawerPage.SettingPage ->
-                                        if (composeUiConfig.readOnlyModeDisabled) {
-                                            Destination.Settings(
-                                                PreferenceScreenOption.BASIC,
-                                            )
-                                        } else {
-                                            Destination.SettingsPin
-                                        }
-
-                                    is DrawerPage.DataTypePage ->
-                                        Destination.Filter(
-                                            server.serverPreferences.getDefaultFilter(
-                                                page.dataType,
-                                            ),
-                                        )
-                                }
-                            navigationManager.navigateFromNavDrawer(pageDest)
-                        }
-                    }
                     NavDrawerListItem(
                         page = page,
                         selectedScreen = selectedScreen,
                         initialFocus = initialFocus,
                         composeUiConfig = composeUiConfig,
                         drawerOpen = drawerState.currentValue == DrawerValue.Open,
-                        onClick = onClick,
+                        onClick = {
+                            if (composeUiConfig.playSoundOnFocus) {
+                                playOnClickSound(
+                                    context,
+                                )
+                            }
+                            drawerState.setValue(DrawerValue.Closed)
+                            onSelectScreen(page)
+                        },
                         onVisible = { visiblePages[page] = it },
                         modifier = Modifier,
                     )

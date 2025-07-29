@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.DialogProperties
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
@@ -23,6 +24,7 @@ import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.NavDrawerFragment.Companion.TAG
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -179,18 +181,69 @@ fun ApplicationContent(
 
                     else -> null
                 }
-            NavDrawer(
-                server = server,
-                navigationManager = navigationManager,
-                composeUiConfig = composeUiConfig,
-                destination = destination,
-                selectedScreen = selectedScreen,
-                pages = pages,
-                itemOnClick = itemOnClick,
-                longClicker = longClicker,
-                onSelectScreen = { selectedScreen = it },
-                modifier = Modifier,
-            )
+
+            val onSelectScreen = { page: DrawerPage ->
+                val refreshMain =
+                    selectedScreen == DrawerPage.HomePage && page == DrawerPage.HomePage
+                Log.v(
+                    TAG,
+                    "Navigating to $page",
+                )
+                selectedScreen = page
+                if (refreshMain) {
+                    navigationManager.goToMain()
+                } else {
+                    val pageDest =
+                        when (page) {
+                            DrawerPage.HomePage -> Destination.Main
+                            DrawerPage.SearchPage -> Destination.Search
+                            DrawerPage.SettingPage ->
+                                if (composeUiConfig.readOnlyModeDisabled) {
+                                    Destination.Settings(
+                                        PreferenceScreenOption.BASIC,
+                                    )
+                                } else {
+                                    Destination.SettingsPin
+                                }
+
+                            is DrawerPage.DataTypePage ->
+                                Destination.Filter(
+                                    server.serverPreferences.getDefaultFilter(
+                                        page.dataType,
+                                    ),
+                                )
+                        }
+                    navigationManager.navigateFromNavDrawer(pageDest)
+                }
+            }
+
+            if (isTvDevice) {
+                NavDrawer(
+                    server = server,
+                    navigationManager = navigationManager,
+                    composeUiConfig = composeUiConfig,
+                    destination = destination,
+                    selectedScreen = selectedScreen,
+                    pages = pages,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                    onSelectScreen = onSelectScreen,
+                    modifier = Modifier,
+                )
+            } else {
+                NavScaffold(
+                    server = server,
+                    navigationManager = navigationManager,
+                    composeUiConfig = composeUiConfig,
+                    destination = destination,
+                    selectedScreen = selectedScreen,
+                    pages = pages,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                    onSelectScreen = onSelectScreen,
+                    modifier = Modifier,
+                )
+            }
         }
         dialogParams?.let { params ->
             DialogPopup(
