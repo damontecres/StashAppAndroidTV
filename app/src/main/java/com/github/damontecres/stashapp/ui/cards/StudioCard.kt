@@ -1,10 +1,12 @@
 package com.github.damontecres.stashapp.ui.cards
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -57,10 +59,10 @@ fun StudioCard(
         imageWidth = StudioPresenter.CARD_WIDTH.dp / 2,
         imageHeight = StudioPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,
-        imagePadding = 8.dp,
+        contentPadding = PaddingValues(8.dp),
         defaultImageDrawableRes = R.drawable.default_studio,
         videoUrl = null,
-        title = title,
+        title = AnnotatedString(title),
         subtitle = {
             Text(details)
         },

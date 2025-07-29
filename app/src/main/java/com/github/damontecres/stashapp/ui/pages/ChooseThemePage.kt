@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -119,7 +120,7 @@ fun ChooseThemePage(
                             modifier = Modifier.padding(32.dp),
                             item = "",
                             onClick = {},
-                            title = "Sample Title",
+                            title = AnnotatedString("Sample Title"),
                             imageContent = {
                                 Image(
                                     modifier = Modifier.fillMaxSize(.75f),
