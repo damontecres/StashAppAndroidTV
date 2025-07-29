@@ -62,6 +62,7 @@ fun TagPage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var tag by remember { mutableStateOf<TagData?>(null) }
@@ -341,7 +342,8 @@ fun TagPage(
                 studiosTab,
             ).filter { it.name in uiTabs }
         val title = AnnotatedString(tag.name)
-        TabPage(title, tabs, DataType.TAG, modifier)
+        LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
+        TabPage(title, tabs, DataType.TAG, modifier, onUpdateTitle == null)
     }
 }
 

@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -391,6 +392,18 @@ fun StashGrid(
             previouslyFocusedIndex = focusedIndex
         }
         focusedIndex = index
+    }
+
+    if (isNotTvDevice) {
+        // Only focusing invokes positionCallback, so on touch, listen to changes
+        // TODO Maybe can use this for both tv & touch?
+        LaunchedEffect(gridState) {
+            snapshotFlow { gridState.firstVisibleItemIndex }
+                .collect {
+                    positionCallback?.invoke(columns, it)
+                    focusOn.invoke(it)
+                }
+        }
     }
 
     // Wait for a recomposition to focus

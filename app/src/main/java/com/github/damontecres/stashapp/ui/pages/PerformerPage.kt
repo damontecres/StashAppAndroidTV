@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
@@ -252,6 +254,7 @@ fun PerformerPage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     val viewModel =
         ViewModelProvider.create(
@@ -296,6 +299,7 @@ fun PerformerPage(
                 onRatingChange = viewModel::updateRating,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
+                onUpdateTitle = onUpdateTitle,
                 modifier = Modifier.fillMaxSize(),
             )
 
@@ -317,6 +321,7 @@ fun PerformerDetailsPage(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
 
@@ -458,7 +463,9 @@ fun PerformerDetailsPage(
                 }
             }
         }
-    TabPage(title, tabs, DataType.PERFORMER, modifier)
+    LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
+
+    TabPage(title, tabs, DataType.PERFORMER, modifier, showTitle = onUpdateTitle == null)
     dialogParams?.let {
         DialogPopup(
             showDialog = true,

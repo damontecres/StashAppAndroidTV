@@ -84,6 +84,7 @@ fun GroupPage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     var group by remember { mutableStateOf<GroupData?>(null) }
     // Remember separately so we don't have refresh the whole page
@@ -292,7 +293,8 @@ fun GroupPage(
             listOf(detailsTab, scenesTab, markersTab, containingGroupsTab, subGroupsTab)
                 .filter { it.name in uiTabs }
         val title = AnnotatedString(group.name)
-        TabPage(title, tabs, DataType.GROUP, modifier)
+        LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
+        TabPage(title, tabs, DataType.GROUP, modifier, onUpdateTitle == null)
     }
 }
 

@@ -9,6 +9,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.preference.PreferenceManager
@@ -39,6 +40,7 @@ fun FilterPage(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: FilterViewModel = viewModel(),
 ) {
     if (viewModel.currentFilter == null) {
@@ -61,13 +63,18 @@ fun FilterPage(
     Column(
         modifier = modifier,
     ) {
-        ProvideTextStyle(MaterialTheme.typography.displayMedium) {
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                text = pager?.filter?.name ?: stringResource(initialFilter.dataType.pluralStringId),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
+        val title = pager?.filter?.name ?: stringResource(initialFilter.dataType.pluralStringId)
+        if (onUpdateTitle == null) {
+            ProvideTextStyle(MaterialTheme.typography.displayMedium) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = title,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+            }
+        } else {
+            LaunchedEffect(title) { onUpdateTitle.invoke(AnnotatedString(title)) }
         }
         if (pager != null) {
             StashGridControls(

@@ -59,6 +59,7 @@ fun TabPage(
     tabs: List<TabProvider>,
     dataType: DataType,
     modifier: Modifier = Modifier,
+    showTitle: Boolean = true,
 ) {
     val context = LocalContext.current
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -89,14 +90,16 @@ fun TabPage(
     Column(
         modifier = modifier.fillMaxSize(),
     ) {
-        Text(
-            text = name,
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.headlineLarge,
-            modifier =
-                Modifier
-                    .align(Alignment.CenterHorizontally),
-        )
+        if (showTitle) {
+            Text(
+                text = name,
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.headlineLarge,
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterHorizontally),
+            )
+        }
         AnimatedVisibility(
             showTabRow,
             modifier = Modifier.align(Alignment.CenterHorizontally),

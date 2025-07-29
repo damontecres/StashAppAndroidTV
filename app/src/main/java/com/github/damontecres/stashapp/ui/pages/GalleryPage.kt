@@ -59,6 +59,7 @@ fun GalleryPage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var gallery by remember { mutableStateOf<GalleryData?>(null) }
@@ -150,7 +151,8 @@ fun GalleryPage(
                 ),
             ).filter { it.name in uiTabs }
         val title = AnnotatedString(gallery.name ?: "")
-        TabPage(title, tabs, DataType.GALLERY, modifier)
+        LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
+        TabPage(title, tabs, DataType.GALLERY, modifier, onUpdateTitle == null)
     }
 }
 
