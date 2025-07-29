@@ -159,6 +159,7 @@ fun StashGridControls(
                             if (it.isFocused) rowFocusRequester.tryRequestFocus()
                         }.focusable(true),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 ProvideTextStyle(MaterialTheme.typography.titleMedium) {
                     if (filterUiMode == FilterUiMode.SAVED_FILTERS) {
