@@ -727,11 +727,3 @@ fun AlphabetButtons(
         }
     }
 }
-
-@Composable
-fun SearchQuery(
-    query: String?,
-    onQueryChange: (String?) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-}

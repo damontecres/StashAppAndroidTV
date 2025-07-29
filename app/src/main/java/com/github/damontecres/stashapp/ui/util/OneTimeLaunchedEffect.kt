@@ -8,24 +8,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 
-@Composable
-fun OneTimeLaunchedEffect(
-    condition: Boolean,
-    runOnceBlock: suspend CoroutineScope.() -> Unit,
-    elseBlock: (suspend CoroutineScope.() -> Unit)? = null,
-) {
-    TODO("Work in progress")
-    var hasRun by rememberSaveable { mutableStateOf(false) }
-    if (!hasRun && condition) {
-        LaunchedEffect(Unit) {
-            runOnceBlock.invoke(this)
-            hasRun = true
-        }
-    } else if (hasRun && elseBlock != null) {
-        LaunchedEffect(Unit, elseBlock)
-    }
-}
-
 /**
  * Run a [LaunchedEffect] exactly once even with multiple recompositions.
  *
