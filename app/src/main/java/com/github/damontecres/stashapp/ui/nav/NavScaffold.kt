@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.nav
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -171,7 +172,8 @@ fun NavScaffold(
         Column(
             modifier =
                 Modifier
-                    .padding(innerPadding),
+                    .padding(innerPadding)
+                    .background(androidx.compose.material3.MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             NavDrawerContent(
@@ -181,7 +183,9 @@ fun NavScaffold(
                 composeUiConfig = composeUiConfig,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
-                modifier = Modifier.fillMaxSize(),
+                modifier =
+                    Modifier
+                        .fillMaxSize(),
                 onUpdateTitle = { title = it },
             )
         }
