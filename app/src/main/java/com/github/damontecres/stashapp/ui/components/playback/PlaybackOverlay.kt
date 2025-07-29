@@ -41,6 +41,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -524,7 +525,7 @@ fun BasicMarkerCard(
         imageUrl = marker.imageUrl,
         defaultImageDrawableRes = R.drawable.default_scene,
         videoUrl = null,
-        title = marker.title,
+        title = AnnotatedString(marker.title),
         subtitle = {},
         description = {},
         imageOverlay = {},
