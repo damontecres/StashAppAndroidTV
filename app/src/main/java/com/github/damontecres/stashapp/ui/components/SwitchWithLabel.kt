@@ -55,6 +55,7 @@ fun SwitchWithLabel(
                         if (enabled) {
                             onStateChange(!checked)
                         } else {
+                            // TODO there are other uses, so shouldn't hardcode this toast
                             Toast
                                 .makeText(context, "Item has no children", Toast.LENGTH_SHORT)
                                 .show()
@@ -74,7 +75,7 @@ fun SwitchWithLabel(
             checked = checked,
             enabled = enabled,
             onCheckedChange = {
-                // no op, handled above
+                onStateChange(!checked)
             },
         )
     }

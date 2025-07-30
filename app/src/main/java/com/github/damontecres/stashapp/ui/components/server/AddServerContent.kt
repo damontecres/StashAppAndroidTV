@@ -108,7 +108,7 @@ fun AddServer(
         }
     }
 
-    val labelWidth = if (usePassword) 80.dp else 64.dp
+    val labelWidth = if (usePassword) 88.dp else 72.dp
 
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
@@ -277,6 +277,14 @@ fun AddServer(
             }
         }
 
+        if (usePassword) {
+            item {
+                Text(
+                    text = "Note: an API key will be fetched or generated for the server",
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+            }
+        }
         item {
             StatusText(connectionState)
         }

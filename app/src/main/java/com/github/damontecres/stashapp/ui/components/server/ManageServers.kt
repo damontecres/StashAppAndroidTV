@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -208,7 +207,8 @@ fun ManageServers(
                 },
                 modifier =
                     Modifier
-                        .width(480.dp)
+                        // .width(480.dp)
+                        .fillMaxWidth(.6f)
                         .graphicsLayer {
                             this.clip = true
                             this.shape = RoundedCornerShape(28.0.dp)
