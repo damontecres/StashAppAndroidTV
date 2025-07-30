@@ -59,6 +59,7 @@ import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
 import com.github.damontecres.stashapp.ui.components.TableRowComposable
+import com.github.damontecres.stashapp.ui.components.ratingBarHeight
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.ui.filterArgsSaver
 import com.github.damontecres.stashapp.ui.titleCount
@@ -345,7 +346,7 @@ fun GroupDetails(
                 enabled = true,
                 modifier =
                     Modifier
-                        .height(32.dp)
+                        .height(ratingBarHeight)
                         .padding(start = 12.dp),
             )
         }

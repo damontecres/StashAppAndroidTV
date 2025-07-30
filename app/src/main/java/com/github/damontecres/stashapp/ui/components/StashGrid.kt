@@ -667,8 +667,7 @@ fun StashGrid(
             }
         }
         // Letters
-        if (showJumpButtons &&
-            pager.size > 0 &&
+        if (pager.isNotEmpty() &&
             SortOption.isJumpSupported(
                 filterArgs.dataType,
                 filterArgs.sortAndDirection.sort,

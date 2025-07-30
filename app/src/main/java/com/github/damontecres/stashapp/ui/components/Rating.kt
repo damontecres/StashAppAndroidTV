@@ -62,6 +62,7 @@ import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.compat.Button
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.playOnClickSound
 import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
@@ -87,6 +88,8 @@ enum class StarRatingPrecision {
 
 val FilledStarColor = Color(0xFFFFC700)
 val EmptyStarColor = Color(0x2AFFC700)
+
+val ratingBarHeight = if (isTvDevice) 32.dp else 48.dp
 
 @Composable
 fun Rating100(

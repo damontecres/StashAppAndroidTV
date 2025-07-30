@@ -53,6 +53,7 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.ScrollableDialog
 import com.github.damontecres.stashapp.ui.components.TitleValueText
+import com.github.damontecres.stashapp.ui.components.ratingBarHeight
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -119,7 +120,7 @@ fun ImageDetailsHeader(
                 enabled = true,
                 modifier =
                     Modifier
-                        .height(32.dp),
+                        .height(ratingBarHeight),
             )
             // Quick info
             val imageFile = image.visual_files.firstOrNull()?.onImageFile
