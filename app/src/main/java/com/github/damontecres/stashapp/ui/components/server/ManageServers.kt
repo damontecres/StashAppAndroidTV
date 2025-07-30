@@ -200,7 +200,6 @@ fun ManageServers(
 
             val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
             AddServer(
-                currentServerUrls = allServers.map { it.url },
                 onSubmit = {
                     viewModel.addServer(it)
                     onSwitchServer.invoke(it)

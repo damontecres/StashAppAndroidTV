@@ -63,7 +63,6 @@ fun InitialSetup(
         modifier = Modifier,
     ) {
         AddServer(
-            currentServerUrls = listOf(),
             onSubmit = {
                 server = it
                 showPinDialog = true

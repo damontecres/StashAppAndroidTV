@@ -60,7 +60,6 @@ private const val TAG = "AddServer"
 
 @Composable
 fun AddServer(
-    currentServerUrls: List<String>,
     onSubmit: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ManageServersViewModel = viewModel(),
@@ -93,10 +92,6 @@ fun AddServer(
         viewModel.clearConnectionStatus()
     }
     LaunchedEffect(connectionState) {
-        showTrustDialog =
-            connectionState.let {
-                it is ConnectionState.Result && it.testResult is TestResult.SelfSignedCertRequired
-            }
         connectionState.let {
             if (it is ConnectionState.Result && it.testResult is TestResult.Success) {
                 Log.i(TAG, "Connection to $serverUrl successful!")
@@ -104,6 +99,8 @@ fun AddServer(
             } else if (it is ConnectionState.NewApiKey) {
                 Log.i(TAG, "Connection to $serverUrl successful with new API key!")
                 onSubmit.invoke(StashServer(serverUrl, it.apiKey))
+            } else if (it is ConnectionState.Result && it.testResult is TestResult.SelfSignedCertRequired) {
+                showTrustDialog = true
             }
         }
     }
@@ -272,6 +269,20 @@ fun AddServer(
                                 }
                             }
                     },
+                    placeholder =
+                        if (usePassword) {
+                            null
+                        } else {
+                            {
+                                Text(
+                                    text = "Optional, if needed",
+                                    color =
+                                        MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                                            alpha = .25f,
+                                        ),
+                                )
+                            }
+                        },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -303,7 +314,10 @@ fun AddServer(
                     SwitchWithLabel(
                         label = "Use username",
                         checked = usePassword,
-                        onStateChange = { usePassword = it },
+                        onStateChange = {
+                            apiKey = null
+                            usePassword = it
+                        },
                         modifier = Modifier,
                     )
                     SwitchWithLabel(
