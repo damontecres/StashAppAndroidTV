@@ -106,6 +106,18 @@ fun ManageServers(
                     .padding(8.dp),
         )
 
+        currentServer?.let { current ->
+            Text(
+                text = "Current: ${current.url}",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+                modifier =
+                    Modifier
+                        .fillMaxWidth(),
+            )
+        }
+
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(0.dp),
             modifier =
