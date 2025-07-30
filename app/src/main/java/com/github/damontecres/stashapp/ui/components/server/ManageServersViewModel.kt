@@ -89,7 +89,7 @@ class ManageServersViewModel : ViewModel() {
                         connectionState.value = ConnectionState.DuplicateServer
                     } else {
                         connectionState.value = ConnectionState.Testing
-                        delay(500L)
+                        delay(1000L)
                         try {
                             val apolloClient =
                                 StashClient.createTestApolloClient(
@@ -98,16 +98,25 @@ class ManageServersViewModel : ViewModel() {
                                     trustCerts,
                                 )
                             val result = testStashConnection(context, false, apolloClient)
-                            connectionState.value = ConnectionState.Result(result)
+                            if (result is TestResult.Error && result.exception is CancellationException) {
+                                testServer(serverUrl, apiKey, trustCerts)
+                            } else {
+                                connectionState.value = ConnectionState.Result(result)
+                            }
                         } catch (_: CancellationException) {
                             connectionState.value = ConnectionState.Inactive
                         } catch (ex: Exception) {
                             connectionState.value =
-                                ConnectionState.Result(TestResult.Error(ex.localizedMessage, ex))
+                                ConnectionState.Result(
+                                    TestResult.Error(
+                                        ex.localizedMessage,
+                                        ex,
+                                    ),
+                                )
                         }
                     }
                 }
-                Log.d(TAG, "connectionState=$connectionState")
+                Log.d(TAG, "connectionState=${connectionState.value}")
             }
     }
 

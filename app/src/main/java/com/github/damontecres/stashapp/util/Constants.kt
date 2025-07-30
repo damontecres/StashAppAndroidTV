@@ -294,6 +294,8 @@ suspend fun testStashConnection(
                             when (val cause = ex.cause) {
                                 is UnknownHostException, is ConnectException -> cause.localizedMessage
                                 is SSLHandshakeException -> "server may be using a self-signed certificate"
+                                // TODO handle case where cert is for a different host
+//                                is SSLPeerUnverifiedException->
                                 is IOException -> cause.localizedMessage
                                 else -> ex.localizedMessage
                             }

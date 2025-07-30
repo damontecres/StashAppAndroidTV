@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.ui.components.server
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -28,7 +29,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -38,6 +41,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.preference.PreferenceManager
+import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -98,16 +102,28 @@ fun AddServer(
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = modifier,
+        modifier = modifier.focusGroup(),
     ) {
         stickyHeader {
-            Text(
-                text = stringResource(R.string.add_server),
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                style = MaterialTheme.typography.displaySmall,
-                textAlign = TextAlign.Center,
+            Box(
+                contentAlignment = Alignment.CenterStart,
                 modifier = Modifier.fillParentMaxWidth(),
-            )
+            ) {
+                Text(
+                    text = stringResource(R.string.add_server),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    style = MaterialTheme.typography.displaySmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillParentMaxWidth(),
+                )
+
+                Icon(
+                    painter = painterResource(R.mipmap.stash_logo),
+                    contentDescription = null,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(64.dp),
+                )
+            }
         }
 
         // Server url
@@ -130,6 +146,7 @@ fun AddServer(
                             autoCorrectEnabled = false,
                             capitalization = KeyboardCapitalization.None,
                             keyboardType = KeyboardType.Uri,
+                            imeAction = ImeAction.Next,
                         ),
                     keyboardActions = KeyboardActions(),
                     leadingIcon = null,
@@ -169,6 +186,7 @@ fun AddServer(
                             autoCorrectEnabled = false,
                             capitalization = KeyboardCapitalization.None,
                             keyboardType = if (showApiKey) KeyboardType.Ascii else KeyboardType.Password,
+                            imeAction = ImeAction.Next,
                         ),
                     keyboardActions = KeyboardActions(),
                     leadingIcon = null,
