@@ -20,6 +20,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
+import com.github.damontecres.stashapp.ui.util.ScreenSize
+import com.github.damontecres.stashapp.ui.util.screenSize
 import com.github.damontecres.stashapp.util.StashServer
 
 @Composable
@@ -29,6 +32,7 @@ fun InitialSetup(
     viewModel: ManageServersViewModel = viewModel(),
 ) {
     val context = LocalContext.current
+    val screenSize = screenSize()
 
     var server by remember { mutableStateOf<StashServer?>(null) }
     var showPinDialog by remember { mutableStateOf(false) }
@@ -39,6 +43,16 @@ fun InitialSetup(
             PreferenceManager.getDefaultSharedPreferences(context).edit(true) {
                 putString(context.getString(R.string.pref_key_pin_code), pin)
                 putBoolean(context.getString(R.string.pref_key_pin_code_auto), true)
+                if (isNotTvDevice) {
+                    // Adjust some settings for a better touch device experience
+                    // Remove the jump buttons
+                    putBoolean(context.getString(R.string.pref_key_ui_grid_jump_controls), false)
+
+                    // If its a larger device, use larger cards
+                    if (screenSize == ScreenSize.EXPANDED) {
+                        putInt(context.getString(R.string.pref_key_card_size), 4)
+                    }
+                }
             }
             onServerConfigure.invoke(it)
         }

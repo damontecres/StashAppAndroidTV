@@ -145,7 +145,11 @@ open class ServerViewModel : ViewModel() {
             val maxSearchResults = manager.getInt("maxSearchResults", 25)
             val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
             val videoPreviewAudio = manager.getBoolean("videoPreviewAudio", false)
-            val columns = manager.getInt("cardSize", context.getString(R.string.card_size_default))
+            val columns =
+                manager.getInt(
+                    context.getString(R.string.pref_key_card_size),
+                    context.getString(R.string.card_size_default),
+                )
             val showRatings =
                 manager.getBoolean(context.getString(R.string.pref_key_show_rating), true)
             val imageCrop =
