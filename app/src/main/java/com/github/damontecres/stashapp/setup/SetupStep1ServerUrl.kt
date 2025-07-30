@@ -60,7 +60,7 @@ class SetupStep1ServerUrl : SetupGuidedStepSupportFragment() {
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
-            val serverUrlAction = findActionById(SetupFragment.ACTION_SERVER_URL)
+            val serverUrlAction = findActionById(SetupFragment.ACTION_SERVER_URL)!!
             testServerUrl(serverUrlAction)
         }
     }
@@ -71,7 +71,7 @@ class SetupStep1ServerUrl : SetupGuidedStepSupportFragment() {
             // Work around in weird cases where the editDescription isn't updated, but the text field has text
             // This attempts to find that text field and get its value
             try {
-                val view = getActionItemView(findActionPositionById(action.id))
+                val view = getActionItemView(findActionPositionById(action.id))!!
                 val descView =
                     view.findViewById<GuidedActionEditText>(androidx.leanback.R.id.guidedactions_item_description)
                 serverUrl = descView.text?.toString()

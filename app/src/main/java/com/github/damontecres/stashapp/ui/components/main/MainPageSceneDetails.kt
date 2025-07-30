@@ -6,12 +6,14 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
@@ -20,16 +22,20 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.ui.enableMarquee
+import com.github.damontecres.stashapp.ui.slimScenePreview
+import com.github.damontecres.stashapp.ui.uiConfigPreview
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
@@ -66,28 +72,33 @@ fun MainPageSceneDetails(
         Column(
             modifier = Modifier.alpha(0.75f),
         ) {
-            // Rating
-            Rating100(
-                rating100 = scene.rating100 ?: 0,
-                uiConfig = uiConfig,
-                onRatingChange = {},
-                enabled = false,
-                modifier =
-                    Modifier
-                        .height(24.dp),
-            )
-            // Quick info
-            val file = scene.files.firstOrNull()?.videoFile
-            DotSeparatedRow(
-                modifier = Modifier.padding(top = 4.dp),
-                textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                texts =
-                    listOfNotNullOrBlank(
-                        scene.date,
-                        file?.let { durationToString(it.duration) },
-                        file?.resolutionName(),
-                    ),
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Rating
+                Rating100(
+                    rating100 = scene.rating100 ?: 0,
+                    uiConfig = uiConfig,
+                    onRatingChange = {},
+                    enabled = false,
+                    modifier =
+                        Modifier
+                            .height(24.dp),
+                )
+                // Quick info
+                val file = scene.files.firstOrNull()?.videoFile
+                DotSeparatedRow(
+                    modifier = Modifier,
+                    textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium),
+                    texts =
+                        listOfNotNullOrBlank(
+                            scene.date,
+                            file?.let { durationToString(it.duration) },
+                            file?.resolutionName(),
+                        ),
+                )
+            }
             // Description
             if (scene.details.isNotNullOrBlank()) {
                 Text(
@@ -138,7 +149,33 @@ fun MainPageSceneDetails(
                     stringResource(R.string.stashapp_play_duration),
                     durationToString(scene.play_duration ?: 0.0),
                 )
+                if (scene.performers.isNotEmpty()) {
+                    TitleValueText(
+                        if (scene.performers.size == 1) {
+                            stringResource(R.string.stashapp_performer)
+                        } else {
+                            stringResource(R.string.stashapp_performers)
+                        },
+                        scene.performers.joinToString(", ") { it.name },
+                    )
+                }
             }
         }
+    }
+}
+
+@Preview(device = "spec:parent=tv_1080p", backgroundColor = 0xFF383535)
+@Composable
+private fun MainPageSceneDetailsPreview() {
+    AppTheme {
+        MainPageSceneDetails(
+            scene = slimScenePreview,
+            uiConfig = uiConfigPreview,
+            modifier =
+                Modifier
+                    .fillMaxSize(.7f)
+                    .height(200.dp)
+                    .padding(8.dp),
+        )
     }
 }

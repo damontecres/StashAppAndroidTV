@@ -245,7 +245,6 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
-    implementation(libs.glide.compose)
     implementation(libs.androidx.compose.runtime)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
@@ -253,6 +252,8 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.material3.android)
+    implementation(libs.androidx.material3.adaptive)
+    implementation(libs.androidx.material3.window.size)
     debugImplementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.tv.foundation)
     implementation(libs.androidx.tv.material)

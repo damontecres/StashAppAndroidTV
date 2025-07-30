@@ -22,6 +22,11 @@ import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.OptionalSerializersModule
 import com.github.damontecres.stashapp.util.Version
+import com.github.damontecres.stashapp.util.convertImageFilterType
+import com.github.damontecres.stashapp.util.convertPerformerFilterType
+import com.github.damontecres.stashapp.util.convertSceneFilterType
+import com.github.damontecres.stashapp.util.convertStudioFilterType
+import com.github.damontecres.stashapp.util.convertTagFilterType
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okio.FileSystem

@@ -32,13 +32,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
-import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -56,6 +56,7 @@ import com.github.damontecres.stashapp.ui.cards.RootCard
 import com.github.damontecres.stashapp.ui.cards.dataTypeImageHeight
 import com.github.damontecres.stashapp.ui.cards.dataTypeImageWidth
 import com.github.damontecres.stashapp.ui.chooseColorScheme
+import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.defaultColorSchemeSet
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.ui.parseThemeJson
@@ -119,7 +120,7 @@ fun ChooseThemePage(
                             modifier = Modifier.padding(32.dp),
                             item = "",
                             onClick = {},
-                            title = "Sample Title",
+                            title = AnnotatedString("Sample Title"),
                             imageContent = {
                                 Image(
                                     modifier = Modifier.fillMaxSize(.75f),

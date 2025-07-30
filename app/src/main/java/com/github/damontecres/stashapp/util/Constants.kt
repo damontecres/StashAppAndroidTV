@@ -791,6 +791,8 @@ val SlimSceneData.resume_position get() = resume_time?.toLongMilliseconds
 
 val FullSceneData.resume_position get() = resume_time?.toLongMilliseconds
 
+val Duration.toSeconds get() = this.inWholeMilliseconds.toSeconds
+
 val Long.toSeconds get() = this / 1000.0
 
 val Double.toLongMilliseconds get() = (this * 1000).toLong()

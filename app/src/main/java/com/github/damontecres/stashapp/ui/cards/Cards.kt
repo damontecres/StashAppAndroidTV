@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,14 +61,12 @@ import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.preference.PreferenceManager
-import androidx.tv.material3.Card
 import androidx.tv.material3.CardBorder
 import androidx.tv.material3.CardColors
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.CardGlow
 import androidx.tv.material3.CardScale
 import androidx.tv.material3.CardShape
-import androidx.tv.material3.ClassicCard
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
@@ -95,6 +94,7 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.LocalPlayerContext
+import com.github.damontecres.stashapp.ui.compat.Card
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.ui.util.playOnClickSound
@@ -221,64 +221,7 @@ fun IconRowText(
 }
 
 /**
- * Main card based on [ClassicCard]
- */
-@OptIn(UnstableApi::class)
-@Composable
-fun RootCard(
-    item: Any?,
-    onClick: () -> Unit,
-    title: String,
-    uiConfig: ComposeUiConfig,
-    imageWidth: Dp,
-    imageHeight: Dp,
-    longClicker: LongClicker<Any>,
-    getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
-    modifier: Modifier = Modifier,
-    imageUrl: String? = null,
-    @DrawableRes defaultImageDrawableRes: Int? = null,
-    imageContent: @Composable (BoxScope.() -> Unit)? = null,
-    videoUrl: String? = null,
-    imageOverlay: @Composable AnimatedVisibilityScope.() -> Unit = {},
-    subtitle: @Composable (focused: Boolean) -> Unit = {},
-    description: @Composable BoxScope.(focused: Boolean) -> Unit = {},
-    shape: CardShape = CardDefaults.shape(),
-    colors: CardColors = CardDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-    scale: CardScale = CardDefaults.scale(),
-    border: CardBorder = CardDefaults.border(),
-    glow: CardGlow = CardDefaults.glow(),
-    contentPadding: PaddingValues = PaddingValues(),
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    imagePadding: Dp = 0.dp,
-) = RootCard(
-    item,
-    onClick,
-    AnnotatedString(title),
-    uiConfig,
-    imageWidth,
-    imageHeight,
-    longClicker,
-    getFilterAndPosition,
-    modifier,
-    imageUrl,
-    defaultImageDrawableRes,
-    imageContent,
-    videoUrl,
-    imageOverlay,
-    subtitle,
-    description,
-    shape,
-    colors,
-    scale,
-    border,
-    glow,
-    contentPadding,
-    interactionSource,
-    imagePadding,
-)
-
-/**
- * Main card based on [ClassicCard]
+ * Main card based on [Card]
  */
 @OptIn(UnstableApi::class)
 @Composable
@@ -306,7 +249,7 @@ fun RootCard(
     glow: CardGlow = CardDefaults.glow(),
     contentPadding: PaddingValues = PaddingValues(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    imagePadding: Dp = 0.dp,
+    extraImageUrls: List<String> = listOf(),
 ) {
     val context = LocalContext.current
     val videoDelay =
@@ -429,16 +372,31 @@ fun RootCard(
                                         .background(Color.Black),
                                 )
                             },
-                        modifier = Modifier.padding(imagePadding),
+                        modifier = Modifier.padding(contentPadding),
                     )
                 }
             } else {
+                var extraImageUrl by remember(imageUrl) { mutableStateOf(imageUrl) }
+                if (playVideoPreviews && focusedAfterDelay && extraImageUrls.isNotEmpty()) {
+                    LaunchedEffect(Unit) {
+                        var idx = 0
+                        while (true) {
+                            extraImageUrl = extraImageUrls[idx]
+                            if (++idx >= extraImageUrls.size) idx = 0
+                            delay(2000L)
+                        }
+                    }
+                    DisposableEffect(Unit) {
+                        onDispose { extraImageUrl = imageUrl }
+                    }
+                }
                 CardImage(
                     imageHeight = height,
-                    imageUrl = imageUrl,
+                    imageUrl = extraImageUrl,
                     defaultImageDrawableRes = defaultImageDrawableRes,
                     imageContent = imageContent,
-                    modifier = Modifier.padding(imagePadding),
+                    crossFade = false,
+                    modifier = Modifier.padding(contentPadding),
                 )
             }
             this@Card.AnimatedVisibility(
@@ -492,6 +450,7 @@ fun CardImage(
     @DrawableRes defaultImageDrawableRes: Int?,
     imageContent: @Composable (BoxScope.() -> Unit)?,
     modifier: Modifier = Modifier,
+    crossFade: Boolean = true,
 ) {
     Box(
         modifier =
@@ -513,7 +472,7 @@ fun CardImage(
                     ImageRequest
                         .Builder(LocalContext.current)
                         .data(imageUrl)
-                        .crossfade(true)
+                        .crossfade(crossFade)
                         .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
@@ -649,7 +608,7 @@ fun StashCard(
         is CreateNew -> {
             RootCard(
                 item = item,
-                title = StashAction.CREATE_NEW.actionName,
+                title = AnnotatedString(StashAction.CREATE_NEW.actionName),
                 subtitle = {
                     Text(text = item.name.replaceFirstChar(Char::titlecase))
                 },

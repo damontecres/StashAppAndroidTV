@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
@@ -31,6 +32,7 @@ fun TableRowComposable(
     keyWeight: Float = .3f,
     valueWeight: Float = .7f,
     focusable: Boolean = true,
+    textStyle: TextStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
@@ -68,7 +70,7 @@ fun TableRowComposable(
         val valueModifier =
             Modifier
                 .weight(valueWeight)
-        ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground)) {
+        ProvideTextStyle(textStyle) {
             Box(modifier = keyModifier) {
                 row.key.invoke(this, Modifier.padding(4.dp))
             }

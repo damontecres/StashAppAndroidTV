@@ -15,6 +15,7 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MinimalSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.SlimImageData
 import com.github.damontecres.stashapp.api.fragment.SlimPerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimTagData
@@ -218,7 +219,7 @@ sealed class Destination(
                 is PerformerData, is SlimPerformerData -> DataType.PERFORMER
                 is TagData, is SlimTagData -> DataType.TAG
                 is GroupData, is GroupRelationshipData -> DataType.GROUP
-                is ImageData, is ExtraImageData -> DataType.IMAGE
+                is ImageData, is ExtraImageData, is SlimImageData -> DataType.IMAGE
                 is GalleryData -> DataType.GALLERY
                 is StudioData -> DataType.STUDIO
                 is MarkerData, is FullMarkerData -> DataType.MARKER

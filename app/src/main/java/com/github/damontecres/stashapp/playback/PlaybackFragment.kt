@@ -65,7 +65,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
-import kotlin.collections.set
 
 /**
  * Parent [Fragment] for playing videos
@@ -329,8 +328,8 @@ abstract class PlaybackFragment(
         if (!isRemoving) {
             childFragmentManager.commit {
                 setCustomAnimations(
-                    androidx.leanback.R.anim.abc_slide_in_top,
-                    androidx.leanback.R.anim.abc_slide_out_top,
+                    R.anim.abc_slide_in_top,
+                    R.anim.abc_slide_out_top,
                 )
                 hide(videoFilterFragment)
             }
@@ -341,8 +340,8 @@ abstract class PlaybackFragment(
         if (!isRemoving) {
             childFragmentManager.commit {
                 setCustomAnimations(
-                    androidx.leanback.R.anim.abc_slide_in_top,
-                    androidx.leanback.R.anim.abc_slide_out_top,
+                    R.anim.abc_slide_in_top,
+                    R.anim.abc_slide_out_top,
                 )
                 show(videoFilterFragment)
             }
@@ -434,7 +433,7 @@ abstract class PlaybackFragment(
 
         val mFocusedZoom =
             requireContext().resources.getFraction(
-                androidx.leanback.R.fraction.lb_focus_zoom_factor_large,
+                R.fraction.focus_zoom_factor_large,
                 1,
                 1,
             )
@@ -553,8 +552,8 @@ abstract class PlaybackFragment(
                                 videoView.showController()
                                 childFragmentManager.commitNow {
                                     setCustomAnimations(
-                                        androidx.leanback.R.anim.abc_slide_in_top,
-                                        androidx.leanback.R.anim.abc_slide_out_top,
+                                        R.anim.abc_slide_in_top,
+                                        R.anim.abc_slide_out_top,
                                     )
                                     add(R.id.video_overlay, videoFilterFragment)
                                 }

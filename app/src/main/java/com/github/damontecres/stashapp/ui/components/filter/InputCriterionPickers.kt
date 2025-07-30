@@ -41,7 +41,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.leanback.widget.picker.DatePicker
 import androidx.tv.material3.Icon
-import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
@@ -53,6 +52,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.between
+import com.github.damontecres.stashapp.ui.compat.ListItem
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.nullCheck

@@ -22,17 +22,17 @@ class DurationPicker(
     constructor(context: Context) : this(context, null)
 
     var hours: Int
-        get() = getColumnAt(0).currentValue
+        get() = getColumnAt(0)!!.currentValue
         set(value) {
             setColumnValue(0, value, false)
         }
     var minutes: Int
-        get() = getColumnAt(1).currentValue
+        get() = getColumnAt(1)!!.currentValue
         set(value) {
             setColumnValue(1, value, false)
         }
     var seconds: Int
-        get() = getColumnAt(2).currentValue
+        get() = getColumnAt(2)!!.currentValue
         set(value) {
             setColumnValue(2, value, false)
         }

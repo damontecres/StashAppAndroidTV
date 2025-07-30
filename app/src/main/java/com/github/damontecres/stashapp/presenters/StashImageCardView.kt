@@ -97,6 +97,8 @@ class StashImageCardView(
     private var videoView: PlayerView? = null
     val mainView: ViewSwitcher = findViewById(R.id.main_view)
 
+    val imageView: ImageView get() = super.mainImageView!!
+
     private val iconTextView: TextView
     private val content2: TextView
 
@@ -137,7 +139,7 @@ class StashImageCardView(
     }
 
     init {
-        mainImageView.visibility = View.VISIBLE
+        imageView.visibility = View.VISIBLE
         val infoArea = findViewById<ViewGroup>(R.id.info_field)
         val extraContent =
             LayoutInflater.from(context).inflate(R.layout.image_card_extra_content_row, infoArea)
@@ -265,7 +267,7 @@ class StashImageCardView(
         if (paddingDp > 0) {
             val scale = resources.displayMetrics.density
             val paddingPixels = (paddingDp * scale + 0.5f).toInt()
-            mainImageView.setPadding(paddingPixels)
+            imageView.setPadding(paddingPixels)
         }
 
         imageDimensionsSet = true
@@ -277,7 +279,7 @@ class StashImageCardView(
         // during animations.
         val mainViewColor = if (blackImageBackground) blackColor else color
         mainView.setBackgroundColor(mainViewColor)
-        mainImageView.setBackgroundColor(mainViewColor)
+        imageView.setBackgroundColor(mainViewColor)
         setInfoAreaBackgroundColor(color)
         if (!blackImageBackground) {
             setBackgroundColor(color)
@@ -444,14 +446,14 @@ class StashImageCardView(
     }
 
     fun updateImageLayoutParams(imageMatchParent: Boolean) {
-        val current = mainImageView.layoutParams.height
+        val current = imageView.layoutParams.height
         if (imageMatchParent &&
             current != ViewGroup.LayoutParams.MATCH_PARENT ||
             !imageMatchParent &&
             current != ViewGroup.LayoutParams.WRAP_CONTENT
         ) {
-            mainImageView.setImageDrawable(null)
-            mainImageView.updateLayoutParams {
+            imageView.setImageDrawable(null)
+            imageView.updateLayoutParams {
                 height =
                     if (imageMatchParent) ViewGroup.LayoutParams.MATCH_PARENT else ViewGroup.LayoutParams.WRAP_CONTENT
             }
@@ -463,7 +465,7 @@ class StashImageCardView(
         setInfoAreaBackgroundColor(sDefaultBackgroundColor)
         val bgColor = if (blackImageBackground) blackColor else sDefaultBackgroundColor
         mainView.setBackgroundColor(bgColor)
-        mainImageView.setBackgroundColor(bgColor)
+        imageView.setBackgroundColor(bgColor)
 
         val prefs =
             PreferenceManager
@@ -489,9 +491,9 @@ class StashImageCardView(
         videoUrl = null
         videoView?.player = null
 
-        mainImageView.setPadding(0)
-        if (mainImageView.layoutParams.height != ViewGroup.LayoutParams.MATCH_PARENT) {
-            mainImageView.updateLayoutParams {
+        imageView.setPadding(0)
+        if (imageView.layoutParams.height != ViewGroup.LayoutParams.MATCH_PARENT) {
+            imageView.updateLayoutParams {
                 height = ViewGroup.LayoutParams.MATCH_PARENT
             }
         }

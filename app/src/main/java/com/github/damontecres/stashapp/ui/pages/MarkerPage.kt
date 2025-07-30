@@ -40,10 +40,10 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
@@ -60,6 +60,7 @@ import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.cards.TagCard
+import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -81,6 +82,7 @@ fun MarkerPage(
     itemOnClick: ItemOnClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: MarkerDetailsViewModel = viewModel(),
 ) {
     LaunchedEffect(Unit) {
@@ -129,9 +131,17 @@ fun MarkerPage(
         }
 
     if (marker != null && primaryTag != null) {
+        val title =
+            if (marker!!.title.isNotNullOrBlank()) {
+                marker!!.title
+            } else {
+                primaryTag!!.name
+            }
+        onUpdateTitle?.invoke(AnnotatedString(title))
         MarkerPageContent(
             server = server,
             marker = marker!!,
+            markerTitle = if (onUpdateTitle == null) title else null,
             primaryTag = primaryTag!!,
             tags = tags,
             itemOnClick = itemOnClick,
@@ -158,6 +168,7 @@ fun MarkerPage(
 fun MarkerPageContent(
     server: StashServer,
     marker: FullMarkerData,
+    markerTitle: String?,
     primaryTag: TagData,
     tags: List<TagData>,
     itemOnClick: ItemOnClicker<Any>,
@@ -213,27 +224,24 @@ fun MarkerPageContent(
                     .fillMaxWidth()
                     .padding(16.dp),
         ) {
-            Text(
-                modifier = Modifier,
-                text =
-                    if (marker.title.isNotNullOrBlank()) {
-                        marker.title
-                    } else {
-                        primaryTag.name
-                    },
-                color = MaterialTheme.colorScheme.onBackground,
-                style =
-                    MaterialTheme.typography.displayMedium.copy(
-                        shadow =
-                            Shadow(
-                                color = Color.DarkGray,
-                                offset = Offset(5f, 2f),
-                                blurRadius = 2f,
-                            ),
-                    ),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            markerTitle?.let {
+                Text(
+                    modifier = Modifier,
+                    text = it,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style =
+                        MaterialTheme.typography.displayMedium.copy(
+                            shadow =
+                                Shadow(
+                                    color = Color.DarkGray,
+                                    offset = Offset(5f, 2f),
+                                    blurRadius = 2f,
+                                ),
+                        ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
 
             val interactionSource = remember { MutableInteractionSource() }
             val isFocused = interactionSource.collectIsFocusedAsState().value

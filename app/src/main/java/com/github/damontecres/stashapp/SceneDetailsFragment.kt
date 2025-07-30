@@ -204,7 +204,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private var scenePresenter: SceneDetailsPresenter? = null
     private var detailsPresenter: FullWidthDetailsOverviewRowPresenter? = null
 
-    override fun onInflateTitleView(
+    @Deprecated("Deprecated in Java")
+    override fun inflateTitle(
         inflater: LayoutInflater?,
         parent: ViewGroup?,
         savedInstanceState: Bundle?,

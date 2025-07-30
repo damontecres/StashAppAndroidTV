@@ -4,6 +4,7 @@ import androidx.annotation.IntRange
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +42,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -70,6 +72,7 @@ import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.RootCard
+import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
 import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
 import com.github.damontecres.stashapp.ui.tryRequestFocus
@@ -162,6 +165,7 @@ fun PlaybackOverlay(
     val scope = rememberCoroutineScope()
     var seekProgress by remember { mutableFloatStateOf(-1f) }
     val seekBarFocused by seekBarInteractionSource.collectIsFocusedAsState()
+    var seekBarDragging by remember { mutableStateOf(false) }
 
     val previewImageUrl = scene.spriteUrl
     val imageLoader = SingletonImageLoader.get(LocalPlatformContext.current)
@@ -304,7 +308,32 @@ fun PlaybackOverlay(
                 }
             }
         }
-        AnimatedVisibility(seekPreviewEnabled && seekBarFocused && seekProgress >= 0) {
+
+        if (isNotTvDevice) {
+            // Playback will be paused while dragging, but want to resume if it was playing
+            var wasPlaying by remember { mutableStateOf(true) }
+            LaunchedEffect(seekBarInteractionSource) {
+                seekBarInteractionSource.interactions.collect {
+                    when (it) {
+                        is DragInteraction.Start -> {
+                            seekBarDragging = true
+                            controllerViewState.pulseControls(Int.MAX_VALUE)
+                            wasPlaying = playerControls.isPlaying
+                            playerControls.pause()
+                        }
+
+                        is DragInteraction.Stop,
+                        is DragInteraction.Cancel,
+                        -> {
+                            seekBarDragging = false
+                            controllerViewState.pulseControls()
+                            if (wasPlaying) playerControls.play()
+                        }
+                    }
+                }
+            }
+        }
+        AnimatedVisibility(seekPreviewEnabled && seekProgress >= 0 && (seekBarFocused || seekBarDragging)) {
             LaunchedEffect(Unit) {
                 seekProgress = playerControls.currentPosition.toFloat() / playerControls.duration
             }
@@ -524,7 +553,7 @@ fun BasicMarkerCard(
         imageUrl = marker.imageUrl,
         defaultImageDrawableRes = R.drawable.default_scene,
         videoUrl = null,
-        title = marker.title,
+        title = AnnotatedString(marker.title),
         subtitle = {},
         description = {},
         imageOverlay = {},

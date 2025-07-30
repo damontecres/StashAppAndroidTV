@@ -76,6 +76,8 @@ enum class PreferenceScreenOption {
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
     override fun onPreferenceStartInitialScreen() {
+        // Always reset player when user may change settings
+        StashExoPlayer.releasePlayer()
         val destination = requireArguments().getDestination<Destination.Settings>()
         // PREFERENCE_FRAGMENT_TAG is private, so hardcoded here
         val prevFragment =

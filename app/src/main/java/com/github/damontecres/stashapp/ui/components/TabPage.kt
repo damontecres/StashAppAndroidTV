@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -41,6 +43,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.filterArgsSaver
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
@@ -49,12 +52,14 @@ import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TabPage(
     name: AnnotatedString,
     tabs: List<TabProvider>,
     dataType: DataType,
     modifier: Modifier = Modifier,
+    showTitle: Boolean = true,
 ) {
     val context = LocalContext.current
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -85,45 +90,81 @@ fun TabPage(
     Column(
         modifier = modifier.fillMaxSize(),
     ) {
-        Text(
-            text = name,
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.headlineLarge,
-            modifier =
-                Modifier
-                    .align(Alignment.CenterHorizontally),
-        )
+        if (showTitle) {
+            Text(
+                text = name,
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.headlineLarge,
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterHorizontally),
+            )
+        }
         AnimatedVisibility(
             showTabRow,
             modifier = Modifier.align(Alignment.CenterHorizontally),
         ) {
-            TabRow(
-                selectedTabIndex = selectedTabIndex,
-                modifier =
-                    Modifier
-                        .focusRestorer(focusRequesters[selectedTabIndex])
-                        .focusRequester(tabRowFocusRequester),
-            ) {
-                tabs.forEachIndexed { index, tab ->
-                    key(index) {
-                        Tab(
-                            selected = index == selectedTabIndex,
-                            onFocus = { selectedTabIndex = index },
-                            modifier =
-                                Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .focusRequester(focusRequesters[index]),
-                        ) {
-                            ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                                Text(
-                                    text = tab.name,
-                                    modifier =
-                                        Modifier.padding(
-                                            horizontal = 16.dp,
-                                            vertical = 6.dp,
-                                        ),
-                                )
+            if (isTvDevice) {
+                TabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    modifier =
+                        Modifier
+                            .focusRestorer(focusRequesters[selectedTabIndex])
+                            .focusRequester(tabRowFocusRequester),
+                ) {
+                    tabs.forEachIndexed { index, tab ->
+                        key(index) {
+                            Tab(
+                                selected = index == selectedTabIndex,
+                                onFocus = { selectedTabIndex = index },
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.CenterHorizontally)
+                                        .focusRequester(focusRequesters[index]),
+                            ) {
+                                ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                                    Text(
+                                        text = tab.name,
+                                        modifier =
+                                            Modifier.padding(
+                                                horizontal = 16.dp,
+                                                vertical = 6.dp,
+                                            ),
+                                    )
+                                }
                             }
+                        }
+                    }
+                }
+            } else {
+                // Not tv
+                PrimaryTabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    modifier = Modifier,
+                ) {
+                    tabs.forEachIndexed { index, tab ->
+                        key(index) {
+                            androidx.compose.material3.Tab(
+                                selected = index == selectedTabIndex,
+                                onClick = { selectedTabIndex = index },
+                                selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                                unselectedContentColor = MaterialTheme.colorScheme.onSurface,
+                                text = {
+                                    androidx.compose.material3.Text(
+                                        text = tab.name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier =
+                                            Modifier.padding(
+                                                horizontal = 16.dp,
+                                                vertical = 6.dp,
+                                            ),
+                                    )
+                                },
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.CenterHorizontally)
+                                        .focusRequester(focusRequesters[index]),
+                            )
                         }
                     }
                 }

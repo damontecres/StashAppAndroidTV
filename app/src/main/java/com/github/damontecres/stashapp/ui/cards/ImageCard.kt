@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -65,7 +66,7 @@ fun ImageCard(
         imageUrl = imageUrl,
         defaultImageDrawableRes = R.drawable.default_image,
         videoUrl = item?.paths?.preview,
-        title = item?.titleOrFilename ?: "",
+        title = AnnotatedString(item?.titleOrFilename ?: ""),
         subtitle = {
             Text(concatIfNotBlank(" - ", details))
         },

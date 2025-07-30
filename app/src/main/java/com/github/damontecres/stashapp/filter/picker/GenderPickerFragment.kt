@@ -90,7 +90,7 @@ class GenderPickerFragment(
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
         if (action.id >= MODIFIER_OFFSET) {
             currentModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
-            findActionById(MODIFIER).description = currentModifier.getString(requireContext())
+            findActionById(MODIFIER)!!.description = currentModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
             setFinish()
         }

@@ -7,6 +7,14 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.Version
+import com.github.damontecres.stashapp.util.convertGalleryFilterType
+import com.github.damontecres.stashapp.util.convertGroupFilterType
+import com.github.damontecres.stashapp.util.convertImageFilterType
+import com.github.damontecres.stashapp.util.convertPerformerFilterType
+import com.github.damontecres.stashapp.util.convertSceneFilterType
+import com.github.damontecres.stashapp.util.convertSceneMarkerFilterType
+import com.github.damontecres.stashapp.util.convertStudioFilterType
+import com.github.damontecres.stashapp.util.convertTagFilterType
 import kotlinx.serialization.Serializable
 
 /**

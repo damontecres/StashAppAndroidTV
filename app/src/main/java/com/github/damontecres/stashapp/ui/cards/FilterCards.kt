@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -85,7 +86,7 @@ fun ViewAllCard(
         imageHeight = height.dp / 2,
         imageUrl = null,
         videoUrl = null,
-        title = stringResource(R.string.stashapp_view_all),
+        title = AnnotatedString(stringResource(R.string.stashapp_view_all)),
         subtitle = {
             Text("")
         },

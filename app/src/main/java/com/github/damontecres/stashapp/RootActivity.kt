@@ -114,7 +114,7 @@ class RootActivity :
                     }
 
                     ServerViewModel.ServerConnection.NotConfigured -> {
-                        Log.i(TAG, "No server, starting setup")
+                        Log.i(TAG, "No servers configured, starting setup")
                         navigationManager.navigate(Destination.Setup)
                     }
 

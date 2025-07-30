@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.MutableCreationExtras
@@ -49,6 +50,7 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MinimalSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.SlimImageData
 import com.github.damontecres.stashapp.api.fragment.SlimPerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimTagData
@@ -92,6 +94,7 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.fakeMarker
 import com.github.damontecres.stashapp.util.resume_position
+import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.toSeconds
 import com.github.damontecres.stashapp.views.durationToString
 
@@ -103,6 +106,7 @@ fun SceneDetailsPage(
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     val viewModel =
         ViewModelProvider.create(
@@ -138,7 +142,12 @@ fun SceneDetailsPage(
 
         SceneLoadingState.Loading -> CircularProgress()
 
-        is SceneLoadingState.Success ->
+        is SceneLoadingState.Success -> {
+            LaunchedEffect(Unit) {
+                state.scene.titleOrFilename?.let {
+                    onUpdateTitle?.invoke(AnnotatedString(it))
+                }
+            }
             SceneDetails(
                 server = server,
                 scene = state.scene,
@@ -164,7 +173,7 @@ fun SceneDetailsPage(
                         is MarkerData -> viewModel.addMarker(item)
 
                         is FullMarkerData -> throw UnsupportedOperationException()
-                        is ImageData, is ExtraImageData -> throw UnsupportedOperationException()
+                        is ImageData, is ExtraImageData, is SlimImageData -> throw UnsupportedOperationException()
                         is SlimSceneData, is FullSceneData, is VideoSceneData, is MinimalSceneData -> throw UnsupportedOperationException()
                     }
                 },
@@ -177,7 +186,7 @@ fun SceneDetailsPage(
                         is StudioData -> viewModel.removeStudio()
                         is MarkerData, is FullMarkerData -> viewModel.removeMarker(item.id)
 
-                        is ImageData, is ExtraImageData -> throw UnsupportedOperationException()
+                        is ImageData, is ExtraImageData, is SlimImageData -> throw UnsupportedOperationException()
                         is SlimSceneData, is FullSceneData, is VideoSceneData, is MinimalSceneData -> throw UnsupportedOperationException()
                     }
                 },
@@ -187,6 +196,7 @@ fun SceneDetailsPage(
                 },
                 modifier = modifier.animateContentSize(),
             )
+        }
 
         null -> {}
     }

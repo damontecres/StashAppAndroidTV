@@ -158,7 +158,8 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             }
         }
 
-    override fun onInflateTitleView(
+    @Deprecated("Deprecated in Java")
+    override fun inflateTitle(
         inflater: LayoutInflater?,
         parent: ViewGroup?,
         savedInstanceState: Bundle?,
@@ -565,7 +566,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
         override fun onBindViewHolder(
             viewHolder: ViewHolder,
-            item: Any,
+            item: Any?,
         ) {
             val action = item as Action
             val vh = viewHolder as ActionViewHolder

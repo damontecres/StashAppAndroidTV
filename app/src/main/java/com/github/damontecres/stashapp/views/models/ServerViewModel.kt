@@ -1,6 +1,8 @@
 package com.github.damontecres.stashapp.views.models
 
 import android.content.Context
+import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -12,10 +14,13 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -83,7 +88,25 @@ open class ServerViewModel : ViewModel() {
     fun updateServerPreferences() {
         currentServer.value?.let { server ->
             viewModelScope.launch(StashCoroutineExceptionHandler()) {
-                server.updateServerPrefs()
+                try {
+                    server.updateServerPrefs()
+                } catch (ex: QueryEngine.QueryException) {
+                    Log.w(TAG, "Error updating server preferences", ex)
+                    val result =
+                        testStashConnection(
+                            StashApplication.getApplication(),
+                            false,
+                            server.apolloClient,
+                        )
+                    if (result !is TestResult.Success) {
+                        Toast
+                            .makeText(
+                                StashApplication.getApplication(),
+                                "Error connecting to ${server.url}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                    }
+                }
             }
         }
     }
@@ -115,6 +138,8 @@ open class ServerViewModel : ViewModel() {
     }
 
     companion object {
+        private const val TAG = "ServerViewModel"
+
         fun createUiSettings(context: Context = StashApplication.getApplication()): CardUiSettings {
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
             val maxSearchResults = manager.getInt("maxSearchResults", 25)
