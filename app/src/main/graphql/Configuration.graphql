@@ -49,6 +49,18 @@ query ConfigurationUI {
   }
 }
 
+query Credentials {
+  configuration {
+    general {
+      apiKey
+    }
+  }
+}
+
+mutation GenerateApiKey{
+  generateAPIKey(input: {clear: false})
+}
+
 mutation MetadataScan($input: ScanMetadataInput!){
   metadataScan(input: $input)
 }

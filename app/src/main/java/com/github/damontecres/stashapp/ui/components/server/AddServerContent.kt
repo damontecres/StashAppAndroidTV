@@ -70,8 +70,11 @@ fun AddServer(
     val testButtonFocusRequester = remember { FocusRequester() }
 
     var serverUrl by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     var apiKey by remember { mutableStateOf<String?>(null) }
     var showApiKey by remember { mutableStateOf(false) }
+    var usePassword by remember { mutableStateOf(false) }
+
     var trustCerts by remember {
         mutableStateOf(
             getPreference(
@@ -86,7 +89,7 @@ fun AddServer(
 
     var showTrustDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(serverUrl, apiKey, trustCerts) {
+    LaunchedEffect(serverUrl, apiKey, trustCerts, username) {
         viewModel.clearConnectionStatus()
     }
     LaunchedEffect(connectionState) {
@@ -98,11 +101,14 @@ fun AddServer(
             if (it is ConnectionState.Result && it.testResult is TestResult.Success) {
                 Log.i(TAG, "Connection to $serverUrl successful!")
                 onSubmit.invoke(StashServer(serverUrl, apiKey))
+            } else if (it is ConnectionState.NewApiKey) {
+                Log.i(TAG, "Connection to $serverUrl successful with new API key!")
+                onSubmit.invoke(StashServer(serverUrl, it.apiKey))
             }
         }
     }
 
-    val labelWidth = 64.dp
+    val labelWidth = if (usePassword) 80.dp else 64.dp
 
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
@@ -152,6 +158,7 @@ fun AddServer(
                             capitalization = KeyboardCapitalization.None,
                             keyboardType = KeyboardType.Uri,
                             imeAction = ImeAction.Next,
+                            showKeyboardOnFocus = true,
                         ),
                     keyboardActions = KeyboardActions(),
                     leadingIcon = null,
@@ -162,6 +169,7 @@ fun AddServer(
                                 ConnectionState.Inactive -> true
                                 is ConnectionState.Result -> it.canConnect
                                 ConnectionState.Testing -> true
+                                is ConnectionState.NewApiKey -> true
                             }
                         }
                     },
@@ -170,7 +178,50 @@ fun AddServer(
             }
         }
 
-        // API Key
+        // Username
+        if (usePassword) {
+            item {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.stashapp_config_general_auth_username),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.width(labelWidth),
+                    )
+                    EditTextBox(
+                        value = username,
+                        onValueChange = { username = it },
+                        keyboardOptions =
+                            KeyboardOptions(
+                                autoCorrectEnabled = false,
+                                capitalization = KeyboardCapitalization.None,
+                                keyboardType = KeyboardType.Ascii,
+                                imeAction = ImeAction.Next,
+                                showKeyboardOnFocus = false,
+                            ),
+                        keyboardActions = KeyboardActions(),
+                        leadingIcon = null,
+                        isInputValid = {
+                            connectionState.let {
+                                when (it) {
+                                    ConnectionState.DuplicateServer -> false
+                                    ConnectionState.Inactive -> true
+                                    is ConnectionState.Result -> it.canConnect
+                                    ConnectionState.Testing -> true
+                                    is ConnectionState.NewApiKey -> true
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
+
+        // Password/API Key
         item {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -178,7 +229,14 @@ fun AddServer(
                 modifier = Modifier.animateItem(),
             ) {
                 Text(
-                    text = stringResource(R.string.stashapp_config_general_auth_api_key),
+                    text =
+                        stringResource(
+                            if (usePassword) {
+                                R.string.stashapp_config_general_auth_password
+                            } else {
+                                R.string.stashapp_config_general_auth_api_key
+                            },
+                        ),
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.width(labelWidth),
@@ -192,6 +250,7 @@ fun AddServer(
                             capitalization = KeyboardCapitalization.None,
                             keyboardType = if (showApiKey) KeyboardType.Ascii else KeyboardType.Password,
                             imeAction = ImeAction.Next,
+                            showKeyboardOnFocus = false,
                         ),
                     keyboardActions =
                         KeyboardActions(
@@ -209,6 +268,7 @@ fun AddServer(
                                     ConnectionState.Inactive -> true
                                     is ConnectionState.Result -> it.testResult is TestResult.Success
                                     ConnectionState.Testing -> true
+                                    is ConnectionState.NewApiKey -> true
                                 }
                             }
                     },
@@ -229,12 +289,22 @@ fun AddServer(
                         .fillParentMaxWidth()
                         .animateItem(),
             ) {
-                SwitchWithLabel(
-                    label = "Show API Key",
-                    checked = showApiKey,
-                    onStateChange = { showApiKey = it },
-                    modifier = Modifier,
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    SwitchWithLabel(
+                        label = "Use username",
+                        checked = usePassword,
+                        onStateChange = { usePassword = it },
+                        modifier = Modifier,
+                    )
+                    SwitchWithLabel(
+                        label = if (usePassword) "Show password" else "Show API Key",
+                        checked = showApiKey,
+                        onStateChange = { showApiKey = it },
+                        modifier = Modifier,
+                    )
+                }
             }
         }
 
@@ -245,7 +315,7 @@ fun AddServer(
             ) {
                 Button(
                     onClick = {
-                        viewModel.testServer(serverUrl, apiKey, trustCerts)
+                        viewModel.testServer(serverUrl, apiKey, trustCerts, username, usePassword)
                     },
                     enabled = serverUrl.isNotNullOrBlank() && connectionState == ConnectionState.Inactive,
                     modifier = Modifier.focusRequester(testButtonFocusRequester),

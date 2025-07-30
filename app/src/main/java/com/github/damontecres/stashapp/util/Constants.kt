@@ -172,7 +172,7 @@ sealed interface TestResult {
     }
 
     data object AuthRequired : TestResult {
-        override val message: String = "API key is required"
+        override val message: String = "Credentials are required"
     }
 
     data class Error(

@@ -85,7 +85,9 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                 onServerConfigure = { serverViewModel.switchServer(it) },
                                 modifier = Modifier.fillMaxSize(),
                             )
-                        } else if (server == null && navCommand?.destination is Destination.ManageServers) {
+                        } else if (server == null &&
+                            (navCommand?.destination is Destination.ManageServers || navCommand?.destination is Destination.Main)
+                        ) {
                             ManageServers(
                                 currentServer = null,
                                 onSwitchServer = serverViewModel::switchServer,

@@ -26,4 +26,11 @@ sealed interface ConnectionState {
     ) : ConnectionState {
         val canConnect: Boolean = testResult is TestResult.Success || testResult is TestResult.AuthRequired
     }
+
+    /**
+     * Connection successful, but must use an API key
+     */
+    data class NewApiKey(
+        val apiKey: String,
+    ) : ConnectionState
 }
