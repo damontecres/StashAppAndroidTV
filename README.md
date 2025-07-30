@@ -4,9 +4,13 @@ This is an Android TV app for browsing images and playing scenes from a [Stash](
 
 The app supports browsing, searching, and filtering just about everything including scenes, images, performers, tags, etc. The app also supports video hardware decoding when available so your server can transcode less.
 
-The app is not intended to perform administrative functions such as scraping or editing details. Some curation tasks are available though such as adding tags or performers to scenes.
+The app does not perform administrative functions such as scraping, but some curation tasks are available like adding tags or performers to scenes.
 
-### Main page
+### Phones & tablets
+
+The app is primarily designed for Android TV, but it can also run on Android phones and tablets. However, much of the UI is not yet fully optimized for touch input and may not as work well, especially on smaller screens.
+
+###
 ![0_6_6_main](https://github.com/user-attachments/assets/6549ce26-bd8a-4b86-90c7-3447f7de3eef)
 
 ## Setup
@@ -37,7 +41,7 @@ Check the [Tips & Tricks](https://github.com/damontecres/StashAppAndroidTV/wiki/
 
 After the initial install above, the app will automatically check for updates which can then be installed in settings.
 
-The first time you attempt an update, the Android TV OS should guide you through enabling the required additional permissions for the app to install updates.
+The first time you attempt an update, the OS should guide you through enabling the required additional permissions for the app to install updates.
 
 ### Configuration
 
@@ -47,10 +51,11 @@ The first time you open the app, follow the prompts to configure the app to conn
     - Don't use `localhost`; use the IP address or domain of your Stash server
     - Don't forget to include the port which 9999 by default
     - If you have configured HTTPS/SSL/TLS, make sure to use `https://` instead of `http://`
-1. If you have enabled authentication on your Stash server, you will be prompted to enter the API Key
+2. If you have enabled authentication on your Stash server, you must enter its API Key
     1. Use your phone to browse to your Stash server and copy the API Key from the Settings->Security page (e.g. http://192.168.1.122:9999/settings?tab=security)
-    1. Use your phone's [virtual remote control](https://support.google.com/chromecast/answer/11221499) or the `Amazon Fire TV` app to paste the API Key into the TV app
-1. If you have trouble submitting the URL or API Key using the virtual remote control, [see some tips here](https://github.com/damontecres/StashAppAndroidTV/wiki/Tips-&-Tricks#i-cant-submit-the-server-url-when-using-a-remote-phone-app)
+    2. Use your phone's [virtual remote control](https://support.google.com/chromecast/answer/11221499) or the `Amazon Fire TV` app to paste the API Key into the TV app
+    3. You can also use your username and password instead. After entering your username and password, the app will automatically retrieve (or generate) the API Key from the server.
+3. If you have trouble submitting the URL or API Key using the virtual remote control, [see some tips here](https://github.com/damontecres/StashAppAndroidTV/wiki/Tips-&-Tricks#i-cant-submit-the-server-url-when-using-a-remote-phone-app)
 
 #### Multiple servers
 
@@ -62,11 +67,13 @@ You can configure multiple servers in the app. To add, remove, or switch servers
 
 The app strives to be compatible with the latest released version of Stash.
 
-Currently, the minimum supported/tested server version is Stash `0.28.0`.
+Currently, the minimum supported server version is Stash `0.28.0`.
 
 #### Devices
 
 The app supports many devices running Android TV OS, such as the NVIDIA Shield, Amazon Fire TV devices (Fire OS 6 or greater), or Chromecast with Google TV.
+
+It also supports Android phones and tablets, but the UI is not fully optimized for touch input.
 
 See [Device Compatibility](https://github.com/damontecres/StashAppAndroidTV/wiki/Device-Compatibility) for more information.
 
