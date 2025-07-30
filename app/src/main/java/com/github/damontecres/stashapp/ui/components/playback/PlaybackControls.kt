@@ -1,3 +1,5 @@
+@file:kotlin.OptIn(ExperimentalMaterial3Api::class)
+
 package com.github.damontecres.stashapp.ui.components.playback
 
 import android.util.Log
@@ -22,6 +24,9 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -61,6 +67,7 @@ import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.compat.ListItem
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import kotlinx.coroutines.delay
@@ -200,7 +207,7 @@ fun PlaybackControls(
     }
 }
 
-@OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SeekBar(
     scene: Scene,
@@ -235,20 +242,41 @@ fun SeekBar(
     ) {
         val aspectRatio =
             if (scene.videoWidth != null && scene.videoHeight != null) scene.videoWidth.toFloat() / scene.videoHeight else 16f / 9
-        SeekBarImpl(
-            progress = progress,
-            bufferedProgress = bufferedProgress,
-            duration = player.duration,
-            onSeek = {
-                onSeekProgress(it)
-            },
-            controllerViewState = controllerViewState,
-            intervals = intervals,
-            aspectRatio = aspectRatio,
-            previewImageUrl = scene.spriteUrl,
-            modifier = Modifier.fillMaxWidth(),
-            interactionSource = interactionSource,
-        )
+        if (isTvDevice) {
+            SeekBarImpl(
+                progress = progress,
+                bufferedProgress = bufferedProgress,
+                duration = player.duration,
+                onSeek = {
+                    onSeekProgress(it)
+                },
+                controllerViewState = controllerViewState,
+                intervals = intervals,
+                aspectRatio = aspectRatio,
+                previewImageUrl = scene.spriteUrl,
+                modifier = Modifier.fillMaxWidth(),
+                interactionSource = interactionSource,
+            )
+        } else {
+            var seekProgress by remember { mutableFloatStateOf(progress) }
+            Slider(
+                value = seekProgress,
+                onValueChange = {
+                    seekProgress = it
+                    onSeekProgress(seekProgress)
+                },
+                onValueChangeFinished = { onSeekProgress(seekProgress) },
+                interactionSource = interactionSource,
+                thumb = {
+                    SliderDefaults.Thumb(
+                        thumbSize = DpSize(4.dp, 24.dp),
+                        interactionSource = interactionSource,
+                        modifier = Modifier,
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
