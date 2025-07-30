@@ -9,6 +9,8 @@ import com.apollographql.apollo.network.http.DefaultHttpEngine
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.CredentialsQuery
 import com.github.damontecres.stashapp.api.GenerateApiKeyMutation
+import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -172,58 +174,36 @@ class ManageServersViewModel : ViewModel() {
                         .serverUrl(StashClient.cleanServerUrl(serverUrl))
                         .httpEngine(DefaultHttpEngine(httpClient))
                         .build()
-                val res =
-                    withContext(Dispatchers.IO) {
-                        apolloClient.query(CredentialsQuery()).execute()
-                    }
-                if (res.exception != null) {
-                    Log.w(TAG, "Exception logging in", res.exception)
-                    connectionState.value =
-                        ConnectionState.Result(
-                            TestResult.Error(
-                                res.exception?.localizedMessage,
-                                res.exception,
-                            ),
+                val queryEngine = QueryEngine(apolloClient, null)
+                val mutationEngine = MutationEngine(apolloClient, null)
+
+                val res = queryEngine.executeQuery(CredentialsQuery())
+                var currentApiKey =
+                    res.data
+                        ?.configuration
+                        ?.general
+                        ?.apiKey ?: ""
+                if (currentApiKey.isBlank()) {
+                    val genResult = mutationEngine.executeMutation(GenerateApiKeyMutation())
+                    val newApiKey = genResult.data?.generateAPIKey
+                    if (newApiKey.isNullOrBlank()) {
+                        Log.w(
+                            TAG,
+                            "Exception generating api key: ${genResult.errors?.joinToString(",")}",
+                            genResult.exception,
                         )
-                } else if (res.errors != null && res.errors!!.isNotEmpty()) {
-                    connectionState.value =
-                        ConnectionState.Result(
-                            TestResult.Error(
-                                res.errors!!.joinToString(", "),
-                                null,
-                            ),
-                        )
-                } else {
-                    var currentApiKey =
-                        res.data
-                            ?.configuration
-                            ?.general
-                            ?.apiKey ?: ""
-                    if (currentApiKey.isBlank()) {
-                        val genResult =
-                            withContext(Dispatchers.IO) {
-                                apolloClient.mutation(GenerateApiKeyMutation()).execute()
-                            }
-                        val newApiKey = genResult.data?.generateAPIKey
-                        if (newApiKey.isNullOrBlank()) {
-                            Log.w(
-                                TAG,
-                                "Exception generating api key: ${genResult.errors?.joinToString(",")}",
-                                genResult.exception,
+                        connectionState.value =
+                            ConnectionState.Result(
+                                TestResult.Error(
+                                    "Failed to generate API Key",
+                                    genResult.exception,
+                                ),
                             )
-                            connectionState.value =
-                                ConnectionState.Result(
-                                    TestResult.Error(
-                                        "Failed to generate API Key",
-                                        genResult.exception,
-                                    ),
-                                )
-                        } else {
-                            currentApiKey = newApiKey
-                        }
+                    } else {
+                        currentApiKey = newApiKey
                     }
-                    connectionState.value = ConnectionState.NewApiKey(currentApiKey)
                 }
+                connectionState.value = ConnectionState.NewApiKey(currentApiKey)
             }
         } catch (ex: Exception) {
             Log.w(TAG, "Exception generating api key", ex)
