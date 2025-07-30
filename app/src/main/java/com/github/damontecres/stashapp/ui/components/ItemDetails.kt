@@ -92,7 +92,7 @@ fun ItemDetails(
                         enabled = true,
                         modifier =
                             Modifier
-                                .height(32.dp)
+                                .height(ratingBarHeight)
                                 .padding(start = 12.dp),
                     )
                 }
