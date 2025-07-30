@@ -123,5 +123,6 @@
     <string name="success">Success</string>
     <string name="add_server">Add Server</string>
     <string name="switch_server">Switch server</string>
+    <string name="test_connection">Test Connection</string>
 
 </resources>

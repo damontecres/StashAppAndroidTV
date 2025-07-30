@@ -11,6 +11,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.testStashConnection
+import com.github.damontecres.stashapp.views.models.EqualityMutableLiveData
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -20,7 +21,7 @@ class ManageServersViewModel : ViewModel() {
     val allServers = MutableLiveData<List<StashServer>>(listOf())
     val serverStatus = MutableLiveData<Map<StashServer, ServerTestResult>>(mapOf())
 
-    val connectionState = MutableLiveData<ConnectionState>(ConnectionState.Inactive)
+    val connectionState = EqualityMutableLiveData<ConnectionState>(ConnectionState.Inactive)
 
     init {
         val servers = StashServer.getAll(StashApplication.getApplication())
@@ -31,6 +32,10 @@ class ManageServersViewModel : ViewModel() {
                 testServer(server)
             }
         }
+    }
+
+    fun clearConnectionStatus() {
+        connectionState.value = ConnectionState.Inactive
     }
 
     fun testServer(server: StashServer) {
@@ -89,7 +94,7 @@ class ManageServersViewModel : ViewModel() {
                         connectionState.value = ConnectionState.DuplicateServer
                     } else {
                         connectionState.value = ConnectionState.Testing
-                        delay(1000L)
+                        delay(300L)
                         try {
                             val apolloClient =
                                 StashClient.createTestApolloClient(

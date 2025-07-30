@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.server
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -21,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,14 +50,11 @@ import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.components.SwitchWithLabel
-import com.github.damontecres.stashapp.util.StashClient
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.getPreference
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.testStashConnection
-import kotlinx.coroutines.launch
 
 private const val TAG = "AddServer"
 
@@ -69,6 +66,8 @@ fun AddServer(
     viewModel: ManageServersViewModel = viewModel(),
 ) {
     val context = LocalContext.current
+
+    val testButtonFocusRequester = remember { FocusRequester() }
 
     var serverUrl by remember { mutableStateOf("") }
     var apiKey by remember { mutableStateOf<String?>(null) }
@@ -88,13 +87,19 @@ fun AddServer(
     var showTrustDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(serverUrl, apiKey, trustCerts) {
-        viewModel.testServer(serverUrl, apiKey, trustCerts)
+        viewModel.clearConnectionStatus()
     }
     LaunchedEffect(connectionState) {
         showTrustDialog =
             connectionState.let {
                 it is ConnectionState.Result && it.testResult is TestResult.SelfSignedCertRequired
             }
+        connectionState.let {
+            if (it is ConnectionState.Result && it.testResult is TestResult.Success) {
+                Log.i(TAG, "Connection to $serverUrl successful!")
+                onSubmit.invoke(StashServer(serverUrl, apiKey))
+            }
+        }
     }
 
     val labelWidth = 64.dp
@@ -188,11 +193,14 @@ fun AddServer(
                             keyboardType = if (showApiKey) KeyboardType.Ascii else KeyboardType.Password,
                             imeAction = ImeAction.Next,
                         ),
-                    keyboardActions = KeyboardActions(),
+                    keyboardActions =
+                        KeyboardActions(
+                            onNext = {
+                                testButtonFocusRequester.tryRequestFocus()
+                            },
+                        ),
                     leadingIcon = null,
-                    enabled =
-                        connectionState.let { it is ConnectionState.Result && it.testResult is TestResult.AuthRequired } ||
-                            apiKey.isNotNullOrBlank(),
+                    enabled = true,
                     isInputValid = {
                         apiKey.isNullOrEmpty() ||
                             connectionState.let {
@@ -235,14 +243,22 @@ fun AddServer(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillParentMaxWidth(),
             ) {
-                SubmitServerButton(
-                    connectionState = connectionState,
-                    serverUrl = serverUrl,
-                    apiKey = apiKey,
-                    trustCerts = trustCerts,
-                    onSubmit = onSubmit,
-                    modifier = Modifier,
-                )
+                Button(
+                    onClick = {
+                        viewModel.testServer(serverUrl, apiKey, trustCerts)
+                    },
+                    enabled = serverUrl.isNotNullOrBlank() && connectionState == ConnectionState.Inactive,
+                    modifier = Modifier.focusRequester(testButtonFocusRequester),
+                ) {
+                    if (connectionState is ConnectionState.Testing) {
+                        CircularProgress(Modifier.size(32.dp), false)
+                    } else {
+                        Text(
+                            text = stringResource(R.string.test_connection),
+//                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                    }
+                }
             }
         }
     }
@@ -256,61 +272,6 @@ fun AddServer(
                 trustCerts = true
             },
         )
-    }
-}
-
-@Composable
-fun SubmitServerButton(
-    connectionState: ConnectionState,
-    serverUrl: String?,
-    apiKey: String?,
-    trustCerts: Boolean,
-    onSubmit: (StashServer) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var testing by remember { mutableStateOf(false) }
-
-    Button(
-        onClick = {
-            scope.launch(StashCoroutineExceptionHandler()) {
-                try {
-                    testing = true
-                    if (serverUrl.isNotNullOrBlank()) {
-                        val server = StashServer(serverUrl, apiKey?.ifBlank { null })
-                        val apolloClient =
-                            StashClient.createTestApolloClient(
-                                context,
-                                server,
-                                trustCerts,
-                            )
-                        val testResult =
-                            testStashConnection(
-                                context,
-                                false,
-                                apolloClient,
-                            )
-                        if (testResult is TestResult.Success) {
-                            onSubmit.invoke(server)
-                        }
-                    }
-                } finally {
-                    testing = false
-                }
-            }
-        },
-        enabled = !testing && connectionState.let { it is ConnectionState.Result && it.testResult is TestResult.Success },
-        modifier = modifier,
-    ) {
-        if (testing || connectionState is ConnectionState.Testing) {
-            CircularProgress(Modifier.size(32.dp), false)
-        } else {
-            Text(
-                text = stringResource(R.string.stashapp_actions_submit),
-//                color = MaterialTheme.colorScheme.onSecondaryContainer,
-            )
-        }
     }
 }
 
