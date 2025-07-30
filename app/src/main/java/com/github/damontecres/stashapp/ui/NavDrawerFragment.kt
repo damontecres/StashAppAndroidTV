@@ -25,6 +25,7 @@ import coil3.annotation.ExperimentalCoilApi
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
+import com.github.damontecres.stashapp.ui.components.server.InitialSetup
 import com.github.damontecres.stashapp.ui.components.server.ManageServers
 import com.github.damontecres.stashapp.ui.nav.ApplicationContent
 import com.github.damontecres.stashapp.ui.nav.CoilConfig
@@ -79,7 +80,14 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                 navController.navigate(cmd.destination)
                             }
                         }
-                        if (server == null && navCommand?.destination is Destination.ManageServers) {
+                        if (server == null && serverViewModel.destination.value is Destination.Setup) {
+                            InitialSetup(
+                                onServerConfigure = { serverViewModel.switchServer(it) },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        } else if (server == null &&
+                            (navCommand?.destination is Destination.ManageServers || navCommand?.destination is Destination.Main)
+                        ) {
                             ManageServers(
                                 currentServer = null,
                                 onSwitchServer = serverViewModel::switchServer,

@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.util
 
 import android.util.Log
+import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Mutation
 import com.apollographql.apollo.api.Optional
@@ -65,8 +66,11 @@ import java.util.concurrent.atomic.AtomicInteger
  * Class for sending graphql mutations
  */
 class MutationEngine(
-    server: StashServer,
-) : StashEngine(server) {
+    apolloClient: ApolloClient,
+    server: StashServer?,
+) : StashEngine(apolloClient, server) {
+    constructor(server: StashServer) : this(server.apolloClient, server)
+
     private val readOnlyMode = readOnlyModeEnabled()
 
     suspend fun <D : Mutation.Data> executeMutation(
@@ -136,7 +140,7 @@ class MutationEngine(
         defValue: Boolean = false,
     ): Optional<Boolean> =
         Optional.presentIfNotNull(
-            serverPreferences.preferences.getBoolean(
+            serverPreferences?.preferences?.getBoolean(
                 preferenceKey,
                 defValue,
             ),

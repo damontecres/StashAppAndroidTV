@@ -120,7 +120,9 @@
     <string name="modifier">Modifier</string>
     <string name="scenes_together">View scenes together</string>
     <string name="no_filters_set">No filters set</string>
+    <string name="success">Success</string>
     <string name="add_server">Add Server</string>
     <string name="switch_server">Switch server</string>
+    <string name="test_connection">Test Connection</string>
 
 </resources>

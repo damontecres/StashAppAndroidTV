@@ -10,7 +10,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.UpdateAppFragment
-import com.github.damontecres.stashapp.setup.SetupFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
 import com.github.damontecres.stashapp.ui.NavDrawerFragment
 import com.github.damontecres.stashapp.util.putDestination
@@ -74,7 +73,7 @@ class NavigationManagerCompose(
                 is Destination.Settings -> SettingsFragment()
                 Destination.Pin -> PinFragment()
                 Destination.SettingsPin -> SettingsPinEntryFragment()
-                Destination.Setup -> SetupFragment()
+//                Destination.Setup -> SetupFragment()
 
                 is Destination.UpdateApp -> UpdateAppFragment()
 //                is Destination.ManageServers -> ManageServersFragment()

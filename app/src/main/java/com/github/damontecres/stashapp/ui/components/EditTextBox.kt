@@ -54,6 +54,7 @@ fun EditTextBox(
     height: Dp = 40.dp,
     isInputValid: (String) -> Boolean = { true },
     supportingText: @Composable (() -> Unit)? = null,
+    placeholder: @Composable (() -> Unit)? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     Material3AppTheme {
@@ -111,7 +112,7 @@ fun EditTextBox(
                                     VisualTransformation.None
                                 },
                             innerTextField = innerTextField,
-                            placeholder = null,
+                            placeholder = placeholder,
                             label = null,
                             leadingIcon = leadingIcon,
                             trailingIcon = null,
