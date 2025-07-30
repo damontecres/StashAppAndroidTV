@@ -96,6 +96,7 @@ import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
 import com.github.damontecres.stashapp.ui.components.TableRowComposable
 import com.github.damontecres.stashapp.ui.components.createTabFunc
+import com.github.damontecres.stashapp.ui.components.ratingBarHeight
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.ui.performerPreview
 import com.github.damontecres.stashapp.ui.tagPreview
@@ -673,7 +674,7 @@ fun PerformerDetails(
                     enabled = true,
                     modifier =
                         Modifier
-                            .height(32.dp)
+                            .height(ratingBarHeight)
                             .padding(start = 12.dp),
                 )
             }

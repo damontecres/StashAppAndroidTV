@@ -84,6 +84,7 @@ fun MainPageImageDetails(
                     enabled = false,
                     modifier =
                         Modifier
+                            // Not using ratingBarHeight intentionally
                             .height(24.dp),
                 )
                 // Quick info
