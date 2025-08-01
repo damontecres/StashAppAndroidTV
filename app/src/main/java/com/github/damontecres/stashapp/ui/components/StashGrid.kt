@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -48,6 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.preference.PreferenceManager
+import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
@@ -463,6 +466,18 @@ fun StashGrid(
             gridState.scrollToItem(newPosition, 0)
         }
     }
+    val jumpToTop = {
+        scope.launch(StashCoroutineExceptionHandler()) {
+            if (focusedIndex < (columns * 6)) {
+                // If close, animate the scroll
+                gridState.animateScrollToItem(0, 0)
+            } else {
+                gridState.scrollToItem(0, 0)
+            }
+            focusOn(0)
+            zeroFocus.tryRequestFocus()
+        }
+    }
     val server = LocalGlobalContext.current.server
 
     var longPressing by remember { mutableStateOf(false) }
@@ -495,16 +510,7 @@ fun StashGrid(
                     if (it.type != KeyEventType.KeyUp) {
                         return@onKeyEvent false
                     } else if (useBackToJump && it.key == Key.Back && focusedIndex > 0) {
-                        scope.launch(StashCoroutineExceptionHandler()) {
-                            if (focusedIndex < (columns * 6)) {
-                                // If close, animate the scroll
-                                gridState.animateScrollToItem(0, 0)
-                            } else {
-                                gridState.scrollToItem(0, 0)
-                            }
-                            focusOn(0)
-                            zeroFocus.tryRequestFocus()
-                        }
+                        jumpToTop()
                         return@onKeyEvent true
                     } else if (isPlayKeyUp(it)) {
                         val destination =
@@ -663,6 +669,24 @@ fun StashGrid(
                         color = MaterialTheme.colorScheme.onBackground,
                         text = "$index / ${pager.size}",
                     )
+                }
+            }
+            if (isNotTvDevice) {
+                androidx.compose.animation.AnimatedVisibility(
+                    focusedIndex > columns,
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                ) {
+                    // Can use material3 here since it's only for non-TV
+                    androidx.compose.material3.Button(
+                        onClick = { jumpToTop() },
+                        modifier = Modifier.padding(32.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowUp,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp),
+                        )
+                    }
                 }
             }
         }
