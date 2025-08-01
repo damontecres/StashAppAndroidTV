@@ -254,7 +254,7 @@ fun ObjectFilterPicker(
                             name = context.getString(filterOption.nameStringId),
                             value = input.value2.getOrNull(),
                             onSave = {
-                                value = input.copy(value = it)
+                                value = input.copy(value2 = Optional.present(it))
                             },
                         ),
                     )

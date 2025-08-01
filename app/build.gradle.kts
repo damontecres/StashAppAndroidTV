@@ -231,6 +231,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
 
     implementation(libs.zoomlayout)
+    implementation(libs.compose.wheel.picker)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.markwon.core)
     implementation(libs.parcelable.core)
