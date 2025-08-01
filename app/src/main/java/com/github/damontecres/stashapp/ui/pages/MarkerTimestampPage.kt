@@ -22,6 +22,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -54,6 +56,7 @@ import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.SwitchWithLabel
 import com.github.damontecres.stashapp.ui.components.TimestampPicker
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -62,6 +65,7 @@ import com.github.damontecres.stashapp.util.toLongMilliseconds
 import com.github.damontecres.stashapp.util.toSeconds
 import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
@@ -113,21 +117,36 @@ fun MarkerTimestampPage(
             val player =
                 remember {
                     StashExoPlayer.getInstance(context, server).also { player ->
-//                        player.setMediaItem(mediaItem, marker.seconds.seconds.inWholeMilliseconds)
-//                        player.prepare()
+                        player.setMediaItem(mediaItem, marker.seconds.toLongMilliseconds)
+                        player.prepare()
                     }
                 }
+            var timestampChanged by remember { mutableStateOf(false) }
             val presentationState = rememberPresentationState(player)
             val playPause = rememberPlayPauseButtonState(player)
             val scaledModifier =
                 Modifier.resizeWithContentScale(ContentScale.Fit, presentationState.videoSizeDp)
 
             LaunchedEffect(Unit) {
-                viewModel.start.asFlow().debounce { 750L }.collect {
-                    player.setMediaItem(mediaItem, derivedNewStart.inWholeMilliseconds)
-                    player.prepare()
+                viewModel.start.asFlow().debounce { 500L }.collect {
+                    player.pause()
+                    player.seekTo(it.inWholeMilliseconds)
+                    timestampChanged = false
                 }
             }
+
+            LaunchedEffect(Unit) {
+                viewModel.end.asFlow().debounce { 500L }.collectIndexed { index, ts ->
+                    if (index > 0) {
+                        player.pause()
+                        player.seekTo(ts.inWholeMilliseconds)
+                        timestampChanged = false
+                    }
+                }
+            }
+
+            val focusRequester = remember { FocusRequester() }
+            LaunchedEffect(Unit) { focusRequester.tryRequestFocus() }
 
             Box(
                 contentAlignment = Alignment.TopCenter,
@@ -138,7 +157,7 @@ fun MarkerTimestampPage(
                     surfaceType = SURFACE_TYPE_SURFACE_VIEW,
                     modifier = scaledModifier,
                 )
-                if (presentationState.coverSurface) {
+                if (presentationState.coverSurface || timestampChanged) {
                     Box(
                         Modifier
                             .matchParentSize()
@@ -147,7 +166,7 @@ fun MarkerTimestampPage(
                         CircularProgress(
                             modifier =
                                 Modifier
-                                    .size(64.dp)
+                                    .size(80.dp)
                                     .align(Alignment.Center),
                             false,
                         )
@@ -166,8 +185,14 @@ fun MarkerTimestampPage(
                     TimestampPicker(
                         timestamp = marker.seconds.seconds,
                         maxDuration = maxDuration,
-                        onValueChange = { viewModel.start.value = it },
-                        modifier = Modifier.fillMaxWidth(.8f),
+                        onValueChange = {
+                            viewModel.start.value = it
+                            timestampChanged = true
+                        },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth(.8f)
+                                .focusRequester(focusRequester),
                     )
                     AnimatedVisibility(setEndTimestamp) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -179,7 +204,10 @@ fun MarkerTimestampPage(
                             TimestampPicker(
                                 timestamp = (marker.end_seconds ?: marker.seconds).seconds,
                                 maxDuration = maxDuration,
-                                onValueChange = { viewModel.end.value = it },
+                                onValueChange = {
+                                    viewModel.end.value = it
+                                    timestampChanged = true
+                                },
                                 modifier = Modifier.fillMaxWidth(.8f),
                             )
                         }
