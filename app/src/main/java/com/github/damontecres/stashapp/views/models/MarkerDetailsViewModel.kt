@@ -24,8 +24,8 @@ class MarkerDetailsViewModel : ViewModel() {
     val seconds = MutableLiveData<Double>()
     val endSeconds = MutableLiveData<Double?>(null)
 
-    val start = MutableLiveData<Duration>()
-    val end = MutableLiveData<Duration>()
+    val start = EqualityMutableLiveData<Duration>()
+    val end = EqualityMutableLiveData<Duration>()
 
     private val _item = EqualityMutableLiveData<FullMarkerData?>()
     val item: LiveData<FullMarkerData?> = _item

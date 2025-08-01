@@ -117,8 +117,8 @@ fun MarkerTimestampPage(
             val player =
                 remember {
                     StashExoPlayer.getInstance(context, server).also { player ->
-                        player.setMediaItem(mediaItem, marker.seconds.toLongMilliseconds)
-                        player.prepare()
+//                        player.setMediaItem(mediaItem, marker.seconds.toLongMilliseconds)
+//                        player.prepare()
                     }
                 }
             var timestampChanged by remember { mutableStateOf(false) }
@@ -128,9 +128,11 @@ fun MarkerTimestampPage(
                 Modifier.resizeWithContentScale(ContentScale.Fit, presentationState.videoSizeDp)
 
             LaunchedEffect(Unit) {
-                viewModel.start.asFlow().debounce { 500L }.collect {
-                    player.pause()
-                    player.seekTo(it.inWholeMilliseconds)
+                viewModel.start.asFlow().debounce { 500L }.collect { ts ->
+                    if (player.currentPosition != ts.inWholeMilliseconds) {
+                        player.setMediaItem(mediaItem, ts.inWholeMilliseconds)
+                        player.prepare()
+                    }
                     timestampChanged = false
                 }
             }
@@ -138,8 +140,10 @@ fun MarkerTimestampPage(
             LaunchedEffect(Unit) {
                 viewModel.end.asFlow().debounce { 500L }.collectIndexed { index, ts ->
                     if (index > 0) {
-                        player.pause()
-                        player.seekTo(ts.inWholeMilliseconds)
+                        if (player.currentPosition != ts.inWholeMilliseconds) {
+                            player.setMediaItem(mediaItem, ts.inWholeMilliseconds)
+                            player.prepare()
+                        }
                         timestampChanged = false
                     }
                 }
@@ -185,10 +189,7 @@ fun MarkerTimestampPage(
                     TimestampPicker(
                         timestamp = marker.seconds.seconds,
                         maxDuration = maxDuration,
-                        onValueChange = {
-                            viewModel.start.value = it
-                            timestampChanged = true
-                        },
+                        onValueChange = { viewModel.start.value = it },
                         modifier =
                             Modifier
                                 .fillMaxWidth(.8f)
@@ -204,10 +205,7 @@ fun MarkerTimestampPage(
                             TimestampPicker(
                                 timestamp = (marker.end_seconds ?: marker.seconds).seconds,
                                 maxDuration = maxDuration,
-                                onValueChange = {
-                                    viewModel.end.value = it
-                                    timestampChanged = true
-                                },
+                                onValueChange = { viewModel.end.value = it },
                                 modifier = Modifier.fillMaxWidth(.8f),
                             )
                         }

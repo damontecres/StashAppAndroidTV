@@ -32,7 +32,6 @@ import com.github.damontecres.stashapp.views.DurationPicker2
 import com.sd.lib.compose.wheel_picker.FVerticalWheelPicker
 import com.sd.lib.compose.wheel_picker.FWheelPickerState
 import com.sd.lib.compose.wheel_picker.rememberFWheelPickerState
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -40,7 +39,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-data class TimestampPickerState private constructor(
+data class TimestampPickerState(
     val hours: FWheelPickerState,
     val minutes: FWheelPickerState,
     val seconds: FWheelPickerState,
@@ -52,29 +51,27 @@ data class TimestampPickerState private constructor(
                 minutes.currentIndex.coerceAtLeast(0).minutes +
                 seconds.currentIndex.coerceAtLeast(0).seconds +
                 (milliseconds.currentIndex.coerceAtLeast(0) * 50).milliseconds
-
-    companion object {
-        @Composable
-        fun rememberTimestampPickerState(timestamp: Duration): TimestampPickerState =
-            TimestampPickerState(
-                rememberFWheelPickerState(
-                    DurationPicker2.getHours(timestamp.inWholeMilliseconds).coerceAtMost(25),
-                ),
-                rememberFWheelPickerState(
-                    DurationPicker2.getMinutes(timestamp.inWholeMilliseconds).coerceAtMost(60),
-                ),
-                rememberFWheelPickerState(
-                    DurationPicker2.getSeconds(timestamp.inWholeMilliseconds).coerceAtMost(60),
-                ),
-                rememberFWheelPickerState(
-                    DurationPicker2
-                        .getMilliseconds(timestamp.inWholeMilliseconds)
-                        .div(50)
-                        .coerceAtMost(20),
-                ),
-            )
-    }
 }
+
+@Composable
+fun rememberTimestampPickerState(timestamp: Duration): TimestampPickerState =
+    TimestampPickerState(
+        rememberFWheelPickerState(
+            DurationPicker2.getHours(timestamp.inWholeMilliseconds).coerceAtMost(25),
+        ),
+        rememberFWheelPickerState(
+            DurationPicker2.getMinutes(timestamp.inWholeMilliseconds).coerceAtMost(60),
+        ),
+        rememberFWheelPickerState(
+            DurationPicker2.getSeconds(timestamp.inWholeMilliseconds).coerceAtMost(60),
+        ),
+        rememberFWheelPickerState(
+            DurationPicker2
+                .getMilliseconds(timestamp.inWholeMilliseconds)
+                .div(50)
+                .coerceAtMost(20),
+        ),
+    )
 
 @Composable
 fun TimestampPicker(
@@ -83,47 +80,17 @@ fun TimestampPicker(
     onValueChange: (Duration) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val hourState =
-        rememberFWheelPickerState(
-            DurationPicker2.getHours(timestamp.inWholeMilliseconds).coerceAtMost(25),
-        )
-    val minuteState =
-        rememberFWheelPickerState(
-            DurationPicker2.getMinutes(timestamp.inWholeMilliseconds).coerceAtMost(60),
-        )
-    val secondState =
-        rememberFWheelPickerState(
-            DurationPicker2.getSeconds(timestamp.inWholeMilliseconds).coerceAtMost(60),
-        )
-    val milliSecondState =
-        rememberFWheelPickerState(
-            DurationPicker2.getMilliseconds(timestamp.inWholeMilliseconds).div(50).coerceAtMost(20),
-        )
+    val state = rememberTimestampPickerState(timestamp)
 
-    LaunchedEffect(hourState, minuteState, secondState, milliSecondState) {
-        combine(
-            snapshotFlow { hourState.currentIndex },
-            snapshotFlow { minuteState.currentIndex },
-            snapshotFlow { secondState.currentIndex },
-            snapshotFlow { milliSecondState.currentIndex },
-        ) { ints ->
-            ints[0].coerceAtLeast(0).hours +
-                ints[1].coerceAtLeast(0).minutes +
-                ints[2].coerceAtLeast(0).seconds +
-                (ints[3].coerceAtLeast(0) * 50).milliseconds
-        }.collect {
-            onValueChange.invoke(it)
-        }
+    LaunchedEffect(state) {
+        snapshotFlow { state.duration }.collect(onValueChange)
     }
 
     var focused by remember { mutableStateOf(false) }
     var activated by remember { mutableStateOf(false) }
     val activateOnClick = {
         if (!activated) {
-            hourState.currentIndex.coerceAtLeast(0).hours +
-                minuteState.currentIndex.coerceAtLeast(0).minutes +
-                hourState.currentIndex.coerceAtLeast(0).seconds +
-                (milliSecondState.currentIndex.coerceAtLeast(0) * 50).milliseconds
+            onValueChange.invoke(state.duration)
         }
         activated = !activated
     }
@@ -141,39 +108,39 @@ fun TimestampPicker(
     ) {
         if (maxDuration.inWholeHours > 0) {
             WheelPicker(
-                state = hourState,
+                state = state.hours,
                 activated = activated,
                 count = maxDuration.inWholeHours.toInt() + 1,
                 indexTransformer = { stringResource(R.string.value_hours, it.toString()) },
-                onClick = { activated = !activated },
+                onClick = activateOnClick,
                 modifier = Modifier.weight(1f),
             )
         }
 
         if (maxDuration.inWholeMinutes > 0) {
             WheelPicker(
-                state = minuteState,
+                state = state.minutes,
                 activated = activated,
                 count = maxDuration.inWholeMinutes.toInt().coerceIn(2, 60),
                 indexTransformer = { stringResource(R.string.value_minutes, it.toString()) },
-                onClick = { activated = !activated },
+                onClick = activateOnClick,
                 modifier = Modifier.weight(1f),
             )
         }
 
         if (maxDuration.inWholeSeconds > 0) {
             WheelPicker(
-                state = secondState,
+                state = state.seconds,
                 activated = activated,
                 count = maxDuration.inWholeSeconds.toInt().coerceIn(2, 60),
                 indexTransformer = { stringResource(R.string.value_seconds, it.toString()) },
-                onClick = { activated = !activated },
+                onClick = activateOnClick,
                 modifier = Modifier.weight(1f),
             )
         }
 
         WheelPicker(
-            state = milliSecondState,
+            state = state.milliseconds,
             activated = activated,
             count = maxDuration.inWholeMilliseconds.toInt().coerceIn(2, 21),
             indexTransformer = {
@@ -182,7 +149,7 @@ fun TimestampPicker(
                     (it * 50).toString(),
                 )
             },
-            onClick = { activated = !activated },
+            onClick = activateOnClick,
             modifier = Modifier.weight(1f),
         )
     }

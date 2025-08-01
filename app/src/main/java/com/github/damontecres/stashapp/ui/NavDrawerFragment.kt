@@ -3,6 +3,8 @@ package com.github.damontecres.stashapp.ui
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
@@ -18,14 +20,15 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.tv.material3.MaterialTheme
 import coil3.annotation.ExperimentalCoilApi
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.ui.components.server.InitialSetup
 import com.github.damontecres.stashapp.ui.components.server.ManageServers
+import com.github.damontecres.stashapp.ui.nav.ApplicationContent
 import com.github.damontecres.stashapp.ui.nav.CoilConfig
-import com.github.damontecres.stashapp.ui.pages.MarkerTimestampPage
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
 import dev.olshevski.navigation.reimagined.NavController
@@ -100,44 +103,38 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                             navManager,
                                         ),
                                 ) {
-                                    MarkerTimestampPage(
+                                    ApplicationContent(
                                         server = currentServer,
                                         navigationManager = navManager,
-                                        markerId = "1",
-                                        modifier = Modifier.fillMaxSize(),
+                                        navController = navController,
+                                        onSwitchServer = { serverViewModel.switchServer(it) },
+                                        onChangeTheme = { name ->
+                                            try {
+                                                colorScheme =
+                                                    chooseColorScheme(
+                                                        requireContext(),
+                                                        isSystemInDarkTheme,
+                                                        if (name.isNullOrBlank() || name == "default") {
+                                                            defaultColorSchemeSet
+                                                        } else {
+                                                            readThemeJson(requireContext(), name)
+                                                        },
+                                                    )
+                                                Log.i(TAG, "Updated theme")
+                                            } catch (ex: Exception) {
+                                                Log.e(TAG, "Exception changing theme", ex)
+                                                Toast
+                                                    .makeText(
+                                                        requireContext(),
+                                                        "Error changing theme: ${ex.localizedMessage}",
+                                                        Toast.LENGTH_LONG,
+                                                    ).show()
+                                            }
+                                        },
+                                        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+                                        // TODO could use onKeyEvent here to make focus/movement sounds everywhere
+                                        // But it wouldn't know if the focus would actually change
                                     )
-//                                    ApplicationContent(
-//                                        server = currentServer,
-//                                        navigationManager = navManager,
-//                                        navController = navController,
-//                                        onSwitchServer = { serverViewModel.switchServer(it) },
-//                                        onChangeTheme = { name ->
-//                                            try {
-//                                                colorScheme =
-//                                                    chooseColorScheme(
-//                                                        requireContext(),
-//                                                        isSystemInDarkTheme,
-//                                                        if (name.isNullOrBlank() || name == "default") {
-//                                                            defaultColorSchemeSet
-//                                                        } else {
-//                                                            readThemeJson(requireContext(), name)
-//                                                        },
-//                                                    )
-//                                                Log.i(TAG, "Updated theme")
-//                                            } catch (ex: Exception) {
-//                                                Log.e(TAG, "Exception changing theme", ex)
-//                                                Toast
-//                                                    .makeText(
-//                                                        requireContext(),
-//                                                        "Error changing theme: ${ex.localizedMessage}",
-//                                                        Toast.LENGTH_LONG,
-//                                                    ).show()
-//                                            }
-//                                        },
-//                                        modifier = Modifier.background(MaterialTheme.colorScheme.background),
-//                                        // TODO could use onKeyEvent here to make focus/movement sounds everywhere
-//                                        // But it wouldn't know if the focus would actually change
-//                                    )
                                 }
                             }
                         }
