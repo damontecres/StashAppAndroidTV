@@ -857,7 +857,7 @@ fun DurationPickerDialogTouch(
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
-                    // Minutes
+                    // Seconds
                     FVerticalWheelPicker(
                         modifier = Modifier.weight(1f),
                         count = 60,

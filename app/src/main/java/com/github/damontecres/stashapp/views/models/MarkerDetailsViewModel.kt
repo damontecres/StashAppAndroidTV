@@ -15,12 +15,17 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 class MarkerDetailsViewModel : ViewModel() {
     private lateinit var server: StashServer
 
     val seconds = MutableLiveData<Double>()
     val endSeconds = MutableLiveData<Double?>(null)
+
+    val start = MutableLiveData<Duration>()
+    val end = MutableLiveData<Duration>()
 
     private val _item = EqualityMutableLiveData<FullMarkerData?>()
     val item: LiveData<FullMarkerData?> = _item
@@ -43,6 +48,8 @@ class MarkerDetailsViewModel : ViewModel() {
             if (marker != null) {
                 seconds.value = marker.seconds
                 endSeconds.value = marker.end_seconds
+                start.value = marker.seconds.seconds
+                end.value = (marker.end_seconds ?: marker.seconds).seconds
                 _primaryTag.value = marker.primary_tag.tagData
                 _tags.value = marker.tags.map { it.tagData }
             }
