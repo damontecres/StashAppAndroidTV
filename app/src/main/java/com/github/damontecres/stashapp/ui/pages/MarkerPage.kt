@@ -59,7 +59,6 @@ import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
-import com.github.damontecres.stashapp.ui.cards.TagCard
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -340,36 +339,19 @@ fun MarkerPageContent(
                     modifier = Modifier,
                 )
             }
-        }
-
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier =
-                Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-        ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(32.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Column(
-                    modifier = Modifier,
-                ) {
-                    Text(
-                        text = stringResource(R.string.stashapp_primary_tag),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                    TagCard(
-                        modifier = Modifier.padding(top = 16.dp),
-                        uiConfig = uiConfig,
-                        item = primaryTag,
-                        onClick = { itemOnClick.onClick(primaryTag, null) },
-                        longClicker = { _, _ -> },
-                        getFilterAndPosition = null,
-                    )
-                }
+                ItemsRow(
+                    title = stringResource(R.string.stashapp_primary_tag),
+                    items = listOf(primaryTag),
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = { _, _ -> },
+                )
+
                 if (tags.isNotEmpty()) {
                     ItemsRow(
                         title = stringResource(DataType.TAG.pluralStringId),
