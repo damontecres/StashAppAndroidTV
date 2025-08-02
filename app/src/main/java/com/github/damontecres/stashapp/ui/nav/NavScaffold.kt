@@ -134,6 +134,7 @@ fun NavScaffold(
                                     Icons.Default.Home
                                 },
                             contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
                 },
@@ -146,12 +147,14 @@ fun NavScaffold(
                         Icon(
                             imageVector = Icons.Filled.AccountCircle,
                             contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
                     IconButton(onClick = { expanded = true }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.List,
                             contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
                     NavDropdownMenu(
