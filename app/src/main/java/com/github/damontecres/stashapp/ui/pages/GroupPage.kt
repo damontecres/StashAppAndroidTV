@@ -367,7 +367,7 @@ fun GroupDetails(
                             ImageRequest
                                 .Builder(LocalContext.current)
                                 .data(group.front_image_path)
-                                .crossfade(true)
+                                .crossfade(false)
                                 .build(),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
@@ -384,7 +384,7 @@ fun GroupDetails(
                             ImageRequest
                                 .Builder(LocalContext.current)
                                 .data(group.back_image_path)
-                                .crossfade(true)
+                                .crossfade(false)
                                 .build(),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
