@@ -340,6 +340,20 @@ fun SceneDetails(
                                             )
                                         },
                                     )
+                                    if (uiConfig.readOnlyModeDisabled) {
+                                        add(
+                                            DialogItem(
+                                                context.getString(R.string.timestamps),
+                                                Icons.Default.Edit,
+                                            ) {
+                                                navigationManager.navigate(
+                                                    Destination.UpdateMarker(
+                                                        item.id,
+                                                    ),
+                                                )
+                                            },
+                                        )
+                                    }
                                 }
                                 if (uiConfig.readOnlyModeDisabled && item !is SlimSceneData) {
                                     if (item is StudioData) {

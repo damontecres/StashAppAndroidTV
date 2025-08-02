@@ -116,9 +116,8 @@ fun MarkerTimestampPage(
 
             val player =
                 remember {
-                    StashExoPlayer.getInstance(context, server).also { player ->
-//                        player.setMediaItem(mediaItem, marker.seconds.toLongMilliseconds)
-//                        player.prepare()
+                    StashExoPlayer.getInstance(context, server).apply {
+                        playWhenReady = false
                     }
                 }
             var timestampChanged by remember { mutableStateOf(false) }
