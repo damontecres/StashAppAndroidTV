@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components
 
+import android.content.Context
 import androidx.annotation.StringRes
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -101,6 +102,18 @@ data class TableRow(
         ): TableRow? =
             if (value.isNotNullOrBlank()) {
                 TableRow(stringResource(keyStringId), value, onClick)
+            } else {
+                null
+            }
+
+        fun from(
+            context: Context,
+            @StringRes keyStringId: Int,
+            value: String?,
+            onClick: (() -> Unit)? = null,
+        ): TableRow? =
+            if (value.isNotNullOrBlank()) {
+                TableRow(context.getString(keyStringId), value, onClick)
             } else {
                 null
             }

@@ -522,93 +522,110 @@ fun PerformerDetails(
         }
 
     val tableRows =
-        buildList {
-            if (perf.alias_list.isNotEmpty()) {
-                add(
-                    TableRow.from(
-                        R.string.stashapp_aliases,
-                        perf.alias_list.joinToString(", "),
-                    ),
-                )
-            }
-            if (!perf.birthdate.isNullOrBlank()) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val age = perf.ageInYears.toString()
-                    add(TableRow.from(R.string.stashapp_age, "$age (${perf.birthdate})"))
+        remember {
+            buildList {
+                if (perf.alias_list.isNotEmpty()) {
+                    add(
+                        TableRow.from(
+                            context,
+                            R.string.stashapp_aliases,
+                            perf.alias_list.joinToString(", "),
+                        ),
+                    )
                 }
-            }
-            add(TableRow.from(R.string.stashapp_death_date, perf.death_date))
-            add(
-                TableRow.from(R.string.stashapp_country, perf.country) {
-                    navigateTo(
-                        R.string.stashapp_country,
-                        perf.country!!,
-                        PerformerFilterType(country = stringCriterion(perf.country!!)),
-                    )
-                },
-            )
-            add(
-                TableRow.from(R.string.stashapp_ethnicity, perf.ethnicity) {
-                    navigateTo(
-                        R.string.stashapp_ethnicity,
-                        perf.ethnicity!!,
-                        PerformerFilterType(ethnicity = stringCriterion(perf.ethnicity!!)),
-                    )
-                },
-            )
-            add(
-                TableRow.from(R.string.stashapp_hair_color, perf.hair_color) {
-                    navigateTo(
-                        R.string.stashapp_hair_color,
-                        perf.hair_color!!,
-                        PerformerFilterType(hair_color = stringCriterion(perf.hair_color!!)),
-                    )
-                },
-            )
-            add(
-                TableRow.from(R.string.stashapp_eye_color, perf.eye_color) {
-                    navigateTo(
-                        R.string.stashapp_eye_color,
-                        perf.eye_color!!,
-                        PerformerFilterType(eye_color = stringCriterion(perf.eye_color!!)),
-                    )
-                },
-            )
-            if (perf.height_cm != null) {
-                val feet = floor(perf.height_cm / 30.48).toInt()
-                val inches = (perf.height_cm / 2.54 - feet * 12).roundToInt()
-                add(
-                    TableRow.from(
-                        R.string.stashapp_height,
-                        "${perf.height_cm} cm ($feet'$inches\")",
-                    ),
-                )
-            }
-            if (perf.weight != null) {
-                val pounds = (perf.weight * 2.2).roundToInt()
-                add(TableRow.from(R.string.stashapp_weight, "${perf.weight} kg ($pounds lbs)"))
-            }
-            if (perf.penis_length != null) {
-                val inches = round(perf.penis_length / 2.54 * 100) / 100
-                add(
-                    TableRow.from(
-                        R.string.stashapp_penis_length,
-                        "${perf.penis_length} cm ($inches\")",
-                    ),
-                )
-            }
-            val circString =
-                when (perf.circumcised) {
-                    CircumisedEnum.CUT -> stringResource(R.string.stashapp_circumcised_types_CUT)
-                    CircumisedEnum.UNCUT -> stringResource(R.string.stashapp_circumcised_types_UNCUT)
-                    CircumisedEnum.UNKNOWN__, null -> null
+                if (!perf.birthdate.isNullOrBlank()) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val age = perf.ageInYears.toString()
+                        add(
+                            TableRow.from(
+                                context,
+                                R.string.stashapp_age,
+                                "$age (${perf.birthdate})",
+                            ),
+                        )
+                    }
                 }
-            add(TableRow.from(R.string.stashapp_circumcised, circString))
+                add(TableRow.from(context, R.string.stashapp_death_date, perf.death_date))
+                add(
+                    TableRow.from(context, R.string.stashapp_country, perf.country) {
+                        navigateTo(
+                            R.string.stashapp_country,
+                            perf.country!!,
+                            PerformerFilterType(country = stringCriterion(perf.country!!)),
+                        )
+                    },
+                )
+                add(
+                    TableRow.from(context, R.string.stashapp_ethnicity, perf.ethnicity) {
+                        navigateTo(
+                            R.string.stashapp_ethnicity,
+                            perf.ethnicity!!,
+                            PerformerFilterType(ethnicity = stringCriterion(perf.ethnicity!!)),
+                        )
+                    },
+                )
+                add(
+                    TableRow.from(context, R.string.stashapp_hair_color, perf.hair_color) {
+                        navigateTo(
+                            R.string.stashapp_hair_color,
+                            perf.hair_color!!,
+                            PerformerFilterType(hair_color = stringCriterion(perf.hair_color!!)),
+                        )
+                    },
+                )
+                add(
+                    TableRow.from(context, R.string.stashapp_eye_color, perf.eye_color) {
+                        navigateTo(
+                            R.string.stashapp_eye_color,
+                            perf.eye_color!!,
+                            PerformerFilterType(eye_color = stringCriterion(perf.eye_color!!)),
+                        )
+                    },
+                )
+                if (perf.height_cm != null) {
+                    val feet = floor(perf.height_cm / 30.48).toInt()
+                    val inches = (perf.height_cm / 2.54 - feet * 12).roundToInt()
+                    add(
+                        TableRow.from(
+                            context,
+                            R.string.stashapp_height,
+                            "${perf.height_cm} cm ($feet'$inches\")",
+                        ),
+                    )
+                }
+                if (perf.weight != null) {
+                    val pounds = (perf.weight * 2.2).roundToInt()
+                    add(
+                        TableRow.from(
+                            context,
+                            R.string.stashapp_weight,
+                            "${perf.weight} kg ($pounds lbs)",
+                        ),
+                    )
+                }
+                if (perf.penis_length != null) {
+                    val inches = round(perf.penis_length / 2.54 * 100) / 100
+                    add(
+                        TableRow.from(
+                            context,
+                            R.string.stashapp_penis_length,
+                            "${perf.penis_length} cm ($inches\")",
+                        ),
+                    )
+                }
+                val circString =
+                    when (perf.circumcised) {
+                        CircumisedEnum.CUT -> context.getString(R.string.stashapp_circumcised_types_CUT)
+                        CircumisedEnum.UNCUT -> context.getString(R.string.stashapp_circumcised_types_UNCUT)
+                        CircumisedEnum.UNKNOWN__, null -> null
+                    }
+                add(TableRow.from(context, R.string.stashapp_circumcised, circString))
 
-            add(TableRow.from(R.string.stashapp_tattoos, perf.tattoos))
-            add(TableRow.from(R.string.stashapp_piercings, perf.piercings))
-            add(TableRow.from(R.string.stashapp_career_length, perf.career_length))
-        }.filterNotNull()
+                add(TableRow.from(context, R.string.stashapp_tattoos, perf.tattoos))
+                add(TableRow.from(context, R.string.stashapp_piercings, perf.piercings))
+                add(TableRow.from(context, R.string.stashapp_career_length, perf.career_length))
+            }.filterNotNull()
+        }
     Row(
         modifier =
             modifier
@@ -625,15 +642,9 @@ fun PerformerDetails(
                         .drawWithContent {
                             drawContent()
                             drawRect(
-                                Brush.verticalGradient(
-                                    colors = listOf(Color.Transparent, gradientColor),
-                                    startY = 200f,
-                                ),
-                            )
-                            drawRect(
                                 Brush.horizontalGradient(
                                     colors = listOf(gradientColor, Color.Transparent),
-                                    endX = 200f,
+                                    endX = size.width * .5f,
                                     startX = 50f,
                                 ),
                             )
@@ -642,10 +653,10 @@ fun PerformerDetails(
                     ImageRequest
                         .Builder(LocalContext.current)
                         .data(perf.image_path)
-                        .crossfade(true)
+                        .crossfade(false)
                         .build(),
                 contentDescription = null,
-                contentScale = ContentScale.FillHeight,
+                contentScale = ContentScale.Fit,
             )
         }
         val topPadding = 12.dp
