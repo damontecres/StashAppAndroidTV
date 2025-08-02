@@ -26,6 +26,7 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
+import com.github.damontecres.stashapp.ui.components.playback.isEnterKey
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.views.DurationPicker2
@@ -176,10 +177,10 @@ fun WheelPicker(
                         .focusable()
                         .onKeyEvent {
                             var result = false
-                            if (it.type == KeyEventType.KeyUp && it.key == Key.Enter) {
+                            if (it.type == KeyEventType.KeyUp && isEnterKey(it)) {
                                 onClick.invoke()
                                 result = true
-                            } else if (activated && it.key != Key.Back) {
+                            } else if (activated) {
                                 if (it.type == KeyEventType.KeyDown) {
                                     if (it.key == Key.DirectionUp) {
                                         scope.launch(StashCoroutineExceptionHandler()) {
