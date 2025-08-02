@@ -136,6 +136,14 @@ fun DefaultTheme(content: @Composable () -> Unit) {
 }
 
 @Composable
+fun DefaultMaterial3Theme(content: @Composable () -> Unit) {
+    androidx.compose.material3.MaterialTheme(
+        colorScheme = defaultColorSchemeSet.dark.colorScheme,
+        content = content,
+    )
+}
+
+@Composable
 fun Material3AppTheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
     val themeChoice =

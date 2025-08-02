@@ -11,6 +11,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven { url = uri("https://repo.repsy.io/mvn/chrynan/public") }
+        maven { url = uri("https://jitpack.io") }
     }
 }
 

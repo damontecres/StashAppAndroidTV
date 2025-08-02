@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.nav
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.github.damontecres.stashapp.navigation.Destination
@@ -11,6 +12,7 @@ import com.github.damontecres.stashapp.ui.components.filter.CreateFilterScreen
 import com.github.damontecres.stashapp.ui.components.server.ManageServers
 import com.github.damontecres.stashapp.ui.pages.ChooseThemePage
 import com.github.damontecres.stashapp.ui.pages.ImagePage
+import com.github.damontecres.stashapp.ui.pages.MarkerTimestampPage
 import com.github.damontecres.stashapp.ui.pages.PlaybackPage
 import com.github.damontecres.stashapp.ui.pages.PlaylistPlaybackPage
 import com.github.damontecres.stashapp.util.StashServer
@@ -121,6 +123,14 @@ fun FullScreenContent(
                 initialFilter = destination.startingFilter,
                 navigationManager = navigationManager,
                 modifier = modifier,
+            )
+
+        is Destination.UpdateMarker ->
+            MarkerTimestampPage(
+                server = server,
+                navigationManager = navigationManager,
+                markerId = destination.markerId,
+                modifier = Modifier.fillMaxSize(),
             )
 
         else -> FragmentView(navigationManager, destination)

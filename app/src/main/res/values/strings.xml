@@ -125,4 +125,9 @@
     <string name="switch_server">Switch server</string>
     <string name="test_connection">Test Connection</string>
 
+    <string name="value_hours" formatted="true">%1$s hours</string>
+    <string name="value_minutes" formatted="true">%1$s minutes</string>
+    <string name="value_seconds" formatted="true">%1$s seconds</string>
+    <string name="value_milliseconds" formatted="true">%1$s ms</string>
+
 </resources>

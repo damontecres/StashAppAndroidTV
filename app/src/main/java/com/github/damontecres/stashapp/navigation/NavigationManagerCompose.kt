@@ -13,7 +13,6 @@ import com.github.damontecres.stashapp.UpdateAppFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
 import com.github.damontecres.stashapp.ui.NavDrawerFragment
 import com.github.damontecres.stashapp.util.putDestination
-import com.github.damontecres.stashapp.views.MarkerPickerFragment
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.navigate
@@ -78,7 +77,7 @@ class NavigationManagerCompose(
                 is Destination.UpdateApp -> UpdateAppFragment()
 //                is Destination.ManageServers -> ManageServersFragment()
 //                is Destination.CreateFilter -> CreateFilterFragment()
-                is Destination.UpdateMarker -> MarkerPickerFragment()
+//                is Destination.UpdateMarker -> MarkerPickerFragment()
                 is Destination.Fragment -> {
                     fragmentManager.fragmentFactory.instantiate(
                         activity.classLoader,

@@ -119,12 +119,12 @@ class DurationPicker2(
         private const val TAG = "DurationPicker"
         private const val MILLISECONDS_STEP = 50
 
-        private fun getHours(value: Long) = (value / (3600 * 1000)).toInt()
+        fun getHours(value: Long) = (value / (3600 * 1000)).toInt()
 
-        private fun getMinutes(value: Long) = ((value % (3600 * 1000)) / (60 * 1000)).toInt()
+        fun getMinutes(value: Long) = ((value % (3600 * 1000)) / (60 * 1000)).toInt()
 
-        private fun getSeconds(value: Long) = (value % (60 * 1000) / 1000).toInt()
+        fun getSeconds(value: Long) = (value % (60 * 1000) / 1000).toInt()
 
-        private fun getMilliseconds(value: Long) = (value % 1000).toInt()
+        fun getMilliseconds(value: Long) = (value % 1000).toInt()
     }
 }

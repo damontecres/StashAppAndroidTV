@@ -13,6 +13,7 @@ auto-service = "1.1.1"
 coil-compose = "3.3.0"
 compose-bom = "2025.07.00"
 compose-runtime = "1.8.3"
+compose-wheel-picker = "1.0.0-rc02"
 constraintlayout = "2.2.1"
 desugar_jdk_libs = "2.1.5"
 markwon-core = "4.6.2"
@@ -90,6 +91,7 @@ coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil-compose" 
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil-compose" }
 coil-network-cachecontrol = { module = "io.coil-kt.coil3:coil-network-cache-control", version.ref = "coil-compose" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil-compose" }
+compose-wheel-picker = { module = "com.github.zj565061763:compose-wheel-picker", version.ref = "compose-wheel-picker" }
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 markwon-core = { module = "io.noties.markwon:core", version.ref = "markwon-core" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
