@@ -343,4 +343,16 @@ sealed class SceneLoadingState {
 enum class AddRemove {
     ADD,
     REMOVE,
+    ;
+
+    fun exec(
+        id: String,
+        list: MutableList<String>,
+    ) {
+        if (this == ADD) {
+            list.add(id)
+        } else {
+            list.remove(id)
+        }
+    }
 }

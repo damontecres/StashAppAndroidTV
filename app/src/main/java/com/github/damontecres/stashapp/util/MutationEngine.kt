@@ -468,6 +468,27 @@ class MutationEngine(
         return result.data?.galleryUpdate?.galleryData
     }
 
+    suspend fun updateGallery(
+        galleryId: String,
+        rating100: Int? = null,
+        tagIds: List<String>? = null,
+        performerIds: List<String>? = null,
+        studioId: String? = null,
+    ): GalleryData? {
+        val mutation =
+            UpdateGalleryMutation(
+                GalleryUpdateInput(
+                    id = galleryId,
+                    rating100 = Optional.presentIfNotNull(rating100),
+                    tag_ids = Optional.presentIfNotNull(tagIds),
+                    performer_ids = Optional.presentIfNotNull(performerIds),
+                    studio_id = Optional.presentIfNotNull(studioId),
+                ),
+            )
+        val result = executeMutation(mutation)
+        return result.data?.galleryUpdate?.galleryData
+    }
+
     suspend fun installPackage(
         type: PackageType,
         input: PackageSpecInput,
@@ -486,12 +507,16 @@ class MutationEngine(
         studioId: String,
         favorite: Boolean? = null,
         rating100: Int? = null,
+        parentStudioId: String? = null,
+        tagIds: List<String>? = null,
     ): StudioData? {
         val input =
             StudioUpdateInput(
                 id = studioId,
                 favorite = Optional.presentIfNotNull(favorite),
                 rating100 = Optional.presentIfNotNull(rating100),
+                parent_id = Optional.presentIfNotNull(parentStudioId),
+                tag_ids = Optional.presentIfNotNull(tagIds),
             )
         val mutation = UpdateStudioMutation(input)
         return executeMutation(mutation).data?.studioUpdate?.studioData

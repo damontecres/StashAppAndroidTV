@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -33,6 +32,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.compat.Button
+import com.github.damontecres.stashapp.ui.components.EditButton
 import com.github.damontecres.stashapp.ui.components.OCounterButton
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -117,24 +117,10 @@ fun PlayButtons(
         // Edit button
         if (showEditButton) {
             item {
-                Button(
+                EditButton(
                     onClick = editOnClick,
-                    onLongClick = {},
-                    modifier =
-                        Modifier
-                            .onFocusChanged(buttonOnFocusChanged),
-                    contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = null,
-                    )
-                    Spacer(Modifier.size(8.dp))
-                    Text(
-                        text = stringResource(R.string.stashapp_actions_edit),
-                        style = MaterialTheme.typography.titleSmall,
-                    )
-                }
+                    modifier = Modifier.onFocusChanged(buttonOnFocusChanged),
+                )
             }
         }
 
