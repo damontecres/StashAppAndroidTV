@@ -147,8 +147,6 @@ fun ItemDetails(
                 TableRowComposable(row)
             }
 
-            bodyContent?.invoke(this)
-
             if (!tags.isNullOrEmpty()) {
                 item {
                     ItemsRow(
@@ -161,6 +159,9 @@ fun ItemDetails(
                     )
                 }
             }
+
+            bodyContent?.invoke(this)
+
             basicItemInfo?.let {
                 item {
                     ItemDetailsFooter(
