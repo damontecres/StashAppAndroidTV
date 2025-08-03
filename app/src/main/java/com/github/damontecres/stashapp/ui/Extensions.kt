@@ -119,7 +119,9 @@ fun showAddGroup(group: GroupData) = showShort("Added group '${group.name}'")
 
 fun showAddMarker(marker: MarkerData) = showShort("Added marker at ${marker.seconds.seconds}")
 
-fun showSetStudio(studio: StudioData) = showShort("Set studio to '${studio.name}'")
+fun showSetStudio(studioName: String) = showShort("Set studio to '$studioName'")
+
+fun showSetStudio(studio: StudioData) = showSetStudio(studio.name)
 
 fun showAddGallery(gallery: GalleryData) = showShort("Added group '${gallery.name}'")
 

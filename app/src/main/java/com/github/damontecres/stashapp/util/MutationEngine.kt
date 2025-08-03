@@ -468,6 +468,27 @@ class MutationEngine(
         return result.data?.galleryUpdate?.galleryData
     }
 
+    suspend fun updateGallery(
+        galleryId: String,
+        rating100: Int? = null,
+        tagIds: List<String>? = null,
+        performerIds: List<String>? = null,
+        studioId: String? = null,
+    ): GalleryData? {
+        val mutation =
+            UpdateGalleryMutation(
+                GalleryUpdateInput(
+                    id = galleryId,
+                    rating100 = Optional.presentIfNotNull(rating100),
+                    tag_ids = Optional.presentIfNotNull(tagIds),
+                    performer_ids = Optional.presentIfNotNull(performerIds),
+                    studio_id = Optional.presentIfNotNull(studioId),
+                ),
+            )
+        val result = executeMutation(mutation)
+        return result.data?.galleryUpdate?.galleryData
+    }
+
     suspend fun installPackage(
         type: PackageType,
         input: PackageSpecInput,
