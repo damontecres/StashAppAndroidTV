@@ -507,12 +507,16 @@ class MutationEngine(
         studioId: String,
         favorite: Boolean? = null,
         rating100: Int? = null,
+        parentStudioId: String? = null,
+        tagIds: List<String>? = null,
     ): StudioData? {
         val input =
             StudioUpdateInput(
                 id = studioId,
                 favorite = Optional.presentIfNotNull(favorite),
                 rating100 = Optional.presentIfNotNull(rating100),
+                parent_id = Optional.presentIfNotNull(parentStudioId),
+                tag_ids = Optional.presentIfNotNull(tagIds),
             )
         val mutation = UpdateStudioMutation(input)
         return executeMutation(mutation).data?.studioUpdate?.studioData

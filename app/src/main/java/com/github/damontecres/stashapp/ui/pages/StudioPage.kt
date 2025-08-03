@@ -36,6 +36,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.BasicItemInfo
+import com.github.damontecres.stashapp.ui.components.EditItem
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -43,12 +44,16 @@ import com.github.damontecres.stashapp.ui.components.StashGridTab
 import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
+import com.github.damontecres.stashapp.ui.components.scene.AddRemove
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.ui.filterArgsSaver
+import com.github.damontecres.stashapp.ui.showAddTag
+import com.github.damontecres.stashapp.ui.showSetStudio
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.showSetRatingToast
@@ -73,6 +78,7 @@ fun StudioPage(
     var favorite by remember { mutableStateOf(false) }
     var rating100 by remember { mutableIntStateOf(0) }
     var tags by remember { mutableStateOf<List<TagData>>(listOf()) }
+    var parentStudio by remember { mutableStateOf<StudioData.Parent_studio?>(null) }
     LaunchedEffect(id) {
         try {
             val queryEngine = QueryEngine(server)
@@ -80,6 +86,7 @@ fun StudioPage(
             studio?.let {
                 favorite = it.favorite
                 rating100 = it.rating100 ?: 0
+                parentStudio = it.parent_studio
                 tags = queryEngine.getTags(it.tags.map { it.slimTagData.id })
             }
         } catch (ex: QueryEngine.QueryException) {
@@ -107,10 +114,9 @@ fun StudioPage(
         val detailsTab =
             TabProvider(stringResource(R.string.stashapp_details)) {
                 StudioDetails(
-                    modifier = Modifier.fillMaxSize(),
-                    uiConfig = uiConfig,
                     studio = studio,
-                    tags = tags,
+                    parentStudio = parentStudio,
+                    uiConfig = uiConfig,
                     favorite = favorite,
                     favoriteClick = {
                         val mutationEngine = MutationEngine(server)
@@ -134,6 +140,7 @@ fun StudioPage(
                         }
                     },
                     rating100 = rating100,
+                    tags = tags,
                     rating100Click = { newRating100 ->
                         val mutationEngine = MutationEngine(server)
                         scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
@@ -152,8 +159,45 @@ fun StudioPage(
                             }
                         }
                     },
+                    onEdit = { edit ->
+                        val mutationEngine = MutationEngine(server)
+                        val queryEngine = QueryEngine(server)
+                        scope.launch(StashCoroutineExceptionHandler()) {
+                            if (edit.dataType == DataType.TAG) {
+                                val ids = tags.map { it.id }.toMutableList()
+                                edit.action.exec(edit.id, ids)
+                                val newItem =
+                                    mutationEngine.updateStudio(
+                                        studioId = studio.id,
+                                        tagIds = ids,
+                                    )
+                                val newTagIds =
+                                    newItem?.let { it.tags.map { it.slimTagData.id } }
+                                if (newTagIds != null) {
+                                    tags = queryEngine.getTags(newTagIds)
+                                    if (edit.action == AddRemove.ADD) {
+                                        tags
+                                            .firstOrNull { it.id == edit.id }
+                                            ?.let { showAddTag(it) }
+                                    }
+                                }
+                            } else if (edit.dataType == DataType.STUDIO) {
+                                // TODO the wording in the dialogs & toasts don't specify its the parent studio
+                                val newItem =
+                                    mutationEngine.updateStudio(
+                                        studioId = studio.id,
+                                        parentStudioId = edit.id,
+                                    )
+                                if (newItem?.parent_studio != null) {
+                                    parentStudio = newItem.parent_studio
+                                    showSetStudio(newItem.parent_studio.name)
+                                }
+                            }
+                        }
+                    },
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
 
@@ -408,6 +452,7 @@ fun StudioPage(
 @Composable
 fun StudioDetails(
     studio: StudioData,
+    parentStudio: StudioData.Parent_studio?,
     uiConfig: ComposeUiConfig,
     favorite: Boolean,
     favoriteClick: () -> Unit,
@@ -416,6 +461,7 @@ fun StudioDetails(
     rating100Click: (rating100: Int) -> Unit,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    onEdit: (EditItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
@@ -423,11 +469,11 @@ fun StudioDetails(
         buildList {
             add(TableRow.from(R.string.stashapp_description, studio.details))
             add(
-                TableRow.from(R.string.stashapp_parent_studio, studio.parent_studio?.name) {
+                TableRow.from(R.string.stashapp_parent_studio, parentStudio?.name) {
                     navigationManager.navigate(
                         Destination.Item(
                             DataType.STUDIO,
-                            studio.parent_studio!!.id,
+                            parentStudio!!.id,
                         ),
                     )
                 },
@@ -454,5 +500,7 @@ fun StudioDetails(
         itemOnClick = itemOnClick,
         longClicker = longClicker,
         tags = tags,
+        onEdit = onEdit,
+        editableTypes = setOf(DataType.TAG, DataType.STUDIO),
     )
 }
