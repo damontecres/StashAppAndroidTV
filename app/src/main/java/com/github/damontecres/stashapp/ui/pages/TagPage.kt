@@ -390,6 +390,8 @@ fun TagDetails(
         basicItemInfo = BasicItemInfo(tag.id, tag.created_at, tag.updated_at),
         itemOnClick = itemOnClick,
         longClicker = longClicker,
+        onEdit = {},
+        editableTypes = setOf(),
     ) {
         if (parentTags.isNotEmpty()) {
             item {

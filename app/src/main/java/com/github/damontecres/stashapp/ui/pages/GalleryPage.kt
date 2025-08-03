@@ -229,8 +229,8 @@ fun GalleryDetails(
     rating100Click: (rating100: Int) -> Unit,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    onEdit: (EditItem) -> Unit,
     modifier: Modifier = Modifier,
-    onEdit: ((EditItem) -> Unit)? = null,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
     val context = LocalContext.current

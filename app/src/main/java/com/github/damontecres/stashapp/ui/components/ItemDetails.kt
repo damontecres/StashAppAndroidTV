@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,11 +22,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
@@ -31,8 +37,11 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.filter.extractTitle
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.compat.Button
@@ -50,6 +59,8 @@ fun ItemDetails(
     tableRows: List<TableRow>,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    onEdit: (EditItem) -> Unit,
+    editableTypes: Set<DataType>,
     modifier: Modifier = Modifier,
     favorite: Boolean? = null,
     favoriteClick: (() -> Unit)? = null,
@@ -57,14 +68,66 @@ fun ItemDetails(
     rating100Click: ((rating100: Int) -> Unit)? = null,
     basicItemInfo: BasicItemInfo? = null,
     tags: List<TagData>? = null,
-    onEdit: ((EditItem) -> Unit)? = null,
-    editableTypes: Set<DataType>? = null,
     bodyContent: (LazyListScope.() -> Unit)? = null,
 ) {
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
 
     var showDialog by remember { mutableStateOf<DialogParams?>(null) }
     var searchForDataType by remember { mutableStateOf<SearchForParams?>(null) }
+
+    val removeLongClicker =
+        remember {
+            LongClicker<Any> { item, filterAndPosition ->
+                item as StashData
+                val dataType = Destination.getDataType(item)
+                showDialog =
+                    DialogParams(
+                        title = extractTitle(item) ?: "",
+                        fromLongClick = true,
+                        items =
+                            buildList {
+                                add(
+                                    DialogItem(
+                                        context.getString(R.string.go_to),
+                                        Icons.Default.PlayArrow,
+                                    ) {
+                                        itemOnClick.onClick(
+                                            item,
+                                            filterAndPosition,
+                                        )
+                                    },
+                                )
+                                if (uiConfig.readOnlyModeDisabled && dataType in editableTypes) {
+                                    add(
+                                        DialogItem(
+                                            onClick = {
+                                                focusManager.moveFocus(FocusDirection.Previous)
+                                                onEdit.invoke(
+                                                    EditItem(
+                                                        item.id,
+                                                        dataType,
+                                                        AddRemove.REMOVE,
+                                                    ),
+                                                )
+                                            },
+                                            headlineContent = {
+                                                Text(stringResource(R.string.stashapp_actions_remove))
+                                            },
+                                            leadingContent = {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = stringResource(R.string.stashapp_actions_remove),
+                                                    tint = Color.Red,
+                                                )
+                                            },
+                                        ),
+                                    )
+                                }
+                            },
+                    )
+            }
+        }
 
     Row(
         modifier =
@@ -113,7 +176,7 @@ fun ItemDetails(
                             }
                         }
                     }
-                    if (uiConfig.readOnlyModeDisabled && onEdit != null && editableTypes != null) {
+                    if (uiConfig.readOnlyModeDisabled && editableTypes.isNotEmpty()) {
                         EditButton(
                             onClick = {
                                 showDialog =
@@ -135,7 +198,7 @@ fun ItemDetails(
                         rating100 = rating100 ?: 0,
                         uiConfig = uiConfig,
                         onRatingChange = rating100Click,
-                        enabled = true,
+                        enabled = uiConfig.readOnlyModeDisabled,
                         modifier =
                             Modifier
                                 .height(ratingBarHeight)
@@ -154,7 +217,7 @@ fun ItemDetails(
                         items = tags,
                         uiConfig = uiConfig,
                         itemOnClick = itemOnClick,
-                        longClicker = longClicker,
+                        longClicker = removeLongClicker,
                         modifier =
                             Modifier
                                 .padding(top = 12.dp)

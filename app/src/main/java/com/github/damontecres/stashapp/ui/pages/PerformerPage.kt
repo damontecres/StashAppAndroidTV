@@ -140,11 +140,10 @@ class PerformerDetailsViewModel(
         this@PerformerDetailsViewModel.performer = performer
 
         loadingState.value = PerformerLoadingState.Success(performer)
-        if (performer.tags.isNotEmpty()) {
-            tags.value =
-                queryEngine.getTags(performer.tags.map { it.slimTagData.id })
-            Log.v(TAG, "Got ${tags.value?.size} tags")
-        }
+
+        tags.value = queryEngine.getTags(performer.tags.map { it.slimTagData.id })
+        Log.v(TAG, "Got ${tags.value?.size} tags")
+
         studios.value =
             queryEngine.findStudios(
                 studioFilter =
