@@ -155,7 +155,10 @@ fun ItemDetails(
                         uiConfig = uiConfig,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
-                        modifier = Modifier.padding(top = 12.dp),
+                        modifier =
+                            Modifier
+                                .padding(top = 12.dp)
+                                .animateItem(),
                     )
                 }
             }

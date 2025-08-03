@@ -69,6 +69,7 @@ import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
+import com.github.damontecres.stashapp.ui.components.EditItem
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
@@ -78,6 +79,7 @@ import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
 import com.github.damontecres.stashapp.ui.components.createTabFunc
+import com.github.damontecres.stashapp.ui.components.scene.AddRemove
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.ui.performerPreview
 import com.github.damontecres.stashapp.ui.tagPreview
@@ -282,7 +284,16 @@ fun PerformerPage(
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 onUpdateTitle = onUpdateTitle,
-                modifier = Modifier.fillMaxSize(),
+                onEdit = { edit ->
+                    if (edit.dataType == DataType.TAG) {
+                        if (edit.action == AddRemove.ADD) {
+                            viewModel.addTag(edit.id)
+                        } else {
+                            viewModel.removeTag(edit.id)
+                        }
+                    }
+                },
+                modifier = modifier.fillMaxSize(),
             )
 
         null -> {}
@@ -302,6 +313,7 @@ fun PerformerDetailsPage(
     onRatingChange: (Int) -> Unit,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    onEdit: (EditItem) -> Unit,
     modifier: Modifier = Modifier,
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
@@ -320,18 +332,19 @@ fun PerformerDetailsPage(
         listOf(
             TabProvider(stringResource(R.string.stashapp_details)) {
                 PerformerDetails(
-                    modifier = Modifier.fillMaxSize(),
                     perf = perf,
                     tags = tags,
                     studios = studios,
-                    uiConfig = uiConfig,
                     favorite = favorite,
                     favoriteClick = onFavoriteClick,
                     rating100 = rating100,
                     rating100Click = onRatingChange,
+                    uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
                     onShowDialog = { dialogParams = it },
+                    onEdit = onEdit,
+                    modifier = Modifier.fillMaxSize(),
                 )
             },
             createTab(
@@ -484,6 +497,7 @@ fun PerformerDetails(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     onShowDialog: (DialogParams) -> Unit,
+    onEdit: (EditItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
@@ -532,7 +546,7 @@ fun PerformerDetails(
                         navigateTo(
                             R.string.stashapp_country,
                             perf.country!!,
-                            PerformerFilterType(country = stringCriterion(perf.country!!)),
+                            PerformerFilterType(country = stringCriterion(perf.country)),
                         )
                     },
                 )
@@ -541,7 +555,7 @@ fun PerformerDetails(
                         navigateTo(
                             R.string.stashapp_ethnicity,
                             perf.ethnicity!!,
-                            PerformerFilterType(ethnicity = stringCriterion(perf.ethnicity!!)),
+                            PerformerFilterType(ethnicity = stringCriterion(perf.ethnicity)),
                         )
                     },
                 )
@@ -550,7 +564,7 @@ fun PerformerDetails(
                         navigateTo(
                             R.string.stashapp_hair_color,
                             perf.hair_color!!,
-                            PerformerFilterType(hair_color = stringCriterion(perf.hair_color!!)),
+                            PerformerFilterType(hair_color = stringCriterion(perf.hair_color)),
                         )
                     },
                 )
@@ -559,7 +573,7 @@ fun PerformerDetails(
                         navigateTo(
                             R.string.stashapp_eye_color,
                             perf.eye_color!!,
-                            PerformerFilterType(eye_color = stringCriterion(perf.eye_color!!)),
+                            PerformerFilterType(eye_color = stringCriterion(perf.eye_color)),
                         )
                     },
                 )
@@ -620,8 +634,8 @@ fun PerformerDetails(
         rating100Click = rating100Click,
         basicItemInfo = BasicItemInfo(perf.id, perf.created_at, perf.updated_at),
         tags = tags,
-        onEdit = {},
-        editableTypes = setOf(),
+        onEdit = onEdit,
+        editableTypes = setOf(DataType.TAG),
     ) {
         if (studios.isNotEmpty()) {
             item {
@@ -655,7 +669,7 @@ fun PerformerDetails(
                             )
                         onShowDialog.invoke(DialogParams(true, item.name, dialogItems))
                     },
-                    modifier = Modifier,
+                    modifier = Modifier.animateItem(),
                 )
             }
         }
@@ -679,27 +693,22 @@ private fun PerformerDetailsPreview() {
                 StashServer("http://0.0.0.0", null),
                 object : NavigationManager {
                     override var previousDestination: Destination?
-                        get() = TODO("Not yet implemented")
+                        get() = null
                         set(value) {}
 
                     override fun navigate(destination: Destination) {
-                        TODO("Not yet implemented")
                     }
 
                     override fun goBack() {
-                        TODO("Not yet implemented")
                     }
 
                     override fun goToMain() {
-                        TODO("Not yet implemented")
                     }
 
                     override fun clearPinFragment() {
-                        TODO("Not yet implemented")
                     }
 
                     override fun addListener(listener: NavigationListener) {
-                        TODO("Not yet implemented")
                     }
                 },
             ),
@@ -717,6 +726,7 @@ private fun PerformerDetailsPreview() {
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 onShowDialog = {},
+                onEdit = {},
                 modifier =
                     Modifier
                         .fillMaxSize()
