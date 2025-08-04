@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -138,8 +138,9 @@ fun TabPage(
                 }
             } else {
                 // Not tv
-                PrimaryTabRow(
+                PrimaryScrollableTabRow(
                     selectedTabIndex = selectedTabIndex,
+                    edgePadding = 16.dp,
                     modifier = Modifier,
                 ) {
                     tabs.forEachIndexed { index, tab ->

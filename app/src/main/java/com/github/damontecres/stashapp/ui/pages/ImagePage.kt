@@ -6,6 +6,8 @@ import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -303,8 +305,8 @@ fun ImagePage(
                         showOverlay = !showOverlay
                     },
                 ).ifElse(
-                    condition = isZoomed,
-                    Modifier.transformable(state),
+                    condition = isZoomed || showOverlay,
+                    Modifier.transformable(state, enabled = !showOverlay),
                     Modifier
                         .transformable(state)
                         .pointerInput(Unit) {
@@ -544,7 +546,11 @@ fun ImagePage(
                 Text("No image URL")
             }
             val focusManager = LocalFocusManager.current
-            AnimatedVisibility(showOverlay) {
+            AnimatedVisibility(
+                showOverlay,
+                enter = slideInVertically { it },
+                exit = slideOutVertically { it },
+            ) {
                 ImageOverlay(
                     modifier =
                         contentModifier

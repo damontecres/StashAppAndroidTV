@@ -48,12 +48,14 @@ import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.ScrollableDialog
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.ui.components.ratingBarHeight
+import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -88,9 +90,10 @@ fun ImageDetailsHeader(
     val scope = rememberCoroutineScope()
 
     Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier =
             modifier
-                .fillMaxWidth(0.8f)
+                .ifElse(isTvDevice, Modifier.fillMaxWidth(), Modifier.fillMaxWidth())
                 .height(440.dp)
                 .bringIntoViewRequester(bringIntoViewRequester),
     ) {
@@ -110,6 +113,7 @@ fun ImageDetailsHeader(
                 ),
         )
         Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.alpha(0.75f),
         ) {
             // Rating
@@ -129,7 +133,7 @@ fun ImageDetailsHeader(
             val imageRes = imageFile?.let { "${it.width}x${it.height}" }
 
             DotSeparatedRow(
-                modifier = Modifier.padding(top = 6.dp),
+                modifier = Modifier.padding(top = 8.dp),
                 textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 texts =
                     listOfNotNullOrBlank(
@@ -289,8 +293,7 @@ fun ImageDetailsHeader(
             isPlaying = playPauseState.showPlay,
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
+                    .fillMaxWidth(),
         )
     }
 }
