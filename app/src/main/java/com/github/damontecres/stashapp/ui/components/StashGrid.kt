@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -153,125 +154,144 @@ fun StashGridControls(
 
     Column(modifier = modifier) {
         if (showTopRow) {
-            Row(
-                modifier =
-                    Modifier
-                        .padding(8.dp)
-                        .focusGroup()
-                        .onFocusChanged {
-                            if (it.isFocused) rowFocusRequester.tryRequestFocus()
-                        }.focusable(true),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+            ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                LazyRow(
+                    modifier =
+                        Modifier
+                            .padding(8.dp)
+                            .focusGroup()
+                            .onFocusChanged {
+                                if (it.isFocused) rowFocusRequester.tryRequestFocus()
+                            }.focusable(true),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     if (filterUiMode == FilterUiMode.SAVED_FILTERS) {
-                        SavedFiltersButton(
+                        item {
+                            SavedFiltersButton(
+                                modifier =
+                                    Modifier
+                                        .focusRequester(rowFocusRequester)
+                                        .focusProperties { down = gridFocusRequester },
+                                dataType = dataType,
+                                onFilterChange = { updateFilter(it) },
+                                onCreateFilter = { createFilter.invoke(CreateFilter.NEW_FILTER) },
+                                onFCreateFromFilter = { createFilter.invoke(CreateFilter.FROM_CURRENT) },
+                            )
+                        }
+                    }
+                    item {
+                        SortByButton(
                             modifier =
                                 Modifier
-                                    .focusRequester(rowFocusRequester)
-                                    .focusProperties { down = gridFocusRequester },
+                                    .ifElse(
+                                        filterUiMode != FilterUiMode.SAVED_FILTERS,
+                                        { Modifier.focusRequester(rowFocusRequester) },
+                                    ).focusProperties { down = gridFocusRequester },
                             dataType = dataType,
-                            onFilterChange = { updateFilter(it) },
-                            onCreateFilter = { createFilter.invoke(CreateFilter.NEW_FILTER) },
-                            onFCreateFromFilter = { createFilter.invoke(CreateFilter.FROM_CURRENT) },
+                            current = filterArgs.sortAndDirection,
+                            onSortChange = {
+                                updateFilter(filterArgs.with(it).withResolvedRandom())
+                            },
                         )
                     }
-                    SortByButton(
-                        modifier =
-                            Modifier
-                                .ifElse(
-                                    filterUiMode != FilterUiMode.SAVED_FILTERS,
-                                    { Modifier.focusRequester(rowFocusRequester) },
-                                ).focusProperties { down = gridFocusRequester },
-                        dataType = dataType,
-                        current = filterArgs.sortAndDirection,
-                        onSortChange = {
-                            updateFilter(filterArgs.with(it).withResolvedRandom())
-                        },
-                    )
                     if (dataType.supportsPlaylists || dataType == DataType.IMAGE) {
-                        Button(
-                            onClick = {
-                                when (dataType) {
-                                    DataType.IMAGE -> {
-                                        navManager.navigate(
-                                            Destination.Slideshow(
-                                                filterArgs,
-                                                0,
-                                                true,
-                                            ),
-                                        )
-                                    }
+                        item {
+                            Button(
+                                onClick = {
+                                    when (dataType) {
+                                        DataType.IMAGE -> {
+                                            navManager.navigate(
+                                                Destination.Slideshow(
+                                                    filterArgs,
+                                                    0,
+                                                    true,
+                                                ),
+                                            )
+                                        }
 
-                                    DataType.MARKER -> {
-                                        showMarkerDialog = true
-                                    }
+                                        DataType.MARKER -> {
+                                            showMarkerDialog = true
+                                        }
 
-                                    else -> {
-                                        navManager.navigate(Destination.Playlist(filterArgs, 0, 0))
+                                        else -> {
+                                            navManager.navigate(
+                                                Destination.Playlist(
+                                                    filterArgs,
+                                                    0,
+                                                    0,
+                                                ),
+                                            )
+                                        }
                                     }
-                                }
-                            },
-                            modifier = Modifier.focusProperties { down = gridFocusRequester },
-                        ) {
-                            Text(text = stringResource(R.string.play_all))
+                                },
+                                modifier = Modifier.focusProperties { down = gridFocusRequester },
+                            ) {
+                                Text(text = stringResource(R.string.play_all))
+                            }
                         }
                     }
                     if (filterUiMode == FilterUiMode.CREATE_FILTER) {
-                        Button(
-                            onClick = {
-                                createFilter.invoke(CreateFilter.FROM_CURRENT)
-                            },
-                            modifier = Modifier.focusProperties { down = gridFocusRequester },
-                        ) {
-                            Text(text = "Create Filter")
+                        item {
+                            Button(
+                                onClick = {
+                                    createFilter.invoke(CreateFilter.FROM_CURRENT)
+                                },
+                                modifier = Modifier.focusProperties { down = gridFocusRequester },
+                            ) {
+                                Text(text = "Create Filter")
+                            }
                         }
                     }
                     if (subToggleLabel != null) {
-                        SwitchWithLabel(
-                            modifier = Modifier.focusProperties { down = gridFocusRequester },
-                            label = subToggleLabel,
-                            checked = checked,
-                            enabled = subToggleEnabled,
-                            onStateChange = { isChecked ->
-                                checked = isChecked
-                                onSubToggleCheck?.invoke(isChecked)
+                        item {
+                            SwitchWithLabel(
+                                modifier = Modifier.focusProperties { down = gridFocusRequester },
+                                label = subToggleLabel,
+                                checked = checked,
+                                enabled = subToggleEnabled,
+                                onStateChange = { isChecked ->
+                                    checked = isChecked
+                                    onSubToggleCheck?.invoke(isChecked)
+                                },
+                            )
+                        }
+                    }
+
+                    var job: Job? = null
+                    val searchDelay =
+                        PreferenceManager
+                            .getDefaultSharedPreferences(context)
+                            .getInt(context.getString(R.string.pref_key_search_delay), 500)
+                            .toLong()
+                    item {
+                        SearchEditTextBox(
+                            modifier =
+                                Modifier.focusProperties { down = gridFocusRequester },
+                            value = searchQuery,
+                            onValueChange = { newQuery ->
+                                shouldRequestFocus = false
+                                searchQuery = newQuery
+                                job?.cancel()
+                                job =
+                                    scope.launch {
+                                        delay(searchDelay)
+                                        if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
+                                            updateFilter(filterArgs.withQuery(searchQuery))
+                                        }
+                                    }
+                            },
+                            onSearchClick = {
+                                shouldRequestFocus = true
+                                job?.cancel()
+                                if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
+                                    updateFilter(filterArgs.withQuery(searchQuery))
+                                }
+                                gridFocusRequester.tryRequestFocus()
                             },
                         )
                     }
                 }
-                var job: Job? = null
-                val searchDelay =
-                    PreferenceManager
-                        .getDefaultSharedPreferences(context)
-                        .getInt(context.getString(R.string.pref_key_search_delay), 500)
-                        .toLong()
-                SearchEditTextBox(
-                    modifier =
-                        Modifier.focusProperties { down = gridFocusRequester },
-                    value = searchQuery,
-                    onValueChange = { newQuery ->
-                        shouldRequestFocus = false
-                        searchQuery = newQuery
-                        job?.cancel()
-                        job =
-                            scope.launch {
-                                delay(searchDelay)
-                                if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
-                                    updateFilter(filterArgs.withQuery(searchQuery))
-                                }
-                            }
-                    },
-                    onSearchClick = {
-                        shouldRequestFocus = true
-                        job?.cancel()
-                        if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
-                            updateFilter(filterArgs.withQuery(searchQuery))
-                        }
-                        gridFocusRequester.tryRequestFocus()
-                    },
-                )
             }
         }
         StashGrid(
