@@ -21,7 +21,7 @@ data class StashServer(
      *
      * Note: needs to populated via [updateServerPrefs]!
      */
-    val serverPreferences = ServerPreferences(this)
+    val serverPreferences by lazy { ServerPreferences(this) }
 
     /**
      * The server's version

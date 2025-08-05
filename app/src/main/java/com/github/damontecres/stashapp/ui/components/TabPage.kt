@@ -140,7 +140,6 @@ fun TabPage(
                 // Not tv
                 PrimaryScrollableTabRow(
                     selectedTabIndex = selectedTabIndex,
-                    edgePadding = 16.dp,
                     modifier = Modifier,
                 ) {
                     tabs.forEachIndexed { index, tab ->

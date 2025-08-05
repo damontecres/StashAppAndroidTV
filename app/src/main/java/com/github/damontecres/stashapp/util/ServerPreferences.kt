@@ -11,7 +11,6 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.FileNotFoundException
 
 /**
  * Represents configuration that users have set server-side
@@ -33,23 +32,6 @@ class ServerPreferences(
     var uiConfiguration: Map<*, *>? = null
         private set
 
-    init {
-        try {
-            val jsonStr =
-                StashApplication
-                    .getApplication()
-                    .openFileInput("${serverKey}_ui.json")
-                    .bufferedReader()
-                    .use { it.readText() }
-            readUIConfig(JSONObject(jsonStr).toMap())
-        } catch (ex: FileNotFoundException) {
-            Log.w(TAG, "UI config file not found")
-            // no-op
-        } catch (ex: Exception) {
-            Log.e(TAG, "Exception reading UI config", ex)
-        }
-    }
-
     // Properties stored in preferences
     val serverVersion: Version
         get() {
@@ -65,7 +47,7 @@ class ServerPreferences(
 
     val showStudioAsText get() = preferences.getBoolean(PREF_INTERFACE_STUDIOS_AS_TEXT, false)
 
-    val minimumPlayPercent get() = preferences.getInt(PREF_MINIMUM_PLAY_PERCENT, 20)
+    val minimumPlayPercent get() = preferences.getInt(PREF_MINIMUM_PLAY_PERCENT, 0)
 
     val ratingsAsStars get() = preferences.getString(PREF_RATING_TYPE, "stars") == "stars"
 
@@ -120,18 +102,6 @@ class ServerPreferences(
         if (ui !is Map<*, *>) {
             Log.w(TAG, "config.configuration.ui is not a map")
         } else {
-            try {
-                val jsonStr = JSONObject(ui).toString()
-                StashApplication
-                    .getApplication()
-                    .openFileOutput("${serverKey}_ui.json", Context.MODE_PRIVATE)
-                    .use {
-                        it.write(jsonStr.toByteArray())
-                    }
-            } catch (ex: Exception) {
-                Log.e(TAG, "Exception writing UI JSON", ex)
-            }
-
             preferences.edit {
                 val taskDefaults = ui.getCaseInsensitive("taskDefaults") as Map<String, *>?
                 try {
@@ -162,11 +132,7 @@ class ServerPreferences(
                 }
             }
             val minPlayPercent = ui.getCaseInsensitive(PREF_MINIMUM_PLAY_PERCENT)
-            try {
-                putInt(PREF_MINIMUM_PLAY_PERCENT, minPlayPercent?.toString()?.toInt() ?: 20)
-            } catch (ex: NumberFormatException) {
-                Log.w(TAG, "$PREF_MINIMUM_PLAY_PERCENT is not an integer: '$minPlayPercent'")
-            }
+            putInt(PREF_MINIMUM_PLAY_PERCENT, minPlayPercent?.toString()?.toIntOrNull() ?: 0)
 
             val ratingSystemOptionsRaw = ui.getCaseInsensitive("ratingSystemOptions")
 
@@ -181,7 +147,7 @@ class ServerPreferences(
                         "half" -> 0.5f
                         "quarter" -> 0.25f
                         "tenth" -> 0.1f
-                        else -> 0.5f
+                        else -> 1.0f
                     }
                 putString(PREF_RATING_TYPE, type)
                 putFloat(PREF_RATING_PRECISION, starPrecision)
@@ -189,6 +155,7 @@ class ServerPreferences(
                 Log.e(
                     TAG,
                     "Exception parsing ratingSystemOptions: $ratingSystemOptionsRaw",
+                    ex,
                 )
             }
 
