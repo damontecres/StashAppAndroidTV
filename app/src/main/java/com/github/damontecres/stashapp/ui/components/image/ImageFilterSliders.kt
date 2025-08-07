@@ -211,6 +211,7 @@ fun SliderBarRow(
                         .colors()
                         .copy(
                             activeTrackColor = color,
+                            inactiveTrackColor = color.copy(alpha = .15f),
                         ),
                 modifier = Modifier.weight(1f),
             )
