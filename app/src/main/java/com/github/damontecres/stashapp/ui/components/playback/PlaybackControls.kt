@@ -68,6 +68,7 @@ import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.compat.ListItem
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
+import com.github.damontecres.stashapp.ui.components.PlaybackOCountButton
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import kotlinx.coroutines.delay
@@ -332,8 +333,7 @@ fun LeftPlaybackButtons(
             horizontalArrangement = Arrangement.spacedBy(2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PlaybackButton(
-                iconRes = R.drawable.sweat_drops,
+            PlaybackOCountButton(
                 onClick = {
                     onControllerInteraction.invoke()
                     onPlaybackActionClick.invoke(PlaybackAction.OCount)
