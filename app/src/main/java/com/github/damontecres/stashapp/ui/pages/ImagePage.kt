@@ -78,6 +78,7 @@ import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.image.DRAG_THROTTLE_DELAY
 import com.github.damontecres.stashapp.ui.components.image.ImageDetailsViewModel
 import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
 import com.github.damontecres.stashapp.ui.components.image.ImageOverlay
@@ -124,6 +125,10 @@ fun ImagePage(
             slideshowDelay,
             uiConfig.persistVideoFilters,
         )
+        if (isNotTvDevice) {
+            // Reduce the throttling for touch devices since a delay when dragging feels like lag
+            viewModel.imageFilter.startThrottling(DRAG_THROTTLE_DELAY)
+        }
     }
 
     val imageState by viewModel.image.observeAsState()
