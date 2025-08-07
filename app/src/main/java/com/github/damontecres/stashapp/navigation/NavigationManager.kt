@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.leanback.app.GuidedStepSupportFragment
+import com.github.damontecres.stashapp.DebugFragment
 import com.github.damontecres.stashapp.FilterFragment
 import com.github.damontecres.stashapp.GalleryFragment
 import com.github.damontecres.stashapp.GroupFragment
@@ -179,6 +180,8 @@ class NavigationManagerLeanback(
                         else -> throw IllegalArgumentException("Playlist for ${destination.filterArgs.dataType} not supported")
                     }
                 }
+
+                is Destination.Debug -> DebugFragment()
 
                 is Destination.Fragment -> {
                     fragmentManager.fragmentFactory.instantiate(
