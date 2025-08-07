@@ -1095,7 +1095,7 @@ fun StashDataFilter.toReadableString(newlines: Boolean = false): String =
         append(")")
     }.replace(Optional.absent().toString(), "Absent")
 
-fun Any.toReadableString() =
+fun Any.toReadableString(newlines: Boolean = false) =
     buildString {
         append(this@toReadableString::class.simpleName)
         append("(")
@@ -1107,6 +1107,8 @@ fun Any.toReadableString() =
                     val value = param.get(this@toReadableString)
                     if (value is Optional<*>) {
                         "${param.name}=${value.getOrNull()}"
+                    } else if (value is StashDataFilter) {
+                        "${param.name}=${value.toReadableString(newlines)}"
                     } else {
                         "${param.name}=$value"
                     }

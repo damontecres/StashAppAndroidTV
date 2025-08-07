@@ -11,6 +11,7 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.filter.CreateFilterScreen
 import com.github.damontecres.stashapp.ui.components.server.ManageServers
 import com.github.damontecres.stashapp.ui.pages.ChooseThemePage
+import com.github.damontecres.stashapp.ui.pages.DebugPage
 import com.github.damontecres.stashapp.ui.pages.ImagePage
 import com.github.damontecres.stashapp.ui.pages.MarkerTimestampPage
 import com.github.damontecres.stashapp.ui.pages.PlaybackPage
@@ -130,6 +131,12 @@ fun FullScreenContent(
                 server = server,
                 navigationManager = navigationManager,
                 markerId = destination.markerId,
+                modifier = Modifier.fillMaxSize(),
+            )
+
+        is Destination.Debug ->
+            DebugPage(
+                server = server,
                 modifier = Modifier.fillMaxSize(),
             )
 

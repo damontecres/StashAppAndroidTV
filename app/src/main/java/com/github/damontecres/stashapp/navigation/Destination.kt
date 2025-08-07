@@ -145,6 +145,9 @@ sealed class Destination(
     @Serializable
     data object ChooseTheme : Destination(true)
 
+    @Serializable
+    data object Debug : Destination(true)
+
     /**
      * An arbitrary fragment that requires no arguments
      */

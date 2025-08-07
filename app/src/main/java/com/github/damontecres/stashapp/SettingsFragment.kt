@@ -198,7 +198,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             versionPref.setOnPreferenceClickListener {
                 if (clickCount > 2) {
                     clickCount = 0
-                    serverViewModel.navigationManager.navigate(Destination.Fragment(DebugFragment::class.qualifiedName!!))
+                    serverViewModel.navigationManager.navigate(Destination.Debug)
                 } else {
                     clickCount++
                 }
