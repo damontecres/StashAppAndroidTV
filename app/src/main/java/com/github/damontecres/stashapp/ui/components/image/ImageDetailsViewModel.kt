@@ -138,7 +138,7 @@ class ImageDetailsViewModel : ViewModel() {
                                 .getDatabase()
                                 .playbackEffectsDao()
                                 .getPlaybackEffect(server.url, galleryId, DataType.GALLERY)
-                        if (vf != null) {
+                        if (vf != null && vf.videoFilter.hasImageFilter()) {
                             Log.d(
                                 TAG,
                                 "Loaded VideoFilter for gallery $galleryId",
@@ -203,7 +203,7 @@ class ImageDetailsViewModel : ViewModel() {
                                         .getDatabase()
                                         .playbackEffectsDao()
                                         .getPlaybackEffect(server!!.url, image.id, DataType.IMAGE)
-                                if (vf != null) {
+                                if (vf != null && vf.videoFilter.hasImageFilter()) {
                                     Log.d(
                                         TAG,
                                         "Loaded VideoFilter for image ${image.id}",
