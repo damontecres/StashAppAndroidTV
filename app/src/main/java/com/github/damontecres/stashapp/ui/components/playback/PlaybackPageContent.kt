@@ -106,6 +106,7 @@ import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.image.DRAG_THROTTLE_DELAY
 import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
 import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
@@ -456,6 +457,9 @@ fun PlaybackPageContent(
     LaunchedEffect(Unit) {
         viewModel.init(server, markersEnabled, uiConfig.persistVideoFilters, useVideoFilters)
         viewModel.changeScene(playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
+        if (isNotTvDevice) {
+            viewModel.videoFilter.startThrottling(DRAG_THROTTLE_DELAY)
+        }
         maybeMuteAudio(context, false, player)
         player.setMediaItems(playlist, startIndex, savedStartPosition)
         if (playlistPager == null) {

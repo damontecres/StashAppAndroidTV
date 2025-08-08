@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
-import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.DefaultTheme
 import com.github.damontecres.stashapp.ui.util.handleDPadKeyEvents
 
 @Composable
@@ -114,7 +114,7 @@ fun SliderBar(
 @Preview
 @Composable
 private fun SliderBarPreview() {
-    AppTheme {
+    DefaultTheme {
         Column {
             SliderBar(
                 value = 40,
