@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
@@ -310,11 +311,31 @@ fun ImagePage(
                     onClick = {
                         showOverlay = !showOverlay
                     },
-                ).ifElse(
+                ).pointerInput(isZoomed) {
+                    detectTapGestures(
+                        onTap = {
+                            showOverlay = !showOverlay
+                        },
+                        onDoubleTap = {
+                            if (!showOverlay) {
+                                if (isZoomed) {
+                                    reset(false)
+                                } else {
+                                    zoom(1.5f)
+                                }
+                            }
+                        },
+                    )
+                }.ifElse(
                     condition = isZoomed || showOverlay,
-                    Modifier.transformable(state, enabled = !showOverlay),
                     Modifier
-                        .transformable(state)
+                        .transformable(
+                            state = state,
+                            enabled = !showOverlay,
+                            lockRotationOnZoomPan = true,
+                        ),
+                    Modifier
+                        .transformable(state, lockRotationOnZoomPan = true)
                         .pointerInput(Unit) {
                             // TODO use https://developer.android.com/develop/ui/compose/touch-input/pointer-input/drag-swipe-fling#swiping
                             detectDragGestures(
