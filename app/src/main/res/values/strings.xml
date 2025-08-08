@@ -129,5 +129,6 @@
     <string name="value_minutes" formatted="true">%1$s minutes</string>
     <string name="value_seconds" formatted="true">%1$s seconds</string>
     <string name="value_milliseconds" formatted="true">%1$s ms</string>
+    <string name="save_for_gallery">Save for gallery</string>
 
 </resources>

@@ -904,10 +904,12 @@ fun PlaybackPageContent(
             AnimatedVisibility(showFilterDialog) {
                 ImageFilterDialog(
                     filter = it,
-                    showVideoOptions = false,
+                    showVideoOptions = true,
+                    showSaveGalleryButton = false,
                     uiConfig = uiConfig,
                     onChange = viewModel::updateVideoFilter,
                     onClickSave = viewModel::saveVideoFilter,
+                    onClickSaveGallery = {},
                     onDismissRequest = {
                         showFilterDialog = false
                     },

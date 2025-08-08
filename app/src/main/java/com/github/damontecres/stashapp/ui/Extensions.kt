@@ -36,6 +36,7 @@ import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -164,5 +165,17 @@ val FloatCriterionInput.valid: Boolean
             return val2 != null && value < val2
         } else {
             return true
+        }
+    }
+
+/**
+ * Get the gallery ID for the filter iff it has a single gallery associated
+ */
+val ImageFilterType.galleryId: String?
+    get() {
+        return galleries.getOrNull()?.let { multi ->
+            multi.value.getOrNull()?.let {
+                if (multi.modifier != CriterionModifier.EXCLUDES && it.size == 1) it[0] else null
+            }
         }
     }
