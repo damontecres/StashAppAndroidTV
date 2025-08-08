@@ -44,8 +44,10 @@ fun ImageFilterSliders(
     filter: VideoFilter,
     showVideoOptions: Boolean,
     showSaveButton: Boolean,
+    showSaveGalleryButton: Boolean,
     onChange: (VideoFilter) -> Unit,
     onClickSave: () -> Unit,
+    onClickSaveGallery: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -155,6 +157,13 @@ fun ImageFilterSliders(
                             Text(text = stringResource(R.string.stashapp_actions_save))
                         }
                     }
+                    if (showSaveGalleryButton) {
+                        Button(
+                            onClick = onClickSaveGallery,
+                        ) {
+                            Text(text = stringResource(R.string.save_for_gallery))
+                        }
+                    }
                     Button(
                         onClick = { onChange(VideoFilter()) },
                     ) {
@@ -228,9 +237,11 @@ fun SliderBarRow(
 fun ImageFilterDialog(
     filter: VideoFilter,
     showVideoOptions: Boolean,
+    showSaveGalleryButton: Boolean,
     uiConfig: ComposeUiConfig,
     onChange: (VideoFilter) -> Unit,
     onClickSave: () -> Unit,
+    onClickSaveGallery: () -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -256,8 +267,10 @@ fun ImageFilterDialog(
                 filter = filter,
                 showVideoOptions = showVideoOptions,
                 showSaveButton = uiConfig.persistVideoFilters,
+                showSaveGalleryButton = showSaveGalleryButton && uiConfig.persistVideoFilters,
                 onChange = onChange,
                 onClickSave = onClickSave,
+                onClickSaveGallery = onClickSaveGallery,
                 modifier = Modifier.padding(8.dp),
             )
         }
@@ -273,7 +286,9 @@ private fun ImageFilterSlidersPreview() {
             showVideoOptions = true,
             onChange = {},
             onClickSave = {},
+            onClickSaveGallery = {},
             showSaveButton = true,
+            showSaveGalleryButton = true,
             modifier = Modifier.padding(8.dp),
         )
     }

@@ -148,6 +148,7 @@ fun ImagePage(
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
     var panX by rememberSaveable { mutableFloatStateOf(0f) }
     var panY by rememberSaveable { mutableFloatStateOf(0f) }
+    val galleryId by viewModel.galleryId.observeAsState(null)
 
     val slideshowControls =
         object : SlideshowControls {
@@ -607,9 +608,11 @@ fun ImagePage(
                 ImageFilterDialog(
                     filter = imageFilter,
                     showVideoOptions = false,
+                    showSaveGalleryButton = galleryId != null,
                     uiConfig = uiConfig,
                     onChange = viewModel::updateImageFilter,
                     onClickSave = viewModel::saveImageFilter,
+                    onClickSaveGallery = viewModel::saveGalleryFilter,
                     onDismissRequest = {
                         showFilterDialog = false
                         viewModel.unpauseSlideshow()

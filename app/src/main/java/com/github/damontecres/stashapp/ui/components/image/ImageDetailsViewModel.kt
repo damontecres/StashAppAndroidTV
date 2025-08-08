@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.ThrottledLiveData
@@ -22,6 +23,7 @@ import com.github.damontecres.stashapp.data.room.PlaybackEffect
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.ui.galleryId
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -82,6 +84,11 @@ class ImageDetailsViewModel : ViewModel() {
     private val _imageFilter = MutableLiveData(VideoFilter())
     val imageFilter = ThrottledLiveData(_imageFilter, 500L)
 
+    private var galleryImageFilter = VideoFilter()
+
+    private val _galleryId = MutableLiveData<String?>(null)
+    val galleryId: LiveData<String?> = _galleryId
+
     fun init(
         server: StashServer,
         filterArgs: FilterArgs,
@@ -97,6 +104,7 @@ class ImageDetailsViewModel : ViewModel() {
             if (filterArgs.dataType != DataType.IMAGE) {
                 throw IllegalArgumentException("Cannot use ${filterArgs.dataType}")
             }
+            _galleryId.value = (filterArgs.objectFilter as? ImageFilterType)?.galleryId
             this.server = server
             this.exceptionHandler =
                 LoggingCoroutineExceptionHandler(
@@ -120,6 +128,30 @@ class ImageDetailsViewModel : ViewModel() {
                 if (slideshow) {
                     startSlideshow()
                     pulseSlideshow()
+                }
+            }
+            galleryId.value?.let { galleryId ->
+                viewModelScope.launchIO {
+                    viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+                        val vf =
+                            StashApplication
+                                .getDatabase()
+                                .playbackEffectsDao()
+                                .getPlaybackEffect(server.url, galleryId, DataType.GALLERY)
+                        if (vf != null && vf.videoFilter.hasImageFilter()) {
+                            Log.d(
+                                TAG,
+                                "Loaded VideoFilter for gallery $galleryId",
+                            )
+                            withContext(Dispatchers.Main) {
+                                galleryImageFilter = vf.videoFilter
+                                // Pause throttling so that the image loads with the filter applied immediately
+                                imageFilter.stopThrottling(true)
+                                updateImageFilter(vf.videoFilter)
+                                imageFilter.startThrottling()
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -163,7 +195,7 @@ class ImageDetailsViewModel : ViewModel() {
                         performers.value = listOf()
                         galleries.value = listOf()
                         // reset image filter
-                        updateImageFilter(VideoFilter())
+                        updateImageFilter(galleryImageFilter)
                         if (saveFilters) {
                             viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
                                 val vf =
@@ -171,7 +203,7 @@ class ImageDetailsViewModel : ViewModel() {
                                         .getDatabase()
                                         .playbackEffectsDao()
                                         .getPlaybackEffect(server!!.url, image.id, DataType.IMAGE)
-                                if (vf != null) {
+                                if (vf != null && vf.videoFilter.hasImageFilter()) {
                                     Log.d(
                                         TAG,
                                         "Loaded VideoFilter for image ${image.id}",
@@ -362,6 +394,32 @@ class ImageDetailsViewModel : ViewModel() {
                             .playbackEffectsDao()
                             .insert(PlaybackEffect(server!!.url, it.id, DataType.IMAGE, vf))
                         Log.d(TAG, "Saved VideoFilter for image ${it.id}")
+                        withContext(Dispatchers.Main) {
+                            Toast
+                                .makeText(
+                                    StashApplication.getApplication(),
+                                    "Saved",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun saveGalleryFilter() {
+        if (server != null) {
+            galleryId.value?.let { galleryId ->
+                viewModelScope.launchIO(StashCoroutineExceptionHandler(autoToast = true)) {
+                    val vf = _imageFilter.value
+                    if (vf != null) {
+                        galleryImageFilter = vf
+                        StashApplication
+                            .getDatabase()
+                            .playbackEffectsDao()
+                            .insert(PlaybackEffect(server!!.url, galleryId, DataType.GALLERY, vf))
+                        Log.d(TAG, "Saved VideoFilter for gallery $galleryId")
                         withContext(Dispatchers.Main) {
                             Toast
                                 .makeText(
