@@ -71,6 +71,8 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import coil3.imageLoader
+import coil3.request.Disposable
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
@@ -262,7 +264,7 @@ fun RootCard(
                 ).toLong()
         }
 
-    var focused = interactionSource.collectIsFocusedAsState().value
+    val focused = interactionSource.collectIsFocusedAsState().value
     var focusedAfterDelay by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
@@ -278,6 +280,15 @@ fun RootCard(
                 focusedAfterDelay = true
             } else {
                 focusedAfterDelay = false
+            }
+        }
+        if (extraImageUrls.isNotEmpty()) {
+            val disposable =
+                context.imageLoader.enqueue(
+                    ImageRequest.Builder(context).data(extraImageUrls.first()).build(),
+                )
+            DisposableEffect(Unit) {
+                onDispose { disposable.dispose() }
             }
         }
     } else {
@@ -378,16 +389,25 @@ fun RootCard(
             } else {
                 var extraImageUrl by remember(imageUrl) { mutableStateOf(imageUrl) }
                 if (playVideoPreviews && focusedAfterDelay && extraImageUrls.isNotEmpty()) {
+                    var enqueued by remember { mutableStateOf<Disposable?>(null) }
                     LaunchedEffect(Unit) {
                         var idx = 0
                         while (true) {
                             extraImageUrl = extraImageUrls[idx]
                             if (++idx >= extraImageUrls.size) idx = 0
+                            // Prefetch next image
+                            enqueued =
+                                context.imageLoader.enqueue(
+                                    ImageRequest.Builder(context).data(extraImageUrls[idx]).build(),
+                                )
                             delay(2000L)
                         }
                     }
                     DisposableEffect(Unit) {
-                        onDispose { extraImageUrl = imageUrl }
+                        onDispose {
+                            extraImageUrl = imageUrl
+                            enqueued?.dispose()
+                        }
                     }
                 }
                 CardImage(
