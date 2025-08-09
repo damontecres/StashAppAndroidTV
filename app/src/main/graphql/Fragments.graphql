@@ -18,8 +18,8 @@ fragment TagData on Tag {
   gallery_count
   parent_count
   child_count
-  created_at
-  updated_at
+  created_at @catch(to: NULL)
+  updated_at @catch(to: NULL)
 }
 
 fragment StashJob on Job {

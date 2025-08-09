@@ -46,8 +46,8 @@ fragment SlimSceneData on Scene {
   o_counter
   organized
   resume_time
-  created_at
-  updated_at
+  created_at @catch(to: NULL)
+  updated_at @catch(to: NULL)
   files {
     ...VideoFile
   }
@@ -104,8 +104,8 @@ fragment FullSceneData on Scene {
   resume_time
   play_duration
   play_count
-  created_at
-  updated_at
+  created_at @catch(to: NULL)
+  updated_at @catch(to: NULL)
   files {
     ...VideoFile
     __typename
@@ -135,8 +135,8 @@ fragment FullSceneData on Scene {
     title
     seconds
     end_seconds
-    created_at
-    updated_at
+    created_at @catch(to: NULL)
+    updated_at @catch(to: NULL)
     stream
     preview
     primary_tag {

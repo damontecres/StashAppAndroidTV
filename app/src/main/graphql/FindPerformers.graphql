@@ -78,8 +78,8 @@ fragment PerformerData on Performer {
   gallery_count
   group_count
   o_counter
-  created_at
-  updated_at
+  created_at @catch(to: NULL)
+  updated_at @catch(to: NULL)
   tags {
     ...SlimTagData
     __typename

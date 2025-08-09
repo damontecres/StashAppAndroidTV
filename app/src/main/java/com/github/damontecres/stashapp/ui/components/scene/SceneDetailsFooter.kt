@@ -11,7 +11,9 @@ import androidx.compose.ui.unit.dp
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.playback.displayString
+import com.github.damontecres.stashapp.ui.components.CreatedTimestamp
 import com.github.damontecres.stashapp.ui.components.TitleValueText
+import com.github.damontecres.stashapp.ui.components.UpdatedTimestamp
 import com.github.damontecres.stashapp.util.bitRateString
 import com.github.damontecres.stashapp.views.formatBytes
 import java.util.Locale
@@ -27,22 +29,8 @@ fun SceneDetailsFooter(
                 .fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (scene.created_at.toString().length >= 10) {
-            item {
-                TitleValueText(
-                    stringResource(R.string.stashapp_created_at),
-                    scene.created_at.toString().substring(0..<10),
-                )
-            }
-        }
-        if (scene.updated_at.toString().length >= 10) {
-            item {
-                TitleValueText(
-                    stringResource(R.string.stashapp_updated_at),
-                    scene.updated_at.toString().substring(0..<10),
-                )
-            }
-        }
+        item { CreatedTimestamp(scene.created_at) }
+        item { UpdatedTimestamp(scene.updated_at) }
         item {
             TitleValueText(stringResource(R.string.stashapp_scene_id), scene.id)
         }

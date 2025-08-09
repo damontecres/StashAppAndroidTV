@@ -522,8 +522,6 @@ val FullSceneData.asVideoSceneData: VideoSceneData
             resume_time,
             rating100,
             o_counter,
-            created_at,
-            updated_at,
             files.map { VideoSceneData.File("", it.videoFile) },
             VideoSceneData.Paths(
                 paths.caption,
@@ -545,8 +543,6 @@ val FullSceneData.asMinimalSceneData: MinimalSceneData
             date,
             rating100,
             o_counter,
-            created_at,
-            updated_at,
             files.map { MinimalSceneData.File("", it.videoFile) },
         )
 

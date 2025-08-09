@@ -60,12 +60,14 @@ import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.compat.Button
+import com.github.damontecres.stashapp.ui.components.CreatedTimestamp
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.TitleValueText
+import com.github.damontecres.stashapp.ui.components.UpdatedTimestamp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -366,18 +368,8 @@ fun MarkerPageContent(
                 modifier = Modifier,
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                if (marker.created_at.toString().length >= 10) {
-                    TitleValueText(
-                        stringResource(R.string.stashapp_created_at),
-                        marker.created_at.toString().substring(0..<10),
-                    )
-                }
-                if (marker.updated_at.toString().length >= 10) {
-                    TitleValueText(
-                        stringResource(R.string.stashapp_updated_at),
-                        marker.updated_at.toString().substring(0..<10),
-                    )
-                }
+                CreatedTimestamp(marker.created_at)
+                UpdatedTimestamp(marker.updated_at)
                 TitleValueText(
                     stringResource(R.string.id),
                     marker.id,

@@ -149,6 +149,8 @@ tasks.register("createGraphqlSchema") {
     doFirst {
         File("$projectDir/src/main/graphql/schema.graphqls").writeTextIfDifferent(
             "# Auto-generated do not edit\n\n" +
+                File("$projectDir/src/main/graphql/client_schema.graphqls").readText() +
+                "\n\n" +
                 fileTree("../stash-server/graphql/schema/")
                     .filter { it.extension == "graphql" }
                     .files

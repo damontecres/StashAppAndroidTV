@@ -86,8 +86,8 @@ fragment GroupData on Group {
   scene_count
   front_image_path
   back_image_path
-  created_at
-  updated_at
+  created_at @catch(to: NULL)
+  updated_at @catch(to: NULL)
 }
 
 mutation CreateGroup($input: GroupCreateInput!) {
