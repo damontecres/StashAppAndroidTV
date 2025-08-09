@@ -6,7 +6,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -15,6 +18,7 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.scene.SceneDescriptionDialog
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeaderInfo
 import com.github.damontecres.stashapp.ui.components.scene.sceneDetailsBody
@@ -34,6 +38,7 @@ fun SceneDetailsOverlay(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val focusRequester = remember { FocusRequester() }
     val listState = rememberLazyListState()
+    var showDetailsDialog by remember { mutableStateOf(false) }
     LazyColumn(
         state = listState,
         contentPadding = PaddingValues(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 135.dp),
@@ -44,22 +49,13 @@ fun SceneDetailsOverlay(
                 scene = scene,
                 studio = scene.studio?.studioData,
                 rating100 = rating100,
-                oCount = scene.o_counter ?: 0,
                 uiConfig = uiConfig,
                 itemOnClick = itemOnClick,
-                playOnClick = { _, _ -> },
-                editOnClick = {},
-                moreOnClick = {},
-                oCounterOnClick = {},
-                oCounterOnLongClick = {},
+                detailsOnClick = { showDetailsDialog = true },
                 onRatingChange = onRatingChange,
-                focusRequester = focusRequester,
                 bringIntoViewRequester = bringIntoViewRequester,
                 removeLongClicker = { _, _ -> },
-                showEditButton = false,
-                alwaysStartFromBeginning = false,
                 modifier = Modifier.padding(bottom = 80.dp),
-                showRatingBar = true,
             )
         }
         sceneDetailsBody(
@@ -84,4 +80,9 @@ fun SceneDetailsOverlay(
             )
         }
     }
+    SceneDescriptionDialog(
+        show = showDetailsDialog,
+        scene = scene,
+        onDismissRequest = { showDetailsDialog = false },
+    )
 }
