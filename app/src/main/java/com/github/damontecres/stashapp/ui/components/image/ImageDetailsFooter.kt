@@ -9,7 +9,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.ui.components.CreatedTimestamp
 import com.github.damontecres.stashapp.ui.components.TitleValueText
+import com.github.damontecres.stashapp.ui.components.UpdatedTimestamp
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.formatBytes
 
@@ -24,22 +26,8 @@ fun ImageDetailsFooter(
                 .fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        if (image.created_at.toString().length >= 10) {
-            item {
-                TitleValueText(
-                    stringResource(R.string.stashapp_created_at),
-                    image.created_at.toString().substring(0..<10),
-                )
-            }
-        }
-        if (image.updated_at.toString().length >= 10) {
-            item {
-                TitleValueText(
-                    stringResource(R.string.stashapp_updated_at),
-                    image.updated_at.toString().substring(0..<10),
-                )
-            }
-        }
+        item { CreatedTimestamp(image.created_at) }
+        item { UpdatedTimestamp(image.updated_at) }
         item {
             TitleValueText(stringResource(R.string.id), image.id)
         }

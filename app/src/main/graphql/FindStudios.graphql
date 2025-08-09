@@ -67,8 +67,8 @@ fragment StudioData on Studio {
   aliases
   favorite
   __typename
-  created_at
-  updated_at
+  created_at @catch(to: NULL)
+  updated_at @catch(to: NULL)
 }
 
 mutation UpdateStudio($input: StudioUpdateInput!){

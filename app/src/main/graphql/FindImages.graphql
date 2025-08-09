@@ -41,8 +41,8 @@ fragment ImageData on Image {
   details
   photographer
   o_counter
-  created_at
-  updated_at
+  created_at @catch(to: NULL)
+  updated_at @catch(to: NULL)
   paths {
     thumbnail
     preview

@@ -284,18 +284,8 @@ fun ItemDetailsFooter(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.Start),
     ) {
-        if (createdAt != null && createdAt.length >= 10) {
-            TitleValueText(
-                stringResource(R.string.stashapp_created_at),
-                createdAt.substring(0..<10),
-            )
-        }
-        if (updatedAt != null && updatedAt.length >= 10) {
-            TitleValueText(
-                stringResource(R.string.stashapp_updated_at),
-                updatedAt.substring(0..<10),
-            )
-        }
+        CreatedTimestamp(createdAt)
+        UpdatedTimestamp(updatedAt)
         TitleValueText(stringResource(R.string.id), id)
     }
 }
