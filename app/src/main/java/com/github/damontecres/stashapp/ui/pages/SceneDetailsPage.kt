@@ -84,6 +84,7 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.components.RowColumn
+import com.github.damontecres.stashapp.ui.components.scene.SceneDescriptionDialog
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeader
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsViewModel
@@ -240,6 +241,7 @@ fun SceneDetails(
     val navigationManager = LocalGlobalContext.current.navigationManager
 
     var showDialog by remember { mutableStateOf<DialogParams?>(null) }
+    var showDetailsDialog by remember { mutableStateOf(false) }
     var searchForDataType by remember { mutableStateOf<SearchForParams?>(null) }
 
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -498,9 +500,11 @@ fun SceneDetails(
                                     markers = markers,
                                     playOnClick = playOnClick,
                                     showDurationDialog = { showMarkerDurationDialog = true },
+                                    detailsOnClick = { showDetailsDialog = true },
                                 ),
                         )
                 },
+                detailsOnClick = { showDetailsDialog = true },
                 oCounterOnClick = { oCountAction.invoke(MutationEngine::incrementOCounter) },
                 oCounterOnLongClick = {
                     showDialog =
@@ -590,6 +594,11 @@ fun SceneDetails(
             headerFocusRequester.tryRequestFocus()
         }
     }
+    SceneDescriptionDialog(
+        show = showDetailsDialog,
+        scene = scene,
+        onDismissRequest = { showDetailsDialog = false },
+    )
 }
 
 fun moreOptionsItems(
@@ -600,8 +609,16 @@ fun moreOptionsItems(
     markers: List<MarkerData>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     showDurationDialog: () -> Unit,
+    detailsOnClick: () -> Unit,
 ): List<DialogItem> =
     buildList {
+        add(
+            DialogItem(
+                context.getString(R.string.stashapp_details),
+                Icons.Default.Info,
+                detailsOnClick,
+            ),
+        )
         add(
             DialogItem(
                 context.getString(R.string.play_direct),
@@ -637,18 +654,20 @@ fun moreOptionsItems(
                 )
             },
         )
-        add(
-            DialogItem(
-                context.getString(R.string.play_all_markers),
-                Icons.Default.Place,
-            ) {
-                if (markers.firstOrNull { it.end_seconds == null } != null) {
-                    showDurationDialog.invoke()
-                } else {
-                    playAllMarkers(navigationManager, scene.id, 0)
-                }
-            },
-        )
+        if (markers.isNotEmpty()) {
+            add(
+                DialogItem(
+                    context.getString(R.string.play_all_markers),
+                    Icons.Default.Place,
+                ) {
+                    if (markers.firstOrNull { it.end_seconds == null } != null) {
+                        showDurationDialog.invoke()
+                    } else {
+                        playAllMarkers(navigationManager, scene.id, 0)
+                    }
+                },
+            )
+        }
     }
 
 fun playAllMarkers(
