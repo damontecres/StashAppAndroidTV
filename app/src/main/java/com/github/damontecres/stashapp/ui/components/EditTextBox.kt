@@ -191,7 +191,7 @@ fun SearchEditTextBox(
 @Preview
 @Composable
 private fun EditTextBoxPreview() {
-    AppTheme(true) {
+    AppTheme {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier =

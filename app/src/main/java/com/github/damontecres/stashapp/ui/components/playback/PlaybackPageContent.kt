@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
-import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
@@ -65,7 +64,6 @@ import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.SubtitleView
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
@@ -74,13 +72,11 @@ import androidx.media3.ui.compose.state.rememberNextButtonState
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.media3.ui.compose.state.rememberPreviousButtonState
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import coil3.SingletonImageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.size.Scale
-import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -101,6 +97,7 @@ import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.playback.checkForSupport
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.playback.switchToTranscode
+import com.github.damontecres.stashapp.proto.PlaybackFinishBehavior
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
@@ -401,47 +398,27 @@ fun PlaybackPageContent(
     var createMarkerPosition by remember { mutableLongStateOf(-1L) }
     var playingBeforeDialog by remember { mutableStateOf(false) }
 
-    val prefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
     var showDebugInfo by remember {
         mutableStateOf(
-            prefs.getBoolean(context.getString(R.string.pref_key_show_playback_debug_info), false),
+            uiConfig.preferences.playbackPreferences.showDebugInfo,
         )
     }
-    val showSkipProgress =
-        remember {
-            prefs.getBoolean(
-                context.getString(R.string.pref_key_playback_show_skip_progress),
-                true,
-            )
-        }
-    val skipWithLeftRight =
-        remember {
-            prefs.getBoolean(
-                context.getString(R.string.pref_key_playback_skip_left_right),
-                true,
-            )
-        }
+    val showSkipProgress = uiConfig.preferences.interfacePreferences.showProgressWhenSkipping
+    val skipWithLeftRight = uiConfig.preferences.playbackPreferences.dpadSkipping
     // Enabled if the preference is enabled and playing a playlist of markers
     val nextWithUpDown =
         remember {
             playlistPager != null &&
                 playlistPager.filter.dataType == DataType.MARKER &&
                 playlistPager.size > 1 &&
-                prefs.getBoolean(
-                    context.getString(R.string.pref_key_playback_next_up_down),
-                    false,
-                )
+                uiConfig.preferences.interfacePreferences.useUpDownPreviousNext
         }
-    val useVideoFilters =
-        remember { prefs.getBoolean(context.getString(R.string.pref_key_video_filters), false) }
+    val useVideoFilters = uiConfig.preferences.playbackPreferences.enableVideoFilters
 
     val controllerViewState =
         remember {
             ControllerViewState(
-                prefs.getInt(
-                    "controllerShowTimeoutMs",
-                    PlayerControlView.DEFAULT_SHOW_TIMEOUT_MS,
-                ),
+                uiConfig.preferences.playbackPreferences.controllerTimeoutMs,
                 controlsEnabled,
             )
         }.also {
@@ -463,7 +440,10 @@ fun PlaybackPageContent(
         maybeMuteAudio(context, false, player)
         player.setMediaItems(playlist, startIndex, savedStartPosition)
         if (playlistPager == null) {
-            player.setupFinishedBehavior(context, navigationManager) {
+            player.setupFinishedBehavior(
+                uiConfig.preferences.playbackPreferences.playbackFinishBehavior,
+                navigationManager,
+            ) {
                 controllerViewState.showControls()
             }
         }
@@ -491,10 +471,7 @@ fun PlaybackPageContent(
                         trackInfo.filter { it.type == TrackType.TEXT && it.supported == TrackSupportReason.HANDLED }
 
                     val captionsByDefault =
-                        prefs.getBoolean(
-                            context.getString(R.string.pref_key_captions_on_by_default),
-                            true,
-                        )
+                        uiConfig.preferences.interfacePreferences.captionsByDefault
                     if (captionsByDefault && captions.isNotEmpty() && mediaIndexSubtitlesActivated != currentPlaylistIndex) {
                         // Captions will be empty when transitioning to new media item
                         // Only want to activate subtitles once in case the user turns them off
@@ -602,10 +579,7 @@ fun PlaybackPageContent(
             StashExoPlayer.removeListener(this)
         }
         currentScene?.let {
-            val appTracking =
-                PreferenceManager
-                    .getDefaultSharedPreferences(context)
-                    .getBoolean(context.getString(R.string.pref_key_playback_track_activity), true)
+            val appTracking = uiConfig.preferences.playbackPreferences.savePlayHistory
             trackActivityListener =
                 if (appTracking && server.serverPreferences.trackActivity && !isMarkerPlaylist) {
                     TrackActivityPlaybackListener(
@@ -952,23 +926,16 @@ fun PlaybackPageContent(
 }
 
 fun Player.setupFinishedBehavior(
-    context: Context,
+    finishedBehavior: PlaybackFinishBehavior,
     navigationManager: NavigationManager,
     showController: () -> Unit,
 ) {
-    val finishedBehavior =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getString(
-                "playbackFinishedBehavior",
-                context.getString(R.string.playback_finished_do_nothing),
-            )
     when (finishedBehavior) {
-        context.getString(R.string.playback_finished_repeat) -> {
+        PlaybackFinishBehavior.PLAYBACK_FINISH_BEHAVIOR_REPEAT -> {
             repeatMode = Player.REPEAT_MODE_ONE
         }
 
-        context.getString(R.string.playback_finished_return) ->
+        PlaybackFinishBehavior.PLAYBACK_FINISH_BEHAVIOR_GO_BACK ->
             StashExoPlayer.addListener(
                 object :
                     Player.Listener {
@@ -980,7 +947,7 @@ fun Player.setupFinishedBehavior(
                 },
             )
 
-        context.getString(R.string.playback_finished_do_nothing) -> {
+        PlaybackFinishBehavior.PLAYBACK_FINISH_BEHAVIOR_DO_NOTHING -> {
             StashExoPlayer.addListener(
                 object :
                     Player.Listener {

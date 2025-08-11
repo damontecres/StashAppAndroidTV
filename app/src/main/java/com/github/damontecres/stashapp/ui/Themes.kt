@@ -15,9 +15,11 @@ import androidx.preference.PreferenceManager
 import androidx.tv.material3.ColorScheme
 import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.proto.ThemeStyle
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.theme.inversePrimaryDark
 import com.github.damontecres.stashapp.ui.theme.inversePrimaryLight
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -48,20 +50,13 @@ val defaultColorSchemeSet =
 private var currentColorSchemeSet: ColorSchemeSet? = null
 
 fun chooseColorScheme(
-    context: Context,
+    themeStyle: ThemeStyle,
     isSystemInDark: Boolean,
     colorSchemeSet: ColorSchemeSet,
-): AppColorScheme {
-    val themeChoice =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getString(
-                context.getString(R.string.pref_key_ui_theme_dark_appearance),
-                context.getString(R.string.ui_theme_dark_appearance_choice_dark),
-            )
-    return when (themeChoice) {
-        context.getString(R.string.ui_theme_dark_appearance_choice_light) -> colorSchemeSet.light
-        context.getString(R.string.ui_theme_dark_appearance_choice_dark) -> colorSchemeSet.dark
+): AppColorScheme =
+    when (themeStyle) {
+        ThemeStyle.THEME_STYLE_LIGHT -> colorSchemeSet.light
+        ThemeStyle.THEME_STYLE_DARK -> colorSchemeSet.dark
         else -> {
             if (isSystemInDark) {
                 colorSchemeSet.dark
@@ -70,32 +65,25 @@ fun chooseColorScheme(
             }
         }
     }
-}
 
 fun getTheme(
     context: Context,
+    themeStyle: ThemeStyle,
+    themeName: String? = null,
     forceDark: Boolean = false,
     isSystemInDarkTheme: Boolean = false,
 ): AppColorScheme {
-    val themeFileName =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getString(
-                context.getString(R.string.pref_key_ui_theme_file),
-                null,
-            )
-
     val useDark = forceDark || isSystemInDarkTheme
     val colorSchemeSet =
-        if (themeFileName != null && themeFileName != "default") {
+        if (themeName.isNotNullOrBlank() && !themeName.equals("default", true)) {
             try {
-                readThemeJson(context, themeFileName)
+                readThemeJson(context, themeName)
             } catch (ex: Exception) {
-                Log.e("Themes", "Error reading json $themeFileName", ex)
+                Log.e("Themes", "Error reading json $themeName", ex)
                 Toast
                     .makeText(
                         context,
-                        "Error reading theme '$themeFileName': ${ex.localizedMessage}",
+                        "Error reading theme '$themeName': ${ex.localizedMessage}",
                         Toast.LENGTH_LONG,
                     ).show()
                 defaultColorSchemeSet
@@ -105,14 +93,21 @@ fun getTheme(
         }
     currentColorSchemeSet = colorSchemeSet
 
-    return chooseColorScheme(context, useDark, colorSchemeSet)
+    return chooseColorScheme(themeStyle, useDark, colorSchemeSet)
 }
 
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun AppTheme(
-    forceDark: Boolean = false,
-    colorScheme: AppColorScheme = getTheme(LocalContext.current, forceDark, isSystemInDarkTheme()),
+    themeStyle: ThemeStyle = ThemeStyle.THEME_STYLE_DARK,
+    themeName: String? = null,
+    colorScheme: AppColorScheme =
+        getTheme(
+            LocalContext.current,
+            themeStyle,
+            themeName,
+            isSystemInDarkTheme(),
+        ),
     content: @Composable () -> Unit,
 ) {
     if (isTvDevice) {

@@ -13,7 +13,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.DialogProperties
-import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
@@ -60,10 +59,7 @@ fun ApplicationContent(
         )
     }
 
-    val scrollToNextPage =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getBoolean("scrollToNextResult", true)
+    val scrollToNextPage = preferences.interfacePreferences.scrollNextViewAll
 
     val itemOnClick =
         ItemOnClicker { item: Any, filterAndPosition ->

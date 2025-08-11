@@ -62,42 +62,51 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                 val preferences by context.preferences.data.collectAsState(null)
                 CoilConfig(serverViewModel)
                 val isSystemInDarkTheme = isSystemInDarkTheme()
-                var colorScheme by
-                    remember { mutableStateOf(getTheme(requireContext(), true, isSystemInDarkTheme)) }
-                AppTheme(colorScheme = colorScheme, forceDark = true) {
-                    key(server) {
-                        val navController = rememberNavController<Destination>(Destination.Main)
-                        this@NavDrawerFragment.navController = navController
-                        NavBackHandler(navController)
-                        val navManager =
-                            (serverViewModel.navigationManager as NavigationManagerCompose)
+                preferences?.let { preferences ->
+                    var colorScheme by
+                        remember {
+                            mutableStateOf(
+                                getTheme(
+                                    requireContext(),
+                                    preferences.interfacePreferences.themeStyle,
+                                    preferences.interfacePreferences.theme,
+                                    isSystemInDarkTheme,
+                                ),
+                            )
+                        }
+                    AppTheme(colorScheme = colorScheme) {
+                        key(server) {
+                            val navController = rememberNavController<Destination>(Destination.Main)
+                            this@NavDrawerFragment.navController = navController
+                            NavBackHandler(navController)
+                            val navManager =
+                                (serverViewModel.navigationManager as NavigationManagerCompose)
 //                        navManager.controller = navController
 
-                        val navCommand by serverViewModel.command.observeAsState()
-                        LaunchedEffect(navCommand) {
-                            navCommand?.let { cmd ->
-                                Log.v(TAG, "cmd=$cmd, server=$server")
-                                if (cmd.popUpToMain) {
-                                    navController.popUpTo { it == Destination.Main }
+                            val navCommand by serverViewModel.command.observeAsState()
+                            LaunchedEffect(navCommand) {
+                                navCommand?.let { cmd ->
+                                    Log.v(TAG, "cmd=$cmd, server=$server")
+                                    if (cmd.popUpToMain) {
+                                        navController.popUpTo { it == Destination.Main }
+                                    }
+                                    navController.navigate(cmd.destination)
                                 }
-                                navController.navigate(cmd.destination)
                             }
-                        }
-                        if (server == null && serverViewModel.destination.value is Destination.Setup) {
-                            InitialSetup(
-                                onServerConfigure = { serverViewModel.switchServer(it) },
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        } else if (server == null &&
-                            (navCommand?.destination is Destination.ManageServers || navCommand?.destination is Destination.Main)
-                        ) {
-                            ManageServers(
-                                currentServer = null,
-                                onSwitchServer = serverViewModel::switchServer,
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        } else {
-                            preferences?.let { preferences ->
+                            if (server == null && serverViewModel.destination.value is Destination.Setup) {
+                                InitialSetup(
+                                    onServerConfigure = { serverViewModel.switchServer(it) },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            } else if (server == null &&
+                                (navCommand?.destination is Destination.ManageServers || navCommand?.destination is Destination.Main)
+                            ) {
+                                ManageServers(
+                                    currentServer = null,
+                                    onSwitchServer = serverViewModel::switchServer,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            } else {
                                 server?.let { currentServer ->
                                     Log.v(TAG, "currentServer=$currentServer")
                                     CompositionLocalProvider(
@@ -108,7 +117,6 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                                 preferences,
                                             ),
                                     ) {
-                                        Log.v(TAG, "preferences=$preferences")
                                         ApplicationContent(
                                             server = currentServer,
                                             preferences = preferences,
@@ -119,7 +127,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                                 try {
                                                     colorScheme =
                                                         chooseColorScheme(
-                                                            requireContext(),
+                                                            preferences.interfacePreferences.themeStyle,
                                                             isSystemInDarkTheme,
                                                             if (name.isNullOrBlank() || name == "default") {
                                                                 defaultColorSchemeSet

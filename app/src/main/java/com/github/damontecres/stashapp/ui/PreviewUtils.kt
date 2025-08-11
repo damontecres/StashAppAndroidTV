@@ -7,6 +7,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimTagData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoFile
 import com.github.damontecres.stashapp.api.type.GenderEnum
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
 import com.github.damontecres.stashapp.util.asSlimTagData
 import com.github.damontecres.stashapp.util.toSeconds
@@ -84,6 +85,7 @@ val tagPreview =
 
 val uiConfigPreview =
     ComposeUiConfig(
+        preferences = StashPreferences.getDefaultInstance(),
         ratingAsStars = true,
         starPrecision = StarRatingPrecision.HALF,
         showStudioAsText = true,
@@ -100,7 +102,7 @@ val uiConfigPreview =
                 columns = 5,
                 showRatings = true,
                 imageCrop = true,
-                videoDelay = 1,
+                videoDelay = 1L,
             ),
     )
 

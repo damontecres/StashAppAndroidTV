@@ -60,7 +60,6 @@ import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.CardBorder
 import androidx.tv.material3.CardColors
 import androidx.tv.material3.CardDefaults
@@ -117,10 +116,7 @@ fun ImageOverlay(
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     val context = LocalContext.current
-    val showRatings =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getBoolean(context.getString(R.string.pref_key_show_rating), true)
+    val showRatings = LocalGlobalContext.current.preferences.interfacePreferences.showRatingOnCards
 
     Box(modifier = modifier.fillMaxSize()) {
         if (showRatings && rating100 != null && rating100 >= 0) {
@@ -254,24 +250,13 @@ fun RootCard(
     extraImageUrls: List<String> = listOf(),
 ) {
     val context = LocalContext.current
-    val videoDelay =
-        remember {
-            PreferenceManager
-                .getDefaultSharedPreferences(context)
-                .getInt(
-                    context.getString(R.string.pref_key_ui_card_overlay_delay),
-                    context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
-                ).toLong()
-        }
+    val videoDelay = uiConfig.preferences.interfacePreferences.cardPreviewDelayMs
 
     val focused = interactionSource.collectIsFocusedAsState().value
     var focusedAfterDelay by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
-    val playVideoPreviews =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getBoolean("playVideoPreviews", true)
+    val playVideoPreviews = uiConfig.preferences.interfacePreferences.playVideoPreviews
 
     if (focused) {
         LaunchedEffect(Unit) {

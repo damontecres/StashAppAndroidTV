@@ -156,10 +156,11 @@ open class ServerViewModel : ViewModel() {
             val imageCrop =
                 manager.getBoolean(context.getString(R.string.pref_key_crop_card_images), true)
             val videoDelay =
-                manager.getInt(
-                    context.getString(R.string.pref_key_ui_card_overlay_delay),
-                    context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
-                )
+                manager
+                    .getInt(
+                        context.getString(R.string.pref_key_ui_card_overlay_delay),
+                        context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
+                    ).toLong()
             return CardUiSettings(
                 maxSearchResults,
                 playVideoPreviews,

@@ -84,7 +84,7 @@ fun SwitchWithLabel(
 @Preview
 @Composable
 private fun SwitchWithLabelPreview() {
-    AppTheme(forceDark = true) {
+    AppTheme {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Button(onClick = {}) { Text(text = "Create Filter") }
             SwitchWithLabel(

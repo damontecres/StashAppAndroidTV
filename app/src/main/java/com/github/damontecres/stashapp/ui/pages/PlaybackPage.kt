@@ -21,7 +21,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
@@ -53,6 +52,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -208,9 +208,10 @@ fun PlaylistPlaybackPage(
             remember {
                 val skipParams =
                     if (viewModel.dataType == DataType.MARKER) {
-                        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-                        val skipForward = prefs.getInt("skip_forward_time", 30).seconds
-                        val skipBack = prefs.getInt("skip_back_time", 10).seconds
+                        val skipForward =
+                            uiConfig.preferences.playbackPreferences.skipForwardMs.milliseconds
+                        val skipBack =
+                            uiConfig.preferences.playbackPreferences.skipBackwardMs.milliseconds
 
                         // Override the skip forward/back since many users will have default seeking values larger than the duration
                         SkipParams.Values(

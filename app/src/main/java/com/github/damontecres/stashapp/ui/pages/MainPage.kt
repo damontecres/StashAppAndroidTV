@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -45,14 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
-import androidx.lifecycle.viewmodel.MutableCreationExtras
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.preference.PreferenceManager
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
@@ -60,7 +55,6 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.transitionFactory
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.StatisticsQuery
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
@@ -103,28 +97,29 @@ import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "MainPage"
 
-class MainPageViewModel(
-    val server: StashServer,
-) : ViewModel() {
+class MainPageViewModel : ViewModel() {
+    private lateinit var server: StashServer
+
     val frontPageRows = mutableStateListOf<FrontPageParser.FrontPageRow.Success>()
 
     private val _serverStats = MutableLiveData<StatisticsQuery.Stats?>()
     val serverStats: LiveData<StatisticsQuery.Stats?> = _serverStats
 
-    init {
+    fun init(
+        context: Context,
+        server: StashServer,
+        pageSize: Int,
+    ) {
+        this.server = server
         val queryEngine = QueryEngine(server)
         val filterParser = FilterParser(server.version)
         val frontPageContent =
             server.serverPreferences.uiConfiguration?.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
         if (frontPageContent != null) {
             Log.d(TAG, "${frontPageContent.size} front page rows")
-            val pageSize =
-                PreferenceManager
-                    .getDefaultSharedPreferences(StashApplication.getApplication())
-                    .getInt("maxSearchResults", 25)
             val frontPageParser =
                 FrontPageParser(
-                    StashApplication.getApplication(),
+                    context,
                     queryEngine,
                     filterParser,
                     pageSize,
@@ -149,17 +144,6 @@ class MainPageViewModel(
             _serverStats.value = queryEngine.executeQuery(StatisticsQuery()).data?.stats
         }
     }
-
-    companion object {
-        val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
-        val Factory: ViewModelProvider.Factory =
-            viewModelFactory {
-                initializer {
-                    val server = this[SERVER_KEY]!!
-                    MainPageViewModel(server)
-                }
-            }
-    }
 }
 
 @Composable
@@ -169,21 +153,17 @@ fun MainPage(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
+    viewModel: MainPageViewModel = viewModel(),
 ) {
-    val viewModel =
-        ViewModelProvider.create(
-            LocalViewModelStoreOwner.current!!,
-            MainPageViewModel.Factory,
-            MutableCreationExtras().apply {
-                set(MainPageViewModel.SERVER_KEY, server)
-            },
-        )[MainPageViewModel::class]
+    val context = LocalContext.current
+    LaunchedEffect(server, uiConfig) {
+        viewModel.init(context, server, uiConfig.preferences.searchPreferences.maxResults)
+    }
 
     val frontPageRows = viewModel.frontPageRows // .observeAsState(listOf())
     val serverStats by viewModel.serverStats.observeAsState()
 
     val focusRequester = remember { FocusRequester() }
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {

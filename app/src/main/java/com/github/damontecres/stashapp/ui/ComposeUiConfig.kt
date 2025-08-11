@@ -9,6 +9,7 @@ import com.github.damontecres.stashapp.views.models.CardUiSettings
 import com.github.damontecres.stashapp.views.models.ServerViewModel.Companion.cardSettings
 
 data class ComposeUiConfig(
+    val preferences: StashPreferences,
     val ratingAsStars: Boolean,
     val starPrecision: StarRatingPrecision,
     val showStudioAsText: Boolean,
@@ -28,6 +29,7 @@ data class ComposeUiConfig(
             server: StashServer,
         ): ComposeUiConfig =
             ComposeUiConfig(
+                preferences = preferences,
                 ratingAsStars = server.serverPreferences.ratingsAsStars,
                 starPrecision =
                     StarRatingPrecision.fromFloat(

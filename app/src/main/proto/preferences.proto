@@ -20,9 +20,9 @@ message InterfacePreferences {
   int32 card_size = 2;
   bool play_video_previews = 3;
   bool remember_selected_tab = 4;
-  int32 card_preview_delay_ms = 5;
-  int32 slide_show_interval_seconds = 6;
-  int32 slide_show_image_clip_pause_ms = 7;
+  int64 card_preview_delay_ms = 5;
+  int64 slide_show_interval_ms = 6;
+  int64 slide_show_image_clip_pause_ms = 7;
 
   bool show_grid_jump_buttons = 8;
 
@@ -81,8 +81,8 @@ enum PlaybackHttpClient{
 }
 
 message PlaybackPreferences {
-  int32 skip_forward_seconds = 1;
-  int32 skip_backward_seconds = 2;
+  int64 skip_forward_ms = 1;
+  int64 skip_backward_ms = 2;
   PlaybackFinishBehavior playback_finish_behavior = 3;
   bool dpad_skipping = 4;
   StreamChoice stream_choice = 5;
@@ -111,14 +111,14 @@ message AdvancedPreferences {
   bool enable_crash_reporting = 1;
   bool log_errors_to_server = 2;
   bool enable_experimental_features = 3;
-  int32 network_timeout_seconds = 4;
+  int64 network_timeout_ms = 4;
   bool trust_self_signed_certificates = 5;
   int32 image_thread_count = 6;
 }
 
 message SearchPreferences {
   int32 max_results = 1;
-  int32 search_delay_ms = 2;
+  int64 search_delay_ms = 2;
 }
 
 message StashPreferences {

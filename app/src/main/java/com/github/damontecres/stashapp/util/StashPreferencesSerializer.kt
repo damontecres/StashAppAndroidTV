@@ -11,11 +11,13 @@ import com.github.damontecres.stashapp.proto.InterfacePreferences
 import com.github.damontecres.stashapp.proto.PlaybackPreferences
 import com.github.damontecres.stashapp.proto.SearchPreferences
 import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.proto.ThemeStyle
 import com.github.damontecres.stashapp.proto.UpdatePreferences
 import com.google.protobuf.InvalidProtocolBufferException
 import java.io.InputStream
 import java.io.OutputStream
+import kotlin.time.Duration.Companion.seconds
 
 object StashPreferencesSerializer : Serializer<StashPreferences> {
     override val defaultValue: StashPreferences =
@@ -31,7 +33,7 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                             playVideoPreviews = true
                             rememberSelectedTab = true
                             cardPreviewDelayMs = 1000
-                            slideShowIntervalSeconds = 5
+                            slideShowIntervalMs = 5000
                             slideShowImageClipPauseMs = 250
                             showGridJumpButtons = true
                             theme = "default"
@@ -51,8 +53,8 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                     PlaybackPreferences
                         .newBuilder()
                         .apply {
-                            skipForwardSeconds = 30
-                            skipBackwardSeconds = 10
+                            skipForwardMs = 30.seconds.inWholeMilliseconds
+                            skipBackwardMs = 10.seconds.inWholeMilliseconds
                             dpadSkipping = true
                             controllerTimeoutMs = 3500
                             savePlayHistory = true
@@ -71,7 +73,7 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                         .apply {
                             enableCrashReporting = true
                             logErrorsToServer = true
-                            networkTimeoutSeconds = 15
+                            networkTimeoutMs = 15.seconds.inWholeMilliseconds
                             imageThreadCount = Runtime.getRuntime().availableProcessors()
                         }.build()
                 cachePreferences =
@@ -107,3 +109,25 @@ val Context.preferences: DataStore<StashPreferences> by dataStore(
     fileName = "preferences.pb",
     serializer = StashPreferencesSerializer,
 )
+
+val StreamChoice.asString: String
+    get() =
+        when (this) {
+            StreamChoice.STREAM_CHOICE_HLS -> "HLS"
+            StreamChoice.STREAM_CHOICE_DASH -> "DASH"
+            StreamChoice.STREAM_CHOICE_MP4 -> "MP4"
+            StreamChoice.STREAM_CHOICE_WEBM -> "WEBM"
+            StreamChoice.UNRECOGNIZED -> "HLS"
+        }
+
+inline fun StashPreferences.update(block: StashPreferences.Builder.() -> Unit): StashPreferences = toBuilder().apply(block).build()
+
+inline fun StashPreferences.updateInterfacePreferences(block: InterfacePreferences.Builder.() -> Unit): StashPreferences =
+    update {
+        interfacePreferences = interfacePreferences.toBuilder().apply(block).build()
+    }
+
+inline fun StashPreferences.updatePlaybackPreferences(block: PlaybackPreferences.Builder.() -> Unit): StashPreferences =
+    update {
+        playbackPreferences = playbackPreferences.toBuilder().apply(block).build()
+    }
