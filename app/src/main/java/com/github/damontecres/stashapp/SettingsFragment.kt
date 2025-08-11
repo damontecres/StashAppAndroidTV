@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
+import androidx.annotation.XmlRes
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.preference.LeanbackEditTextPreferenceDialogFragmentCompat
@@ -63,10 +64,12 @@ import okhttp3.Cache
 import java.io.File
 
 @Serializable
-enum class PreferenceScreenOption {
-    BASIC,
-    ADVANCED,
-    USER_INTERFACE,
+enum class PreferenceScreenOption(
+    @XmlRes val preferenceRes: Int,
+) {
+    BASIC(R.xml.root_preferences),
+    ADVANCED(R.xml.advanced_preferences),
+    USER_INTERFACE(R.xml.ui_preferences),
     ;
 
     companion object {

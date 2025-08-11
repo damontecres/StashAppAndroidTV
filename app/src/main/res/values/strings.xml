@@ -130,5 +130,6 @@
     <string name="value_seconds" formatted="true">%1$s seconds</string>
     <string name="value_milliseconds" formatted="true">%1$s ms</string>
     <string name="save_for_gallery">Save for gallery</string>
+    <string name="basic_interface">Interface</string>
 
 </resources>

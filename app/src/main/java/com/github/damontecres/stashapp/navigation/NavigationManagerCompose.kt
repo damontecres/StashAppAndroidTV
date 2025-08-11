@@ -8,7 +8,6 @@ import androidx.leanback.app.GuidedStepSupportFragment
 import com.github.damontecres.stashapp.PinFragment
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
-import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.UpdateAppFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
 import com.github.damontecres.stashapp.ui.NavDrawerFragment
@@ -69,7 +68,7 @@ class NavigationManagerCompose(
         if (DEBUG) Log.v(TAG, "navigate: ${destination.fragmentTag}")
         val fragment =
             when (destination) {
-                is Destination.Settings -> SettingsFragment()
+//                is Destination.Settings -> SettingsFragment()
                 Destination.Pin -> PinFragment()
                 Destination.SettingsPin -> SettingsPinEntryFragment()
 //                Destination.Setup -> SetupFragment()
