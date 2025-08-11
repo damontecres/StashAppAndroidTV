@@ -1,34 +1,78 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import com.github.damontecres.stashapp.proto.StashPreferences
+import androidx.compose.ui.text.TextStyle
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.pages.DialogParams
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.testStashConnection
+import kotlinx.coroutines.launch
 
 @Composable
 fun <T> ComposablePreference(
-    preferences: StashPreferences,
+    server: StashServer,
+    navigationManager: NavigationManager,
     preference: StashPreference<T>,
     value: T?,
     onValueChange: (T) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
+    val scope = rememberCoroutineScope()
 
+    var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
+    val title = stringResource(preference.title)
     when (preference) {
+        StashPreference.CurrentServer -> {
+            ClickPreference(
+                title = title,
+                onClick = {
+                    scope.launch(StashCoroutineExceptionHandler()) {
+                        testStashConnection(context, true, server.apolloClient)
+                    }
+                },
+                summary = server.url,
+                modifier = modifier,
+            )
+        }
+
+        StashPreference.ManageServers ->
+            ClickPreference(
+                title = title,
+                onClick = {
+                    navigationManager.navigate(Destination.ManageServers(true))
+                },
+                summary = preference.summary(context, value),
+                modifier = modifier,
+            )
+
+        is ClickablePreference ->
+            ClickPreference(
+                title = title,
+                onClick = {},
+                summary = preference.summary(context, value),
+                modifier = modifier,
+            )
+
         is StashSwitchPreference ->
             SwitchPreference(
-                title = stringResource(preference.title),
+                title = title,
                 value = value as Boolean,
                 onClick = { onValueChange.invoke(!value as T) },
                 summary = preference.summary(context, value),
@@ -38,7 +82,6 @@ fun <T> ComposablePreference(
         is StashPinPreference -> {}
         is StashStringPreference -> {}
         is StashIntChoicePreference -> {
-            val title = stringResource(preference.title)
             val values = stringArrayResource(preference.displayValues).toList()
             val summary =
                 preference.summary(context, value as Int) ?: preference
@@ -46,6 +89,7 @@ fun <T> ComposablePreference(
                     ?.let { values[it] }
             ClickPreference(
                 title = title,
+                summary = summary,
                 onClick = {
                     dialogParams =
                         DialogParams(
@@ -63,12 +107,10 @@ fun <T> ComposablePreference(
                         )
                 },
                 modifier = modifier,
-                summary = summary,
             )
         }
 
         is StashStringChoicePreference -> {
-            val title = stringResource(preference.title)
             val values = stringArrayResource(preference.displayValues).toList()
             val summary =
                 preference.summary(context, value as String) ?: preference
@@ -76,6 +118,7 @@ fun <T> ComposablePreference(
                     ?.let { values[it] }
             ClickPreference(
                 title = title,
+                summary = summary,
                 onClick = {
                     dialogParams =
                         DialogParams(
@@ -93,7 +136,6 @@ fun <T> ComposablePreference(
                         )
                 },
                 modifier = modifier,
-                summary = summary,
             )
         }
     }
@@ -105,6 +147,40 @@ fun <T> ComposablePreference(
             dialogItems = it.items,
             onDismissRequest = { dialogParams = null },
             waitToLoad = false,
+        )
+    }
+}
+
+val PreferenceTitleStyle: TextStyle
+    @Composable @ReadOnlyComposable
+    get() = MaterialTheme.typography.titleLarge
+
+val PreferenceSummaryStyle: TextStyle
+    @Composable @ReadOnlyComposable
+    get() = MaterialTheme.typography.bodyMedium
+
+@Composable
+fun PreferenceTitle(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = title,
+        style = PreferenceTitleStyle,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun PreferenceSummary(
+    summary: String?,
+    modifier: Modifier = Modifier,
+) {
+    summary?.let {
+        Text(
+            text = it,
+            style = PreferenceSummaryStyle,
+            modifier = modifier,
         )
     }
 }

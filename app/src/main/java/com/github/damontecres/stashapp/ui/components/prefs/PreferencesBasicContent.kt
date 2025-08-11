@@ -3,8 +3,10 @@ package com.github.damontecres.stashapp.ui.components.prefs
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -12,36 +14,58 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.preferences
 import kotlinx.coroutines.launch
 
 private val basicPreferences =
     listOf(
         PreferenceGroup(
+            R.string.app_name_long,
+            listOf(
+                StashPreference.CurrentServer,
+                StashPreference.ManageServers,
+            ),
+        ),
+        PreferenceGroup(
             R.string.basic_interface,
             listOf(
                 StashPreference.AutoSubmitPin,
                 StashPreference.PinCode,
                 StashPreference.CardSize,
+                StashPreference.PlayVideoPreviews,
+                StashPreference.MoreUiSettings,
             ),
         ),
     )
 
 @Composable
 fun PreferencesBasicContent(
+    server: StashServer,
+    navigationManager: NavigationManager,
     preferences: StashPreferences,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        focusRequester.tryRequestFocus()
+    }
     LazyColumn(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -55,20 +79,23 @@ fun PreferencesBasicContent(
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
-        basicPreferences.forEach { group ->
+        basicPreferences.forEachIndexed { groupIndex, group ->
             item {
                 Text(
                     text = stringResource(group.title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.border,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
-            group.preferences.forEach { pref ->
+            group.preferences.forEachIndexed { prefIndex, pref ->
                 pref as StashPreference<Any>
                 item {
                     var value by remember { mutableStateOf(pref.getter.invoke(preferences)) }
                     ComposablePreference(
-                        preferences = preferences,
+                        server = server,
+                        navigationManager = navigationManager,
                         preference = pref,
                         value = value,
                         onValueChange = { newValue ->
@@ -93,7 +120,11 @@ fun PreferencesBasicContent(
                                 }
                             }
                         },
-                        modifier = Modifier,
+                        modifier =
+                            Modifier.ifElse(
+                                groupIndex == 0 && prefIndex == 0,
+                                Modifier.focusRequester(focusRequester),
+                            ),
                     )
                 }
             }

@@ -131,5 +131,12 @@
     <string name="value_milliseconds" formatted="true">%1$s ms</string>
     <string name="save_for_gallery">Save for gallery</string>
     <string name="basic_interface">Interface</string>
+    <string name="manage_servers">Manage Servers</string>
+    <string name="add_remove_servers_summary">Add, remove, or change servers</string>
+    <string name="play_video_previews">Play video previews</string>
+    <string name="more_ui_settings">More UI Settings</string>
+    <string name="more_ui_settings_summary">Go to advanced UI settings</string>
+    <string name="play_video_previews_summary_on">Video preview will play when item is selected</string>
+    <string name="play_video_previews_summary_off">Video previews will not play</string>
 
 </resources>

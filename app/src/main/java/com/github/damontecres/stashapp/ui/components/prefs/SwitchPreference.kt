@@ -2,8 +2,6 @@ package com.github.damontecres.stashapp.ui.components.prefs
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.ui.compat.ListItem
 
 @Composable
@@ -38,18 +36,10 @@ fun SwitchPreference(
         onClick = onClick,
         onLongClick = onLongClick,
         headlineContent = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-            )
+            PreferenceTitle(title)
         },
         supportingContent = {
-            summary?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
+            PreferenceSummary(summary)
         },
         trailingContent = {
             androidx.tv.material3.Switch(

@@ -66,6 +66,7 @@ fun FullScreenContent(
         is Destination.Settings -> {
             SettingsPage(
                 server = server,
+                navigationManager = navigationManager,
                 preferenceScreenOption = destination.screenOption,
                 uiConfig = composeUiConfig,
                 modifier = modifier,

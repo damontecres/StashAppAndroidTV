@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.github.damontecres.stashapp.PreferenceScreenOption
+import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.prefs.PreferencesBasicContent
@@ -16,6 +17,7 @@ import com.github.damontecres.stashapp.util.StashServer
 @Composable
 fun SettingsPage(
     server: StashServer,
+    navigationManager: NavigationManager,
     preferenceScreenOption: PreferenceScreenOption,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
@@ -34,6 +36,8 @@ fun SettingsPage(
         when (preferenceScreenOption) {
             PreferenceScreenOption.BASIC ->
                 PreferencesBasicContent(
+                    server,
+                    navigationManager,
                     uiConfig.preferences,
                     newModifier,
                 )

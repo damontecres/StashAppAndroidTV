@@ -51,6 +51,15 @@ sealed interface StashPreference<T> {
     fun validate(value: T): PreferenceValidation = PreferenceValidation.Valid
 
     companion object {
+        val CurrentServer =
+            ClickablePreference(
+                title = R.string.pref_key_current_server,
+            )
+        val ManageServers =
+            ClickablePreference(
+                title = R.string.manage_servers,
+                summary = R.string.add_remove_servers_summary,
+            )
         val AutoSubmitPin =
             StashSwitchPreference(
                 title = R.string.pref_key_pin_code_auto,
@@ -80,6 +89,22 @@ sealed interface StashPreference<T> {
                 setter = { prefs, value ->
                     prefs.updateInterfacePreferences { cardSize = value }
                 },
+            )
+        val PlayVideoPreviews =
+            StashSwitchPreference(
+                title = R.string.play_video_previews,
+                defaultValue = true,
+                getter = { it.interfacePreferences.playVideoPreviews },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { playVideoPreviews = value }
+                },
+                summaryOn = R.string.play_video_previews_summary_on,
+                summaryOff = R.string.play_video_previews_summary_off,
+            )
+        val MoreUiSettings =
+            ClickablePreference(
+                title = R.string.more_ui_settings,
+                summary = R.string.more_ui_settings_summary,
             )
     }
 }
@@ -162,3 +187,16 @@ data class StashStringChoicePreference(
     override val getter: (prefs: StashPreferences) -> String,
     override val setter: (prefs: StashPreferences, value: String) -> StashPreferences,
 ) : StashPreference<String>
+
+data class ClickablePreference(
+    override val title: Int,
+    override val defaultValue: Unit = Unit,
+    override val getter: (prefs: StashPreferences) -> Unit = { },
+    override val setter: (prefs: StashPreferences, value: Unit) -> StashPreferences = { prefs, _ -> prefs },
+    @param:StringRes val summary: Int? = null,
+) : StashPreference<Unit> {
+    override fun summary(
+        context: Context,
+        value: Unit?,
+    ): String? = summary?.let { context.getString(it) }
+}
