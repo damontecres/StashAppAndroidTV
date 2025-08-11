@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -62,7 +63,7 @@ fun <T> ComposablePreference(
                 modifier = modifier,
             )
 
-        is ClickablePreference ->
+        is StashClickablePreference ->
             ClickPreference(
                 title = title,
                 onClick = {},
@@ -81,6 +82,36 @@ fun <T> ComposablePreference(
 
         is StashPinPreference -> {}
         is StashStringPreference -> {}
+
+        is StashChoicePreference -> {
+            val values = stringArrayResource(preference.displayValues).toList()
+            val summary =
+                preference.summary(context, value) ?: preference
+                    .valueToIndex(value as T)
+                    ?.let { values[it] }
+            ClickPreference(
+                title = title,
+                summary = summary,
+                onClick = {
+                    dialogParams =
+                        DialogParams(
+                            title = title,
+                            fromLongClick = false,
+                            items =
+                                values.mapIndexed { index, it ->
+                                    DialogItem(
+                                        text = it,
+                                        onClick = {
+                                            onValueChange(preference.indexToValue(index) as T)
+                                        },
+                                    )
+                                },
+                        )
+                },
+                modifier = modifier,
+            )
+        }
+
         is StashIntChoicePreference -> {
             val values = stringArrayResource(preference.displayValues).toList()
             val summary =
@@ -138,6 +169,21 @@ fun <T> ComposablePreference(
                 modifier = modifier,
             )
         }
+
+        is StashSliderPreference -> {
+            val summary =
+                preference.summary(context, value)
+                    ?: preference.summary?.let { stringResource(it) }
+            SliderPreference(
+                preference = preference,
+                title = title,
+                summary = summary,
+                value = value as Int,
+                onChange = { onValueChange(it as T) },
+                summaryBelow = false,
+                modifier = modifier,
+            )
+        }
     }
 
     dialogParams?.let {
@@ -163,10 +209,12 @@ val PreferenceSummaryStyle: TextStyle
 fun PreferenceTitle(
     title: String,
     modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
 ) {
     Text(
         text = title,
         style = PreferenceTitleStyle,
+        color = color,
         modifier = modifier,
     )
 }
@@ -175,11 +223,13 @@ fun PreferenceTitle(
 fun PreferenceSummary(
     summary: String?,
     modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
 ) {
     summary?.let {
         Text(
             text = it,
             style = PreferenceSummaryStyle,
+            color = color,
             modifier = modifier,
         )
     }

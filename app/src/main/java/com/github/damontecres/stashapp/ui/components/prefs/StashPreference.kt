@@ -4,10 +4,15 @@ import android.content.Context
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.proto.PlaybackFinishBehavior
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.updateInterfacePreferences
 import com.github.damontecres.stashapp.util.updatePinPreferences
+import com.github.damontecres.stashapp.util.updatePlaybackPreferences
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * A group of preferences
@@ -52,11 +57,11 @@ sealed interface StashPreference<T> {
 
     companion object {
         val CurrentServer =
-            ClickablePreference(
+            StashClickablePreference(
                 title = R.string.pref_key_current_server,
             )
         val ManageServers =
-            ClickablePreference(
+            StashClickablePreference(
                 title = R.string.manage_servers,
                 summary = R.string.add_remove_servers_summary,
             )
@@ -102,16 +107,83 @@ sealed interface StashPreference<T> {
                 summaryOff = R.string.play_video_previews_summary_off,
             )
         val MoreUiSettings =
-            ClickablePreference(
+            StashClickablePreference(
                 title = R.string.more_ui_settings,
                 summary = R.string.more_ui_settings_summary,
+            )
+
+        val SkipForward =
+            StashSliderPreference(
+                title = R.string.skip_forward_preference,
+                defaultValue = 30,
+                min = 10,
+                max = 5.minutes.inWholeSeconds.toInt(),
+                interval = 5,
+                getter = {
+                    it.playbackPreferences.skipForwardMs
+                        .milliseconds.inWholeSeconds
+                        .toInt()
+                },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences {
+                        skipForwardMs = value.seconds.inWholeMilliseconds
+                    }
+                },
+                summarizer = { value ->
+                    if (value != null) {
+                        "$value seconds"
+                    } else {
+                        null
+                    }
+                },
+            )
+
+        val SkipBack =
+            StashSliderPreference(
+                title = R.string.skip_back_preference,
+                defaultValue = 10,
+                min = 5,
+                max = 5.minutes.inWholeSeconds.toInt(),
+                interval = 5,
+                getter = {
+                    it.playbackPreferences.skipBackwardMs
+                        .milliseconds.inWholeSeconds
+                        .toInt()
+                },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences {
+                        skipBackwardMs = value.seconds.inWholeMilliseconds
+                    }
+                },
+                summarizer = { value ->
+                    if (value != null) {
+                        "$value seconds"
+                    } else {
+                        null
+                    }
+                },
+            )
+        val FinishedBehavior =
+            StashChoicePreference<PlaybackFinishBehavior>(
+                title = R.string.playback_finished_behavior,
+                defaultValue = PlaybackFinishBehavior.PLAYBACK_FINISH_BEHAVIOR_DO_NOTHING,
+                displayValues = R.array.playback_finished_behavior_options,
+                indexToValue = {
+                    PlaybackFinishBehavior.forNumber(it)
+                },
+                valueToIndex = { it.number },
+                getter = { it.playbackPreferences.playbackFinishBehavior },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences {
+                        playbackFinishBehavior = value
+                    }
+                },
             )
     }
 }
 
 data class StashSwitchPreference(
-    @get:StringRes
-    override val title: Int,
+    @get:StringRes override val title: Int,
     override val defaultValue: Boolean,
     override val getter: (prefs: StashPreferences) -> Boolean,
     override val setter: (prefs: StashPreferences, value: Boolean) -> StashPreferences,
@@ -132,7 +204,7 @@ data class StashSwitchPreference(
 }
 
 abstract class StashStringPreference(
-    override val title: Int,
+    @param:StringRes override val title: Int,
     override val defaultValue: String,
 ) : StashPreference<String> {
     override fun summary(
@@ -142,7 +214,7 @@ abstract class StashStringPreference(
 }
 
 class StashPinPreference(
-    title: Int,
+    @StringRes title: Int,
     defaultValue: String = "",
     override val getter: (prefs: StashPreferences) -> String,
     override val setter: (prefs: StashPreferences, value: String) -> StashPreferences,
@@ -168,8 +240,18 @@ class StashPinPreference(
         }
 }
 
+data class StashChoicePreference<T>(
+    @param:StringRes override val title: Int,
+    override val defaultValue: T,
+    @param:ArrayRes val displayValues: Int,
+    val indexToValue: (index: Int) -> T,
+    val valueToIndex: (T) -> Int,
+    override val getter: (prefs: StashPreferences) -> T,
+    override val setter: (prefs: StashPreferences, value: T) -> StashPreferences,
+) : StashPreference<T>
+
 data class StashIntChoicePreference(
-    override val title: Int,
+    @param:StringRes override val title: Int,
     override val defaultValue: Int,
     @param:ArrayRes val displayValues: Int,
     val indexToValue: (index: Int) -> Int,
@@ -179,7 +261,7 @@ data class StashIntChoicePreference(
 ) : StashPreference<Int>
 
 data class StashStringChoicePreference(
-    override val title: Int,
+    @param:StringRes override val title: Int,
     override val defaultValue: String,
     @param:ArrayRes val displayValues: Int,
     val indexToValue: (index: Int) -> String,
@@ -188,8 +270,8 @@ data class StashStringChoicePreference(
     override val setter: (prefs: StashPreferences, value: String) -> StashPreferences,
 ) : StashPreference<String>
 
-data class ClickablePreference(
-    override val title: Int,
+data class StashClickablePreference(
+    @param:StringRes override val title: Int,
     override val defaultValue: Unit = Unit,
     override val getter: (prefs: StashPreferences) -> Unit = { },
     override val setter: (prefs: StashPreferences, value: Unit) -> StashPreferences = { prefs, _ -> prefs },
@@ -199,4 +281,24 @@ data class ClickablePreference(
         context: Context,
         value: Unit?,
     ): String? = summary?.let { context.getString(it) }
+}
+
+class StashSliderPreference(
+    @param:StringRes override val title: Int,
+    override val defaultValue: Int,
+    val min: Int = 0,
+    val max: Int = 100,
+    val interval: Int = 1,
+    override val getter: (prefs: StashPreferences) -> Int,
+    override val setter: (prefs: StashPreferences, value: Int) -> StashPreferences,
+    @param:StringRes val summary: Int? = null,
+    val summarizer: ((Int?) -> String?)? = null,
+) : StashPreference<Int> {
+    override fun summary(
+        context: Context,
+        value: Int?,
+    ): String? =
+        summarizer?.invoke(value)
+            ?: summary?.let { context.getString(it) }
+            ?: value?.toString()
 }

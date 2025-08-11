@@ -51,6 +51,14 @@ private val basicPreferences =
                 StashPreference.MoreUiSettings,
             ),
         ),
+        PreferenceGroup(
+            R.string.playback,
+            listOf(
+                StashPreference.SkipForward,
+                StashPreference.SkipBack,
+                StashPreference.FinishedBehavior,
+            ),
+        ),
     )
 
 @Composable

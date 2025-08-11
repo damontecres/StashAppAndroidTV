@@ -89,7 +89,15 @@ fun PlaybackPage(
     scene?.let {
         val player =
             remember {
-                StashExoPlayer.getInstance(context, server).apply {
+                val skipParams =
+                    uiConfig.preferences.playbackPreferences.let {
+                        SkipParams.Values(
+                            it.skipForwardMs,
+                            it.skipBackwardMs,
+                        )
+                    }
+
+                StashExoPlayer.getInstance(context, server, skipParams).apply {
                     repeatMode = Player.REPEAT_MODE_OFF
                     playWhenReady = true
                 }
@@ -206,20 +214,22 @@ fun PlaylistPlaybackPage(
     if (playlist.isNotEmpty()) {
         val player =
             remember {
+                val skipForward =
+                    uiConfig.preferences.playbackPreferences.skipForwardMs.milliseconds
+                val skipBack =
+                    uiConfig.preferences.playbackPreferences.skipBackwardMs.milliseconds
                 val skipParams =
                     if (viewModel.dataType == DataType.MARKER) {
-                        val skipForward =
-                            uiConfig.preferences.playbackPreferences.skipForwardMs.milliseconds
-                        val skipBack =
-                            uiConfig.preferences.playbackPreferences.skipBackwardMs.milliseconds
-
                         // Override the skip forward/back since many users will have default seeking values larger than the duration
                         SkipParams.Values(
                             (clipDuration / 4).coerceAtMost(skipForward).inWholeMilliseconds,
                             (clipDuration / 4).coerceAtMost(skipBack).inWholeMilliseconds,
                         )
                     } else {
-                        SkipParams.Default
+                        SkipParams.Values(
+                            skipForward.inWholeMilliseconds,
+                            skipBack.inWholeMilliseconds,
+                        )
                     }
                 StashExoPlayer.getInstance(context, server, skipParams).apply {
                     repeatMode = Player.REPEAT_MODE_OFF

@@ -138,5 +138,8 @@
     <string name="more_ui_settings_summary">Go to advanced UI settings</string>
     <string name="play_video_previews_summary_on">Video preview will play when item is selected</string>
     <string name="play_video_previews_summary_off">Video previews will not play</string>
+    <string name="skip_forward_preference">Skip forward (seconds)</string>
+    <string name="skip_back_preference">Skip back (seconds)</string>
+    <string name="playback_finished_behavior">Playback finished behavior</string>
 
 </resources>
