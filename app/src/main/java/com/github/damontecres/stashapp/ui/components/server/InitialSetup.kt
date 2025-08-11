@@ -50,7 +50,7 @@ fun InitialSetup(
 
                     // If its a larger device, use larger cards
                     if (screenSize == ScreenSize.EXPANDED) {
-                        putInt(context.getString(R.string.pref_key_card_size), 4)
+                        putString(context.getString(R.string.pref_key_card_size), "4")
                     }
                 }
             }

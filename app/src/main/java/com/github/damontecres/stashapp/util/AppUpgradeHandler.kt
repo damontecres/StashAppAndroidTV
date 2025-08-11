@@ -120,6 +120,16 @@ class AppUpgradeHandler(
                 putBoolean(key, true)
             }
         }
+        if (previousVersion.isEqualOrBefore(Version.fromString("0.6.10"))) {
+            try {
+                preferences.getString(context.getString(R.string.pref_key_card_size), "5")
+            } catch (_: ClassCastException) {
+                val value = preferences.getInt(context.getString(R.string.pref_key_card_size), 5)
+                preferences.edit(true) {
+                    putString(context.getString(R.string.pref_key_card_size), value.toString())
+                }
+            }
+        }
     }
 
     private fun SharedPreferences.ensureSetHas(
