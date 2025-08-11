@@ -277,6 +277,7 @@ fun PlaybackOverlay(
                     audioOptions = audioOptions,
                     playbackSpeed = playbackSpeed,
                     scale = scale,
+                    seekBarIntervals = uiConfig.preferences.playbackPreferences.seekBarSteps,
                 )
             }
             if (markers.isNotEmpty()) {

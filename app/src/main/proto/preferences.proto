@@ -45,12 +45,30 @@ message InterfacePreferences {
 
 }
 
+enum TabType {
+  TAB_TYPE_DETAILS = 0;
+  TAB_TYPE_GALLERIES = 1;
+  TAB_TYPE_GROUPS = 2;
+  TAB_TYPE_PERFORMERS = 3;
+  TAB_TYPE_STUDIOS = 4;
+  TAB_TYPE_TAGS = 5;
+  TAB_TYPE_SCENES = 6;
+  TAB_TYPE_APPEARS_WITH = 7;
+  TAB_TYPE_MARKERS = 8;
+  TAB_TYPE_IMAGES = 9;
+  TAB_TYPE_CONTAINING_GROUPS = 10;
+  TAB_TYPE_SUB_GROUPS = 11;
+  TAB_TYPE_SUBSIDIARY_STUDIOS = 12;
+  TAB_TYPE_SUB_TAGS = 13;
+  TAB_TYPE_PARENT_TAGS = 14;
+}
+
 message TabPreferences {
-  repeated string gallery = 1;
-  repeated string group = 2;
-  repeated string performer = 3;
-  repeated string studio = 4;
-  repeated string tags = 5;
+  repeated TabType gallery = 1;
+  repeated TabType group = 2;
+  repeated TabType performer = 3;
+  repeated TabType studio = 4;
+  repeated TabType tags = 5;
 }
 
 enum PlaybackFinishBehavior {
@@ -95,11 +113,15 @@ message PlaybackPreferences {
   bool save_video_filters = 12;
   bool enable_debug_logging = 13;
   PlaybackHttpClient playback_http_client = 14;
+  int32 seek_bar_steps = 15;
   // TODO direct play overrides
 }
 
 message CachePreferences {
-  // TODO
+  int64 network_cache_size = 1;
+  int64 image_disk_cache_size = 2;
+  int32 cache_expiration_time = 3;
+  bool log_cache_hits = 4;
 }
 
 message UpdatePreferences {

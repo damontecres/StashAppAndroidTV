@@ -60,9 +60,9 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
             setContent {
                 val server by serverViewModel.currentServer.observeAsState()
                 val preferences by context.preferences.data.collectAsState(null)
-                CoilConfig(serverViewModel)
                 val isSystemInDarkTheme = isSystemInDarkTheme()
                 preferences?.let { preferences ->
+                    CoilConfig(serverViewModel, preferences)
                     var colorScheme by
                         remember {
                             mutableStateOf(

@@ -11,7 +11,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.ColorScheme
 import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.R
@@ -139,21 +138,15 @@ fun DefaultMaterial3Theme(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun Material3AppTheme(content: @Composable () -> Unit) {
-    val context = LocalContext.current
-    val themeChoice =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getString(
-                stringResource(R.string.pref_key_ui_theme_dark_appearance),
-                stringResource(R.string.ui_theme_dark_appearance_choice_dark),
-            )
-
+fun Material3AppTheme(
+    themeStyle: ThemeStyle = ThemeStyle.THEME_STYLE_DARK,
+    content: @Composable () -> Unit,
+) {
     val colorSchemeSet = currentColorSchemeSet ?: defaultColorSchemeSet
     val colorScheme =
-        when (themeChoice) {
-            stringResource(id = R.string.ui_theme_dark_appearance_choice_light) -> colorSchemeSet.light
-            stringResource(id = R.string.ui_theme_dark_appearance_choice_dark) -> colorSchemeSet.dark
+        when (themeStyle) {
+            ThemeStyle.THEME_STYLE_LIGHT -> colorSchemeSet.light
+            ThemeStyle.THEME_STYLE_DARK -> colorSchemeSet.dark
             else -> {
                 if (isSystemInDarkTheme()) {
                     colorSchemeSet.dark

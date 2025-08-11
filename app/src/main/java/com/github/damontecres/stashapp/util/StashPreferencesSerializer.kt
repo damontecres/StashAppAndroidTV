@@ -8,6 +8,7 @@ import androidx.datastore.dataStore
 import com.github.damontecres.stashapp.proto.AdvancedPreferences
 import com.github.damontecres.stashapp.proto.CachePreferences
 import com.github.damontecres.stashapp.proto.InterfacePreferences
+import com.github.damontecres.stashapp.proto.PinPreferences
 import com.github.damontecres.stashapp.proto.PlaybackPreferences
 import com.github.damontecres.stashapp.proto.SearchPreferences
 import com.github.damontecres.stashapp.proto.StashPreferences
@@ -80,7 +81,9 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                     CachePreferences
                         .newBuilder()
                         .apply {
-                            // TODO
+                            imageDiskCacheSize = 100 * 1024 * 1024 // 100 MB
+                            networkCacheSize = 10 * 1024 * 1024 // 10 MB
+                            cacheExpirationTime = 6 // TODO
                         }.build()
                 searchPreferences =
                     SearchPreferences
@@ -130,4 +133,29 @@ inline fun StashPreferences.updateInterfacePreferences(block: InterfacePreferenc
 inline fun StashPreferences.updatePlaybackPreferences(block: PlaybackPreferences.Builder.() -> Unit): StashPreferences =
     update {
         playbackPreferences = playbackPreferences.toBuilder().apply(block).build()
+    }
+
+inline fun StashPreferences.updateAdvancedPreferences(block: AdvancedPreferences.Builder.() -> Unit): StashPreferences =
+    update {
+        advancedPreferences = advancedPreferences.toBuilder().apply(block).build()
+    }
+
+inline fun StashPreferences.updateCachePreferences(block: CachePreferences.Builder.() -> Unit): StashPreferences =
+    update {
+        cachePreferences = cachePreferences.toBuilder().apply(block).build()
+    }
+
+inline fun StashPreferences.updateSearchPreferences(block: SearchPreferences.Builder.() -> Unit): StashPreferences =
+    update {
+        searchPreferences = searchPreferences.toBuilder().apply(block).build()
+    }
+
+inline fun StashPreferences.updateUpdatePreferences(block: UpdatePreferences.Builder.() -> Unit): StashPreferences =
+    update {
+        updatePreferences = updatePreferences.toBuilder().apply(block).build()
+    }
+
+inline fun StashPreferences.updatePinPreferences(block: PinPreferences.Builder.() -> Unit): StashPreferences =
+    update {
+        pinPreferences = pinPreferences.toBuilder().apply(block).build()
     }

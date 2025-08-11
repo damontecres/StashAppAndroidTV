@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,15 +16,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
-import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.util.ScreenSize
 import com.github.damontecres.stashapp.ui.util.screenSize
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.preferences
+import com.github.damontecres.stashapp.util.updateInterfacePreferences
+import com.github.damontecres.stashapp.util.updatePinPreferences
+import kotlinx.coroutines.launch
 
 @Composable
 fun InitialSetup(
@@ -32,6 +35,7 @@ fun InitialSetup(
     viewModel: ManageServersViewModel = viewModel(),
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val screenSize = screenSize()
 
     var server by remember { mutableStateOf<StashServer?>(null) }
@@ -40,21 +44,27 @@ fun InitialSetup(
     fun submit(pin: String?) {
         server?.let {
             viewModel.addServer(it)
-            PreferenceManager.getDefaultSharedPreferences(context).edit(true) {
-                putString(context.getString(R.string.pref_key_pin_code), pin)
-                putBoolean(context.getString(R.string.pref_key_pin_code_auto), true)
-                if (isNotTvDevice) {
-                    // Adjust some settings for a better touch device experience
-                    // Remove the jump buttons
-                    putBoolean(context.getString(R.string.pref_key_ui_grid_jump_controls), false)
+            scope.launch(StashCoroutineExceptionHandler()) {
+                context.preferences.updateData {
+                    it
+                        .updatePinPreferences {
+                            this.pin = pin
+                            autoSubmit = true
+                        }.updateInterfacePreferences {
+                            if (isNotTvDevice) {
+                                // Adjust some settings for a better touch device experience
+                                // Remove the jump buttons
+                                showGridJumpButtons = false
 
-                    // If its a larger device, use larger cards
-                    if (screenSize == ScreenSize.EXPANDED) {
-                        putString(context.getString(R.string.pref_key_card_size), "4")
-                    }
+                                // If its a larger device, use larger cards
+                                if (screenSize == ScreenSize.EXPANDED) {
+                                    cardSize = 4
+                                }
+                            }
+                        }
                 }
+                onServerConfigure.invoke(it)
             }
-            onServerConfigure.invoke(it)
         }
     }
 

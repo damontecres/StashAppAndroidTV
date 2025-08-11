@@ -39,6 +39,7 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
@@ -56,6 +57,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun TabPage(
     name: AnnotatedString,
+    rememberTab: Boolean,
     tabs: List<TabProvider>,
     dataType: DataType,
     modifier: Modifier = Modifier,
@@ -63,12 +65,20 @@ fun TabPage(
 ) {
     val context = LocalContext.current
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-    val rememberTab =
-        preferences.getBoolean(context.getString(R.string.pref_key_ui_remember_tab), false)
     val rememberTabKey = context.getString(R.string.pref_key_ui_remember_tab) + ".${dataType.name}"
-    val rememberedTabIndex = if (rememberTab) preferences.getInt(rememberTabKey, 0) else 0
 
-    var selectedTabIndex by rememberSaveable { mutableIntStateOf(rememberedTabIndex) }
+    var selectedTabIndex by rememberSaveable {
+        mutableIntStateOf(
+            if (rememberTab) {
+                preferences.getInt(
+                    rememberTabKey,
+                    0,
+                )
+            } else {
+                0
+            },
+        )
+    }
     val tabRowFocusRequester = remember { FocusRequester() }
     var showTabRowRaw by rememberSaveable { mutableStateOf(true) }
     val showTabRow by remember { derivedStateOf { showTabRowRaw } }
@@ -181,6 +191,7 @@ fun TabPage(
 
 data class TabProvider(
     val name: String,
+    val type: TabType,
     val content: @Composable ColumnScope.(
         /**
          * Callback when grid position changes, passed to [StashGrid]. None-StashGrid can probably ignore this
@@ -198,7 +209,18 @@ fun createTabFunc(
     { initialFilter ->
         val name =
             StashApplication.getApplication().getString(initialFilter.dataType.pluralStringId)
-        TabProvider(name) { positionCallback ->
+        val type =
+            when (initialFilter.dataType) {
+                DataType.SCENE -> TabType.TAB_TYPE_SCENES
+                DataType.GROUP -> TabType.TAB_TYPE_GROUPS
+                DataType.MARKER -> TabType.TAB_TYPE_MARKERS
+                DataType.PERFORMER -> TabType.TAB_TYPE_PERFORMERS
+                DataType.STUDIO -> TabType.TAB_TYPE_STUDIOS
+                DataType.TAG -> TabType.TAB_TYPE_TAGS
+                DataType.IMAGE -> TabType.TAB_TYPE_IMAGES
+                DataType.GALLERY -> TabType.TAB_TYPE_GALLERIES
+            }
+        TabProvider(name, type) { positionCallback ->
             var filter by rememberSaveable(name, saver = filterArgsSaver) {
                 mutableStateOf(
                     initialFilter,

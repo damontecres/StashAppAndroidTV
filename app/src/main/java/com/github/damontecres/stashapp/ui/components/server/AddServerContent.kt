@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,9 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -51,10 +50,14 @@ import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.components.SwitchWithLabel
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.getPreference
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.preferences
+import com.github.damontecres.stashapp.util.updateAdvancedPreferences
+import kotlinx.coroutines.launch
 
 private const val TAG = "AddServer"
 
@@ -65,6 +68,7 @@ fun AddServer(
     viewModel: ManageServersViewModel = viewModel(),
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val testButtonFocusRequester = remember { FocusRequester() }
 
@@ -358,8 +362,12 @@ fun AddServer(
         AllowSelfSignedCertsDialog(
             onDismissRequest = { showTrustDialog = false },
             onEnableTrust = {
-                PreferenceManager.getDefaultSharedPreferences(context).edit(true) {
-                    putBoolean(context.getString(R.string.pref_key_trust_certs), true)
+                scope.launch(StashCoroutineExceptionHandler()) {
+                    context.preferences.updateData {
+                        it.updateAdvancedPreferences {
+                            trustSelfSignedCertificates = true
+                        }
+                    }
                 }
                 trustCerts = true
             },

@@ -26,6 +26,7 @@ import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -106,10 +107,11 @@ fun GalleryPage(
                     modifier = CriterionModifier.INCLUDES_ALL,
                 ),
             )
-        val uiTabs = getUiTabs(context, DataType.GALLERY)
+        val uiTabs =
+            getUiTabs(uiConfig.preferences.interfacePreferences.tabPreferences, DataType.GALLERY)
         val tabs =
             listOf(
-                TabProvider(stringResource(R.string.stashapp_details)) {
+                TabProvider(stringResource(R.string.stashapp_details), TabType.TAB_TYPE_DETAILS) {
                     GalleryDetails(
                         modifier = Modifier.fillMaxSize(),
                         uiConfig = uiConfig,
@@ -212,10 +214,17 @@ fun GalleryPage(
                         override = DataSupplierOverride.GalleryPerformer(gallery.id),
                     ),
                 ),
-            ).filter { it.name in uiTabs }
+            ).filter { it.type in uiTabs }
         val title = AnnotatedString(gallery.name ?: "")
         LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
-        TabPage(title, tabs, DataType.GALLERY, modifier, onUpdateTitle == null)
+        TabPage(
+            title,
+            uiConfig.preferences.interfacePreferences.rememberSelectedTab,
+            tabs,
+            DataType.GALLERY,
+            modifier,
+            onUpdateTitle == null,
+        )
     }
 }
 
