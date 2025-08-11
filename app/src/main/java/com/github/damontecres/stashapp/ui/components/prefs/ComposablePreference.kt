@@ -112,64 +112,6 @@ fun <T> ComposablePreference(
             )
         }
 
-        is StashIntChoicePreference -> {
-            val values = stringArrayResource(preference.displayValues).toList()
-            val summary =
-                preference.summary(context, value as Int) ?: preference
-                    .valueToIndex(value)
-                    ?.let { values[it] }
-            ClickPreference(
-                title = title,
-                summary = summary,
-                onClick = {
-                    dialogParams =
-                        DialogParams(
-                            title = title,
-                            fromLongClick = false,
-                            items =
-                                values.mapIndexed { index, it ->
-                                    DialogItem(
-                                        text = it,
-                                        onClick = {
-                                            onValueChange(preference.indexToValue(index) as T)
-                                        },
-                                    )
-                                },
-                        )
-                },
-                modifier = modifier,
-            )
-        }
-
-        is StashStringChoicePreference -> {
-            val values = stringArrayResource(preference.displayValues).toList()
-            val summary =
-                preference.summary(context, value as String) ?: preference
-                    .valueToIndex(value)
-                    ?.let { values[it] }
-            ClickPreference(
-                title = title,
-                summary = summary,
-                onClick = {
-                    dialogParams =
-                        DialogParams(
-                            title = title,
-                            fromLongClick = false,
-                            items =
-                                values.mapIndexed { index, it ->
-                                    DialogItem(
-                                        text = it,
-                                        onClick = {
-                                            onValueChange(preference.indexToValue(index) as T)
-                                        },
-                                    )
-                                },
-                        )
-                },
-                modifier = modifier,
-            )
-        }
-
         is StashSliderPreference -> {
             val summary =
                 preference.summary(context, value)

@@ -141,5 +141,10 @@
     <string name="skip_forward_preference">Skip forward (seconds)</string>
     <string name="skip_back_preference">Skip back (seconds)</string>
     <string name="playback_finished_behavior">Playback finished behavior</string>
+    <string name="auto_submit_pin">Auto submit PIN</string>
+    <string name="auto_submit_pin_summary">Submit PIN automatically when typed</string>
+    <string name="current_server">Current server</string>
+    <string name="pin_code">Protect with PIN code</string>
+    <string name="card_size_title">Card size</string>
 
 </resources>

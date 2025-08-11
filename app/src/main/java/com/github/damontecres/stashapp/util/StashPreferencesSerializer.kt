@@ -13,6 +13,8 @@ import com.github.damontecres.stashapp.proto.PlaybackPreferences
 import com.github.damontecres.stashapp.proto.SearchPreferences
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.proto.StreamChoice
+import com.github.damontecres.stashapp.proto.TabPreferences
+import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.proto.ThemeStyle
 import com.github.damontecres.stashapp.proto.UpdatePreferences
 import com.google.protobuf.InvalidProtocolBufferException
@@ -42,13 +44,75 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                             showProgressWhenSkipping = true
                             playMovementSounds = true
                             captionsByDefault = true
-                            // TODO tab prefs
                             scrollNextViewAll = true
                             scrollTopOnBack = true
                             showPositionFooter = true
                             showRatingOnCards = true
                             videoPreviewAudio = false
                             pageWithRemoteButtons = true
+                            tabPreferences =
+                                TabPreferences
+                                    .newBuilder()
+                                    .apply {
+                                        addAllPerformer(
+                                            listOf(
+                                                TabType.TAB_TYPE_DETAILS,
+                                                TabType.TAB_TYPE_SCENES,
+                                                TabType.TAB_TYPE_GALLERIES,
+                                                TabType.TAB_TYPE_IMAGES,
+                                                TabType.TAB_TYPE_GROUPS,
+                                                TabType.TAB_TYPE_TAGS,
+                                                TabType.TAB_TYPE_APPEARS_WITH,
+                                                TabType.TAB_TYPE_MARKERS,
+                                                TabType.TAB_TYPE_STUDIOS,
+                                            ),
+                                        )
+                                        addAllGallery(
+                                            listOf(
+                                                TabType.TAB_TYPE_DETAILS,
+                                                TabType.TAB_TYPE_IMAGES,
+                                                TabType.TAB_TYPE_SCENES,
+                                                TabType.TAB_TYPE_PERFORMERS,
+                                                TabType.TAB_TYPE_TAGS,
+                                            ),
+                                        )
+                                        addAllGroup(
+                                            listOf(
+                                                TabType.TAB_TYPE_DETAILS,
+                                                TabType.TAB_TYPE_SCENES,
+                                                TabType.TAB_TYPE_MARKERS,
+                                                TabType.TAB_TYPE_TAGS,
+                                                TabType.TAB_TYPE_CONTAINING_GROUPS,
+                                                TabType.TAB_TYPE_SUB_GROUPS,
+                                            ),
+                                        )
+                                        addAllStudio(
+                                            listOf(
+                                                TabType.TAB_TYPE_DETAILS,
+                                                TabType.TAB_TYPE_SCENES,
+                                                TabType.TAB_TYPE_GALLERIES,
+                                                TabType.TAB_TYPE_IMAGES,
+                                                TabType.TAB_TYPE_PERFORMERS,
+                                                TabType.TAB_TYPE_GROUPS,
+                                                TabType.TAB_TYPE_TAGS,
+                                                TabType.TAB_TYPE_SUBSIDIARY_STUDIOS,
+                                                TabType.TAB_TYPE_MARKERS,
+                                            ),
+                                        )
+                                        addAllTags(
+                                            listOf(
+                                                TabType.TAB_TYPE_DETAILS,
+                                                TabType.TAB_TYPE_SCENES,
+                                                TabType.TAB_TYPE_GALLERIES,
+                                                TabType.TAB_TYPE_IMAGES,
+                                                TabType.TAB_TYPE_MARKERS,
+                                                TabType.TAB_TYPE_PERFORMERS,
+                                                TabType.TAB_TYPE_STUDIOS,
+                                                TabType.TAB_TYPE_SUB_TAGS,
+                                                TabType.TAB_TYPE_PARENT_TAGS,
+                                            ),
+                                        )
+                                    }.build()
                         }.build()
                 playbackPreferences =
                     PlaybackPreferences

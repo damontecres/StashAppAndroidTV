@@ -58,7 +58,7 @@ sealed interface StashPreference<T> {
     companion object {
         val CurrentServer =
             StashClickablePreference(
-                title = R.string.pref_key_current_server,
+                title = R.string.current_server,
             )
         val ManageServers =
             StashClickablePreference(
@@ -67,7 +67,8 @@ sealed interface StashPreference<T> {
             )
         val AutoSubmitPin =
             StashSwitchPreference(
-                title = R.string.pref_key_pin_code_auto,
+                title = R.string.auto_submit_pin,
+                summary = R.string.auto_submit_pin_summary,
                 defaultValue = true,
                 getter = { it.pinPreferences.autoSubmit },
                 setter = { prefs, value ->
@@ -76,7 +77,7 @@ sealed interface StashPreference<T> {
             )
         val PinCode =
             StashPinPreference(
-                title = R.string.pref_key_pin_code,
+                title = R.string.pin_code,
                 defaultValue = "",
                 getter = { it.pinPreferences.pin },
                 setter = { prefs, value ->
@@ -84,8 +85,8 @@ sealed interface StashPreference<T> {
                 },
             )
         val CardSize =
-            StashIntChoicePreference(
-                title = R.string.pref_key_card_size,
+            StashChoicePreference<Int>(
+                title = R.string.card_size_title,
                 defaultValue = 5,
                 displayValues = R.array.card_sizes,
                 indexToValue = { listOf(7, 6, 5, 4, 3)[it] },
@@ -249,26 +250,6 @@ data class StashChoicePreference<T>(
     override val getter: (prefs: StashPreferences) -> T,
     override val setter: (prefs: StashPreferences, value: T) -> StashPreferences,
 ) : StashPreference<T>
-
-data class StashIntChoicePreference(
-    @param:StringRes override val title: Int,
-    override val defaultValue: Int,
-    @param:ArrayRes val displayValues: Int,
-    val indexToValue: (index: Int) -> Int,
-    val valueToIndex: (Int) -> Int,
-    override val getter: (prefs: StashPreferences) -> Int,
-    override val setter: (prefs: StashPreferences, value: Int) -> StashPreferences,
-) : StashPreference<Int>
-
-data class StashStringChoicePreference(
-    @param:StringRes override val title: Int,
-    override val defaultValue: String,
-    @param:ArrayRes val displayValues: Int,
-    val indexToValue: (index: Int) -> String,
-    val valueToIndex: (String) -> Int,
-    override val getter: (prefs: StashPreferences) -> String,
-    override val setter: (prefs: StashPreferences, value: String) -> StashPreferences,
-) : StashPreference<String>
 
 data class StashClickablePreference(
     @param:StringRes override val title: Int,
