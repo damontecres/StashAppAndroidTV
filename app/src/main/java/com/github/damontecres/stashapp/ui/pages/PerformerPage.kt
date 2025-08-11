@@ -61,6 +61,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationListener
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -710,6 +711,7 @@ private fun PerformerDetailsPreview() {
                     override fun addListener(listener: NavigationListener) {
                     }
                 },
+                StashPreferences.getDefaultInstance(),
             ),
     ) {
         AppTheme {

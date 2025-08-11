@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -169,6 +170,18 @@ open class ServerViewModel : ViewModel() {
                 videoDelay,
             )
         }
+
+        val StashPreferences.cardSettings: CardUiSettings
+            get() =
+                CardUiSettings(
+                    maxSearchResults = searchPreferences.maxResults,
+                    playVideoPreviews = interfacePreferences.playVideoPreviews,
+                    videoPreviewAudio = interfacePreferences.videoPreviewAudio,
+                    columns = interfacePreferences.cardSize,
+                    showRatings = interfacePreferences.showRatingOnCards,
+                    imageCrop = true,
+                    videoDelay = interfacePreferences.cardPreviewDelayMs,
+                )
     }
 
     // For compose navigation

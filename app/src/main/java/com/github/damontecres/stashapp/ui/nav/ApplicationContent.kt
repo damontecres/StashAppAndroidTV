@@ -21,6 +21,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.NavDrawerFragment.Companion.TAG
@@ -42,6 +43,7 @@ import dev.olshevski.navigation.reimagined.NavHost
 @Composable
 fun ApplicationContent(
     server: StashServer,
+    preferences: StashPreferences,
     navigationManager: NavigationManagerCompose,
     navController: NavController<Destination>,
     onChangeTheme: (String?) -> Unit,
@@ -52,7 +54,7 @@ fun ApplicationContent(
     var composeUiConfig by remember(server) {
         mutableStateOf(
             ComposeUiConfig.fromStashServer(
-                context,
+                preferences,
                 server,
             ),
         )
@@ -134,7 +136,7 @@ fun ApplicationContent(
         LaunchedEffect(Unit) {
             // Refresh server preferences on each page change
             navigationManager.serverViewModel.updateServerPreferences()
-            composeUiConfig = ComposeUiConfig.fromStashServer(context, server)
+            composeUiConfig = ComposeUiConfig.fromStashServer(preferences, server)
 
             navigationManager.previousDestination = destination
             navigationManager.serverViewModel.setCurrentDestination(destination)
