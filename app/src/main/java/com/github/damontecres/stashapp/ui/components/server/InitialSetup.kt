@@ -55,7 +55,6 @@ fun InitialSetup(
                                 // Adjust some settings for a better touch device experience
                                 // Remove the jump buttons
                                 showGridJumpButtons = false
-
                                 // If its a larger device, use larger cards
                                 if (screenSize == ScreenSize.EXPANDED) {
                                     cardSize = 4
