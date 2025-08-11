@@ -32,7 +32,11 @@ fun SettingsPage(
                 Modifier
             }
         when (preferenceScreenOption) {
-            PreferenceScreenOption.BASIC -> PreferencesBasicContent(newModifier)
+            PreferenceScreenOption.BASIC ->
+                PreferencesBasicContent(
+                    uiConfig.preferences,
+                    newModifier,
+                )
             PreferenceScreenOption.ADVANCED -> TODO()
             PreferenceScreenOption.USER_INTERFACE -> TODO()
         }

@@ -1,11 +1,13 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
-import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.updateInterfacePreferences
+import com.github.damontecres.stashapp.util.updatePinPreferences
 
 /**
  * A group of preferences
@@ -35,14 +37,11 @@ sealed interface StashPreference<T> {
     @get:StringRes
     val title: Int
 
-    @get:StringRes
-    val key: Int
-
     val defaultValue: T
 
-    val getter: (prefs: SharedPreferences, key: String) -> T
+    val getter: (prefs: StashPreferences) -> T
 
-    val setter: (editor: SharedPreferences.Editor, key: String, value: T?) -> Unit
+    val setter: (prefs: StashPreferences, value: T) -> StashPreferences
 
     fun summary(
         context: Context,
@@ -52,65 +51,50 @@ sealed interface StashPreference<T> {
     fun validate(value: T): PreferenceValidation = PreferenceValidation.Valid
 
     companion object {
-        fun <T> get(
-            context: Context,
-            preference: StashPreference<T>,
-        ): T {
-            PreferenceManager.getDefaultSharedPreferences(context).let { prefs ->
-                val key = context.getString(preference.key)
-                return preference.getter(prefs, key)
-            }
-        }
-
         val AutoSubmitPin =
             StashSwitchPreference(
                 title = R.string.pref_key_pin_code_auto,
-                key = R.string.pref_key_pin_code_auto,
                 defaultValue = true,
-            )
-        val ReadOnlyMode =
-            StashSwitchPreference(
-                title = R.string.pref_key_read_only_mode,
-                key = R.string.pref_key_read_only_mode,
-                defaultValue = false,
+                getter = { it.pinPreferences.autoSubmit },
+                setter = { prefs, value ->
+                    prefs.updatePinPreferences { autoSubmit = value }
+                },
             )
         val PinCode =
             StashPinPreference(
                 title = R.string.pref_key_pin_code,
-                key = R.string.pref_key_pin_code,
                 defaultValue = "",
+                getter = { it.pinPreferences.pin },
+                setter = { prefs, value ->
+                    prefs.updatePinPreferences { pin = value }
+                },
             )
         val CardSize =
-            StashStringChoicePreference(
+            StashIntChoicePreference(
                 title = R.string.pref_key_card_size,
-                key = R.string.pref_key_card_size,
-                defaultValue = "5",
+                defaultValue = 5,
                 displayValues = R.array.card_sizes,
-                storeValues = listOf("7", "6", "5", "4", "3"),
+                indexToValue = { listOf(7, 6, 5, 4, 3)[it] },
+                valueToIndex = { listOf(7, 6, 5, 4, 3).indexOf(it) },
+                getter = { it.interfacePreferences.cardSize },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { cardSize = value }
+                },
             )
     }
 }
 
 data class StashSwitchPreference(
+    @get:StringRes
     override val title: Int,
-    override val key: Int,
     override val defaultValue: Boolean,
+    override val getter: (prefs: StashPreferences) -> Boolean,
+    override val setter: (prefs: StashPreferences, value: Boolean) -> StashPreferences,
+    val validator: (value: Boolean) -> PreferenceValidation = { PreferenceValidation.Valid },
     @param:StringRes val summary: Int? = null,
     @param:StringRes val summaryOn: Int? = null,
     @param:StringRes val summaryOff: Int? = null,
 ) : StashPreference<Boolean> {
-    override val getter = { prefs: SharedPreferences, key: String ->
-        prefs.getBoolean(key, defaultValue)
-    }
-    override val setter = { editor: SharedPreferences.Editor, key: String, value: Boolean? ->
-        if (value == null) {
-            editor.remove(key)
-        } else {
-            editor.putBoolean(key, value)
-        }
-        Unit
-    }
-
     override fun summary(
         context: Context,
         value: Boolean?,
@@ -122,69 +106,59 @@ data class StashSwitchPreference(
         }
 }
 
-open class StashStringPreference(
+abstract class StashStringPreference(
     override val title: Int,
-    override val key: Int,
     override val defaultValue: String,
 ) : StashPreference<String> {
-    override val getter = { prefs: SharedPreferences, key: String ->
-        prefs.getString(key, defaultValue)!!
-    }
-    override val setter = { editor: SharedPreferences.Editor, key: String, value: String? ->
-        editor.putString(key, value)
-        Unit
-    }
+    override fun summary(
+        context: Context,
+        value: String?,
+    ): String? = value
 }
 
 class StashPinPreference(
     title: Int,
-    key: Int,
     defaultValue: String = "",
-) : StashStringPreference(title, key, defaultValue) {
+    override val getter: (prefs: StashPreferences) -> String,
+    override val setter: (prefs: StashPreferences, value: String) -> StashPreferences,
+) : StashStringPreference(
+        title,
+        defaultValue,
+    ) {
     override fun validate(value: String): PreferenceValidation =
         if (value.isBlank() || value.toIntOrNull() != null) {
             PreferenceValidation.Valid
         } else {
             PreferenceValidation.Invalid("Invalid PIN code format")
         }
+
+    override fun summary(
+        context: Context,
+        value: String?,
+    ): String? =
+        if (value.isNotNullOrBlank()) {
+            "Pin code set"
+        } else {
+            "No pin code set"
+        }
 }
 
 data class StashIntChoicePreference(
     override val title: Int,
-    override val key: Int,
     override val defaultValue: Int,
     @param:ArrayRes val displayValues: Int,
-    val storeValues: List<Int>,
-) : StashPreference<Int> {
-    override val getter = { prefs: SharedPreferences, key: String ->
-        prefs.getInt(key, defaultValue)
-    }
-    override val setter = { editor: SharedPreferences.Editor, key: String, value: Int? ->
-        if (value == null) {
-            editor.remove(key)
-        } else {
-            editor.putInt(key, value)
-        }
-        Unit
-    }
-}
+    val indexToValue: (index: Int) -> Int,
+    val valueToIndex: (Int) -> Int,
+    override val getter: (prefs: StashPreferences) -> Int,
+    override val setter: (prefs: StashPreferences, value: Int) -> StashPreferences,
+) : StashPreference<Int>
 
 data class StashStringChoicePreference(
     override val title: Int,
-    override val key: Int,
     override val defaultValue: String,
     @param:ArrayRes val displayValues: Int,
-    val storeValues: List<String>,
-) : StashPreference<String> {
-    override val getter = { prefs: SharedPreferences, key: String ->
-        prefs.getString(key, defaultValue)!!
-    }
-    override val setter = { editor: SharedPreferences.Editor, key: String, value: String? ->
-        if (value == null) {
-            editor.remove(key)
-        } else {
-            editor.putString(key, value)
-        }
-        Unit
-    }
-}
+    val indexToValue: (index: Int) -> String,
+    val valueToIndex: (String) -> Int,
+    override val getter: (prefs: StashPreferences) -> String,
+    override val setter: (prefs: StashPreferences, value: String) -> StashPreferences,
+) : StashPreference<String>

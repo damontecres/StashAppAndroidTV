@@ -9,12 +9,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 
 @Composable
 fun <T> ComposablePreference(
+    preferences: StashPreferences,
     preference: StashPreference<T>,
     value: T?,
     onValueChange: (T) -> Unit,
@@ -38,6 +40,10 @@ fun <T> ComposablePreference(
         is StashIntChoicePreference -> {
             val title = stringResource(preference.title)
             val values = stringArrayResource(preference.displayValues).toList()
+            val summary =
+                preference.summary(context, value as Int) ?: preference
+                    .valueToIndex(value)
+                    ?.let { values[it] }
             ClickPreference(
                 title = title,
                 onClick = {
@@ -50,20 +56,24 @@ fun <T> ComposablePreference(
                                     DialogItem(
                                         text = it,
                                         onClick = {
-                                            onValueChange.invoke(preference.storeValues[index] as T)
+                                            onValueChange(preference.indexToValue(index) as T)
                                         },
                                     )
                                 },
                         )
                 },
                 modifier = modifier,
-                summary = preference.summary(context, value as Int),
+                summary = summary,
             )
         }
 
         is StashStringChoicePreference -> {
             val title = stringResource(preference.title)
             val values = stringArrayResource(preference.displayValues).toList()
+            val summary =
+                preference.summary(context, value as String) ?: preference
+                    .valueToIndex(value)
+                    ?.let { values[it] }
             ClickPreference(
                 title = title,
                 onClick = {
@@ -76,14 +86,14 @@ fun <T> ComposablePreference(
                                     DialogItem(
                                         text = it,
                                         onClick = {
-                                            onValueChange.invoke(preference.storeValues[index] as T)
+                                            onValueChange(preference.indexToValue(index) as T)
                                         },
                                     )
                                 },
                         )
                 },
                 modifier = modifier,
-                summary = preference.summary(context, value as String),
+                summary = summary,
             )
         }
     }

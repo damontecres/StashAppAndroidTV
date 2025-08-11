@@ -8,35 +8,40 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.edit
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.preferences
+import kotlinx.coroutines.launch
 
-private val preferences =
+private val basicPreferences =
     listOf(
         PreferenceGroup(
             R.string.basic_interface,
             listOf(
                 StashPreference.AutoSubmitPin,
                 StashPreference.PinCode,
-                StashPreference.ReadOnlyMode,
                 StashPreference.CardSize,
             ),
         ),
     )
 
 @Composable
-fun PreferencesBasicContent(modifier: Modifier = Modifier) {
+fun PreferencesBasicContent(
+    preferences: StashPreferences,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
-    val pm = remember { PreferenceManager.getDefaultSharedPreferences(context) }
+    val scope = rememberCoroutineScope()
     LazyColumn(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -50,7 +55,7 @@ fun PreferencesBasicContent(modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
-        preferences.forEach { group ->
+        basicPreferences.forEach { group ->
             item {
                 Text(
                     text = stringResource(group.title),
@@ -61,9 +66,9 @@ fun PreferencesBasicContent(modifier: Modifier = Modifier) {
             group.preferences.forEach { pref ->
                 pref as StashPreference<Any>
                 item {
-                    val key = stringResource(pref.key)
-                    var value by remember { mutableStateOf(pref.getter.invoke(pm, key)) }
+                    var value by remember { mutableStateOf(pref.getter.invoke(preferences)) }
                     ComposablePreference(
+                        preferences = preferences,
                         preference = pref,
                         value = value,
                         onValueChange = { newValue ->
@@ -79,10 +84,12 @@ fun PreferencesBasicContent(modifier: Modifier = Modifier) {
                                         ).show()
                                 }
                                 PreferenceValidation.Valid -> {
-                                    pm.edit {
-                                        pref.setter.invoke(this, key, newValue)
+                                    scope.launch(StashCoroutineExceptionHandler()) {
+                                        context.preferences.updateData { prefs ->
+                                            pref.setter(prefs, newValue)
+                                        }
+                                        value = newValue
                                     }
-                                    value = newValue
                                 }
                             }
                         },

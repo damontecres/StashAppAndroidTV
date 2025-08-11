@@ -22,7 +22,6 @@ fun ClickPreference(
             Text(
                 text = title,
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
             )
         },
         supportingContent = {
@@ -30,7 +29,6 @@ fun ClickPreference(
                 Text(
                     text = it,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
         },
