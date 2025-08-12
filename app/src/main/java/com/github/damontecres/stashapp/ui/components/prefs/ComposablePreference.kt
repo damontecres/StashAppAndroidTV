@@ -1,5 +1,8 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
@@ -13,15 +16,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.core.content.edit
+import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
+import com.github.damontecres.stashapp.ui.components.server.ConfigurePin
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.launch
 
@@ -38,6 +48,8 @@ fun <T> ComposablePreference(
     val scope = rememberCoroutineScope()
 
     var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
+    var showPinDialog by remember { mutableStateOf<StashPinPreference?>(null) }
+
     val title = stringResource(preference.title)
     when (preference) {
         StashPreference.CurrentServer -> {
@@ -80,7 +92,28 @@ fun <T> ComposablePreference(
                 modifier = modifier,
             )
 
-        is StashPinPreference -> {}
+        is StashPinPreference -> {
+            val enabled = (value as String).isNotNullOrBlank()
+            SwitchPreference(
+                title = stringResource(preference.title),
+                value = enabled,
+                summary = preference.summary(context, value),
+                onClick = {
+                    if (enabled) {
+                        // Enabled, so disable
+                        onValueChange.invoke("" as T)
+                        PreferenceManager
+                            .getDefaultSharedPreferences(context)
+                            .edit(true) {
+                                remove(context.getString(getPinPreferenceKey(preference)))
+                            }
+                    } else {
+                        showPinDialog = preference
+                    }
+                },
+                modifier = Modifier,
+            )
+        }
         is StashStringPreference -> {}
 
         is StashChoicePreference -> {
@@ -136,6 +169,29 @@ fun <T> ComposablePreference(
             onDismissRequest = { dialogParams = null },
             waitToLoad = false,
         )
+    }
+    AnimatedVisibility(showPinDialog != null) {
+        Dialog(
+            onDismissRequest = { showPinDialog = null },
+        ) {
+            showPinDialog?.let { pref ->
+                ConfigurePin(
+                    onCancel = { showPinDialog = null },
+                    onSubmit = { pin ->
+                        onValueChange.invoke(pin as T)
+                        showPinDialog = null
+                    },
+                    descriptionString = pref.description,
+                    cancelString = R.string.stashapp_actions_cancel,
+                    modifier =
+                        Modifier
+                            .background(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                shape = RoundedCornerShape(8.dp),
+                            ),
+                )
+            }
+        }
     }
 }
 

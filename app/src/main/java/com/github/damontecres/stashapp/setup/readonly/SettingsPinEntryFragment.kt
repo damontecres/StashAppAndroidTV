@@ -58,7 +58,7 @@ class SettingsPinEntryFragment : GuidedStepSupportFragment() {
             val enteredPIN =
                 findActionById(ACTION_PIN)!!.editDescription?.toString()?.ifBlank { null }
             val pin = preferences.getString(getString(R.string.pref_key_read_only_mode_pin), null)
-            if (enteredPIN != null && pin == enteredPIN || true) {
+            if (enteredPIN != null && pin == enteredPIN) {
                 finishGuidedStepSupportFragments()
                 serverViewModel.navigationManager.navigate(
                     Destination.Settings(

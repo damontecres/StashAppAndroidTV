@@ -1,13 +1,10 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,7 +20,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
@@ -31,12 +27,10 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.proto.StashPreferences
-import com.github.damontecres.stashapp.ui.components.server.ConfigurePin
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.preferences
 import kotlinx.coroutines.launch
 
@@ -82,8 +76,6 @@ fun PreferencesBasicContent(
     val focusRequester = remember { FocusRequester() }
     var preferences by remember { mutableStateOf(initialPreferences) }
 
-    var showPinDialog by remember { mutableStateOf<StashPinPreference?>(null) }
-
     LaunchedEffect(Unit) {
         focusRequester.tryRequestFocus()
     }
@@ -114,109 +106,62 @@ fun PreferencesBasicContent(
                 pref as StashPreference<Any>
                 item {
                     val value = pref.getter.invoke(preferences)
-                    if (pref is StashPinPreference) {
-                        val enabled = (value as String).isNotNullOrBlank()
-                        SwitchPreference(
-                            title = stringResource(pref.title),
-                            value = enabled,
-                            summary = pref.summary(context, value),
-                            onClick = {
-                                if (enabled) {
-                                    // Enabled, so disable
+                    ComposablePreference(
+                        server = server,
+                        navigationManager = navigationManager,
+                        preference = pref,
+                        value = value,
+                        onValueChange = { newValue ->
+                            val validation = pref.validate(newValue)
+                            when (validation) {
+                                is PreferenceValidation.Invalid -> {
+                                    // TODO?
+                                    Toast
+                                        .makeText(
+                                            context,
+                                            validation.message,
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                }
+
+                                PreferenceValidation.Valid -> {
                                     scope.launch(StashCoroutineExceptionHandler()) {
                                         preferences =
                                             context.preferences.updateData { prefs ->
-                                                pref.setter(prefs, "")
+                                                pref.setter(prefs, newValue)
                                             }
-                                        PreferenceManager
-                                            .getDefaultSharedPreferences(context)
-                                            .edit(true) {
-                                                remove(context.getString(getPinPreferenceKey(pref)))
-                                            }
-                                    }
-                                } else {
-                                    showPinDialog = pref
-                                }
-                            },
-                            modifier = Modifier,
-                        )
-                    } else {
-                        ComposablePreference(
-                            server = server,
-                            navigationManager = navigationManager,
-                            preference = pref,
-                            value = value,
-                            onValueChange = { newValue ->
-                                val validation = pref.validate(newValue)
-                                when (validation) {
-                                    is PreferenceValidation.Invalid -> {
-                                        // TODO?
-                                        Toast
-                                            .makeText(
-                                                context,
-                                                validation.message,
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                    }
-
-                                    PreferenceValidation.Valid -> {
-                                        scope.launch(StashCoroutineExceptionHandler()) {
-                                            preferences =
-                                                context.preferences.updateData { prefs ->
-                                                    pref.setter(prefs, newValue)
+                                        if (pref is StashPinPreference) {
+                                            // TODO also store in shared preferences
+                                            PreferenceManager
+                                                .getDefaultSharedPreferences(context)
+                                                .edit(true) {
+                                                    putString(
+                                                        context.getString(
+                                                            getPinPreferenceKey(
+                                                                pref,
+                                                            ),
+                                                        ),
+                                                        (newValue as String).ifBlank { null },
+                                                    )
                                                 }
                                         }
                                     }
                                 }
-                            },
-                            modifier =
-                                Modifier.ifElse(
-                                    groupIndex == 0 && prefIndex == 0,
-                                    Modifier.focusRequester(focusRequester),
-                                ),
-                        )
-                    }
-                }
-            }
-        }
-    }
-    AnimatedVisibility(showPinDialog != null) {
-        Dialog(
-            onDismissRequest = { showPinDialog = null },
-        ) {
-            showPinDialog?.let { pref ->
-                ConfigurePin(
-                    onCancel = { showPinDialog = null },
-                    onSubmit = { pin ->
-                        scope.launch(StashCoroutineExceptionHandler()) {
-                            // TODO Save to both new preferences and shared preferences for now
-                            preferences =
-                                context.preferences.updateData { prefs ->
-                                    pref.setter(prefs, pin)
-                                }
-                            PreferenceManager
-                                .getDefaultSharedPreferences(context)
-                                .edit(true) {
-                                    putString(context.getString(getPinPreferenceKey(pref)), pin)
-                                }
-                            showPinDialog = null
-                        }
-                    },
-                    descriptionString = pref.description,
-                    cancelString = R.string.stashapp_actions_cancel,
-                    modifier =
-                        Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                shape = RoundedCornerShape(8.dp),
+                            }
+                        },
+                        modifier =
+                            Modifier.ifElse(
+                                groupIndex == 0 && prefIndex == 0,
+                                Modifier.focusRequester(focusRequester),
                             ),
-                )
+                    )
+                }
             }
         }
     }
 }
 
-private fun getPinPreferenceKey(pref: StashPreference<*>) =
+fun getPinPreferenceKey(pref: StashPreference<*>) =
     when (pref) {
         StashPreference.PinCode -> R.string.pref_key_pin_code
         StashPreference.ReadOnlyMode -> R.string.pref_key_read_only_mode_pin
