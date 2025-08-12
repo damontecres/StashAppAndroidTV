@@ -40,6 +40,7 @@ fun InitialSetup(
 
     var server by remember { mutableStateOf<StashServer?>(null) }
     var showPinDialog by remember { mutableStateOf(false) }
+    val isNotTvDevice = isNotTvDevice
 
     fun submit(pin: String?) {
         server?.let {

@@ -194,13 +194,14 @@ sealed interface SortOption {
     }
 
     companion object {
-        private val MAPPING =
+        private val MAPPING by lazy {
             SortOption::class
                 .nestedClasses
                 .filter { klass -> klass.isSubclassOf(SortOption::class) }
                 .mapNotNull { klass -> klass.objectInstance }
                 .filterIsInstance<SortOption>()
                 .associateBy { it.key }
+        }
 
         fun getByKey(key: String): SortOption =
             if (key.startsWith("random")) {

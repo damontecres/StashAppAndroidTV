@@ -44,7 +44,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.EditTextBox
@@ -465,7 +465,7 @@ fun AllowSelfSignedCertsDialog(
 @Preview
 @Composable
 private fun AddServerPreview() {
-    AppTheme {
+    PreviewTheme {
         AllowSelfSignedCertsDialog(
             {},
             {},

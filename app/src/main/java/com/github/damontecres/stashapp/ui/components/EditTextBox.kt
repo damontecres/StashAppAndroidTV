@@ -36,8 +36,8 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.Material3AppTheme
+import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.compat.Button
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -191,7 +191,7 @@ fun SearchEditTextBox(
 @Preview
 @Composable
 private fun EditTextBoxPreview() {
-    AppTheme {
+    PreviewTheme {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier =

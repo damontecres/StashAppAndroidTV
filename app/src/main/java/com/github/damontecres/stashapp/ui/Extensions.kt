@@ -41,6 +41,7 @@ import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.compat.detectTvDevice
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.name
@@ -69,6 +70,13 @@ object PlayerContext {
 
 val LocalPlayerContext =
     compositionLocalOf<PlayerContext> { PlayerContext }
+
+enum class DeviceType {
+    TV,
+    TOUCH,
+}
+
+val LocalDeviceType = compositionLocalOf { if (detectTvDevice) DeviceType.TV else DeviceType.TOUCH }
 
 fun Modifier.enableMarquee(focused: Boolean) =
     if (focused) {

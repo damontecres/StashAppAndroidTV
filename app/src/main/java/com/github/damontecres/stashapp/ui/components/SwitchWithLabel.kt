@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
-import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.compat.Button
 
 @Composable
@@ -84,7 +84,7 @@ fun SwitchWithLabel(
 @Preview
 @Composable
 private fun SwitchWithLabelPreview() {
-    AppTheme {
+    PreviewTheme {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Button(onClick = {}) { Text(text = "Create Filter") }
             SwitchWithLabel(

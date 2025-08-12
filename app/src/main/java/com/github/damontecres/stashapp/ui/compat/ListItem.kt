@@ -18,6 +18,8 @@ import androidx.tv.material3.ListItemGlow
 import androidx.tv.material3.ListItemScale
 import androidx.tv.material3.ListItemShape
 import androidx.tv.material3.LocalContentColor
+import com.github.damontecres.stashapp.ui.DeviceType
+import com.github.damontecres.stashapp.ui.LocalDeviceType
 
 @Composable
 fun ListItem(
@@ -39,7 +41,7 @@ fun ListItem(
     glow: ListItemGlow = ListItemDefaults.glow(),
     interactionSource: MutableInteractionSource? = null,
 ) {
-    if (isTvDevice) {
+    if (LocalDeviceType.current == DeviceType.TV) {
         androidx.tv.material3.ListItem(
             selected = selected,
             onClick = onClick,

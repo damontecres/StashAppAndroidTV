@@ -16,6 +16,8 @@ import androidx.tv.material3.ButtonScale
 import androidx.tv.material3.ButtonShape
 import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
+import com.github.damontecres.stashapp.ui.DeviceType
+import com.github.damontecres.stashapp.ui.LocalDeviceType
 
 val DefaultButtonColors: androidx.compose.material3.ButtonColors
     @Composable
@@ -42,7 +44,7 @@ fun Button(
     interactionSource: MutableInteractionSource? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
-    if (isTvDevice) {
+    if (LocalDeviceType.current == DeviceType.TV) {
         Button(
             onClick = onClick,
             modifier = modifier,
