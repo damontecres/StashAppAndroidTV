@@ -111,6 +111,7 @@ fun ImagePage(
     viewModel: ImageDetailsViewModel = viewModel(),
 ) {
     val context = LocalContext.current
+    val isNotTvDevice = isNotTvDevice
     LaunchedEffect(server, filter) {
         val slideshowDelay =
             PreferenceManager.getDefaultSharedPreferences(context).getInt(

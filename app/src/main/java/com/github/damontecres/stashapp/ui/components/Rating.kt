@@ -50,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -59,8 +60,8 @@ import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.ui.AppColors
-import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.tryRequestFocus
@@ -89,7 +90,8 @@ enum class StarRatingPrecision {
 val FilledStarColor = Color(0xFFFFC700)
 val EmptyStarColor = Color(0x2AFFC700)
 
-val ratingBarHeight = if (isTvDevice) 32.dp else 48.dp
+val ratingBarHeight: Dp
+    @Composable get() = if (isTvDevice) 32.dp else 48.dp
 
 @Composable
 fun Rating100(
@@ -413,7 +415,7 @@ fun DecimalRating(
 @Preview
 @Composable
 private fun StarRatingPreview() {
-    AppTheme {
+    PreviewTheme {
         val bgColor = AppColors.TransparentBlack75
         Column(modifier = Modifier.background(Color.DarkGray)) {
             var rating by remember { mutableIntStateOf(50) }

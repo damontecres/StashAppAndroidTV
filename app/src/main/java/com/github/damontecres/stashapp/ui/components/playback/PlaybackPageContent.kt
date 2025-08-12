@@ -454,10 +454,12 @@ fun PlaybackPageContent(
 
     val isMarkerPlaylist = playlistPager?.filter?.dataType == DataType.MARKER
 
+    val isTvDevice = isTvDevice
+
     LaunchedEffect(Unit) {
         viewModel.init(server, markersEnabled, uiConfig.persistVideoFilters, useVideoFilters)
         viewModel.changeScene(playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
-        if (isNotTvDevice) {
+        if (!isTvDevice) {
             viewModel.videoFilter.startThrottling(DRAG_THROTTLE_DELAY)
         }
         maybeMuteAudio(context, false, player)
@@ -668,6 +670,7 @@ fun PlaybackPageContent(
     val playbackKeyHandler =
         remember {
             PlaybackKeyHandler(
+                isTvDevice = isTvDevice,
                 player = player,
                 controlsEnabled = controlsEnabled,
                 skipWithLeftRight = skipWithLeftRight,
@@ -1002,6 +1005,7 @@ fun Player.setupFinishedBehavior(
 }
 
 class PlaybackKeyHandler(
+    private val isTvDevice: Boolean,
     private val player: Player,
     private val controlsEnabled: Boolean,
     private val skipWithLeftRight: Boolean,
@@ -1070,7 +1074,7 @@ class PlaybackKeyHandler(
         } else if (it.key == Key.Back && controllerViewState.controlsVisible) {
             // TODO change this to a BackHandler?
             controllerViewState.hideControls()
-            if (isNotTvDevice) {
+            if (!isTvDevice) {
                 // Allow to propagate up
                 result = false
             }

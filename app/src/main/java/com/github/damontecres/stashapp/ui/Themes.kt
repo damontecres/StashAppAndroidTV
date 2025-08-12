@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -15,7 +16,6 @@ import androidx.preference.PreferenceManager
 import androidx.tv.material3.ColorScheme
 import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.theme.inversePrimaryDark
 import com.github.damontecres.stashapp.ui.theme.inversePrimaryLight
 import kotlinx.serialization.json.Json
@@ -115,7 +115,7 @@ fun AppTheme(
     colorScheme: AppColorScheme = getTheme(LocalContext.current, forceDark, isSystemInDarkTheme()),
     content: @Composable () -> Unit,
 ) {
-    if (isTvDevice) {
+    if (LocalDeviceType.current == DeviceType.TV) {
         MaterialTheme(
             colorScheme = colorScheme.tvColorScheme,
             content = content,
@@ -133,14 +133,6 @@ fun AppTheme(
 @Composable
 fun DefaultTheme(content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = defaultColorSchemeSet.dark.tvColorScheme, content = content)
-}
-
-@Composable
-fun DefaultMaterial3Theme(content: @Composable () -> Unit) {
-    androidx.compose.material3.MaterialTheme(
-        colorScheme = defaultColorSchemeSet.dark.colorScheme,
-        content = content,
-    )
 }
 
 @Composable
@@ -172,6 +164,30 @@ fun Material3AppTheme(content: @Composable () -> Unit) {
         colorScheme = colorScheme.colorScheme,
         content = content,
     )
+}
+
+/**
+ * A theme useful for @Preview composables which provides [LocalDeviceType] for the specified device type
+ */
+@Composable
+fun PreviewTheme(
+    deviceType: DeviceType = DeviceType.TV,
+    useDark: Boolean = true,
+    content: @Composable () -> Unit,
+) {
+    CompositionLocalProvider(LocalDeviceType provides deviceType) {
+        val colorScheme = if (useDark) defaultColorSchemeSet.dark else defaultColorSchemeSet.light
+        if (deviceType == DeviceType.TV) {
+            MaterialTheme(colorScheme = colorScheme.tvColorScheme, content = content)
+        } else {
+            MaterialTheme(colorScheme = colorScheme.tvColorScheme) {
+                androidx.compose.material3.MaterialTheme(
+                    colorScheme = colorScheme.colorScheme,
+                    content = content,
+                )
+            }
+        }
+    }
 }
 
 sealed class AppColors private constructor() {

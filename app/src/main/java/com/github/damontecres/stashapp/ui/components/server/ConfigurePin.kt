@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -147,7 +147,7 @@ fun ConfigurePin(
 @Preview
 @Composable
 private fun ConfigurePinPreview() {
-    AppTheme {
+    PreviewTheme {
         ConfigurePin(
             {},
             {},

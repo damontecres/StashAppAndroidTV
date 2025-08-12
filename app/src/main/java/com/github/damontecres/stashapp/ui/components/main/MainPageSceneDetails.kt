@@ -28,8 +28,8 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.TitleValueText
@@ -167,7 +167,7 @@ fun MainPageSceneDetails(
 @Preview(device = "spec:parent=tv_1080p", backgroundColor = 0xFF383535)
 @Composable
 private fun MainPageSceneDetailsPreview() {
-    AppTheme {
+    PreviewTheme {
         MainPageSceneDetails(
             scene = slimScenePreview,
             uiConfig = uiConfigPreview,

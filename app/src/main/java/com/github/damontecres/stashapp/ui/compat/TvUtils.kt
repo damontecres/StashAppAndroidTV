@@ -5,10 +5,19 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.util.Log
+import androidx.compose.runtime.Composable
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.ui.DeviceType
+import com.github.damontecres.stashapp.ui.LocalDeviceType
+
+val isTvDevice: Boolean
+    @Composable get() = LocalDeviceType.current == DeviceType.TV
+
+val isNotTvDevice: Boolean
+    @Composable get() = !isTvDevice
 
 // TODO make this a preference?
-val isTvDevice by lazy {
+val detectTvDevice by lazy {
     val context = StashApplication.getApplication()
     val pm = context.packageManager
     val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager
@@ -21,5 +30,3 @@ val isTvDevice by lazy {
     Log.i("isTvDevice", "isTvDevice=$isTvDevice")
     isTvDevice
 }
-
-val isNotTvDevice = !isTvDevice

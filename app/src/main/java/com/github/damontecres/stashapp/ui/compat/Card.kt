@@ -15,6 +15,8 @@ import androidx.tv.material3.CardScale
 import androidx.tv.material3.CardShape
 import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
+import com.github.damontecres.stashapp.ui.DeviceType
+import com.github.damontecres.stashapp.ui.LocalDeviceType
 
 @Composable
 fun Card(
@@ -29,7 +31,7 @@ fun Card(
     interactionSource: MutableInteractionSource? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    if (isTvDevice) {
+    if (LocalDeviceType.current == DeviceType.TV) {
         androidx.tv.material3.Card(
             onClick = onClick,
             modifier = modifier,
