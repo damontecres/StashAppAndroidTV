@@ -119,9 +119,11 @@ fun <T> ComposablePreference(
         is StashChoicePreference -> {
             val values = stringArrayResource(preference.displayValues).toList()
             val summary =
-                preference.summary(context, value) ?: preference
-                    .valueToIndex(value as T)
-                    .let { values[it] }
+                preference.summary?.let { stringResource(it) }
+                    ?: preference.summary(context, value)
+                    ?: preference
+                        .valueToIndex(value as T)
+                        .let { values[it] }
             ClickPreference(
                 title = title,
                 summary = summary,

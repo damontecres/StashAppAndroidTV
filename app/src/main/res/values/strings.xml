@@ -168,5 +168,29 @@
     <string name="up_down_next_previous_pref_title">Use Up/Down for Previous/Next</string>
     <string name="captions_default">Turn captions on by default</string>
     <string name="captions_default_summary">Whether to turn captions for the device\'s language on by default</string>
+    <string name="enabled_for_markers">Enabled for marker playlists</string>
+    <string name="scroll_next_view_all">Scroll to next on View All</string>
+    <string name="scroll_next_view_all_summary">Automatically scroll down to the \'next\' results when clicking View All on main page</string>
+    <string name="scroll_to_top_back_summary">Scroll to the top of page when pressing the back button</string>
+    <string name="scroll_to_top_back">Scroll to top on back</string>
+    <string name="grid_position_footer">Show position footer on grids</string>
+    <string name="show_card_rating">Show rating on cards</string>
+    <string name="play_preview_audio">Play audio for video previews</string>
+    <string name="page_with_remote_buttons">Page up/down with remote buttons</string>
+    <string name="page_with_remote_buttons_summary_on">Fast-forward/rewind/channel buttons will page</string>
+    <string name="dpad_skipping">D-Pad skipping</string>
+    <string name="dpad_skipping_summary_on">Skip back/forward with D-Pad left/right</string>
+    <string name="dpad_skipping_summary_off">D-Pad left/right will not skip</string>
+    <string name="dpad_skip_indicator">Show D-Pad skipping indicator</string>
+    <string name="stream_choice">Stream choice</string>
+    <string name="stream_choice_summary">Which stream type to use when direct is unavailable</string>
+    <string name="playback_debug_info">Playback debug info</string>
+    <string name="hide_controller_timeout">Hide controls after</string>
+    <string name="save_play_history_summary_on">Save if also enabled on server</string>
+    <string name="save_play_history">Save play history</string>
+    <string name="playback_start_muted_summary_off">Play audio normally</string>
+    <string name="playback_start_muted_summary_on">Manually enable audio track</string>
+    <string name="transcode_above_resolution">Transcode when resolution above</string>
+    <string name="advanced_settings_summary">Go to advanced settings</string>
 
 </resources>

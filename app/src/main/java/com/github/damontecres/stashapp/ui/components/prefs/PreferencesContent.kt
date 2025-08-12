@@ -63,13 +63,23 @@ private val basicPreferences =
                 StashPreference.FinishedBehavior,
             ),
         ),
+        PreferenceGroup(
+            R.string.advanced_settings,
+            listOf(
+                StashPreference.AdvancedSettings,
+            ),
+        ),
     )
 
 private val advancedPreferences =
     listOf(
         PreferenceGroup(
+            R.string.advanced_ui,
+            StashPreference.advancedUiPrefs,
+        ),
+        PreferenceGroup(
             R.string.playback,
-            listOf(),
+            StashPreference.advancedPlaybackPrefs,
         ),
     )
 

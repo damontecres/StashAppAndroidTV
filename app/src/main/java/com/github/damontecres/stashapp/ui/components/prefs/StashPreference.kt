@@ -7,7 +7,9 @@ import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.PlaybackFinishBehavior
+import com.github.damontecres.stashapp.proto.Resolution
 import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.proto.ThemeStyle
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.updateInterfacePreferences
@@ -59,6 +61,7 @@ sealed interface StashPreference<T> {
     fun validate(value: T): PreferenceValidation = PreferenceValidation.Valid
 
     companion object {
+        // Basic
         val CurrentServer =
             StashClickablePreference(
                 title = R.string.current_server,
@@ -197,7 +200,15 @@ sealed interface StashPreference<T> {
                     prefs.updatePinPreferences { readOnlyPin = value }
                 },
             )
+        val AdvancedSettings =
+            StashDestinationPreference(
+                title = R.string.advanced_settings,
+                summary = R.string.advanced_settings_summary,
+                destination = Destination.Settings(PreferenceScreenOption.ADVANCED),
+            )
+        // End basic
 
+        // More UI settings
         val RememberTab =
             StashSwitchPreference(
                 title = R.string.remember_selected_tab,
@@ -332,12 +343,12 @@ sealed interface StashPreference<T> {
         val UpDownNextPrevious =
             StashSwitchPreference(
                 title = R.string.up_down_next_previous_pref_title,
-                defaultValue = true,
+                defaultValue = false,
                 getter = { it.interfacePreferences.useUpDownPreviousNext },
                 setter = { prefs, value ->
                     prefs.updateInterfacePreferences { useUpDownPreviousNext = value }
                 },
-                summaryOn = R.string.stashapp_actions_enable,
+                summaryOn = R.string.enabled_for_markers,
                 summaryOff = R.string.transcode_options_disabled,
             )
 
@@ -350,6 +361,160 @@ sealed interface StashPreference<T> {
                     prefs.updateInterfacePreferences { captionsByDefault = value }
                 },
                 summary = R.string.captions_default_summary,
+            )
+
+        // Advanced
+        val advancedUiPrefs =
+            listOf(
+                StashSwitchPreference(
+                    title = R.string.scroll_next_view_all,
+                    defaultValue = true,
+                    getter = { it.interfacePreferences.scrollNextViewAll },
+                    setter = { prefs, value ->
+                        prefs.updateInterfacePreferences { scrollNextViewAll = value }
+                    },
+                    summary = R.string.scroll_next_view_all_summary,
+                ),
+                StashSwitchPreference(
+                    title = R.string.scroll_to_top_back,
+                    defaultValue = true,
+                    getter = { it.interfacePreferences.scrollTopOnBack },
+                    setter = { prefs, value ->
+                        prefs.updateInterfacePreferences { scrollTopOnBack = value }
+                    },
+                    summary = R.string.scroll_to_top_back_summary,
+                ),
+                StashSwitchPreference(
+                    title = R.string.grid_position_footer,
+                    defaultValue = true,
+                    getter = { it.interfacePreferences.showPositionFooter },
+                    setter = { prefs, value ->
+                        prefs.updateInterfacePreferences { showPositionFooter = value }
+                    },
+                    summaryOn = R.string.stashapp_actions_show,
+                    summaryOff = R.string.stashapp_actions_hide,
+                ),
+                StashSwitchPreference(
+                    title = R.string.show_card_rating,
+                    defaultValue = true,
+                    getter = { it.interfacePreferences.showRatingOnCards },
+                    setter = { prefs, value ->
+                        prefs.updateInterfacePreferences { showRatingOnCards = value }
+                    },
+                    summaryOn = R.string.stashapp_actions_show,
+                    summaryOff = R.string.stashapp_actions_hide,
+                ),
+                StashSwitchPreference(
+                    title = R.string.play_preview_audio,
+                    defaultValue = false,
+                    getter = { it.interfacePreferences.videoPreviewAudio },
+                    setter = { prefs, value ->
+                        prefs.updateInterfacePreferences { videoPreviewAudio = value }
+                    },
+                    summaryOn = R.string.stashapp_actions_enable,
+                    summaryOff = R.string.transcode_options_disabled,
+                ),
+                StashSwitchPreference(
+                    title = R.string.page_with_remote_buttons,
+                    defaultValue = true,
+                    getter = { it.interfacePreferences.pageWithRemoteButtons },
+                    setter = { prefs, value ->
+                        prefs.updateInterfacePreferences { pageWithRemoteButtons = value }
+                    },
+                    summaryOn = R.string.page_with_remote_buttons_summary_on,
+                    summaryOff = R.string.transcode_options_disabled,
+                ),
+            )
+
+        val advancedPlaybackPrefs =
+            listOf(
+                StashSwitchPreference(
+                    title = R.string.dpad_skipping,
+                    defaultValue = true,
+                    getter = { it.playbackPreferences.dpadSkipping },
+                    setter = { prefs, value ->
+                        prefs.updatePlaybackPreferences { dpadSkipping = value }
+                    },
+                    summaryOn = R.string.dpad_skipping_summary_on,
+                    summaryOff = R.string.dpad_skipping_summary_off,
+                ),
+                StashSwitchPreference(
+                    title = R.string.dpad_skip_indicator,
+                    defaultValue = true,
+                    getter = { it.interfacePreferences.dpadSkipIndicator },
+                    setter = { prefs, value ->
+                        prefs.updateInterfacePreferences { dpadSkipIndicator = value }
+                    },
+                    summaryOn = R.string.stashapp_actions_show,
+                    summaryOff = R.string.stashapp_actions_hide,
+                ),
+                StashChoicePreference<StreamChoice>(
+                    title = R.string.stream_choice,
+                    summary = R.string.stream_choice_summary,
+                    defaultValue = StreamChoice.STREAM_CHOICE_HLS,
+                    displayValues = R.array.stream_options,
+                    indexToValue = { StreamChoice.forNumber(it) },
+                    valueToIndex = { it.number },
+                    getter = { it.playbackPreferences.streamChoice },
+                    setter = { prefs, value ->
+                        prefs.updatePlaybackPreferences { streamChoice = value }
+                    },
+                ),
+                // TODO direct play prefs
+                StashSwitchPreference(
+                    title = R.string.playback_debug_info,
+                    defaultValue = false,
+                    getter = { it.playbackPreferences.showDebugInfo },
+                    setter = { prefs, value ->
+                        prefs.updatePlaybackPreferences { showDebugInfo = value }
+                    },
+                    summaryOn = R.string.stashapp_actions_show,
+                    summaryOff = R.string.stashapp_actions_hide,
+                ),
+                StashSliderPreference(
+                    title = R.string.hide_controller_timeout,
+                    defaultValue = 3500,
+                    min = 500,
+                    max = 15.seconds.inWholeMilliseconds.toInt(),
+                    interval = 100,
+                    getter = { it.playbackPreferences.controllerTimeoutMs },
+                    setter = { prefs, value ->
+                        prefs.updatePlaybackPreferences { controllerTimeoutMs = value }
+                    },
+                    summarizer = { value -> value?.let { "${value / 1000.0} seconds" } },
+                ),
+                StashSwitchPreference(
+                    title = R.string.save_play_history,
+                    defaultValue = true,
+                    getter = { it.playbackPreferences.savePlayHistory },
+                    setter = { prefs, value ->
+                        prefs.updatePlaybackPreferences { savePlayHistory = value }
+                    },
+                    summaryOn = R.string.save_play_history_summary_on,
+                    summaryOff = R.string.transcode_options_disabled,
+                ),
+                StashSwitchPreference(
+                    title = R.string.start_playback_without_audio,
+                    defaultValue = false,
+                    getter = { it.playbackPreferences.startWithNoAudio },
+                    setter = { prefs, value ->
+                        prefs.updatePlaybackPreferences { startWithNoAudio = value }
+                    },
+                    summaryOn = R.string.playback_start_muted_summary_on,
+                    summaryOff = R.string.playback_start_muted_summary_off,
+                ),
+                StashChoicePreference<Resolution>(
+                    title = R.string.transcode_above_resolution,
+                    summary = null,
+                    defaultValue = Resolution.RESOLUTION_UNSPECIFIED,
+                    displayValues = R.array.transcode_options,
+                    indexToValue = { Resolution.forNumber(it) },
+                    valueToIndex = { it.number },
+                    getter = { it.playbackPreferences.transcodeAboveResolution },
+                    setter = { prefs, value ->
+                        prefs.updatePlaybackPreferences { transcodeAboveResolution = value }
+                    },
+                ),
             )
     }
 }
@@ -421,6 +586,7 @@ data class StashChoicePreference<T>(
     val valueToIndex: (T) -> Int,
     override val getter: (prefs: StashPreferences) -> T,
     override val setter: (prefs: StashPreferences, value: T) -> StashPreferences,
+    @param:StringRes val summary: Int? = null,
 ) : StashPreference<T>
 
 data class StashClickablePreference(

@@ -43,6 +43,7 @@ message InterfacePreferences {
   bool video_preview_audio = 20;
   bool page_with_remote_buttons = 21;
 
+  bool dpad_skip_indicator = 22;
 }
 
 enum TabType {
