@@ -229,7 +229,7 @@ abstract class StashStringPreference(
 class StashPinPreference(
     @StringRes title: Int,
     defaultValue: String = "",
-    @StringRes description: Int,
+    @param:StringRes val description: Int,
     override val getter: (prefs: StashPreferences) -> String,
     override val setter: (prefs: StashPreferences, value: String) -> StashPreferences,
 ) : StashStringPreference(

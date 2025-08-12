@@ -24,6 +24,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.edit
+import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -80,8 +82,7 @@ fun PreferencesBasicContent(
     val focusRequester = remember { FocusRequester() }
     var preferences by remember { mutableStateOf(initialPreferences) }
 
-//    var readOnlyEnabled by remember { mutableStateOf(preferences.pinPreferences.readOnlyPin.isNotNullOrBlank()) }
-    var showReadOnlyDialog by remember { mutableStateOf(false) }
+    var showPinDialog by remember { mutableStateOf<StashPinPreference?>(null) }
 
     LaunchedEffect(Unit) {
         focusRequester.tryRequestFocus()
@@ -113,11 +114,12 @@ fun PreferencesBasicContent(
                 pref as StashPreference<Any>
                 item {
                     val value = pref.getter.invoke(preferences)
-                    if (pref == StashPreference.ReadOnlyMode) {
+                    if (pref is StashPinPreference) {
                         val enabled = (value as String).isNotNullOrBlank()
                         SwitchPreference(
                             title = stringResource(pref.title),
                             value = enabled,
+                            summary = pref.summary(context, value),
                             onClick = {
                                 if (enabled) {
                                     // Enabled, so disable
@@ -126,9 +128,14 @@ fun PreferencesBasicContent(
                                             context.preferences.updateData { prefs ->
                                                 pref.setter(prefs, "")
                                             }
+                                        PreferenceManager
+                                            .getDefaultSharedPreferences(context)
+                                            .edit(true) {
+                                                remove(context.getString(getPinPreferenceKey(pref)))
+                                            }
                                     }
                                 } else {
-                                    showReadOnlyDialog = true
+                                    showPinDialog = pref
                                 }
                             },
                             modifier = Modifier,
@@ -173,31 +180,45 @@ fun PreferencesBasicContent(
             }
         }
     }
-    AnimatedVisibility(showReadOnlyDialog) {
+    AnimatedVisibility(showPinDialog != null) {
         Dialog(
-            onDismissRequest = { showReadOnlyDialog = false },
+            onDismissRequest = { showPinDialog = null },
         ) {
-            ConfigurePin(
-                onCancel = { showReadOnlyDialog = false },
-                onSubmit = { pin ->
-                    scope.launch(StashCoroutineExceptionHandler()) {
-                        preferences =
-                            context.preferences
-                                .updateData { prefs ->
-                                    StashPreference.ReadOnlyMode.setter(prefs, pin)
+            showPinDialog?.let { pref ->
+                ConfigurePin(
+                    onCancel = { showPinDialog = null },
+                    onSubmit = { pin ->
+                        scope.launch(StashCoroutineExceptionHandler()) {
+                            // TODO Save to both new preferences and shared preferences for now
+                            preferences =
+                                context.preferences.updateData { prefs ->
+                                    pref.setter(prefs, pin)
                                 }
-                        showReadOnlyDialog = false
-                    }
-                },
-                descriptionString = R.string.read_only_pin_description,
-                cancelString = R.string.stashapp_actions_cancel,
-                modifier =
-                    Modifier
-                        .background(
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = RoundedCornerShape(8.dp),
-                        ),
-            )
+                            PreferenceManager
+                                .getDefaultSharedPreferences(context)
+                                .edit(true) {
+                                    putString(context.getString(getPinPreferenceKey(pref)), pin)
+                                }
+                            showPinDialog = null
+                        }
+                    },
+                    descriptionString = pref.description,
+                    cancelString = R.string.stashapp_actions_cancel,
+                    modifier =
+                        Modifier
+                            .background(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                shape = RoundedCornerShape(8.dp),
+                            ),
+                )
+            }
         }
     }
 }
+
+private fun getPinPreferenceKey(pref: StashPreference<*>) =
+    when (pref) {
+        StashPreference.PinCode -> R.string.pref_key_pin_code
+        StashPreference.ReadOnlyMode -> R.string.pref_key_read_only_mode_pin
+        else -> throw IllegalStateException("Unknown preference type: $pref")
+    }
