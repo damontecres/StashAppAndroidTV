@@ -50,11 +50,11 @@ private val basicPreferences =
         PreferenceGroup(
             R.string.basic_interface,
             listOf(
-                StashPreference.AutoSubmitPin,
                 StashPreference.PinCode,
+                StashPreference.ReadOnlyMode,
+                StashPreference.AutoSubmitPin,
                 StashPreference.CardSize,
                 StashPreference.PlayVideoPreviews,
-                StashPreference.ReadOnlyMode,
                 StashPreference.MoreUiSettings,
             ),
         ),
@@ -72,14 +72,15 @@ private val basicPreferences =
 fun PreferencesBasicContent(
     server: StashServer,
     navigationManager: NavigationManager,
-    preferences: StashPreferences,
+    initialPreferences: StashPreferences,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
+    var preferences by remember { mutableStateOf(initialPreferences) }
 
-    var readOnlyEnabled by remember { mutableStateOf(preferences.pinPreferences.readOnlyPin.isNotNullOrBlank()) }
+//    var readOnlyEnabled by remember { mutableStateOf(preferences.pinPreferences.readOnlyPin.isNotNullOrBlank()) }
     var showReadOnlyDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -111,19 +112,20 @@ fun PreferencesBasicContent(
             group.preferences.forEachIndexed { prefIndex, pref ->
                 pref as StashPreference<Any>
                 item {
-                    var value by remember { mutableStateOf(pref.getter.invoke(preferences)) }
+                    val value = pref.getter.invoke(preferences)
                     if (pref == StashPreference.ReadOnlyMode) {
+                        val enabled = (value as String).isNotNullOrBlank()
                         SwitchPreference(
                             title = stringResource(pref.title),
-                            value = readOnlyEnabled,
+                            value = enabled,
                             onClick = {
-                                if (readOnlyEnabled) {
+                                if (enabled) {
                                     // Enabled, so disable
                                     scope.launch(StashCoroutineExceptionHandler()) {
-                                        context.preferences.updateData { prefs ->
-                                            pref.setter(prefs, "")
-                                        }
-                                        readOnlyEnabled = false
+                                        preferences =
+                                            context.preferences.updateData { prefs ->
+                                                pref.setter(prefs, "")
+                                            }
                                     }
                                 } else {
                                     showReadOnlyDialog = true
@@ -152,10 +154,10 @@ fun PreferencesBasicContent(
 
                                     PreferenceValidation.Valid -> {
                                         scope.launch(StashCoroutineExceptionHandler()) {
-                                            context.preferences.updateData { prefs ->
-                                                pref.setter(prefs, newValue)
-                                            }
-                                            value = newValue
+                                            preferences =
+                                                context.preferences.updateData { prefs ->
+                                                    pref.setter(prefs, newValue)
+                                                }
                                         }
                                     }
                                 }
@@ -179,11 +181,11 @@ fun PreferencesBasicContent(
                 onCancel = { showReadOnlyDialog = false },
                 onSubmit = { pin ->
                     scope.launch(StashCoroutineExceptionHandler()) {
-                        context.preferences
-                            .updateData { prefs ->
-                                StashPreference.ReadOnlyMode.setter(prefs, pin)
-                            }
-                        readOnlyEnabled = true
+                        preferences =
+                            context.preferences
+                                .updateData { prefs ->
+                                    StashPreference.ReadOnlyMode.setter(prefs, pin)
+                                }
                         showReadOnlyDialog = false
                     }
                 },

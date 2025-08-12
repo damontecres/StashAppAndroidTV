@@ -79,6 +79,7 @@ sealed interface StashPreference<T> {
             StashPinPreference(
                 title = R.string.pin_code,
                 defaultValue = "",
+                description = R.string.set_app_pin_code,
                 getter = { it.pinPreferences.pin },
                 setter = { prefs, value ->
                     prefs.updatePinPreferences { pin = value }
@@ -185,10 +186,10 @@ sealed interface StashPreference<T> {
             StashPinPreference(
                 title = R.string.read_only_mode,
                 defaultValue = "",
+                description = R.string.read_only_pin_description,
                 getter = { it.pinPreferences.readOnlyPin },
                 setter = { prefs, value ->
-                    // Handled separately in the pin preferences
-                    prefs
+                    prefs.updatePinPreferences { readOnlyPin = value }
                 },
             )
     }
@@ -228,6 +229,7 @@ abstract class StashStringPreference(
 class StashPinPreference(
     @StringRes title: Int,
     defaultValue: String = "",
+    @StringRes description: Int,
     override val getter: (prefs: StashPreferences) -> String,
     override val setter: (prefs: StashPreferences, value: String) -> StashPreferences,
 ) : StashStringPreference(
