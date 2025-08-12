@@ -69,8 +69,8 @@ import com.github.damontecres.stashapp.playback.TrackSupportReason
 import com.github.damontecres.stashapp.playback.TrackType
 import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.ui.AppColors
-import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.cards.RootCard
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
@@ -564,7 +564,7 @@ fun BasicMarkerCard(
 @Preview(device = "spec:parent=tv_1080p", backgroundColor = 0xFF383535)
 @Composable
 private fun PlaybackOverlayPreview() {
-    AppTheme {
+    PreviewTheme {
         val controllerViewState = ControllerViewState(3000, true)
         controllerViewState.showControls(Int.MAX_VALUE)
         PlaybackOverlay(

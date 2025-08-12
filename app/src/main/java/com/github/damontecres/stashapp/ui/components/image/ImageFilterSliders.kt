@@ -31,7 +31,8 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.VideoFilter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.DefaultTheme
+import com.github.damontecres.stashapp.ui.DeviceType
+import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.SliderBar
@@ -280,7 +281,7 @@ fun ImageFilterDialog(
 @Preview
 @Composable
 private fun ImageFilterSlidersPreview() {
-    DefaultTheme {
+    PreviewTheme(DeviceType.TV) {
         ImageFilterSliders(
             filter = VideoFilter(),
             showVideoOptions = true,

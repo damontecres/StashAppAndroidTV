@@ -30,7 +30,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.playback.PlaybackMode
-import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.EditButton
 import com.github.damontecres.stashapp.ui.components.OCounterButton
@@ -177,7 +177,7 @@ fun PlayButton(
 @Preview(widthDp = 800)
 @Composable
 private fun PlayButtonsPreview() {
-    AppTheme {
+    PreviewTheme {
         PlayButtons(
             resumePosition = 1000L,
             oCount = 10,

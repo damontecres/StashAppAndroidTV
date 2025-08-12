@@ -48,8 +48,8 @@ import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationListener
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.presenters.ScenePresenter
-import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.cards.IconRowText
 import com.github.damontecres.stashapp.ui.cards.ImageOverlay
 import com.github.damontecres.stashapp.ui.cards.RootCard
@@ -340,7 +340,7 @@ fun deleteJson(
 @Preview
 @Composable
 private fun ChooseThemePagePreview() {
-    AppTheme {
+    PreviewTheme {
         ChooseThemePage(
             server = StashServer("0.0.0.0", null),
             navigationManager =

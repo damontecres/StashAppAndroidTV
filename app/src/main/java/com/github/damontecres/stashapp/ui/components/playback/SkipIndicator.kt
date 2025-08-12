@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.util.ifElse
 import kotlin.math.abs
 
@@ -71,7 +71,7 @@ fun SkipIndicator(
 @Preview
 @Composable
 private fun SkipIndicatorPreview() {
-    AppTheme {
+    PreviewTheme {
         SkipIndicator(-3000L, {}, Modifier)
     }
 }

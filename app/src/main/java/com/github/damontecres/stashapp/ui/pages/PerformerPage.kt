@@ -62,10 +62,10 @@ import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationListener
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.GlobalContext
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -685,34 +685,33 @@ private fun PerformerDetailsPreview() {
     val longClicker =
         LongClicker<Any> { item, filterAndPosition ->
         }
+    PreviewTheme {
+        CompositionLocalProvider(
+            LocalGlobalContext provides
+                GlobalContext(
+                    StashServer("http://0.0.0.0", null),
+                    object : NavigationManager {
+                        override var previousDestination: Destination?
+                            get() = null
+                            set(value) {}
 
-    CompositionLocalProvider(
-        LocalGlobalContext provides
-            GlobalContext(
-                StashServer("http://0.0.0.0", null),
-                object : NavigationManager {
-                    override var previousDestination: Destination?
-                        get() = null
-                        set(value) {}
+                        override fun navigate(destination: Destination) {
+                        }
 
-                    override fun navigate(destination: Destination) {
-                    }
+                        override fun goBack() {
+                        }
 
-                    override fun goBack() {
-                    }
+                        override fun goToMain() {
+                        }
 
-                    override fun goToMain() {
-                    }
+                        override fun clearPinFragment() {
+                        }
 
-                    override fun clearPinFragment() {
-                    }
-
-                    override fun addListener(listener: NavigationListener) {
-                    }
-                },
-            ),
-    ) {
-        AppTheme {
+                        override fun addListener(listener: NavigationListener) {
+                        }
+                    },
+                ),
+        ) {
             PerformerDetails(
                 perf = performer,
                 tags = listOf(tagPreview, tagPreview.copy(id = "723")),
