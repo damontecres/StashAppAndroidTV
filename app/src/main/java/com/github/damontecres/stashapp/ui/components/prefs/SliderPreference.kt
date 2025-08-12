@@ -3,10 +3,12 @@ package com.github.damontecres.stashapp.ui.components.prefs
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
@@ -34,15 +36,19 @@ fun SliderPreference(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier =
             modifier
-                .height(80.dp)
-                .fillMaxWidth(),
+//                .height(80.dp) // not dense
+                .height(72.dp) // dense
+                .fillMaxWidth()
+                .padding(PaddingValues(horizontal = 12.dp, vertical = 10.dp)), // dense,
     ) {
         PreferenceTitle(title, color = MaterialTheme.colorScheme.onSurface)
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxSize(),
+            modifier =
+                Modifier
+                    .fillMaxSize(),
         ) {
             if (isTvDevice) {
                 SliderBar(

@@ -33,6 +33,7 @@ fun SwitchPreference(
 ) {
     ListItem(
         selected = false,
+        dense = true,
         onClick = onClick,
         onLongClick = onLongClick,
         headlineContent = {

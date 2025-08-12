@@ -200,6 +200,19 @@ sealed interface StashPreference<T> {
                     prefs.updatePinPreferences { readOnlyPin = value }
                 },
             )
+        val InstalledVersion =
+            StashClickablePreference(
+                title = R.string.stashapp_package_manager_installed_version,
+                getter = { },
+                setter = { prefs, _ -> prefs },
+            )
+        val Update =
+            StashClickablePreference(
+                title = R.string.stashapp_package_manager_check_for_updates,
+                getter = { },
+                setter = { prefs, _ -> prefs },
+            )
+
         val AdvancedSettings =
             StashDestinationPreference(
                 title = R.string.advanced_settings,

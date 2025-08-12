@@ -105,7 +105,18 @@ class UpdateChecker {
             return Version.fromString(pkgInfo.versionName!!)
         }
 
-        suspend fun getLatestRelease(context: Context): Release? {
+        suspend fun getLatestRelease(
+            context: Context,
+            updateUrl: String =
+                PreferenceManager
+                    .getDefaultSharedPreferences(context)
+                    .getStringNotNull(
+                        "updateCheckUrl",
+                        context.getString(
+                            R.string.app_update_url,
+                        ),
+                    ),
+        ): Release? {
             return withContext(Dispatchers.IO) {
                 val preferredAsset =
                     if (PreferenceManager
@@ -116,13 +127,6 @@ class UpdateChecker {
                     } else {
                         DEBUG_ASSET_NAME
                     }
-                val updateUrl =
-                    PreferenceManager.getDefaultSharedPreferences(context).getStringNotNull(
-                        "updateCheckUrl",
-                        context.getString(
-                            R.string.app_update_url,
-                        ),
-                    )
 
                 val client = StashClient.okHttpClient
                 val request =

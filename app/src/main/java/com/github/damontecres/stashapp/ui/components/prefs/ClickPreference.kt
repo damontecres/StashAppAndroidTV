@@ -13,6 +13,7 @@ fun ClickPreference(
     onLongClick: (() -> Unit)? = null,
 ) {
     ListItem(
+        dense = true,
         selected = false,
         onClick = onClick,
         onLongClick = onLongClick,

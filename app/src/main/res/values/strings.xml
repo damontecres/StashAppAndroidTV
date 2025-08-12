@@ -192,5 +192,7 @@
     <string name="playback_start_muted_summary_on">Manually enable audio track</string>
     <string name="transcode_above_resolution">Transcode when resolution above</string>
     <string name="advanced_settings_summary">Go to advanced settings</string>
+    <string name="no_update_available">No update available</string>
+    <string name="install_update">Install update</string>
 
 </resources>

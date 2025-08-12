@@ -40,27 +40,50 @@ fun ListItem(
     border: ListItemBorder = ListItemDefaults.border(),
     glow: ListItemGlow = ListItemDefaults.glow(),
     interactionSource: MutableInteractionSource? = null,
+    dense: Boolean = false,
 ) {
     if (LocalDeviceType.current == DeviceType.TV) {
-        androidx.tv.material3.ListItem(
-            selected = selected,
-            onClick = onClick,
-            headlineContent = headlineContent,
-            modifier = modifier,
-            enabled = enabled,
-            onLongClick = onLongClick,
-            overlineContent = overlineContent,
-            supportingContent = supportingContent,
-            leadingContent = leadingContent,
-            trailingContent = trailingContent,
-            tonalElevation = tonalElevation,
-            shape = shape,
-            colors = colors,
-            scale = scale,
-            border = border,
-            glow = glow,
-            interactionSource = interactionSource,
-        )
+        if (dense) {
+            androidx.tv.material3.DenseListItem(
+                selected = selected,
+                onClick = onClick,
+                headlineContent = headlineContent,
+                modifier = modifier,
+                enabled = enabled,
+                onLongClick = onLongClick,
+                overlineContent = overlineContent,
+                supportingContent = supportingContent,
+                leadingContent = leadingContent,
+                trailingContent = trailingContent,
+                tonalElevation = tonalElevation,
+                shape = shape,
+                colors = colors,
+                scale = scale,
+                border = border,
+                glow = glow,
+                interactionSource = interactionSource,
+            )
+        } else {
+            androidx.tv.material3.ListItem(
+                selected = selected,
+                onClick = onClick,
+                headlineContent = headlineContent,
+                modifier = modifier,
+                enabled = enabled,
+                onLongClick = onLongClick,
+                overlineContent = overlineContent,
+                supportingContent = supportingContent,
+                leadingContent = leadingContent,
+                trailingContent = trailingContent,
+                tonalElevation = tonalElevation,
+                shape = shape,
+                colors = colors,
+                scale = scale,
+                border = border,
+                glow = glow,
+                interactionSource = interactionSource,
+            )
+        }
     } else {
         Log.v(
             "ListItem",

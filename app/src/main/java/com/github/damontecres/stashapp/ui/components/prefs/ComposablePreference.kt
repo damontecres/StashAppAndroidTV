@@ -199,11 +199,11 @@ fun <T> ComposablePreference(
 
 val PreferenceTitleStyle: TextStyle
     @Composable @ReadOnlyComposable
-    get() = MaterialTheme.typography.titleLarge
+    get() = MaterialTheme.typography.titleSmall
 
 val PreferenceSummaryStyle: TextStyle
     @Composable @ReadOnlyComposable
-    get() = MaterialTheme.typography.bodyMedium
+    get() = MaterialTheme.typography.bodySmall
 
 @Composable
 fun PreferenceTitle(
