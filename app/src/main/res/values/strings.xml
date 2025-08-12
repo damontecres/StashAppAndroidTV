@@ -147,5 +147,7 @@
     <string name="pin_code">Protect with PIN code</string>
     <string name="card_size_title">Card size</string>
     <string name="read_only_mode">Read only mode</string>
+    <string name="set_app_pin_code">If set, it must be entered whenever the app is opened</string>
+    <string name="read_only_pin_description">"Enabling this will prevent the app from making any server side changes.\n\nIf Scene Play history is enabled on the server and in app, then it will still be saved to the server.\n\nAdditionally, the PIN will be required to change any app settings."</string>
 
 </resources>

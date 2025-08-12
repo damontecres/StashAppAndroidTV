@@ -36,6 +36,7 @@ fun ConfigurePin(
     onCancel: () -> Unit,
     onSubmit: (String) -> Unit,
     modifier: Modifier = Modifier,
+    @StringRes descriptionString: Int = R.string.set_app_pin_code,
     @StringRes submitString: Int = R.string.stashapp_actions_submit,
     @StringRes cancelString: Int = R.string.stashapp_actions_skip,
 ) {
@@ -60,7 +61,7 @@ fun ConfigurePin(
         }
         item {
             Text(
-                text = "If set, it must be entered whenever the app is opened",
+                text = stringResource(descriptionString),
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
@@ -155,6 +156,7 @@ private fun ConfigurePinPreview() {
             {},
             {},
             Modifier,
+            descriptionString = R.string.read_only_pin_description,
         )
     }
 }

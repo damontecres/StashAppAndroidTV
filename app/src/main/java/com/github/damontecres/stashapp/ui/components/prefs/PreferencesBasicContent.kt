@@ -1,10 +1,13 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,11 +23,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.ui.components.server.ConfigurePin
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -73,6 +78,10 @@ fun PreferencesBasicContent(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
+
+    var readOnlyEnabled by remember { mutableStateOf(preferences.pinPreferences.readOnlyPin.isNotNullOrBlank()) }
+    var showReadOnlyDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         focusRequester.tryRequestFocus()
     }
@@ -106,8 +115,19 @@ fun PreferencesBasicContent(
                     if (pref == StashPreference.ReadOnlyMode) {
                         SwitchPreference(
                             title = stringResource(pref.title),
-                            value = value.toString().isNotNullOrBlank(),
+                            value = readOnlyEnabled,
                             onClick = {
+                                if (readOnlyEnabled) {
+                                    // Enabled, so disable
+                                    scope.launch(StashCoroutineExceptionHandler()) {
+                                        context.preferences.updateData { prefs ->
+                                            pref.setter(prefs, "")
+                                        }
+                                        readOnlyEnabled = false
+                                    }
+                                } else {
+                                    showReadOnlyDialog = true
+                                }
                             },
                             modifier = Modifier,
                         )
@@ -149,6 +169,33 @@ fun PreferencesBasicContent(
                     }
                 }
             }
+        }
+    }
+    AnimatedVisibility(showReadOnlyDialog) {
+        Dialog(
+            onDismissRequest = { showReadOnlyDialog = false },
+        ) {
+            ConfigurePin(
+                onCancel = { showReadOnlyDialog = false },
+                onSubmit = { pin ->
+                    scope.launch(StashCoroutineExceptionHandler()) {
+                        context.preferences
+                            .updateData { prefs ->
+                                StashPreference.ReadOnlyMode.setter(prefs, pin)
+                            }
+                        readOnlyEnabled = true
+                        showReadOnlyDialog = false
+                    }
+                },
+                descriptionString = R.string.read_only_pin_description,
+                cancelString = R.string.stashapp_actions_cancel,
+                modifier =
+                    Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = RoundedCornerShape(8.dp),
+                        ),
+            )
         }
     }
 }
