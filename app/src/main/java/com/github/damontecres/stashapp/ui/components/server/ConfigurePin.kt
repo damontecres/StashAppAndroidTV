@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.server
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -25,16 +26,18 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.DefaultTheme
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
 @Composable
 fun ConfigurePin(
-    onSkip: () -> Unit,
+    onCancel: () -> Unit,
     onSubmit: (String) -> Unit,
     modifier: Modifier = Modifier,
+    @StringRes submitString: Int = R.string.stashapp_actions_submit,
+    @StringRes cancelString: Int = R.string.stashapp_actions_skip,
 ) {
     var pin1 by remember { mutableStateOf("") }
     var pin2 by remember { mutableStateOf("") }
@@ -124,11 +127,11 @@ fun ConfigurePin(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Button(
-                    onClick = onSkip,
+                    onClick = onCancel,
                     enabled = true,
                 ) {
                     Text(
-                        text = stringResource(R.string.stashapp_actions_skip),
+                        text = stringResource(cancelString),
                     )
                 }
                 Button(
@@ -136,7 +139,7 @@ fun ConfigurePin(
                     enabled = pin1.isNotBlank() && valid,
                 ) {
                     Text(
-                        text = stringResource(R.string.stashapp_actions_submit),
+                        text = stringResource(submitString),
                     )
                 }
             }
@@ -147,7 +150,7 @@ fun ConfigurePin(
 @Preview
 @Composable
 private fun ConfigurePinPreview() {
-    AppTheme {
+    DefaultTheme {
         ConfigurePin(
             {},
             {},

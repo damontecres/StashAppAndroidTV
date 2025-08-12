@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.preferences
 import kotlinx.coroutines.launch
 
@@ -48,6 +49,7 @@ private val basicPreferences =
                 StashPreference.PinCode,
                 StashPreference.CardSize,
                 StashPreference.PlayVideoPreviews,
+                StashPreference.ReadOnlyMode,
                 StashPreference.MoreUiSettings,
             ),
         ),
@@ -101,39 +103,50 @@ fun PreferencesBasicContent(
                 pref as StashPreference<Any>
                 item {
                     var value by remember { mutableStateOf(pref.getter.invoke(preferences)) }
-                    ComposablePreference(
-                        server = server,
-                        navigationManager = navigationManager,
-                        preference = pref,
-                        value = value,
-                        onValueChange = { newValue ->
-                            val validation = pref.validate(newValue)
-                            when (validation) {
-                                is PreferenceValidation.Invalid -> {
-                                    // TODO?
-                                    Toast
-                                        .makeText(
-                                            context,
-                                            validation.message,
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                }
-                                PreferenceValidation.Valid -> {
-                                    scope.launch(StashCoroutineExceptionHandler()) {
-                                        context.preferences.updateData { prefs ->
-                                            pref.setter(prefs, newValue)
+                    if (pref == StashPreference.ReadOnlyMode) {
+                        SwitchPreference(
+                            title = stringResource(pref.title),
+                            value = value.toString().isNotNullOrBlank(),
+                            onClick = {
+                            },
+                            modifier = Modifier,
+                        )
+                    } else {
+                        ComposablePreference(
+                            server = server,
+                            navigationManager = navigationManager,
+                            preference = pref,
+                            value = value,
+                            onValueChange = { newValue ->
+                                val validation = pref.validate(newValue)
+                                when (validation) {
+                                    is PreferenceValidation.Invalid -> {
+                                        // TODO?
+                                        Toast
+                                            .makeText(
+                                                context,
+                                                validation.message,
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
+                                    }
+
+                                    PreferenceValidation.Valid -> {
+                                        scope.launch(StashCoroutineExceptionHandler()) {
+                                            context.preferences.updateData { prefs ->
+                                                pref.setter(prefs, newValue)
+                                            }
+                                            value = newValue
                                         }
-                                        value = newValue
                                     }
                                 }
-                            }
-                        },
-                        modifier =
-                            Modifier.ifElse(
-                                groupIndex == 0 && prefIndex == 0,
-                                Modifier.focusRequester(focusRequester),
-                            ),
-                    )
+                            },
+                            modifier =
+                                Modifier.ifElse(
+                                    groupIndex == 0 && prefIndex == 0,
+                                    Modifier.focusRequester(focusRequester),
+                                ),
+                        )
+                    }
                 }
             }
         }

@@ -146,5 +146,6 @@
     <string name="current_server">Current server</string>
     <string name="pin_code">Protect with PIN code</string>
     <string name="card_size_title">Card size</string>
+    <string name="read_only_mode">Read only mode</string>
 
 </resources>

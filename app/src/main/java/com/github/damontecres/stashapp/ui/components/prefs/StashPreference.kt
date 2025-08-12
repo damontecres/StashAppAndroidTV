@@ -180,6 +180,17 @@ sealed interface StashPreference<T> {
                     }
                 },
             )
+
+        val ReadOnlyMode =
+            StashPinPreference(
+                title = R.string.read_only_mode,
+                defaultValue = "",
+                getter = { it.pinPreferences.readOnlyPin },
+                setter = { prefs, value ->
+                    // Handled separately in the pin preferences
+                    prefs
+                },
+            )
     }
 }
 

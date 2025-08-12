@@ -91,7 +91,7 @@ fun InitialSetup(
                 ),
         ) {
             ConfigurePin(
-                onSkip = { submit(null) },
+                onCancel = { submit(null) },
                 onSubmit = { submit(it) },
                 modifier =
                     Modifier
