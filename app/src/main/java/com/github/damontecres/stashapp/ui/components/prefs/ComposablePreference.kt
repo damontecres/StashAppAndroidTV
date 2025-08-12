@@ -23,7 +23,6 @@ import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -35,6 +34,7 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.launch
 
+@Suppress("UNCHECKED_CAST")
 @Composable
 fun <T> ComposablePreference(
     server: StashServer,
@@ -65,11 +65,11 @@ fun <T> ComposablePreference(
             )
         }
 
-        StashPreference.ManageServers ->
+        is StashDestinationPreference ->
             ClickPreference(
                 title = title,
                 onClick = {
-                    navigationManager.navigate(Destination.ManageServers(true))
+                    navigationManager.navigate(preference.destination)
                 },
                 summary = preference.summary(context, value),
                 modifier = modifier,
@@ -121,7 +121,7 @@ fun <T> ComposablePreference(
             val summary =
                 preference.summary(context, value) ?: preference
                     .valueToIndex(value as T)
-                    ?.let { values[it] }
+                    .let { values[it] }
             ClickPreference(
                 title = title,
                 summary = summary,
@@ -135,7 +135,7 @@ fun <T> ComposablePreference(
                                     DialogItem(
                                         text = it,
                                         onClick = {
-                                            onValueChange(preference.indexToValue(index) as T)
+                                            onValueChange(preference.indexToValue(index))
                                         },
                                     )
                                 },

@@ -24,6 +24,7 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.proto.StashPreferences
@@ -64,17 +65,69 @@ private val basicPreferences =
         ),
     )
 
+private val advancedPreferences =
+    listOf(
+        PreferenceGroup(
+            R.string.playback,
+            listOf(),
+        ),
+    )
+
+private val uiPreferences =
+    listOf(
+        PreferenceGroup(
+            R.string.advanced_ui,
+            listOf(
+                StashPreference.RememberTab,
+                StashPreference.VideoPreviewDelay,
+                StashPreference.SlideshowDuration,
+                StashPreference.SlideshowImageClipDelay,
+            ),
+        ),
+        PreferenceGroup(
+            R.string.show_hide_tabs,
+            listOf(), // TODO
+        ),
+        PreferenceGroup(
+            R.string.new_ui,
+            listOf(
+                StashPreference.UseNewUI,
+                StashPreference.GridJumpButtons,
+                StashPreference.ChooseTheme,
+                StashPreference.ThemeStylePref,
+                StashPreference.ShowProgressSkipping,
+                StashPreference.MovementSound,
+                StashPreference.UpDownNextPrevious,
+                StashPreference.Captions,
+            ),
+        ),
+    )
+
 @Composable
-fun PreferencesBasicContent(
+fun PreferencesContent(
     server: StashServer,
     navigationManager: NavigationManager,
     initialPreferences: StashPreferences,
+    preferenceScreenOption: PreferenceScreenOption,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
     var preferences by remember { mutableStateOf(initialPreferences) }
+
+    val prefList =
+        when (preferenceScreenOption) {
+            PreferenceScreenOption.BASIC -> basicPreferences
+            PreferenceScreenOption.ADVANCED -> advancedPreferences
+            PreferenceScreenOption.USER_INTERFACE -> uiPreferences
+        }
+    val title =
+        when (preferenceScreenOption) {
+            PreferenceScreenOption.BASIC -> "Preferences"
+            PreferenceScreenOption.ADVANCED -> "Advanced Preferences"
+            PreferenceScreenOption.USER_INTERFACE -> "User Interface Preferences"
+        }
 
     LaunchedEffect(Unit) {
         focusRequester.tryRequestFocus()
@@ -87,12 +140,12 @@ fun PreferencesBasicContent(
     ) {
         item {
             Text(
-                text = "Basic Preferences",
+                text = title,
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
-        basicPreferences.forEachIndexed { groupIndex, group ->
+        prefList.forEachIndexed { groupIndex, group ->
             item {
                 Text(
                     text = stringResource(group.title),

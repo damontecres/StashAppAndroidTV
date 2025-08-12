@@ -10,7 +10,7 @@ import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
-import com.github.damontecres.stashapp.ui.components.prefs.PreferencesBasicContent
+import com.github.damontecres.stashapp.ui.components.prefs.PreferencesContent
 import com.github.damontecres.stashapp.util.StashServer
 
 @SuppressLint("RestrictedApi")
@@ -33,16 +33,12 @@ fun SettingsPage(
             } else {
                 Modifier
             }
-        when (preferenceScreenOption) {
-            PreferenceScreenOption.BASIC ->
-                PreferencesBasicContent(
-                    server,
-                    navigationManager,
-                    uiConfig.preferences,
-                    newModifier,
-                )
-            PreferenceScreenOption.ADVANCED -> TODO()
-            PreferenceScreenOption.USER_INTERFACE -> TODO()
-        }
+        PreferencesContent(
+            server,
+            navigationManager,
+            uiConfig.preferences,
+            preferenceScreenOption,
+            newModifier,
+        )
     }
 }

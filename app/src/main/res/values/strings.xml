@@ -149,5 +149,24 @@
     <string name="read_only_mode">Read only mode</string>
     <string name="set_app_pin_code">If set, it must be entered whenever the app is opened</string>
     <string name="read_only_pin_description">"Enabling this will prevent the app from making any server side changes.\n\nIf Scene Play history is enabled on the server and in app, then it will still be saved to the server.\n\nAdditionally, the PIN will be required to change any app settings."</string>
+    <string name="remember_selected_tab">Remember selected tab?</string>
+    <string name="remember_selected_tab_summary_on">Start on previously selected tab</string>
+    <string name="remember_selected_tab_summary_off">Start on first tab</string>
+    <string name="video_preview_delay">Delay before playing card previews</string>
+    <string name="advanced_ui">Advanced UI</string>
+    <string name="slideshow_duration">Slideshow duration</string>
+    <string name="slideshow_image_clip_delay">Slideshow pause after image clips</string>
+    <string name="show_hide_tabs">Show/Hide tabs</string>
+    <string name="new_ui">New UI</string>
+    <string name="use_new_ui">Use new UI</string>
+    <string name="show_grid_jump_buttons">Show grid jump butons</string>
+    <string name="choose_theme">Choose theme</string>
+    <string name="theme_style_preference_title">Theme coloring (Light/Dark)</string>
+    <string name="show_progress_when_skipping">Show progress when skipping</string>
+    <string name="movement_sounds">Movement sound effects</string>
+    <string name="movement_sounds_summary">Applies to new UI only</string>
+    <string name="up_down_next_previous_pref_title">Use Up/Down for Previous/Next</string>
+    <string name="captions_default">Turn captions on by default</string>
+    <string name="captions_default_summary">Whether to turn captions for the device\'s language on by default</string>
 
 </resources>

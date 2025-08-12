@@ -3,9 +3,12 @@ package com.github.damontecres.stashapp.ui.components.prefs
 import android.content.Context
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
+import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.PlaybackFinishBehavior
 import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.proto.ThemeStyle
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.updateInterfacePreferences
 import com.github.damontecres.stashapp.util.updatePinPreferences
@@ -61,9 +64,10 @@ sealed interface StashPreference<T> {
                 title = R.string.current_server,
             )
         val ManageServers =
-            StashClickablePreference(
+            StashDestinationPreference(
                 title = R.string.manage_servers,
                 summary = R.string.add_remove_servers_summary,
+                destination = Destination.ManageServers(true),
             )
         val AutoSubmitPin =
             StashSwitchPreference(
@@ -109,9 +113,10 @@ sealed interface StashPreference<T> {
                 summaryOff = R.string.play_video_previews_summary_off,
             )
         val MoreUiSettings =
-            StashClickablePreference(
+            StashDestinationPreference(
                 title = R.string.more_ui_settings,
                 summary = R.string.more_ui_settings_summary,
+                destination = Destination.Settings(PreferenceScreenOption.USER_INTERFACE),
             )
 
         val SkipForward =
@@ -192,6 +197,160 @@ sealed interface StashPreference<T> {
                     prefs.updatePinPreferences { readOnlyPin = value }
                 },
             )
+
+        val RememberTab =
+            StashSwitchPreference(
+                title = R.string.remember_selected_tab,
+                defaultValue = true,
+                getter = { it.interfacePreferences.rememberSelectedTab },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { rememberSelectedTab = value }
+                },
+                summaryOn = R.string.remember_selected_tab_summary_on,
+                summaryOff = R.string.remember_selected_tab_summary_off,
+            )
+
+        val VideoPreviewDelay =
+            StashSliderPreference(
+                title = R.string.video_preview_delay,
+                defaultValue = 1_000,
+                min = 0,
+                max = 10_000,
+                interval = 100,
+                getter = { it.interfacePreferences.cardPreviewDelayMs.toInt() },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences {
+                        cardPreviewDelayMs = value.toLong()
+                    }
+                },
+                summarizer = { value -> value?.let { "${value / 1000.0} seconds" } },
+            )
+
+        val SlideshowDuration =
+            StashSliderPreference(
+                title = R.string.slideshow_duration,
+                defaultValue = 5.seconds.inWholeMilliseconds.toInt(),
+                min = 1.seconds.inWholeMilliseconds.toInt(),
+                max = 60.seconds.inWholeMilliseconds.toInt(),
+                interval = 1.seconds.inWholeMilliseconds.toInt(),
+                getter = { it.interfacePreferences.slideShowIntervalMs.toInt() },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences {
+                        slideShowIntervalMs = value.toLong()
+                    }
+                },
+                summarizer = { value -> value?.let { "${value / 1000} seconds" } },
+            )
+
+        val SlideshowImageClipDelay =
+            StashSliderPreference(
+                title = R.string.slideshow_image_clip_delay,
+                defaultValue = 250,
+                min = 0,
+                max = 60.seconds.inWholeMilliseconds.toInt(),
+                interval = 250,
+                getter = { it.interfacePreferences.slideShowImageClipPauseMs.toInt() },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences {
+                        slideShowImageClipPauseMs = value.toLong()
+                    }
+                },
+                summarizer = { value -> value?.let { "${value / 1000.0} seconds" } },
+            )
+
+        val UseNewUI =
+            StashSwitchPreference(
+                title = R.string.use_new_ui,
+                defaultValue = true,
+                getter = { it.interfacePreferences.useComposeUi },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { useComposeUi = value }
+                },
+                summaryOn = R.string.stashapp_actions_enable,
+                summaryOff = R.string.transcode_options_disabled,
+            )
+
+        val GridJumpButtons =
+            StashSwitchPreference(
+                title = R.string.show_grid_jump_buttons,
+                defaultValue = true,
+                getter = { it.interfacePreferences.showGridJumpButtons },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { showGridJumpButtons = value }
+                },
+                summaryOn = R.string.stashapp_actions_enable,
+                summaryOff = R.string.transcode_options_disabled,
+            )
+
+        val ChooseTheme =
+            StashDestinationPreference(
+                title = R.string.choose_theme,
+                summary = R.string.add_remove_servers_summary,
+                destination = Destination.ChooseTheme,
+            )
+
+        val ThemeStylePref =
+            StashChoicePreference<ThemeStyle>(
+                title = R.string.theme_style_preference_title,
+                defaultValue = ThemeStyle.THEME_STYLE_SYSTEM,
+                displayValues = R.array.ui_theme_dark_appearance_choices,
+                indexToValue = {
+                    ThemeStyle.forNumber(it)
+                },
+                valueToIndex = { it.number },
+                getter = { it.interfacePreferences.themeStyle },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences {
+                        themeStyle = value
+                    }
+                },
+            )
+
+        val ShowProgressSkipping =
+            StashSwitchPreference(
+                title = R.string.show_progress_when_skipping,
+                defaultValue = true,
+                getter = { it.interfacePreferences.showProgressWhenSkipping },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { showProgressWhenSkipping = value }
+                },
+                summaryOn = R.string.stashapp_actions_enable,
+                summaryOff = R.string.transcode_options_disabled,
+            )
+
+        val MovementSound =
+            StashSwitchPreference(
+                title = R.string.movement_sounds,
+                defaultValue = true,
+                getter = { it.interfacePreferences.playMovementSounds },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { playMovementSounds = value }
+                },
+                summary = R.string.movement_sounds_summary,
+            )
+
+        val UpDownNextPrevious =
+            StashSwitchPreference(
+                title = R.string.up_down_next_previous_pref_title,
+                defaultValue = true,
+                getter = { it.interfacePreferences.useUpDownPreviousNext },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { useUpDownPreviousNext = value }
+                },
+                summaryOn = R.string.stashapp_actions_enable,
+                summaryOff = R.string.transcode_options_disabled,
+            )
+
+        val Captions =
+            StashSwitchPreference(
+                title = R.string.captions_default,
+                defaultValue = true,
+                getter = { it.interfacePreferences.captionsByDefault },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { captionsByDefault = value }
+                },
+                summary = R.string.captions_default_summary,
+            )
     }
 }
 
@@ -270,6 +429,20 @@ data class StashClickablePreference(
     override val getter: (prefs: StashPreferences) -> Unit = { },
     override val setter: (prefs: StashPreferences, value: Unit) -> StashPreferences = { prefs, _ -> prefs },
     @param:StringRes val summary: Int? = null,
+) : StashPreference<Unit> {
+    override fun summary(
+        context: Context,
+        value: Unit?,
+    ): String? = summary?.let { context.getString(it) }
+}
+
+data class StashDestinationPreference(
+    @param:StringRes override val title: Int,
+    override val defaultValue: Unit = Unit,
+    override val getter: (prefs: StashPreferences) -> Unit = { },
+    override val setter: (prefs: StashPreferences, value: Unit) -> StashPreferences = { prefs, _ -> prefs },
+    @param:StringRes val summary: Int? = null,
+    val destination: Destination,
 ) : StashPreference<Unit> {
     override fun summary(
         context: Context,
