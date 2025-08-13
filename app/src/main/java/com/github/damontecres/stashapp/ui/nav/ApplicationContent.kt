@@ -128,7 +128,11 @@ fun ApplicationContent(
     val defaultSelection: DrawerPage = DrawerPage.HomePage
     var selectedScreen by rememberSaveable { mutableStateOf<DrawerPage?>(defaultSelection) }
 
-    AnimatedNavHost(navController, modifier = modifier) { destination ->
+    AnimatedNavHost(
+        controller = navController,
+        transitionSpec = DestinationTransitionSpec(),
+        modifier = modifier,
+    ) { destination ->
         LaunchedEffect(Unit) {
             // Refresh server preferences on each page change
             navigationManager.serverViewModel.updateServerPreferences()
