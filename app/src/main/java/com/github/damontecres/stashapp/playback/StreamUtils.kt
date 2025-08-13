@@ -533,7 +533,7 @@ fun resolutionFromLabel(label: String): Resolution =
         "720P" -> Resolution.RESOLUTION_720P
         "480P" -> Resolution.RESOLUTION_480P
         "240P" -> Resolution.RESOLUTION_240P
-        else -> Resolution.UNRECOGNIZED
+        else -> Resolution.RESOLUTION_UNSPECIFIED
     }
 
 fun getStreamChoiceFromPreferences(context: Context): StreamChoice {

@@ -670,12 +670,12 @@ fun NestedScrollView.onlyScrollIfNeeded() {
 fun SharedPreferences.getStringNotNull(
     key: String,
     defValue: String,
-): String = getString(key, defValue)!!
+): String = getString(key, defValue) ?: defValue
 
 fun SharedPreferences.getInt(
     key: String,
     defValue: String,
-): Int = getStringNotNull(key, defValue).toInt()
+): Int = getStringNotNull(key, defValue).toIntOrNull() ?: defValue.toInt()
 
 fun ArrayObjectAdapter.isEmpty(): Boolean = size() == 0
 

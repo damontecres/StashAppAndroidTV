@@ -82,4 +82,6 @@
     <string name="pref_key_playback_show_skip_progress" translatable="false">playback.showSkipProgress</string>
     <string name="pref_key_movement_sounds" translatable="false">ui.movementSounds</string>
 
+    <string name="pref_key_migration_complete" translatable="false">meta.preference.migration</string>
+
 </resources>

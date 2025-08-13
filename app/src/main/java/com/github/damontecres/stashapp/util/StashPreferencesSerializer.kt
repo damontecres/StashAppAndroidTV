@@ -88,7 +88,6 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                     AdvancedPreferences
                         .newBuilder()
                         .apply {
-                            enableCrashReporting = true
                             logErrorsToServer = true
                             networkTimeoutMs = 15.seconds.inWholeMilliseconds
                             imageThreadCount = Runtime.getRuntime().availableProcessors()

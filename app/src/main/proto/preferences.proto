@@ -134,7 +134,7 @@ message UpdatePreferences {
 }
 
 message AdvancedPreferences {
-  bool enable_crash_reporting = 1;
+  //  bool enable_crash_reporting = 1; Must be in shared preferences
   bool log_errors_to_server = 2;
   bool enable_experimental_features = 3;
   int64 network_timeout_ms = 4;
@@ -155,4 +155,6 @@ message StashPreferences {
   UpdatePreferences update_preferences = 5;
   AdvancedPreferences advanced_preferences = 6;
   SearchPreferences search_preferences = 7;
+
+  bool preferences_migrated_v1 = 8;
 }

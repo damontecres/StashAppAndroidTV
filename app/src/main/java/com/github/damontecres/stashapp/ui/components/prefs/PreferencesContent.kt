@@ -316,8 +316,8 @@ fun PreferencesContent(
                                                     context.preferences.updateData { prefs ->
                                                         pref.setter(prefs, newValue)
                                                     }
+                                                // TODO also store some in shared preferences
                                                 if (pref is StashPinPreference) {
-                                                    // TODO also store in shared preferences
                                                     PreferenceManager
                                                         .getDefaultSharedPreferences(context)
                                                         .edit(true) {
@@ -328,6 +328,17 @@ fun PreferencesContent(
                                                                     ),
                                                                 ),
                                                                 (newValue as String).ifBlank { null },
+                                                            )
+                                                        }
+                                                } else if (pref == StashPreference.UseNewUI) {
+                                                    PreferenceManager
+                                                        .getDefaultSharedPreferences(context)
+                                                        .edit(true) {
+                                                            putBoolean(
+                                                                context.getString(
+                                                                    R.string.pref_key_use_compose_ui,
+                                                                ),
+                                                                newValue as Boolean,
                                                             )
                                                         }
                                                 }
