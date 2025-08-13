@@ -78,20 +78,9 @@ private val basicPreferences =
         PreferenceGroup(
             R.string.advanced_settings,
             listOf(
+                StashPreference.SendLogs,
                 StashPreference.AdvancedSettings,
             ),
-        ),
-    )
-
-private val advancedPreferences =
-    listOf(
-        PreferenceGroup(
-            R.string.advanced_ui,
-            StashPreference.advancedUiPrefs,
-        ),
-        PreferenceGroup(
-            R.string.playback,
-            StashPreference.advancedPlaybackPrefs,
         ),
     )
 
@@ -121,6 +110,63 @@ private val uiPreferences =
                 StashPreference.MovementSound,
                 StashPreference.UpDownNextPrevious,
                 StashPreference.Captions,
+            ),
+        ),
+    )
+
+private val advancedPreferences =
+    listOf(
+        PreferenceGroup(
+            R.string.advanced_ui,
+            StashPreference.advancedUiPrefs,
+        ),
+        PreferenceGroup(
+            R.string.playback,
+            StashPreference.advancedPlaybackPrefs,
+        ),
+        PreferenceGroup(
+            R.string.effects_filters,
+            listOf(
+                StashPreference.VideoFilter,
+                StashPreference.PersistVideoFilter,
+            ),
+        ),
+        PreferenceGroup(
+            R.string.stashapp_actions_search,
+            listOf(
+                StashPreference.SearchResults,
+                StashPreference.SearchDelay,
+            ),
+        ),
+        PreferenceGroup(
+            R.string.cache,
+            listOf(
+                StashPreference.NetworkCache,
+                StashPreference.ImageDiskCache,
+                StashPreference.CacheInvalidation,
+                StashPreference.CacheLogging,
+                StashPreference.CacheClear,
+            ),
+        ),
+        PreferenceGroup(
+            R.string.stashapp_config_categories_about,
+            listOf(
+                StashPreference.CheckForUpdates,
+                StashPreference.UpdateUrl,
+                StashPreference.OssLicenseInfo,
+            ),
+        ),
+        PreferenceGroup(
+            R.string.advanced_settings,
+            listOf(
+                StashPreference.CrashReporting,
+                StashPreference.LogErrorsToServer,
+                StashPreference.ExperimentalFeatures,
+                StashPreference.NetworkTimeout,
+                StashPreference.PlaybackDebugLogging,
+                StashPreference.PlaybackStreamingClient,
+                StashPreference.ImageThreads,
+                StashPreference.TrustCertificates,
             ),
         ),
     )

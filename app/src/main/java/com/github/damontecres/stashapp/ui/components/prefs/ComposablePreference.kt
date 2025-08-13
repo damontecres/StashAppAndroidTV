@@ -25,6 +25,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -33,6 +34,7 @@ import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.launch
 
@@ -53,6 +55,7 @@ fun <T> ComposablePreference(
     var showPinDialog by remember { mutableStateOf<StashPinPreference?>(null) }
 
     val title = stringResource(preference.title)
+
     when (preference) {
         StashPreference.CurrentServer -> {
             ClickPreference(
@@ -63,6 +66,45 @@ fun <T> ComposablePreference(
                     }
                 },
                 summary = server.url,
+                modifier = modifier,
+            )
+        }
+
+        StashPreference.SendLogs -> {
+            ClickPreference(
+                title = title,
+                onClick = {
+                    scope.launch(StashCoroutineExceptionHandler()) {
+                        CompanionPlugin.sendLogCat(
+                            context,
+                            server,
+                            false,
+                        )
+                    }
+                },
+                onLongClick = {
+                    scope.launch(StashCoroutineExceptionHandler()) {
+                        CompanionPlugin.sendLogCat(
+                            context,
+                            server,
+                            true,
+                        )
+                    }
+                },
+                summary = preference.summary(context, value),
+                modifier = modifier,
+            )
+        }
+
+        StashPreference.CacheClear -> {
+            ClickPreference(
+                title = title,
+                onClick = {
+                    scope.launch(StashCoroutineExceptionHandler()) {
+                        SettingsFragment.clearCaches(context)
+                    }
+                },
+                summary = preference.summary(context, value),
                 modifier = modifier,
             )
         }

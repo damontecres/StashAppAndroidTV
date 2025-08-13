@@ -3,20 +3,27 @@ package com.github.damontecres.stashapp.ui.components.prefs
 import android.content.Context
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
+import com.github.damontecres.stashapp.LicenseFragment
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.PlaybackFinishBehavior
+import com.github.damontecres.stashapp.proto.PlaybackHttpClient
 import com.github.damontecres.stashapp.proto.Resolution
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.proto.ThemeStyle
+import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.updateAdvancedPreferences
+import com.github.damontecres.stashapp.util.updateCachePreferences
 import com.github.damontecres.stashapp.util.updateInterfacePreferences
 import com.github.damontecres.stashapp.util.updatePinPreferences
 import com.github.damontecres.stashapp.util.updatePlaybackPreferences
+import com.github.damontecres.stashapp.util.updateSearchPreferences
 import com.github.damontecres.stashapp.util.updateTabPreferences
+import com.github.damontecres.stashapp.util.updateUpdatePreferences
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -215,6 +222,14 @@ sealed interface StashPreference<T> {
                 setter = { prefs, _ -> prefs },
             )
 
+        val SendLogs =
+            StashClickablePreference(
+                title = R.string.send_logs,
+                summary = R.string.send_logs_summary,
+                getter = { },
+                setter = { prefs, _ -> prefs },
+            )
+
         val AdvancedSettings =
             StashDestinationPreference(
                 title = R.string.advanced_settings,
@@ -311,7 +326,7 @@ sealed interface StashPreference<T> {
         val ChooseTheme =
             StashDestinationPreference(
                 title = R.string.choose_theme,
-                summary = R.string.add_remove_servers_summary,
+                summary = null,
                 destination = Destination.ChooseTheme,
             )
 
@@ -804,6 +819,256 @@ sealed interface StashPreference<T> {
                     },
                 ),
             )
+
+        val VideoFilter =
+            StashSwitchPreference(
+                title = R.string.enable_video_filters,
+                defaultValue = false,
+                getter = { it.playbackPreferences.enableVideoFilters },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences { enableVideoFilters = value }
+                },
+                summaryOn = R.string.stashapp_actions_enable,
+                summaryOff = R.string.transcode_options_disabled,
+            )
+
+        val PersistVideoFilter =
+            StashSwitchPreference(
+                title = R.string.persist_video_filters,
+                defaultValue = false,
+                getter = { it.playbackPreferences.saveVideoFilters },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences { saveVideoFilters = value }
+                },
+                summary = R.string.persist_video_filters_summary,
+            )
+
+        val SearchResults =
+            StashSliderPreference(
+                title = R.string.search_results_title,
+                defaultValue = 25,
+                min = 1,
+                max = 50,
+                interval = 1,
+                getter = { it.searchPreferences.maxResults },
+                setter = { prefs, value ->
+                    prefs.updateSearchPreferences { maxResults = value }
+                },
+            )
+
+        val SearchDelay =
+            StashSliderPreference(
+                title = R.string.search_delay,
+                defaultValue = 750,
+                min = 0,
+                max = 5.seconds.inWholeMilliseconds.toInt(),
+                interval = 50,
+                getter = { it.searchPreferences.searchDelayMs.toInt() },
+                setter = { prefs, value ->
+                    prefs.updateSearchPreferences { searchDelayMs = value.toLong() }
+                },
+                summarizer = { "${it}ms" },
+            )
+
+        val NetworkCache =
+            StashSliderPreference(
+                title = R.string.network_cache_size,
+                defaultValue = 100,
+                min = 25,
+                max = 500,
+                interval = 25,
+                getter = { (it.cachePreferences.networkCacheSize / (1024 * 1024)).toInt() },
+                setter = { prefs, value ->
+                    prefs.updateCachePreferences {
+                        networkCacheSize = (value * 1024 * 1024).toLong()
+                    }
+                },
+                summarizer = { "${it}MB" },
+            )
+
+        val ImageDiskCache =
+            StashSliderPreference(
+                title = R.string.image_disk_cache_size,
+                defaultValue = 100,
+                min = 25,
+                max = 500,
+                interval = 25,
+                getter = { (it.cachePreferences.imageDiskCacheSize / (1024 * 1024)).toInt() },
+                setter = { prefs, value ->
+                    prefs.updateCachePreferences {
+                        imageDiskCacheSize = (value * 1024 * 1024).toLong()
+                    }
+                },
+                summarizer = { "${it}MB" },
+            )
+
+        val CacheInvalidation =
+            StashSliderPreference(
+                title = R.string.cache_invalidation,
+                defaultValue = 6,
+                min = 0,
+                max = 10,
+                interval = 1,
+                getter = { it.cachePreferences.cacheExpirationTime },
+                setter = { prefs, value ->
+                    prefs.updateCachePreferences { cacheExpirationTime = value }
+                },
+                summarizer = {
+                    cacheDurationPrefToDuration(it ?: 0)?.toString() ?: "Always request from server"
+                },
+            )
+
+        val CacheLogging =
+            StashSwitchPreference(
+                title = R.string.cache_logging,
+                defaultValue = false,
+                getter = { it.cachePreferences.logCacheHits },
+                setter = { prefs, value ->
+                    prefs.updateCachePreferences { logCacheHits = value }
+                },
+                summaryOn = R.string.cache_logging_summary_on,
+                summaryOff = R.string.cache_logging_summary_off,
+            )
+
+        val CacheClear =
+            StashClickablePreference(
+                title = R.string.clear_cache,
+                summary = R.string.clear_cache_summary,
+                getter = { },
+                setter = { prefs, _ -> prefs },
+            )
+
+        val CheckForUpdates =
+            StashSwitchPreference(
+                title = R.string.check_for_updates,
+                defaultValue = true,
+                getter = { it.updatePreferences.checkForUpdates },
+                setter = { prefs, value ->
+                    prefs.updateUpdatePreferences { checkForUpdates = value }
+                },
+                summaryOn = R.string.stashapp_actions_enable,
+                summaryOff = R.string.transcode_options_disabled,
+            )
+
+        val UpdateUrl =
+            StashStringPreference(
+                title = R.string.update_url,
+                defaultValue = "https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/latest",
+                getter = { it.updatePreferences.updateUrl },
+                setter = { prefs, value ->
+                    prefs.updateUpdatePreferences { updateUrl = value }
+                },
+                summary = R.string.update_url_summary,
+            )
+
+        val OssLicenseInfo =
+            StashDestinationPreference(
+                title = R.string.oss_license_info,
+                destination = Destination.Fragment(LicenseFragment::class.qualifiedName!!),
+            )
+
+        val CrashReporting =
+            StashSwitchPreference(
+                title = R.string.crash_reporting,
+                defaultValue = true,
+                getter = { true },
+                setter = { prefs, value -> prefs },
+                summaryOn = R.string.stashapp_actions_enable,
+                summaryOff = R.string.transcode_options_disabled,
+            )
+
+        val LogErrorsToServer =
+            StashSwitchPreference(
+                title = R.string.log_errors_to_server,
+                defaultValue = true,
+                getter = { it.advancedPreferences.logErrorsToServer },
+                setter = { prefs, value ->
+                    prefs.updateAdvancedPreferences { logErrorsToServer = value }
+                },
+                summary = R.string.log_errors_to_server_summary,
+            )
+
+        val ExperimentalFeatures =
+            StashSwitchPreference(
+                title = R.string.experimental_features,
+                defaultValue = false,
+                getter = { it.advancedPreferences.enableExperimentalFeatures },
+                setter = { prefs, value ->
+                    prefs.updateAdvancedPreferences { enableExperimentalFeatures = value }
+                },
+                summaryOn = R.string.stashapp_actions_enable,
+                summaryOff = R.string.transcode_options_disabled,
+            )
+
+        val NetworkTimeout =
+            StashSliderPreference(
+                title = R.string.network_timeout,
+                defaultValue = 15,
+                min = 0,
+                max = 120,
+                interval = 5,
+                getter = { (it.advancedPreferences.networkTimeoutMs.milliseconds.inWholeSeconds).toInt() },
+                setter = { prefs, value ->
+                    prefs.updateAdvancedPreferences {
+                        networkTimeoutMs = value.seconds.inWholeMilliseconds
+                    }
+                },
+                summarizer = { value -> if (value == 0) "Never" else value?.let { "$value seconds" } },
+            )
+
+        val PlaybackDebugLogging =
+            StashSwitchPreference(
+                title = R.string.playback_debug_logging,
+                defaultValue = false,
+                getter = { it.playbackPreferences.enableDebugLogging },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences { enableDebugLogging = value }
+                },
+                summaryOn = R.string.stashapp_actions_enable,
+                summaryOff = R.string.transcode_options_disabled,
+            )
+
+        val PlaybackStreamingClient =
+            StashChoicePreference<PlaybackHttpClient>(
+                title = R.string.playback_http_client,
+                defaultValue = PlaybackHttpClient.PLAYBACK_HTTP_CLIENT_OKHTTP,
+                displayValues = R.array.playback_http_client,
+                indexToValue = { PlaybackHttpClient.forNumber(it) },
+                valueToIndex = { it.number },
+                getter = { it.playbackPreferences.playbackHttpClient },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences { playbackHttpClient = value }
+                },
+            )
+
+        val ImageThreads =
+            StashSliderPreference(
+                title = R.string.image_loading_threads,
+                defaultValue = Runtime.getRuntime().availableProcessors(),
+                min = 1,
+                max = Runtime.getRuntime().availableProcessors() * 2,
+                interval = 1,
+                getter = { it.advancedPreferences.imageThreadCount },
+                setter = { prefs, value ->
+                    prefs.updateAdvancedPreferences { imageThreadCount = value }
+                },
+                summarizer = {
+                    "$it threads, default is ${
+                        Runtime.getRuntime().availableProcessors()
+                    }"
+                },
+            )
+
+        val TrustCertificates =
+            StashSwitchPreference(
+                title = R.string.trust_certificates,
+                defaultValue = false,
+                getter = { it.advancedPreferences.trustSelfSignedCertificates },
+                setter = { prefs, value ->
+                    prefs.updateAdvancedPreferences { trustSelfSignedCertificates = value }
+                },
+                summary = R.string.trust_certificates_summary,
+            )
     }
 }
 
@@ -828,14 +1093,17 @@ data class StashSwitchPreference(
         }
 }
 
-abstract class StashStringPreference(
+open class StashStringPreference(
     @param:StringRes override val title: Int,
     override val defaultValue: String,
+    override val getter: (StashPreferences) -> String,
+    override val setter: (StashPreferences, String) -> StashPreferences,
+    @param:StringRes val summary: Int?,
 ) : StashPreference<String> {
     override fun summary(
         context: Context,
         value: String?,
-    ): String? = value
+    ): String? = summary?.let { context.getString(it) } ?: value
 }
 
 class StashPinPreference(
@@ -847,6 +1115,9 @@ class StashPinPreference(
 ) : StashStringPreference(
         title,
         defaultValue,
+        getter,
+        setter,
+        null,
     ) {
     override fun validate(value: String): PreferenceValidation =
         if (value.isBlank() || value.toIntOrNull() != null) {

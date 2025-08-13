@@ -200,5 +200,36 @@
     <string name="direct_play_audio_summary">Additional audio codecs which should always direct play even if the device doesn\'t report support</string>
     <string name="direct_play_format">Direct Play Formats</string>
     <string name="direct_play_format_summary">Additional container formats which should always direct play</string>
+    <string name="send_logs">Send logs</string>
+    <string name="send_logs_summary">Send a copy of recent app logs to your current server</string>
+    <string name="enable_video_filters">Enable video filters</string>
+    <string name="persist_video_filters"><![CDATA[Persist image & video filters]]></string>
+    <string name="persist_video_filters_summary">Save applied effects (color, rotation, etc) for future plays</string>
+    <string name="search_results_title">Maximum number of search results</string>
+    <string name="search_delay">Wait before searching</string>
+    <string name="network_cache_size">Max network cache size</string>
+    <string name="image_disk_cache_size">Max image disk cache size</string>
+    <string name="cache_logging">Cache logging</string>
+    <string name="cache_logging_summary_on">Log cache hits/misses</string>
+    <string name="cache_logging_summary_off">Don\'t log cache hits/misses</string>
+    <string name="cache_invalidation">Invalidate cache after</string>
+    <string name="clear_cache">Clear cache</string>
+    <string name="clear_cache_summary">Clear network and disk caches</string>
+    <string name="check_for_updates">Automatically check for updates</string>
+    <string name="update_url">Update URL</string>
+    <string name="update_url_summary">Override URL used for update checks</string>
+    <string name="oss_license_info">OSS License Information</string>
+    <string name="crash_reporting">Enable crash reporting</string>
+    <string name="log_errors_to_server">Log errors to server</string>
+    <string name="log_errors_to_server_summary">Requires companion plugin installed on the server</string>
+    <string name="experimental_features">Experimental features</string>
+    <string name="network_timeout">Network timeout</string>
+    <string name="playback_debug_logging">Playback debug logging</string>
+    <string name="playback_http_client">Playback Streaming Client</string>
+    <string name="image_loading_threads">Threads for loading images</string>
+    <string name="trust_certificates">Trust self-signed certificates</string>
+    <string name="trust_certificates_summary">Restart may be required after changing this</string>
+    <string name="effects_filters">Effect filters</string>
+    <string name="cache">Cache</string>
 
 </resources>

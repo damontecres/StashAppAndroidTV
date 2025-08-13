@@ -32,8 +32,8 @@
     <string name="playback_http_client_default" translatable="false">default</string>
     <string name="playback_http_client_okhttp" translatable="false">okhttp</string>
     <string-array name="playback_http_client">
-        <item>@string/playback_http_client_default</item>
         <item>@string/playback_http_client_okhttp</item>
+        <item>@string/playback_http_client_default</item>
     </string-array>
     <string name="pref_key_playback_start_muted" translatable="false">playback.startMuted</string>
     <string name="pref_key_playback_always_transcode" translatable="false">playback.alwaysTranscode</string>
