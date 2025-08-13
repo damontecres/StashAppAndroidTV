@@ -36,6 +36,7 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.room.PlaybackEffect
 import com.github.damontecres.stashapp.playback.CodecSupport
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.TableRow
 import com.github.damontecres.stashapp.ui.components.TableRowComposable
 import com.github.damontecres.stashapp.util.StashClient
@@ -71,6 +72,7 @@ fun TableRowSmall(
 @Composable
 fun DebugPage(
     server: StashServer,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
     val scrollAmount = 150f
@@ -205,30 +207,48 @@ fun DebugPage(
                     Row {
                         Text(
                             text = "Type",
-                            modifier = Modifier.weight(1f).padding(4.dp),
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .padding(4.dp),
                         )
                         Text(
                             text = "ID",
-                            modifier = Modifier.weight(1f).padding(4.dp),
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .padding(4.dp),
                         )
                         Text(
                             text = "Filter",
-                            modifier = Modifier.weight(10f).padding(4.dp),
+                            modifier =
+                                Modifier
+                                    .weight(10f)
+                                    .padding(4.dp),
                         )
                     }
                     playbackEffects.forEach {
                         Row {
                             Text(
                                 text = it.dataType.name,
-                                modifier = Modifier.weight(1f).padding(4.dp),
+                                modifier =
+                                    Modifier
+                                        .weight(1f)
+                                        .padding(4.dp),
                             )
                             Text(
                                 text = it.id,
-                                modifier = Modifier.weight(1f).padding(4.dp),
+                                modifier =
+                                    Modifier
+                                        .weight(1f)
+                                        .padding(4.dp),
                             )
                             Text(
                                 text = it.videoFilter.toString(),
-                                modifier = Modifier.weight(10f).padding(4.dp),
+                                modifier =
+                                    Modifier
+                                        .weight(10f)
+                                        .padding(4.dp),
                             )
                         }
                     }
@@ -257,7 +277,8 @@ fun DebugPage(
 
         // Codecs
         item {
-            val codecs = remember { CodecSupport.getSupportedCodecs(context) }
+            val codecs =
+                remember { CodecSupport.getSupportedCodecs(uiConfig.preferences.playbackPreferences) }
             val rows =
                 listOfNotNull(
                     tableRow("Video codecs", codecs.videoCodecs.sorted().joinToString(", ")),
@@ -302,9 +323,18 @@ fun DebugPage(
 
 @Composable
 private fun ColumnScope.Decoders() {
-    val nameModifier = Modifier.weight(1.5f).padding(4.dp)
-    val textModifier = Modifier.weight(1f).padding(4.dp)
-    val smallModifier = Modifier.weight(.5f).padding(4.dp)
+    val nameModifier =
+        Modifier
+            .weight(1.5f)
+            .padding(4.dp)
+    val textModifier =
+        Modifier
+            .weight(1f)
+            .padding(4.dp)
+    val smallModifier =
+        Modifier
+            .weight(.5f)
+            .padding(4.dp)
     Row {
         ProvideTextStyle(MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onBackground)) {
             Text(

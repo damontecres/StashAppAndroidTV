@@ -149,6 +149,7 @@ fun FullScreenContent(
         is Destination.Debug ->
             DebugPage(
                 server = server,
+                uiConfig = composeUiConfig,
                 modifier = Modifier.fillMaxSize(),
             )
 

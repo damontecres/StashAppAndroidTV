@@ -48,6 +48,7 @@ import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
@@ -118,6 +119,7 @@ fun MarkerTimestampPage(
                             PlaybackMode.Choose,
                             uiConfig.preferences.playbackPreferences.streamChoice,
                             uiConfig.preferences.playbackPreferences.transcodeAboveResolution,
+                            CodecSupport.getSupportedCodecs(uiConfig.preferences.playbackPreferences),
                         )
                     buildMediaItem(context, streamDecision, scene)
                 }

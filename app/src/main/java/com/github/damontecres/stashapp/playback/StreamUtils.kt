@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.Caption
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.proto.PlaybackPreferences
 import com.github.damontecres.stashapp.proto.Resolution
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.proto.StreamChoice
@@ -155,6 +156,7 @@ fun getStreamDecision(
     mode: PlaybackMode,
     streamChoice: StreamChoice,
     alwaysTranscodeAbove: Resolution,
+    supportedCodecs: CodecSupport = CodecSupport.getSupportedCodecs(context),
 ): StreamDecision {
     Log.d(
         TAG,
@@ -166,7 +168,6 @@ fun getStreamDecision(
             "format=${scene.format}, " +
             "alwaysTranscodeAbove=$alwaysTranscodeAbove",
     )
-    val supportedCodecs = CodecSupport.getSupportedCodecs(context)
     val videoSupported = supportedCodecs.isVideoSupported(scene.videoCodec)
     val audioSupported = supportedCodecs.isAudioSupported(scene.audioCodec)
     val containerSupported = supportedCodecs.isContainerFormatSupported(scene.format)
@@ -477,16 +478,17 @@ fun findPossibleTranscodeLabels(
 fun switchToTranscode(
     context: Context,
     current: MediaItem,
-    streamChoice: StreamChoice,
+    prefs: PlaybackPreferences,
 ): MediaItem {
     val currScene = (current.localConfiguration!!.tag as PlaylistFragment.MediaItemTag).item
     val transcodeDecision =
         getStreamDecision(
             context,
             currScene,
-            PlaybackMode.ForcedTranscode(streamChoice.label),
-            streamChoice,
+            PlaybackMode.ForcedTranscode(prefs.streamChoice.label),
+            prefs.streamChoice,
             Resolution.RESOLUTION_UNSPECIFIED,
+            CodecSupport.getSupportedCodecs(prefs),
         )
     return buildMediaItem(context, transcodeDecision, currScene) {
         setTag(PlaylistFragment.MediaItemTag(currScene, transcodeDecision))

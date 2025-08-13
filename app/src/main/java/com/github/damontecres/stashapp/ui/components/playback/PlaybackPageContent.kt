@@ -531,7 +531,7 @@ fun PlaybackPageContent(
                                             switchToTranscode(
                                                 context,
                                                 current,
-                                                uiConfig.preferences.playbackPreferences.streamChoice,
+                                                uiConfig.preferences.playbackPreferences,
                                             )
                                         val newTag =
                                             newMediaItem.localConfiguration!!.tag as PlaylistFragment.MediaItemTag

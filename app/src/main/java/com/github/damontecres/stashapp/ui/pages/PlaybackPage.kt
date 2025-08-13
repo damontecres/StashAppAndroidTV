@@ -32,6 +32,7 @@ import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.PlaylistFragment
 import com.github.damontecres.stashapp.playback.buildMediaItem
@@ -112,6 +113,7 @@ fun PlaybackPage(
                     playbackMode,
                     uiConfig.preferences.playbackPreferences.streamChoice,
                     uiConfig.preferences.playbackPreferences.transcodeAboveResolution,
+                    CodecSupport.getSupportedCodecs(uiConfig.preferences.playbackPreferences),
                 )
             }
         val media =
@@ -350,6 +352,7 @@ private fun convertToMediaItem(
                 PlaybackMode.Choose,
                 prefs.streamChoice,
                 prefs.transcodeAboveResolution,
+                CodecSupport.getSupportedCodecs(prefs),
             )
         return buildMediaItem(context, decision, scene) {
             setTag(PlaylistFragment.MediaItemTag(scene, decision))
@@ -365,6 +368,7 @@ private fun convertToMediaItem(
                 PlaybackMode.Choose,
                 prefs.streamChoice,
                 prefs.transcodeAboveResolution,
+                CodecSupport.getSupportedCodecs(prefs),
             )
         val mediaItem =
             buildMediaItem(context, decision, scene) {
