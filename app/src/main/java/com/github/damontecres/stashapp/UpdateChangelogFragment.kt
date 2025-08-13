@@ -5,8 +5,10 @@ import android.view.View
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.UpdateChecker
+import com.github.damontecres.stashapp.util.getStringNotNull
 import io.noties.markwon.Markwon
 import kotlinx.coroutines.launch
 
@@ -17,7 +19,14 @@ class UpdateChangelogFragment : Fragment(R.layout.changelog) {
     ) {
         super.onViewCreated(view, savedInstanceState)
         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-            val release = UpdateChecker.getLatestRelease(requireActivity())
+            val updateUrl =
+                PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
+                    .getStringNotNull(
+                        "updateCheckUrl",
+                        requireContext().getString(R.string.app_update_url),
+                    )
+            val release = UpdateChecker.getLatestRelease(requireActivity(), updateUrl)
             if (release != null) {
                 val changelogText =
                     "# ${release.version}\n\n${release.body}"

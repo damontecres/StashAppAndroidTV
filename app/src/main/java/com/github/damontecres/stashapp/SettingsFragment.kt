@@ -47,6 +47,7 @@ import com.github.damontecres.stashapp.util.SubscriptionEngine
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.getDestination
+import com.github.damontecres.stashapp.util.getStringNotNull
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchIO
@@ -208,12 +209,20 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 true
             }
 
+            val updateUrl =
+                PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
+                    .getStringNotNull(
+                        "updateCheckUrl",
+                        requireContext().getString(R.string.app_update_url),
+                    )
+
             val checkForUpdatePref = findPreference<LongClickPreference>("checkForUpdate")!!
             val installUpdate = findPreference<LongClickPreference>("installUpdate")!!
             listOf(checkForUpdatePref, installUpdate).forEach { pref ->
                 pref.setOnPreferenceClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        val release = UpdateChecker.getLatestRelease(requireContext())
+                        val release = UpdateChecker.getLatestRelease(requireContext(), updateUrl)
                         if (release != null) {
                             if (release.version.isGreaterThan(installedVersion)) {
                                 serverViewModel.navigationManager.navigate(
@@ -242,7 +251,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 }
                 pref.setOnLongClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        val release = UpdateChecker.getLatestRelease(requireContext())
+                        val release = UpdateChecker.getLatestRelease(requireContext(), updateUrl)
                         if (release != null) {
                             serverViewModel.navigationManager.navigate(Destination.UpdateApp(release))
                         } else {
@@ -299,7 +308,14 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 val updatePrefs = listOf(checkForUpdatePref, installUpdate)
 
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val release = UpdateChecker.getLatestRelease(requireContext())
+                    val updateUrl =
+                        PreferenceManager
+                            .getDefaultSharedPreferences(requireContext())
+                            .getStringNotNull(
+                                "updateCheckUrl",
+                                requireContext().getString(R.string.app_update_url),
+                            )
+                    val release = UpdateChecker.getLatestRelease(requireContext(), updateUrl)
                     val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
                     if (release != null) {
                         if (release.version.isGreaterThan(installedVersion)) {

@@ -166,8 +166,16 @@ fun MainPage(
     val focusRequester = remember { FocusRequester() }
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
-        scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-            UpdateChecker.maybeShowUpdateToast(context, false)
+        uiConfig.preferences.updatePreferences.let {
+            if (it.checkForUpdates) {
+                scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                    UpdateChecker.maybeShowUpdateToast(
+                        context,
+                        it.updateUrl,
+                        false,
+                    )
+                }
+            }
         }
         viewModel.updateStatistics()
     }

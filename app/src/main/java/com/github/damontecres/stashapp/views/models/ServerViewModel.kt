@@ -21,6 +21,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.getStringNotNull
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -113,8 +114,17 @@ open class ServerViewModel : ViewModel() {
     }
 
     fun maybeShowUpdate(context: Context) {
+        val pref = PreferenceManager.getDefaultSharedPreferences(context)
+        if (!pref.getBoolean("autoCheckForUpdates", true)) {
+            return
+        }
+        val updateUrl =
+            pref.getStringNotNull(
+                "updateCheckUrl",
+                context.getString(R.string.app_update_url),
+            )
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
-            UpdateChecker.maybeShowUpdateToast(context, false)
+            UpdateChecker.maybeShowUpdateToast(context, updateUrl, false)
         }
     }
 
