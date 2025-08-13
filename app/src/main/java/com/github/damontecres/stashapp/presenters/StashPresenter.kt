@@ -29,6 +29,8 @@ import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
+import com.github.damontecres.stashapp.views.models.CardUiSettings
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 abstract class StashPresenter<T>(
     private var callback: LongClickCallBack<T>? = null,
@@ -41,8 +43,10 @@ abstract class StashPresenter<T>(
             return callback!!
         }
 
+    private val cardsSettings: CardUiSettings by lazy { ServerViewModel.createUiSettings() }
+
     final override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
-        val cardView = StashImageCardView(parent.context)
+        val cardView = StashImageCardView(parent.context, cardsSettings)
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = false
         return ViewHolder(cardView)

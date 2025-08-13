@@ -328,7 +328,7 @@ fun RootCard(
                         LocalGlobalContext.current.server,
                     )
                 LaunchedEffect(player) {
-                    maybeMuteAudio(context, true, player)
+                    maybeMuteAudio(uiConfig.preferences, true, player)
                     val mediaItem =
                         MediaItem
                             .Builder()

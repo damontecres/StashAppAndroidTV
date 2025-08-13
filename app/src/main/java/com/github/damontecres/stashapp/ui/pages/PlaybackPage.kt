@@ -36,6 +36,7 @@ import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.PlaylistFragment
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
+import com.github.damontecres.stashapp.proto.PlaybackPreferences
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -103,7 +104,16 @@ fun PlaybackPage(
                 }
             }
         val playbackScene = remember { Scene.fromFullSceneData(it) }
-        val decision = remember { getStreamDecision(context, playbackScene, playbackMode) }
+        val decision =
+            remember {
+                getStreamDecision(
+                    context,
+                    playbackScene,
+                    playbackMode,
+                    uiConfig.preferences.playbackPreferences.streamChoice,
+                    uiConfig.preferences.playbackPreferences.transcodeAboveResolution,
+                )
+            }
         val media =
             remember {
                 buildMediaItem(context, decision, playbackScene) {
@@ -200,6 +210,7 @@ fun PlaylistPlaybackPage(
                             add(
                                 convertToMediaItem(
                                     context,
+                                    uiConfig.preferences.playbackPreferences,
                                     filterArgs.dataType,
                                     clipDuration,
                                     item,
@@ -258,6 +269,7 @@ fun PlaylistPlaybackPage(
                                                 pager.getBlocking(index)?.let { item ->
                                                     convertToMediaItem(
                                                         context,
+                                                        uiConfig.preferences.playbackPreferences,
                                                         filterArgs.dataType,
                                                         clipDuration,
                                                         item,
@@ -297,6 +309,7 @@ fun PlaylistPlaybackPage(
                                         pager.getBlocking(index)?.let { item ->
                                             convertToMediaItem(
                                                 context,
+                                                uiConfig.preferences.playbackPreferences,
                                                 filterArgs.dataType,
                                                 clipDuration,
                                                 item,
@@ -322,6 +335,7 @@ fun PlaylistPlaybackPage(
  */
 private fun convertToMediaItem(
     context: Context,
+    prefs: PlaybackPreferences,
     dataType: DataType,
     clipDuration: Duration,
     item: StashData,
@@ -329,7 +343,14 @@ private fun convertToMediaItem(
     if (dataType == DataType.SCENE) {
         item as VideoSceneData
         val scene = Scene.fromVideoSceneData(item)
-        val decision = getStreamDecision(context, scene, PlaybackMode.Choose)
+        val decision =
+            getStreamDecision(
+                context,
+                scene,
+                PlaybackMode.Choose,
+                prefs.streamChoice,
+                prefs.transcodeAboveResolution,
+            )
         return buildMediaItem(context, decision, scene) {
             setTag(PlaylistFragment.MediaItemTag(scene, decision))
         }
@@ -337,7 +358,14 @@ private fun convertToMediaItem(
         // Markers
         item as FullMarkerData
         val scene = Scene.fromMarkerData(item)
-        val decision = getStreamDecision(context, scene, PlaybackMode.Choose)
+        val decision =
+            getStreamDecision(
+                context,
+                scene,
+                PlaybackMode.Choose,
+                prefs.streamChoice,
+                prefs.transcodeAboveResolution,
+            )
         val mediaItem =
             buildMediaItem(context, decision, scene) {
                 setTag(PlaylistFragment.MediaItemTag(scene, decision))

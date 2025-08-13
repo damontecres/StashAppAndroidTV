@@ -439,7 +439,7 @@ fun PlaybackPageContent(
         if (!isTvDevice) {
             viewModel.videoFilter.startThrottling(DRAG_THROTTLE_DELAY)
         }
-        maybeMuteAudio(context, false, player)
+        maybeMuteAudio(uiConfig.preferences, false, player)
         player.setMediaItems(playlist, startIndex, savedStartPosition)
         if (playlistPager == null) {
             player.setupFinishedBehavior(
@@ -527,7 +527,12 @@ fun PlaybackPageContent(
                                             tag.streamDecision.transcodeDecision is TranscodeDecision.ForcedDirectPlay
                                     if (id !in retryMediaItemIds && !isTranscodingOrDirect) {
                                         retryMediaItemIds.add(id)
-                                        val newMediaItem = switchToTranscode(context, current)
+                                        val newMediaItem =
+                                            switchToTranscode(
+                                                context,
+                                                current,
+                                                uiConfig.preferences.playbackPreferences.streamChoice,
+                                            )
                                         val newTag =
                                             newMediaItem.localConfiguration!!.tag as PlaylistFragment.MediaItemTag
                                         Log.d(

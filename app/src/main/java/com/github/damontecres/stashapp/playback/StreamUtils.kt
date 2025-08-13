@@ -16,6 +16,9 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.Caption
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.proto.Resolution
+import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.util.getPreference
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.serialization.Serializable
@@ -57,6 +60,7 @@ sealed interface TranscodeDecision {
 data class StreamDecision(
     val sceneId: String,
     val transcodeDecision: TranscodeDecision,
+    val streamChoice: StreamChoice,
     val videoSupported: Boolean,
     val audioSupported: Boolean,
     val containerSupported: Boolean,
@@ -74,9 +78,7 @@ fun buildMediaItem(
     val format =
         when (streamDecision.transcodeDecision) {
             TranscodeDecision.Transcode, is TranscodeDecision.ForcedTranscode -> {
-                PreferenceManager
-                    .getDefaultSharedPreferences(context)
-                    .getString("stream_choice", "HLS")
+                streamDecision.streamChoice.label
             }
 
             TranscodeDecision.DirectPlay, TranscodeDecision.ForcedDirectPlay -> {
@@ -151,6 +153,8 @@ fun getStreamDecision(
     context: Context,
     scene: Scene,
     mode: PlaybackMode,
+    streamChoice: StreamChoice,
+    alwaysTranscodeAbove: Resolution,
 ): StreamDecision {
     Log.d(
         TAG,
@@ -159,14 +163,15 @@ fun getStreamDecision(
             "videoCodec=${scene.videoCodec}, " +
             "videoHeight=${scene.videoHeight}, " +
             "audioCodec=${scene.audioCodec}, " +
-            "format=${scene.format}",
+            "format=${scene.format}, " +
+            "alwaysTranscodeAbove=$alwaysTranscodeAbove",
     )
     val supportedCodecs = CodecSupport.getSupportedCodecs(context)
     val videoSupported = supportedCodecs.isVideoSupported(scene.videoCodec)
     val audioSupported = supportedCodecs.isAudioSupported(scene.audioCodec)
     val containerSupported = supportedCodecs.isContainerFormatSupported(scene.format)
 
-    val alwaysTranscode = checkIfAlwaysTranscode(context, scene)
+    val alwaysTranscode = checkIfAlwaysTranscode(scene, streamChoice, alwaysTranscodeAbove)
     Log.d(TAG, "alwaysTranscode=$alwaysTranscode")
     if (mode != PlaybackMode.ForcedDirectPlay &&
         mode !is PlaybackMode.ForcedTranscode &&
@@ -175,6 +180,7 @@ fun getStreamDecision(
         return StreamDecision(
             scene.id,
             TranscodeDecision.ForcedTranscode(alwaysTranscode),
+            streamChoice,
             videoSupported,
             audioSupported,
             containerSupported,
@@ -195,6 +201,7 @@ fun getStreamDecision(
         return StreamDecision(
             scene.id,
             TranscodeDecision.DirectPlay,
+            streamChoice,
             true,
             true,
             true,
@@ -207,6 +214,7 @@ fun getStreamDecision(
         return StreamDecision(
             scene.id,
             TranscodeDecision.ForcedDirectPlay,
+            streamChoice,
             videoSupported,
             audioSupported,
             containerSupported,
@@ -220,6 +228,7 @@ fun getStreamDecision(
         return StreamDecision(
             scene.id,
             if (mode is PlaybackMode.ForcedTranscode) TranscodeDecision.ForcedTranscode(mode.streamLabel) else TranscodeDecision.Transcode,
+            streamChoice,
             videoSupported,
             audioSupported,
             containerSupported,
@@ -228,22 +237,13 @@ fun getStreamDecision(
 }
 
 fun checkIfAlwaysTranscode(
-    context: Context,
     scene: Scene,
-    alwaysTarget: String =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getString(
-                context.getString(R.string.pref_key_playback_always_transcode),
-                context.getString(R.string.transcode_options_disabled),
-            )!!,
+    streamChoice: StreamChoice,
+    alwaysTarget: Resolution,
 ): String? {
-    val format =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getString("stream_choice", "HLS")!!
-    return if (alwaysTarget != context.getString(R.string.transcode_options_disabled)) {
-        scene.streams.keys.firstOrNull { it.startsWith(format) && it.contains(alwaysTarget) }
+    val format = streamChoice.label
+    return if (alwaysTarget != Resolution.RESOLUTION_UNSPECIFIED && alwaysTarget != Resolution.UNRECOGNIZED) {
+        scene.streams.keys.firstOrNull { it.startsWith(format) && it.contains(alwaysTarget.label) }
     } else {
         null
     }
@@ -390,6 +390,19 @@ fun checkForSupport(tracks: Tracks): List<TrackSupport> =
         }
     }
 
+fun maybeMuteAudio(
+    preferences: StashPreferences,
+    checkPreviewAudioPref: Boolean,
+    player: Player?,
+) {
+    maybeMuteAudio(
+        preferences.interfacePreferences.videoPreviewAudio,
+        preferences.playbackPreferences.startWithNoAudio,
+        checkPreviewAudioPref,
+        player,
+    )
+}
+
 /**
  * If [R.string.pref_key_playback_start_muted] is true, disable selection of audio tracks by default on the given [Player]
  */
@@ -398,14 +411,23 @@ fun maybeMuteAudio(
     checkPreviewAudioPref: Boolean,
     player: Player?,
 ) {
+    val playAudioPreview =
+        getPreference(
+            context,
+            R.string.pref_key_video_preview_audio,
+            false,
+        )
+    val startMuted = getPreference(context, R.string.pref_key_playback_start_muted, false)
+    maybeMuteAudio(playAudioPreview, startMuted, checkPreviewAudioPref, player)
+}
+
+fun maybeMuteAudio(
+    playAudioPreview: Boolean,
+    startMuted: Boolean,
+    checkPreviewAudioPref: Boolean,
+    player: Player?,
+) {
     player?.let {
-        val playAudioPreview =
-            getPreference(
-                context,
-                R.string.pref_key_video_preview_audio,
-                false,
-            )
-        val startMuted = getPreference(context, R.string.pref_key_playback_start_muted, false)
         Log.v(
             TAG,
             "maybeMuteAudio: playAudioPreview=$playAudioPreview, startMuted=$startMuted, checkPreviewAudioPref=$checkPreviewAudioPref",
@@ -432,21 +454,18 @@ fun maybeMuteAudio(
 
 fun findPossibleTranscodeLabels(
     context: Context,
+    streamChoice: StreamChoice,
     streams: List<FullSceneData.SceneStream>?,
 ): List<StreamLabel> {
     if (streams == null) {
         return listOf()
     }
-    val format =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getString("stream_choice", "HLS")!!
     return streams
-        .filter { it.label.isNotNullOrBlank() && it.label.startsWith(format) }
+        .filter { it.label.isNotNullOrBlank() && it.label.startsWith(streamChoice.label) }
         .mapNotNull {
             if (it.label.isNotNullOrBlank()) {
                 StreamLabel(
-                    if (it.label == format) "${it.label} (Original)" else it.label,
+                    if (it.label == streamChoice.label) "${it.label} (Original)" else it.label,
                     it.label,
                 )
             } else {
@@ -458,15 +477,78 @@ fun findPossibleTranscodeLabels(
 fun switchToTranscode(
     context: Context,
     current: MediaItem,
+    streamChoice: StreamChoice,
 ): MediaItem {
     val currScene = (current.localConfiguration!!.tag as PlaylistFragment.MediaItemTag).item
-    val format =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getString("stream_choice", "HLS")!!
     val transcodeDecision =
-        getStreamDecision(context, currScene, PlaybackMode.ForcedTranscode(format))
+        getStreamDecision(
+            context,
+            currScene,
+            PlaybackMode.ForcedTranscode(streamChoice.label),
+            streamChoice,
+            Resolution.RESOLUTION_UNSPECIFIED,
+        )
     return buildMediaItem(context, transcodeDecision, currScene) {
         setTag(PlaylistFragment.MediaItemTag(currScene, transcodeDecision))
     }
+}
+
+val StreamChoice.label: String
+    get() =
+        when (this) {
+            StreamChoice.STREAM_CHOICE_HLS -> "HLS"
+            StreamChoice.STREAM_CHOICE_DASH -> "DASH"
+            StreamChoice.STREAM_CHOICE_MP4 -> "MP4"
+            StreamChoice.STREAM_CHOICE_WEBM -> "WEBM"
+            StreamChoice.UNRECOGNIZED -> "Disabled"
+        }
+
+fun streamChoiceFromLabel(label: String): StreamChoice =
+    when (label.uppercase(Locale.getDefault())) {
+        "HLS" -> StreamChoice.STREAM_CHOICE_HLS
+        "DASH" -> StreamChoice.STREAM_CHOICE_DASH
+        "MP4" -> StreamChoice.STREAM_CHOICE_MP4
+        "WEBM" -> StreamChoice.STREAM_CHOICE_WEBM
+        else -> StreamChoice.UNRECOGNIZED
+    }
+
+val Resolution.label: String
+    get() =
+        when (this) {
+            Resolution.RESOLUTION_2160P -> "2160p"
+            Resolution.RESOLUTION_1080P -> "1080p"
+            Resolution.RESOLUTION_720P -> "720p"
+            Resolution.RESOLUTION_480P -> "480p"
+            Resolution.RESOLUTION_240P -> "240p"
+            Resolution.UNRECOGNIZED -> "Unrecognized"
+            Resolution.RESOLUTION_UNSPECIFIED -> "Unspecified"
+        }
+
+fun resolutionFromLabel(label: String): Resolution =
+    when (label.uppercase(Locale.getDefault())) {
+        "2160P" -> Resolution.RESOLUTION_2160P
+        "1080P" -> Resolution.RESOLUTION_1080P
+        "720P" -> Resolution.RESOLUTION_720P
+        "480P" -> Resolution.RESOLUTION_480P
+        "240P" -> Resolution.RESOLUTION_240P
+        else -> Resolution.UNRECOGNIZED
+    }
+
+fun getStreamChoiceFromPreferences(context: Context): StreamChoice {
+    val streamChoice =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getString("stream_choice", "HLS") ?: "HLS"
+    return streamChoiceFromLabel(streamChoice)
+}
+
+fun getTranscodeAboveFromPreferences(context: Context): Resolution {
+    val resolution =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getString(
+                context.getString(R.string.pref_key_playback_always_transcode),
+                Resolution.RESOLUTION_UNSPECIFIED.label,
+            )
+    return resolutionFromLabel(resolution ?: Resolution.RESOLUTION_UNSPECIFIED.label)
 }

@@ -141,6 +141,7 @@ fun FullScreenContent(
             MarkerTimestampPage(
                 server = server,
                 navigationManager = navigationManager,
+                uiConfig = composeUiConfig,
                 markerId = destination.markerId,
                 modifier = Modifier.fillMaxSize(),
             )

@@ -255,7 +255,7 @@ fun ImagePage(
     val player =
         remember {
             StashExoPlayer.getInstance(context, server).apply {
-                maybeMuteAudio(context, false, this)
+                maybeMuteAudio(uiConfig.preferences, false, this)
                 repeatMode = Player.REPEAT_MODE_OFF
                 playWhenReady = true
             }

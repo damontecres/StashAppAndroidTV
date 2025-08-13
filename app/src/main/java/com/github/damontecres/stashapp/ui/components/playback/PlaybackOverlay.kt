@@ -69,6 +69,7 @@ import com.github.damontecres.stashapp.playback.TrackSupportReason
 import com.github.damontecres.stashapp.playback.TrackType
 import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.PreviewTheme
@@ -630,6 +631,7 @@ private fun PlaybackOverlayPreview() {
                     videoSupported = true,
                     audioSupported = true,
                     containerSupported = true,
+                    streamChoice = StreamChoice.STREAM_CHOICE_HLS,
                 ),
             oCounter = 1,
             playerControls = FakePlayerControls,
