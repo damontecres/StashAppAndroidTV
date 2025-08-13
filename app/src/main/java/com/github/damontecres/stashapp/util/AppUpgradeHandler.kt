@@ -157,7 +157,7 @@ class AppUpgradeHandler(
                     context.preferences.data
                         .map { it.preferencesMigratedV1 }
                         .first()
-                if (!preferencesMigratedV1 || true) { // TODO Force migration for now
+                if (!preferencesMigratedV1) {
                     migratePreferences()
                 }
             }
