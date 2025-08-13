@@ -10,11 +10,13 @@ import com.github.damontecres.stashapp.proto.PlaybackFinishBehavior
 import com.github.damontecres.stashapp.proto.Resolution
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.proto.StreamChoice
+import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.proto.ThemeStyle
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.updateInterfacePreferences
 import com.github.damontecres.stashapp.util.updatePinPreferences
 import com.github.damontecres.stashapp.util.updatePlaybackPreferences
+import com.github.damontecres.stashapp.util.updateTabPreferences
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -376,6 +378,133 @@ sealed interface StashPreference<T> {
                 summary = R.string.captions_default_summary,
             )
 
+        val GalleryTab =
+            StashMultiChoicePreference<TabType>(
+                title = R.string.stashapp_gallery,
+                defaultValue =
+                    listOf(
+                        TabType.TAB_TYPE_DETAILS,
+                        TabType.TAB_TYPE_IMAGES,
+                        TabType.TAB_TYPE_SCENES,
+                        TabType.TAB_TYPE_PERFORMERS,
+                        TabType.TAB_TYPE_TAGS,
+                    ),
+                displayValues = R.array.gallery_tabs,
+                getter = { it.interfacePreferences.tabPreferences.galleryList },
+                setter = { prefs, value ->
+                    prefs.updateTabPreferences {
+                        clearGallery()
+                        addAllGallery(value)
+                    }
+                },
+            )
+
+        val GroupTab =
+            StashMultiChoicePreference<TabType>(
+                title = R.string.stashapp_group,
+                defaultValue =
+                    listOf(
+                        TabType.TAB_TYPE_DETAILS,
+                        TabType.TAB_TYPE_SCENES,
+                        TabType.TAB_TYPE_MARKERS,
+                        TabType.TAB_TYPE_TAGS,
+                        TabType.TAB_TYPE_CONTAINING_GROUPS,
+                        TabType.TAB_TYPE_SUB_GROUPS,
+                    ),
+                displayValues = R.array.group_tabs,
+                getter = { it.interfacePreferences.tabPreferences.groupList },
+                setter = { prefs, value ->
+                    prefs.updateTabPreferences {
+                        clearGroup()
+                        addAllGroup(value)
+                    }
+                },
+            )
+
+        val PerformerTab =
+            StashMultiChoicePreference<TabType>(
+                title = R.string.stashapp_performer,
+                defaultValue =
+                    listOf(
+                        TabType.TAB_TYPE_DETAILS,
+                        TabType.TAB_TYPE_SCENES,
+                        TabType.TAB_TYPE_GALLERIES,
+                        TabType.TAB_TYPE_IMAGES,
+                        TabType.TAB_TYPE_GROUPS,
+                        TabType.TAB_TYPE_TAGS,
+                        TabType.TAB_TYPE_APPEARS_WITH,
+                        TabType.TAB_TYPE_MARKERS,
+                        TabType.TAB_TYPE_STUDIOS,
+                    ),
+                displayValues = R.array.performer_tabs,
+                getter = { it.interfacePreferences.tabPreferences.performerList },
+                setter = { prefs, value ->
+                    prefs.updateTabPreferences {
+                        clearPerformer()
+                        addAllPerformer(value)
+                    }
+                },
+            )
+
+        val StudioTab =
+            StashMultiChoicePreference<TabType>(
+                title = R.string.stashapp_studio,
+                defaultValue =
+                    listOf(
+                        TabType.TAB_TYPE_DETAILS,
+                        TabType.TAB_TYPE_SCENES,
+                        TabType.TAB_TYPE_GALLERIES,
+                        TabType.TAB_TYPE_IMAGES,
+                        TabType.TAB_TYPE_PERFORMERS,
+                        TabType.TAB_TYPE_GROUPS,
+                        TabType.TAB_TYPE_TAGS,
+                        TabType.TAB_TYPE_SUBSIDIARY_STUDIOS,
+                        TabType.TAB_TYPE_MARKERS,
+                    ),
+                displayValues = R.array.studio_tabs,
+                getter = { it.interfacePreferences.tabPreferences.studioList },
+                setter = { prefs, value ->
+                    prefs.updateTabPreferences {
+                        clearStudio()
+                        addAllStudio(value)
+                    }
+                },
+            )
+
+        val TagTab =
+            StashMultiChoicePreference<TabType>(
+                title = R.string.stashapp_tag,
+                defaultValue =
+                    listOf(
+                        TabType.TAB_TYPE_DETAILS,
+                        TabType.TAB_TYPE_SCENES,
+                        TabType.TAB_TYPE_GALLERIES,
+                        TabType.TAB_TYPE_IMAGES,
+                        TabType.TAB_TYPE_MARKERS,
+                        TabType.TAB_TYPE_PERFORMERS,
+                        TabType.TAB_TYPE_STUDIOS,
+                        TabType.TAB_TYPE_SUB_TAGS,
+                        TabType.TAB_TYPE_PARENT_TAGS,
+                    ),
+                displayValues = R.array.tag_tabs,
+                getter = { it.interfacePreferences.tabPreferences.tagsList },
+                setter = { prefs, value ->
+                    prefs.updateTabPreferences {
+                        clearTags()
+                        addAllTags(value)
+                    }
+                },
+            )
+
+        val TabPrefs =
+            listOf(
+                GalleryTab,
+                GroupTab,
+                PerformerTab,
+                StudioTab,
+                TagTab,
+            )
+
         // Advanced
         val advancedUiPrefs =
             listOf(
@@ -601,6 +730,17 @@ data class StashChoicePreference<T>(
     override val setter: (prefs: StashPreferences, value: T) -> StashPreferences,
     @param:StringRes val summary: Int? = null,
 ) : StashPreference<T>
+
+data class StashMultiChoicePreference<T>(
+    @param:StringRes override val title: Int,
+    override val defaultValue: List<T>,
+    @param:ArrayRes val displayValues: Int,
+//    val indexToValue: (index: Int) -> T,
+//    val valueToIndex: (T) -> Int,
+    override val getter: (prefs: StashPreferences) -> List<T>,
+    override val setter: (prefs: StashPreferences, value: List<T>) -> StashPreferences,
+    @param:StringRes val summary: Int? = null,
+) : StashPreference<List<T>>
 
 data class StashClickablePreference(
     @param:StringRes override val title: Int,

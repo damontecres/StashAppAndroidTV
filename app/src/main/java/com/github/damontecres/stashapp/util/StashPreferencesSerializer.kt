@@ -14,9 +14,9 @@ import com.github.damontecres.stashapp.proto.SearchPreferences
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.proto.TabPreferences
-import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.proto.ThemeStyle
 import com.github.damontecres.stashapp.proto.UpdatePreferences
+import com.github.damontecres.stashapp.ui.components.prefs.StashPreference
 import com.google.protobuf.InvalidProtocolBufferException
 import java.io.InputStream
 import java.io.OutputStream
@@ -54,64 +54,11 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                                 TabPreferences
                                     .newBuilder()
                                     .apply {
-                                        addAllPerformer(
-                                            listOf(
-                                                TabType.TAB_TYPE_DETAILS,
-                                                TabType.TAB_TYPE_SCENES,
-                                                TabType.TAB_TYPE_GALLERIES,
-                                                TabType.TAB_TYPE_IMAGES,
-                                                TabType.TAB_TYPE_GROUPS,
-                                                TabType.TAB_TYPE_TAGS,
-                                                TabType.TAB_TYPE_APPEARS_WITH,
-                                                TabType.TAB_TYPE_MARKERS,
-                                                TabType.TAB_TYPE_STUDIOS,
-                                            ),
-                                        )
-                                        addAllGallery(
-                                            listOf(
-                                                TabType.TAB_TYPE_DETAILS,
-                                                TabType.TAB_TYPE_IMAGES,
-                                                TabType.TAB_TYPE_SCENES,
-                                                TabType.TAB_TYPE_PERFORMERS,
-                                                TabType.TAB_TYPE_TAGS,
-                                            ),
-                                        )
-                                        addAllGroup(
-                                            listOf(
-                                                TabType.TAB_TYPE_DETAILS,
-                                                TabType.TAB_TYPE_SCENES,
-                                                TabType.TAB_TYPE_MARKERS,
-                                                TabType.TAB_TYPE_TAGS,
-                                                TabType.TAB_TYPE_CONTAINING_GROUPS,
-                                                TabType.TAB_TYPE_SUB_GROUPS,
-                                            ),
-                                        )
-                                        addAllStudio(
-                                            listOf(
-                                                TabType.TAB_TYPE_DETAILS,
-                                                TabType.TAB_TYPE_SCENES,
-                                                TabType.TAB_TYPE_GALLERIES,
-                                                TabType.TAB_TYPE_IMAGES,
-                                                TabType.TAB_TYPE_PERFORMERS,
-                                                TabType.TAB_TYPE_GROUPS,
-                                                TabType.TAB_TYPE_TAGS,
-                                                TabType.TAB_TYPE_SUBSIDIARY_STUDIOS,
-                                                TabType.TAB_TYPE_MARKERS,
-                                            ),
-                                        )
-                                        addAllTags(
-                                            listOf(
-                                                TabType.TAB_TYPE_DETAILS,
-                                                TabType.TAB_TYPE_SCENES,
-                                                TabType.TAB_TYPE_GALLERIES,
-                                                TabType.TAB_TYPE_IMAGES,
-                                                TabType.TAB_TYPE_MARKERS,
-                                                TabType.TAB_TYPE_PERFORMERS,
-                                                TabType.TAB_TYPE_STUDIOS,
-                                                TabType.TAB_TYPE_SUB_TAGS,
-                                                TabType.TAB_TYPE_PARENT_TAGS,
-                                            ),
-                                        )
+                                        addAllGallery(StashPreference.GalleryTab.defaultValue)
+                                        addAllGroup(StashPreference.GroupTab.defaultValue)
+                                        addAllPerformer(StashPreference.PerformerTab.defaultValue)
+                                        addAllStudio(StashPreference.StudioTab.defaultValue)
+                                        addAllTags(StashPreference.TagTab.defaultValue)
                                     }.build()
                         }.build()
                 playbackPreferences =
@@ -192,6 +139,11 @@ inline fun StashPreferences.update(block: StashPreferences.Builder.() -> Unit): 
 inline fun StashPreferences.updateInterfacePreferences(block: InterfacePreferences.Builder.() -> Unit): StashPreferences =
     update {
         interfacePreferences = interfacePreferences.toBuilder().apply(block).build()
+    }
+
+inline fun StashPreferences.updateTabPreferences(block: TabPreferences.Builder.() -> Unit): StashPreferences =
+    updateInterfacePreferences {
+        tabPreferences = tabPreferences.toBuilder().apply(block).build()
     }
 
 inline fun StashPreferences.updatePlaybackPreferences(block: PlaybackPreferences.Builder.() -> Unit): StashPreferences =

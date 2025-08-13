@@ -109,7 +109,7 @@ private val uiPreferences =
         ),
         PreferenceGroup(
             R.string.show_hide_tabs,
-            listOf(), // TODO
+            StashPreference.TabPrefs,
         ),
         PreferenceGroup(
             R.string.new_ui,

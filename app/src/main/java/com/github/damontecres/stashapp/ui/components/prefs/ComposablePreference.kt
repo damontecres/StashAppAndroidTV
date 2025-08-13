@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -21,6 +22,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.NavigationManager
@@ -114,7 +116,9 @@ fun <T> ComposablePreference(
                 modifier = Modifier,
             )
         }
-        is StashStringPreference -> {}
+        is StashStringPreference -> {
+            // TODO
+        }
 
         is StashChoicePreference -> {
             val values = stringArrayResource(preference.displayValues).toList()
@@ -138,6 +142,56 @@ fun <T> ComposablePreference(
                                         text = it,
                                         onClick = {
                                             onValueChange(preference.indexToValue(index))
+                                            dialogParams = null
+                                        },
+                                    )
+                                },
+                        )
+                },
+                modifier = modifier,
+            )
+        }
+
+        is StashMultiChoicePreference<*> -> {
+            val values = stringArrayResource(preference.displayValues).toList()
+            val summary =
+                preference.summary?.let { stringResource(it) }
+                    ?: preference.summary(context, value)
+            val selectedValues =
+                remember {
+                    val list = mutableStateSetOf<Any>()
+                    list.addAll(value as List<Any>)
+                    list
+                }
+
+            ClickPreference(
+                title = title,
+                summary = summary,
+                onClick = {
+                    dialogParams =
+                        DialogParams(
+                            title = title,
+                            fromLongClick = false,
+                            items =
+                                values.mapIndexed { index, it ->
+                                    val item = preference.defaultValue[index]!!
+                                    DialogItem(
+                                        headlineContent = { Text(it) },
+                                        trailingContent = {
+                                            Switch(
+                                                checked = selectedValues.contains(item),
+                                                onCheckedChange = {
+                                                    // no-op
+                                                },
+                                            )
+                                        },
+                                        onClick = {
+                                            if (selectedValues.contains(item)) {
+                                                selectedValues.remove(item)
+                                            } else {
+                                                selectedValues.add(item)
+                                            }
+                                            onValueChange.invoke(selectedValues.toList() as T)
                                         },
                                     )
                                 },
@@ -170,6 +224,7 @@ fun <T> ComposablePreference(
             dialogItems = it.items,
             onDismissRequest = { dialogParams = null },
             waitToLoad = false,
+            dismissOnClick = false,
         )
     }
     AnimatedVisibility(showPinDialog != null) {
