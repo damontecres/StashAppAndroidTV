@@ -174,7 +174,7 @@ fun <T> ComposablePreference(
                             fromLongClick = false,
                             items =
                                 values.mapIndexed { index, it ->
-                                    val item = preference.defaultValue[index]!!
+                                    val item = preference.allValues[index]!!
                                     DialogItem(
                                         headlineContent = { Text(it) },
                                         trailingContent = {

@@ -194,5 +194,11 @@
     <string name="advanced_settings_summary">Go to advanced settings</string>
     <string name="no_update_available">No update available</string>
     <string name="install_update">Install update</string>
+    <string name="direct_play_video">Direct Play Video</string>
+    <string name="direct_play_video_summary">Additional video codecs which should always direct play even if the device doesn\'t report support</string>
+    <string name="direct_play_audio">Direct Play Audio</string>
+    <string name="direct_play_audio_summary">Additional audio codecs which should always direct play even if the device doesn\'t report support</string>
+    <string name="direct_play_format">Direct Play Formats</string>
+    <string name="direct_play_format_summary">Additional container formats which should always direct play</string>
 
 </resources>

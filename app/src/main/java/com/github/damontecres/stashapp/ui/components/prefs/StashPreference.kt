@@ -378,17 +378,19 @@ sealed interface StashPreference<T> {
                 summary = R.string.captions_default_summary,
             )
 
+        private val GalleryTabList =
+            listOf(
+                TabType.TAB_TYPE_DETAILS,
+                TabType.TAB_TYPE_IMAGES,
+                TabType.TAB_TYPE_SCENES,
+                TabType.TAB_TYPE_PERFORMERS,
+                TabType.TAB_TYPE_TAGS,
+            )
         val GalleryTab =
             StashMultiChoicePreference<TabType>(
                 title = R.string.stashapp_gallery,
-                defaultValue =
-                    listOf(
-                        TabType.TAB_TYPE_DETAILS,
-                        TabType.TAB_TYPE_IMAGES,
-                        TabType.TAB_TYPE_SCENES,
-                        TabType.TAB_TYPE_PERFORMERS,
-                        TabType.TAB_TYPE_TAGS,
-                    ),
+                defaultValue = GalleryTabList,
+                allValues = GalleryTabList,
                 displayValues = R.array.gallery_tabs,
                 getter = { it.interfacePreferences.tabPreferences.galleryList },
                 setter = { prefs, value ->
@@ -399,18 +401,20 @@ sealed interface StashPreference<T> {
                 },
             )
 
+        private val GroupTabList =
+            listOf(
+                TabType.TAB_TYPE_DETAILS,
+                TabType.TAB_TYPE_SCENES,
+                TabType.TAB_TYPE_MARKERS,
+                TabType.TAB_TYPE_TAGS,
+                TabType.TAB_TYPE_CONTAINING_GROUPS,
+                TabType.TAB_TYPE_SUB_GROUPS,
+            )
         val GroupTab =
             StashMultiChoicePreference<TabType>(
                 title = R.string.stashapp_group,
-                defaultValue =
-                    listOf(
-                        TabType.TAB_TYPE_DETAILS,
-                        TabType.TAB_TYPE_SCENES,
-                        TabType.TAB_TYPE_MARKERS,
-                        TabType.TAB_TYPE_TAGS,
-                        TabType.TAB_TYPE_CONTAINING_GROUPS,
-                        TabType.TAB_TYPE_SUB_GROUPS,
-                    ),
+                defaultValue = GroupTabList,
+                allValues = GroupTabList,
                 displayValues = R.array.group_tabs,
                 getter = { it.interfacePreferences.tabPreferences.groupList },
                 setter = { prefs, value ->
@@ -421,21 +425,23 @@ sealed interface StashPreference<T> {
                 },
             )
 
+        val PerformerTabList =
+            listOf(
+                TabType.TAB_TYPE_DETAILS,
+                TabType.TAB_TYPE_SCENES,
+                TabType.TAB_TYPE_GALLERIES,
+                TabType.TAB_TYPE_IMAGES,
+                TabType.TAB_TYPE_GROUPS,
+                TabType.TAB_TYPE_TAGS,
+                TabType.TAB_TYPE_APPEARS_WITH,
+                TabType.TAB_TYPE_MARKERS,
+                TabType.TAB_TYPE_STUDIOS,
+            )
         val PerformerTab =
             StashMultiChoicePreference<TabType>(
                 title = R.string.stashapp_performer,
-                defaultValue =
-                    listOf(
-                        TabType.TAB_TYPE_DETAILS,
-                        TabType.TAB_TYPE_SCENES,
-                        TabType.TAB_TYPE_GALLERIES,
-                        TabType.TAB_TYPE_IMAGES,
-                        TabType.TAB_TYPE_GROUPS,
-                        TabType.TAB_TYPE_TAGS,
-                        TabType.TAB_TYPE_APPEARS_WITH,
-                        TabType.TAB_TYPE_MARKERS,
-                        TabType.TAB_TYPE_STUDIOS,
-                    ),
+                defaultValue = PerformerTabList,
+                allValues = PerformerTabList,
                 displayValues = R.array.performer_tabs,
                 getter = { it.interfacePreferences.tabPreferences.performerList },
                 setter = { prefs, value ->
@@ -446,21 +452,23 @@ sealed interface StashPreference<T> {
                 },
             )
 
+        private val StudioTabList =
+            listOf(
+                TabType.TAB_TYPE_DETAILS,
+                TabType.TAB_TYPE_SCENES,
+                TabType.TAB_TYPE_GALLERIES,
+                TabType.TAB_TYPE_IMAGES,
+                TabType.TAB_TYPE_PERFORMERS,
+                TabType.TAB_TYPE_GROUPS,
+                TabType.TAB_TYPE_TAGS,
+                TabType.TAB_TYPE_SUBSIDIARY_STUDIOS,
+                TabType.TAB_TYPE_MARKERS,
+            )
         val StudioTab =
             StashMultiChoicePreference<TabType>(
                 title = R.string.stashapp_studio,
-                defaultValue =
-                    listOf(
-                        TabType.TAB_TYPE_DETAILS,
-                        TabType.TAB_TYPE_SCENES,
-                        TabType.TAB_TYPE_GALLERIES,
-                        TabType.TAB_TYPE_IMAGES,
-                        TabType.TAB_TYPE_PERFORMERS,
-                        TabType.TAB_TYPE_GROUPS,
-                        TabType.TAB_TYPE_TAGS,
-                        TabType.TAB_TYPE_SUBSIDIARY_STUDIOS,
-                        TabType.TAB_TYPE_MARKERS,
-                    ),
+                defaultValue = StudioTabList,
+                allValues = StudioTabList,
                 displayValues = R.array.studio_tabs,
                 getter = { it.interfacePreferences.tabPreferences.studioList },
                 setter = { prefs, value ->
@@ -471,21 +479,23 @@ sealed interface StashPreference<T> {
                 },
             )
 
+        private val TagTabList =
+            listOf(
+                TabType.TAB_TYPE_DETAILS,
+                TabType.TAB_TYPE_SCENES,
+                TabType.TAB_TYPE_GALLERIES,
+                TabType.TAB_TYPE_IMAGES,
+                TabType.TAB_TYPE_MARKERS,
+                TabType.TAB_TYPE_PERFORMERS,
+                TabType.TAB_TYPE_STUDIOS,
+                TabType.TAB_TYPE_SUB_TAGS,
+                TabType.TAB_TYPE_PARENT_TAGS,
+            )
         val TagTab =
             StashMultiChoicePreference<TabType>(
                 title = R.string.stashapp_tag,
-                defaultValue =
-                    listOf(
-                        TabType.TAB_TYPE_DETAILS,
-                        TabType.TAB_TYPE_SCENES,
-                        TabType.TAB_TYPE_GALLERIES,
-                        TabType.TAB_TYPE_IMAGES,
-                        TabType.TAB_TYPE_MARKERS,
-                        TabType.TAB_TYPE_PERFORMERS,
-                        TabType.TAB_TYPE_STUDIOS,
-                        TabType.TAB_TYPE_SUB_TAGS,
-                        TabType.TAB_TYPE_PARENT_TAGS,
-                    ),
+                defaultValue = TagTabList,
+                allValues = TagTabList,
                 displayValues = R.array.tag_tabs,
                 getter = { it.interfacePreferences.tabPreferences.tagsList },
                 setter = { prefs, value ->
@@ -568,6 +578,140 @@ sealed interface StashPreference<T> {
                 ),
             )
 
+        val DirectPlayVideo =
+            StashMultiChoicePreference<String>(
+                title = R.string.direct_play_video,
+                summary = R.string.direct_play_video_summary,
+                defaultValue = listOf(),
+                allValues =
+                    listOf(
+                        "av1",
+                        "h263",
+                        "h264",
+                        "hevc",
+                        "mpeg2video",
+                        "mpeg4",
+                        "vc1",
+                        "vp8",
+                        "vp9",
+                        // Less common codecs
+                        "flv1",
+                        "mpeg1video",
+                        "rv30",
+                        "rv40",
+                        "svq3",
+                        "vc1",
+                        "vp6f",
+                        "wmv1",
+                        "wmv2",
+                        "wmv3",
+                    ),
+                displayValues = R.array.video_codecs,
+                getter = { it.playbackPreferences.directPlayVideoList },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences {
+                        clearDirectPlayVideo()
+                        addAllDirectPlayVideo(value)
+                    }
+                },
+            )
+
+        val DirectPlayAudio =
+            StashMultiChoicePreference<String>(
+                title = R.string.direct_play_audio,
+                summary = R.string.direct_play_audio_summary,
+                defaultValue =
+                    listOf(
+                        "ac3",
+                        "aac",
+                        "dts",
+                        "truehd",
+                        "pcm_alaw",
+                        "pcm_f32le",
+                        "pcm_mulaw",
+                        "pcm_s16be",
+                        "pcm_s16le",
+                        "pcm_s24le",
+                        "pcm_s32le",
+                        "pcm_s8",
+                    ),
+                allValues =
+                    listOf(
+                        "aac",
+                        "ac3",
+                        "ac4",
+                        "dts",
+                        "eac3",
+                        "flac",
+                        "mp3",
+                        "opus",
+                        "truehd",
+                        "vorbis",
+                        // PCM formats
+                        "pcm_s8",
+                        "pcm_s16be",
+                        "pcm_s16le",
+                        "pcm_s24le",
+                        "pcm_s32le",
+                        "pcm_f32le",
+                        "pcm_alaw",
+                        "pcm_mulaw",
+                        // Less common codecs
+                        "nellymoser",
+                        "sipr",
+                        "wmav2",
+                        "wmapro",
+                    ),
+                displayValues = R.array.audio_codecs,
+                getter = { it.playbackPreferences.directPlayAudioList },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences {
+                        clearDirectPlayAudio()
+                        addAllDirectPlayAudio(value)
+                    }
+                },
+            )
+
+        val DirectPlayFormat =
+            StashMultiChoicePreference<String>(
+                title = R.string.direct_play_format,
+                summary = R.string.direct_play_format_summary,
+                defaultValue =
+                    listOf(
+                        "flv",
+                        "matroska",
+                        "mov",
+                        "mp4",
+                        "mpeg",
+                        "mpegts",
+                        "webm",
+                    ),
+                allValues =
+                    listOf(
+                        "asf",
+                        "avi",
+                        "flv",
+                        "hls",
+                        "matroska",
+                        "mov",
+                        "mp4",
+                        "mpeg",
+                        "mpegts",
+                        "mpegvideo",
+                        "rm",
+                        "webm",
+                        "wmv",
+                    ),
+                displayValues = R.array.container_formats,
+                getter = { it.playbackPreferences.directPlayFormatList },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences {
+                        clearDirectPlayFormat()
+                        addAllDirectPlayFormat(value)
+                    }
+                },
+            )
+
         val advancedPlaybackPrefs =
             listOf(
                 StashSwitchPreference(
@@ -602,7 +746,9 @@ sealed interface StashPreference<T> {
                         prefs.updatePlaybackPreferences { streamChoice = value }
                     },
                 ),
-                // TODO direct play prefs
+                DirectPlayVideo,
+                DirectPlayAudio,
+                DirectPlayFormat,
                 StashSwitchPreference(
                     title = R.string.playback_debug_info,
                     defaultValue = false,
@@ -734,6 +880,7 @@ data class StashChoicePreference<T>(
 data class StashMultiChoicePreference<T>(
     @param:StringRes override val title: Int,
     override val defaultValue: List<T>,
+    val allValues: List<T>,
     @param:ArrayRes val displayValues: Int,
 //    val indexToValue: (index: Int) -> T,
 //    val valueToIndex: (T) -> Int,

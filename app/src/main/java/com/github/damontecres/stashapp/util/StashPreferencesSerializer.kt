@@ -71,6 +71,10 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                             controllerTimeoutMs = 3500
                             savePlayHistory = true
                             saveVideoFilters = true
+
+                            addAllDirectPlayVideo(StashPreference.DirectPlayVideo.defaultValue)
+                            addAllDirectPlayAudio(StashPreference.DirectPlayAudio.defaultValue)
+                            addAllDirectPlayFormat(StashPreference.DirectPlayFormat.defaultValue)
                         }.build()
                 updatePreferences =
                     UpdatePreferences

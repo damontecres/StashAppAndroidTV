@@ -115,7 +115,10 @@ message PlaybackPreferences {
   bool enable_debug_logging = 13;
   PlaybackHttpClient playback_http_client = 14;
   int32 seek_bar_steps = 15;
-  // TODO direct play overrides
+
+  repeated string direct_play_video = 16;
+  repeated string direct_play_audio = 17;
+  repeated string direct_play_format = 18;
 }
 
 message CachePreferences {
