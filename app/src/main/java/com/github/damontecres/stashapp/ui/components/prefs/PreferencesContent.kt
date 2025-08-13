@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -170,7 +169,7 @@ fun PreferencesContent(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(0.dp),
         contentPadding = PaddingValues(16.dp),
-        modifier = modifier.background(MaterialTheme.colorScheme.secondaryContainer),
+        modifier = modifier,
     ) {
         stickyHeader {
             Text(
@@ -194,7 +193,7 @@ fun PreferencesContent(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .padding(top = 8.dp),
+                            .padding(top = 8.dp, bottom = 4.dp),
                 )
             }
             if (updateAvailable && preferences.updatePreferences.checkForUpdates) {

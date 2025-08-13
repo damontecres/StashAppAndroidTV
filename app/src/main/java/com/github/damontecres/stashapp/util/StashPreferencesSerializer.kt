@@ -50,6 +50,7 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                             showRatingOnCards = true
                             videoPreviewAudio = false
                             pageWithRemoteButtons = true
+                            dpadSkipIndicator = true
                             tabPreferences =
                                 TabPreferences
                                     .newBuilder()

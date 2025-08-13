@@ -1,11 +1,13 @@
 package com.github.damontecres.stashapp.ui.pages
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -23,7 +25,7 @@ fun SettingsPage(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier,
+        modifier = modifier.background(MaterialTheme.colorScheme.background),
     ) {
         val newModifier =
             if (isTvDevice) {
@@ -32,7 +34,7 @@ fun SettingsPage(
                     .align(Alignment.TopEnd)
             } else {
                 Modifier
-            }
+            }.background(MaterialTheme.colorScheme.secondaryContainer)
         PreferencesContent(
             server,
             navigationManager,
