@@ -590,7 +590,6 @@ fun PlaybackPageContent(
             trackActivityListener =
                 if (appTracking && server.serverPreferences.trackActivity && !isMarkerPlaylist) {
                     TrackActivityPlaybackListener(
-                        context = context,
                         server = server,
                         scene = currentScene.item,
                         getCurrentPosition = {

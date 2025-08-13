@@ -1,11 +1,9 @@
 package com.github.damontecres.stashapp.playback
 
-import android.content.Context
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -19,15 +17,13 @@ import java.util.Timer
 import java.util.TimerTask
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Listens to playback and periodically saves playback activity to the server
  */
 @OptIn(UnstableApi::class)
 class TrackActivityPlaybackListener(
-    context: Context,
     private val server: StashServer,
     dispatcher: CoroutineDispatcher = Dispatchers.Main,
     private val scene: Scene,
@@ -37,7 +33,7 @@ class TrackActivityPlaybackListener(
     private val coroutineScope = CoroutineScope(dispatcher)
     private val task: TimerTask
     private val minimumPlayPercent = server.serverPreferences.minimumPlayPercent
-    private val maxPlayPercent: Int
+    private val maxPlayPercent: Int = 98
 
     private var totalPlayDurationMilliseconds = AtomicLong(0)
     private var currentDurationMilliseconds = AtomicLong(0)
@@ -45,17 +41,8 @@ class TrackActivityPlaybackListener(
     private var incrementedPlayCount = AtomicBoolean(false)
 
     init {
-        val manager = PreferenceManager.getDefaultSharedPreferences(context)
-        val playbackDurationInterval = manager.getInt("playbackDurationInterval", 1)
-        val saveActivityInterval =
-            manager
-                .getInt("saveActivityInterval", 10)
-                .toDuration(DurationUnit.SECONDS)
-                .inWholeMilliseconds
-        maxPlayPercent = manager.getInt("maxPlayPercent", 98)
-
-        val delay =
-            playbackDurationInterval.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
+        val saveActivityInterval = 10.seconds.inWholeMilliseconds
+        val delay = 1.seconds.inWholeMilliseconds
         // Every x seconds, check if the video is playing
         task =
             object : TimerTask() {
