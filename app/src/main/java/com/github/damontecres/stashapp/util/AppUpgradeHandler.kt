@@ -157,7 +157,7 @@ class AppUpgradeHandler(
                     context.preferences.data
                         .map { it.preferencesMigratedV1 }
                         .first()
-                if (!preferencesMigratedV1) {
+                if (!preferencesMigratedV1 || true) { // TODO Force migration for now
                     migratePreferences()
                 }
             }
@@ -227,8 +227,8 @@ class AppUpgradeHandler(
                                 slideShowIntervalMs =
                                     int(
                                         R.string.pref_key_slideshow_duration,
-                                        StashPreference.SlideshowDuration.defaultValue,
-                                    ).toLong()
+                                        5,
+                                    ).seconds.inWholeMilliseconds
                                 slideShowImageClipPauseMs =
                                     int(
                                         R.string.pref_key_slideshow_duration_image_clip,
@@ -242,7 +242,7 @@ class AppUpgradeHandler(
                                         R.string.pref_key_ui_theme_dark_appearance,
                                         "system",
                                     ).let {
-                                        when (it) {
+                                        when (it.lowercase()) {
                                             "dark" -> ThemeStyle.THEME_STYLE_DARK
                                             "light" -> ThemeStyle.THEME_STYLE_LIGHT
                                             else -> ThemeStyle.THEME_STYLE_SYSTEM
@@ -281,8 +281,10 @@ class AppUpgradeHandler(
                         PlaybackPreferences
                             .newBuilder()
                             .apply {
-                                skipForwardMs = pm.getInt("skip_forward_time", 30_000).toLong()
-                                skipBackwardMs = pm.getInt("skip_back_time", 10_000).toLong()
+                                skipForwardMs =
+                                    pm.getInt("skip_forward_time", 30).seconds.inWholeMilliseconds
+                                skipBackwardMs =
+                                    pm.getInt("skip_back_time", 10).seconds.inWholeMilliseconds
                                 playbackFinishBehavior =
                                     (
                                         pm.getString("playbackFinishedBehavior", null)
@@ -371,8 +373,8 @@ class AppUpgradeHandler(
                                     pm
                                         .getInt(
                                             "networkTimeout",
-                                            15.seconds.inWholeMilliseconds.toInt(),
-                                        ).toLong()
+                                            15,
+                                        ).seconds.inWholeMilliseconds
                                 trustSelfSignedCertificates =
                                     bool(R.string.pref_key_trust_certs, false)
                                 imageThreadCount =
@@ -386,14 +388,18 @@ class AppUpgradeHandler(
                             .newBuilder()
                             .apply {
                                 networkCacheSize =
-                                    int(
-                                        R.string.pref_key_network_cache_size,
-                                        10 * 1024 * 1024,
+                                    (
+                                        int(
+                                            R.string.pref_key_network_cache_size,
+                                            10,
+                                        ) * 1024 * 1024
                                     ).toLong()
                                 imageDiskCacheSize =
-                                    int(
-                                        R.string.pref_key_image_cache_size,
-                                        100 * 1024 * 1024,
+                                    (
+                                        int(
+                                            R.string.pref_key_image_cache_size,
+                                            100,
+                                        ) * 1024 * 1024
                                     ).toLong()
                                 cacheExpirationTime = pm.getInt("networkCacheDuration", 6)
                                 logCacheHits = pm.getBoolean("networkCacheLogging", false)
