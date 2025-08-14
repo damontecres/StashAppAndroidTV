@@ -199,14 +199,10 @@ tasks.preBuild.dependsOn("generateStrings")
 tasks.clean.dependsOn("cleanGraphqlSchema")
 
 protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:${libs.protobuf.kotlin.lite.get().version}"
+    }
     generateProtoTasks {
-//        all().forEach { task ->
-//            task.builtins {
-//                create("kotlin") {
-//                    option("lite")
-//                }
-//            }
-//        }
         all().forEach {
             it.plugins {
                 id("java") {
