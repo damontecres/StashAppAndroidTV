@@ -1,6 +1,8 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.github.damontecres.stashapp.ui.compat.ListItem
 
@@ -11,6 +13,7 @@ fun ClickPreference(
     modifier: Modifier = Modifier,
     summary: String? = null,
     onLongClick: (() -> Unit)? = null,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     ListItem(
         dense = true,
@@ -23,6 +26,7 @@ fun ClickPreference(
         supportingContent = {
             PreferenceSummary(summary)
         },
+        interactionSource = interactionSource,
         modifier = modifier,
     )
 }

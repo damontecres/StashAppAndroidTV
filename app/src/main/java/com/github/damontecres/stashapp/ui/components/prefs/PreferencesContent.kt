@@ -1,11 +1,14 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
 import android.widget.Toast
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,6 +16,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -182,6 +186,8 @@ fun PreferencesContent(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
+    var focusedIndex by rememberSaveable { mutableStateOf(Pair(0, 0)) }
+    val state = rememberLazyListState()
     var preferences by remember { mutableStateOf(initialPreferences) }
 
     val installedVersion = remember { UpdateChecker.getInstalledVersion(context) }
@@ -212,6 +218,7 @@ fun PreferencesContent(
         focusRequester.tryRequestFocus()
     }
     LazyColumn(
+        state = state,
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(0.dp),
         contentPadding = PaddingValues(16.dp),
@@ -242,10 +249,12 @@ fun PreferencesContent(
                             .padding(top = 8.dp, bottom = 4.dp),
                 )
             }
-            if (updateAvailable && preferences.updatePreferences.checkForUpdates) {
+            if (updateAvailable &&
+                groupIndex == 0 &&
+                preferenceScreenOption == PreferenceScreenOption.BASIC
+            ) {
                 item {
                     val updateFocusRequester = remember { FocusRequester() }
-                    LaunchedEffect(Unit) { updateFocusRequester.tryRequestFocus() }
                     ClickPreference(
                         title = stringResource(R.string.install_update),
                         onClick = {
@@ -261,6 +270,13 @@ fun PreferencesContent(
             group.preferences.forEachIndexed { prefIndex, pref ->
                 pref as StashPreference<Any>
                 item {
+                    val interactionSource = remember { MutableInteractionSource() }
+                    val focused = interactionSource.collectIsFocusedAsState().value
+                    LaunchedEffect(focused) {
+                        if (focused) {
+                            focusedIndex = Pair(groupIndex, prefIndex)
+                        }
+                    }
                     when (pref) {
                         StashPreference.InstalledVersion -> {
                             var clickCount by remember { mutableIntStateOf(0) }
@@ -273,9 +289,10 @@ fun PreferencesContent(
                                     }
                                 },
                                 summary = installedVersion.toString(),
+                                interactionSource = interactionSource,
                                 modifier =
                                     Modifier.ifElse(
-                                        groupIndex == 0 && prefIndex == 0,
+                                        groupIndex == focusedIndex.first && prefIndex == focusedIndex.second,
                                         Modifier.focusRequester(focusRequester),
                                     ),
                             )
@@ -328,9 +345,10 @@ fun PreferencesContent(
                                     } else {
                                         null
                                     },
+                                interactionSource = interactionSource,
                                 modifier =
                                     Modifier.ifElse(
-                                        groupIndex == 0 && prefIndex == 0,
+                                        groupIndex == focusedIndex.first && prefIndex == focusedIndex.second,
                                         Modifier.focusRequester(focusRequester),
                                     ),
                             )
@@ -392,9 +410,10 @@ fun PreferencesContent(
                                         }
                                     }
                                 },
+                                interactionSource = interactionSource,
                                 modifier =
                                     Modifier.ifElse(
-                                        groupIndex == 0 && prefIndex == 0,
+                                        groupIndex == focusedIndex.first && prefIndex == focusedIndex.second,
                                         Modifier.focusRequester(focusRequester),
                                     ),
                             )

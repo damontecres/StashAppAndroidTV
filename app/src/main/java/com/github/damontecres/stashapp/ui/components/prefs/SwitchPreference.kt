@@ -1,6 +1,8 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.github.damontecres.stashapp.ui.compat.ListItem
 
@@ -13,6 +15,7 @@ fun SwitchPreference(
     summaryOff: String?,
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) = SwitchPreference(
     title = title,
     value = value,
@@ -20,6 +23,7 @@ fun SwitchPreference(
     modifier = modifier,
     summary = if (value) summaryOn else summaryOff,
     onLongClick = onLongClick,
+    interactionSource = interactionSource,
 )
 
 @Composable
@@ -30,6 +34,7 @@ fun SwitchPreference(
     modifier: Modifier = Modifier,
     summary: String? = null,
     onLongClick: (() -> Unit)? = null,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     ListItem(
         selected = false,
@@ -51,6 +56,7 @@ fun SwitchPreference(
                         .colors(),
             )
         },
+        interactionSource = interactionSource,
         modifier = modifier,
     )
 }

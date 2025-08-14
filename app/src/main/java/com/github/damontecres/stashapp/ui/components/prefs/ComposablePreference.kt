@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.ui.components.prefs
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
@@ -47,6 +48,7 @@ fun <T> ComposablePreference(
     value: T?,
     onValueChange: (T) -> Unit,
     modifier: Modifier = Modifier,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -66,6 +68,7 @@ fun <T> ComposablePreference(
                     }
                 },
                 summary = server.url,
+                interactionSource = interactionSource,
                 modifier = modifier,
             )
         }
@@ -92,6 +95,7 @@ fun <T> ComposablePreference(
                     }
                 },
                 summary = preference.summary(context, value),
+                interactionSource = interactionSource,
                 modifier = modifier,
             )
         }
@@ -105,6 +109,7 @@ fun <T> ComposablePreference(
                     }
                 },
                 summary = preference.summary(context, value),
+                interactionSource = interactionSource,
                 modifier = modifier,
             )
         }
@@ -116,6 +121,7 @@ fun <T> ComposablePreference(
                     navigationManager.navigate(preference.destination)
                 },
                 summary = preference.summary(context, value),
+                interactionSource = interactionSource,
                 modifier = modifier,
             )
 
@@ -124,6 +130,7 @@ fun <T> ComposablePreference(
                 title = title,
                 onClick = {},
                 summary = preference.summary(context, value),
+                interactionSource = interactionSource,
                 modifier = modifier,
             )
 
@@ -133,6 +140,7 @@ fun <T> ComposablePreference(
                 value = value as Boolean,
                 onClick = { onValueChange.invoke(!value as T) },
                 summary = preference.summary(context, value),
+                interactionSource = interactionSource,
                 modifier = modifier,
             )
 
@@ -155,6 +163,7 @@ fun <T> ComposablePreference(
                         showPinDialog = preference
                     }
                 },
+                interactionSource = interactionSource,
                 modifier = Modifier,
             )
         }
@@ -190,6 +199,7 @@ fun <T> ComposablePreference(
                                 },
                         )
                 },
+                interactionSource = interactionSource,
                 modifier = modifier,
             )
         }
@@ -239,6 +249,7 @@ fun <T> ComposablePreference(
                                 },
                         )
                 },
+                interactionSource = interactionSource,
                 modifier = modifier,
             )
         }
@@ -254,20 +265,23 @@ fun <T> ComposablePreference(
                 value = value as Int,
                 onChange = { onValueChange(it as T) },
                 summaryBelow = false,
+                interactionSource = interactionSource,
                 modifier = modifier,
             )
         }
     }
 
-    dialogParams?.let {
-        DialogPopup(
-            showDialog = true,
-            title = it.title,
-            dialogItems = it.items,
-            onDismissRequest = { dialogParams = null },
-            waitToLoad = false,
-            dismissOnClick = false,
-        )
+    AnimatedVisibility(dialogParams != null) {
+        dialogParams?.let {
+            DialogPopup(
+                showDialog = true,
+                title = it.title,
+                dialogItems = it.items,
+                onDismissRequest = { dialogParams = null },
+                waitToLoad = false,
+                dismissOnClick = false,
+            )
+        }
     }
     AnimatedVisibility(showPinDialog != null) {
         Dialog(
