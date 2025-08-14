@@ -54,8 +54,8 @@ fun chooseColorScheme(
     colorSchemeSet: ColorSchemeSet,
 ): AppColorScheme =
     when (themeStyle) {
-        ThemeStyle.THEME_STYLE_LIGHT -> colorSchemeSet.light
-        ThemeStyle.THEME_STYLE_DARK -> colorSchemeSet.dark
+        ThemeStyle.LIGHT -> colorSchemeSet.light
+        ThemeStyle.DARK -> colorSchemeSet.dark
         else -> {
             if (isSystemInDark) {
                 colorSchemeSet.dark
@@ -98,7 +98,7 @@ fun getTheme(
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun AppTheme(
-    themeStyle: ThemeStyle = ThemeStyle.THEME_STYLE_DARK,
+    themeStyle: ThemeStyle = ThemeStyle.DARK,
     themeName: String? = null,
     colorScheme: AppColorScheme =
         getTheme(
@@ -139,14 +139,14 @@ fun DefaultMaterial3Theme(content: @Composable () -> Unit) {
 
 @Composable
 fun Material3AppTheme(
-    themeStyle: ThemeStyle = ThemeStyle.THEME_STYLE_DARK,
+    themeStyle: ThemeStyle = ThemeStyle.DARK,
     content: @Composable () -> Unit,
 ) {
     val colorSchemeSet = currentColorSchemeSet ?: defaultColorSchemeSet
     val colorScheme =
         when (themeStyle) {
-            ThemeStyle.THEME_STYLE_LIGHT -> colorSchemeSet.light
-            ThemeStyle.THEME_STYLE_DARK -> colorSchemeSet.dark
+            ThemeStyle.LIGHT -> colorSchemeSet.light
+            ThemeStyle.DARK -> colorSchemeSet.dark
             else -> {
                 if (isSystemInDarkTheme()) {
                     colorSchemeSet.dark

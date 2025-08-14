@@ -188,7 +188,7 @@ sealed interface StashPreference<T> {
         val FinishedBehavior =
             StashChoicePreference<PlaybackFinishBehavior>(
                 title = R.string.playback_finished_behavior,
-                defaultValue = PlaybackFinishBehavior.PLAYBACK_FINISH_BEHAVIOR_DO_NOTHING,
+                defaultValue = PlaybackFinishBehavior.DO_NOTHING,
                 displayValues = R.array.playback_finished_behavior_options,
                 indexToValue = {
                     PlaybackFinishBehavior.forNumber(it)
@@ -336,7 +336,7 @@ sealed interface StashPreference<T> {
         val ThemeStylePref =
             StashChoicePreference<ThemeStyle>(
                 title = R.string.theme_style_preference_title,
-                defaultValue = ThemeStyle.THEME_STYLE_SYSTEM,
+                defaultValue = ThemeStyle.SYSTEM,
                 displayValues = R.array.ui_theme_dark_appearance_choices,
                 indexToValue = {
                     ThemeStyle.forNumber(it)
@@ -398,11 +398,11 @@ sealed interface StashPreference<T> {
 
         private val GalleryTabList =
             listOf(
-                TabType.TAB_TYPE_DETAILS,
-                TabType.TAB_TYPE_IMAGES,
-                TabType.TAB_TYPE_SCENES,
-                TabType.TAB_TYPE_PERFORMERS,
-                TabType.TAB_TYPE_TAGS,
+                TabType.DETAILS,
+                TabType.IMAGES,
+                TabType.SCENES,
+                TabType.PERFORMERS,
+                TabType.TAGS,
             )
         val GalleryTab =
             StashMultiChoicePreference<TabType>(
@@ -421,12 +421,12 @@ sealed interface StashPreference<T> {
 
         private val GroupTabList =
             listOf(
-                TabType.TAB_TYPE_DETAILS,
-                TabType.TAB_TYPE_SCENES,
-                TabType.TAB_TYPE_MARKERS,
-                TabType.TAB_TYPE_TAGS,
-                TabType.TAB_TYPE_CONTAINING_GROUPS,
-                TabType.TAB_TYPE_SUB_GROUPS,
+                TabType.DETAILS,
+                TabType.SCENES,
+                TabType.MARKERS,
+                TabType.TAGS,
+                TabType.CONTAINING_GROUPS,
+                TabType.SUB_GROUPS,
             )
         val GroupTab =
             StashMultiChoicePreference<TabType>(
@@ -445,15 +445,15 @@ sealed interface StashPreference<T> {
 
         val PerformerTabList =
             listOf(
-                TabType.TAB_TYPE_DETAILS,
-                TabType.TAB_TYPE_SCENES,
-                TabType.TAB_TYPE_GALLERIES,
-                TabType.TAB_TYPE_IMAGES,
-                TabType.TAB_TYPE_GROUPS,
-                TabType.TAB_TYPE_TAGS,
-                TabType.TAB_TYPE_APPEARS_WITH,
-                TabType.TAB_TYPE_MARKERS,
-                TabType.TAB_TYPE_STUDIOS,
+                TabType.DETAILS,
+                TabType.SCENES,
+                TabType.GALLERIES,
+                TabType.IMAGES,
+                TabType.GROUPS,
+                TabType.TAGS,
+                TabType.APPEARS_WITH,
+                TabType.MARKERS,
+                TabType.STUDIOS,
             )
         val PerformerTab =
             StashMultiChoicePreference<TabType>(
@@ -472,15 +472,15 @@ sealed interface StashPreference<T> {
 
         private val StudioTabList =
             listOf(
-                TabType.TAB_TYPE_DETAILS,
-                TabType.TAB_TYPE_SCENES,
-                TabType.TAB_TYPE_GALLERIES,
-                TabType.TAB_TYPE_IMAGES,
-                TabType.TAB_TYPE_PERFORMERS,
-                TabType.TAB_TYPE_GROUPS,
-                TabType.TAB_TYPE_TAGS,
-                TabType.TAB_TYPE_SUBSIDIARY_STUDIOS,
-                TabType.TAB_TYPE_MARKERS,
+                TabType.DETAILS,
+                TabType.SCENES,
+                TabType.GALLERIES,
+                TabType.IMAGES,
+                TabType.PERFORMERS,
+                TabType.GROUPS,
+                TabType.TAGS,
+                TabType.SUBSIDIARY_STUDIOS,
+                TabType.MARKERS,
             )
         val StudioTab =
             StashMultiChoicePreference<TabType>(
@@ -499,15 +499,15 @@ sealed interface StashPreference<T> {
 
         private val TagTabList =
             listOf(
-                TabType.TAB_TYPE_DETAILS,
-                TabType.TAB_TYPE_SCENES,
-                TabType.TAB_TYPE_GALLERIES,
-                TabType.TAB_TYPE_IMAGES,
-                TabType.TAB_TYPE_MARKERS,
-                TabType.TAB_TYPE_PERFORMERS,
-                TabType.TAB_TYPE_STUDIOS,
-                TabType.TAB_TYPE_SUB_TAGS,
-                TabType.TAB_TYPE_PARENT_TAGS,
+                TabType.DETAILS,
+                TabType.SCENES,
+                TabType.GALLERIES,
+                TabType.IMAGES,
+                TabType.MARKERS,
+                TabType.PERFORMERS,
+                TabType.STUDIOS,
+                TabType.SUB_TAGS,
+                TabType.PARENT_TAGS,
             )
         val TagTab =
             StashMultiChoicePreference<TabType>(
@@ -755,7 +755,7 @@ sealed interface StashPreference<T> {
                 StashChoicePreference<StreamChoice>(
                     title = R.string.stream_choice,
                     summary = R.string.stream_choice_summary,
-                    defaultValue = StreamChoice.STREAM_CHOICE_HLS,
+                    defaultValue = StreamChoice.HLS,
                     displayValues = R.array.stream_options,
                     indexToValue = { StreamChoice.forNumber(it) },
                     valueToIndex = { it.number },
@@ -812,7 +812,7 @@ sealed interface StashPreference<T> {
                 StashChoicePreference<Resolution>(
                     title = R.string.transcode_above_resolution,
                     summary = null,
-                    defaultValue = Resolution.RESOLUTION_UNSPECIFIED,
+                    defaultValue = Resolution.UNSPECIFIED,
                     displayValues = R.array.transcode_options,
                     indexToValue = { Resolution.forNumber(it) },
                     valueToIndex = { it.number },
@@ -1045,7 +1045,7 @@ sealed interface StashPreference<T> {
         val PlaybackStreamingClient =
             StashChoicePreference<PlaybackHttpClient>(
                 title = R.string.playback_http_client,
-                defaultValue = PlaybackHttpClient.PLAYBACK_HTTP_CLIENT_OKHTTP,
+                defaultValue = PlaybackHttpClient.OKHTTP,
                 displayValues = R.array.playback_http_client,
                 indexToValue = { PlaybackHttpClient.forNumber(it) },
                 valueToIndex = { it.number },

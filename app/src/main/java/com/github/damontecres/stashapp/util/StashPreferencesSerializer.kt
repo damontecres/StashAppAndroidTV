@@ -40,7 +40,7 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                             slideShowImageClipPauseMs = 250
                             showGridJumpButtons = true
                             theme = "default"
-                            themeStyle = ThemeStyle.THEME_STYLE_DARK
+                            themeStyle = ThemeStyle.DARK
                             showProgressWhenSkipping = true
                             playMovementSounds = true
                             captionsByDefault = true
@@ -131,10 +131,10 @@ val Context.preferences: DataStore<StashPreferences> by dataStore(
 val StreamChoice.asString: String
     get() =
         when (this) {
-            StreamChoice.STREAM_CHOICE_HLS -> "HLS"
-            StreamChoice.STREAM_CHOICE_DASH -> "DASH"
-            StreamChoice.STREAM_CHOICE_MP4 -> "MP4"
-            StreamChoice.STREAM_CHOICE_WEBM -> "WEBM"
+            StreamChoice.HLS -> "HLS"
+            StreamChoice.DASH -> "DASH"
+            StreamChoice.MP4 -> "MP4"
+            StreamChoice.WEBM -> "WEBM"
             StreamChoice.UNRECOGNIZED -> "HLS"
         }
 

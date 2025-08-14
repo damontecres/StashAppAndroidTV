@@ -111,7 +111,7 @@ fun GalleryPage(
             getUiTabs(uiConfig.preferences.interfacePreferences.tabPreferences, DataType.GALLERY)
         val tabs =
             listOf(
-                TabProvider(stringResource(R.string.stashapp_details), TabType.TAB_TYPE_DETAILS) {
+                TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
                     GalleryDetails(
                         modifier = Modifier.fillMaxSize(),
                         uiConfig = uiConfig,

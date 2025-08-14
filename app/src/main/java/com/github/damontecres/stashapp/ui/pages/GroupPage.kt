@@ -122,7 +122,7 @@ fun GroupPage(
         }
 
         val detailsTab =
-            TabProvider(stringResource(R.string.stashapp_details), TabType.TAB_TYPE_DETAILS) {
+            TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
                 GroupDetails(
                     modifier = Modifier.fillMaxSize(),
                     uiConfig = uiConfig,
@@ -174,7 +174,7 @@ fun GroupPage(
             remember(scenesFilter, scenesSubTags) {
                 TabProvider(
                     context.getString(R.string.stashapp_scenes),
-                    TabType.TAB_TYPE_SCENES,
+                    TabType.SCENES,
                 ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_scenes),
@@ -213,7 +213,7 @@ fun GroupPage(
             remember(markersSubTags, markersFilter) {
                 TabProvider(
                     context.getString(R.string.stashapp_markers),
-                    TabType.TAB_TYPE_MARKERS,
+                    TabType.MARKERS,
                 ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_markers),
@@ -236,7 +236,7 @@ fun GroupPage(
         val containingGroupsTab =
             TabProvider(
                 stringResource(R.string.stashapp_containing_groups),
-                TabType.TAB_TYPE_CONTAINING_GROUPS,
+                TabType.CONTAINING_GROUPS,
             ) { positionCallback ->
                 var filter by rememberSaveable(saver = filterArgsSaver) {
                     mutableStateOf(
@@ -268,7 +268,7 @@ fun GroupPage(
         val subGroupsTab =
             TabProvider(
                 stringResource(R.string.stashapp_sub_groups),
-                TabType.TAB_TYPE_SUB_GROUPS,
+                TabType.SUB_GROUPS,
             ) { positionCallback ->
                 var filter by rememberSaveable(saver = filterArgsSaver) {
                     mutableStateOf(

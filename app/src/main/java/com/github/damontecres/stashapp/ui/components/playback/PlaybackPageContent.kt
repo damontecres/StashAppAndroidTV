@@ -938,11 +938,11 @@ fun Player.setupFinishedBehavior(
     showController: () -> Unit,
 ) {
     when (finishedBehavior) {
-        PlaybackFinishBehavior.PLAYBACK_FINISH_BEHAVIOR_REPEAT -> {
+        PlaybackFinishBehavior.REPEAT -> {
             repeatMode = Player.REPEAT_MODE_ONE
         }
 
-        PlaybackFinishBehavior.PLAYBACK_FINISH_BEHAVIOR_GO_BACK ->
+        PlaybackFinishBehavior.GO_BACK ->
             StashExoPlayer.addListener(
                 object :
                     Player.Listener {
@@ -954,7 +954,7 @@ fun Player.setupFinishedBehavior(
                 },
             )
 
-        PlaybackFinishBehavior.PLAYBACK_FINISH_BEHAVIOR_DO_NOTHING -> {
+        PlaybackFinishBehavior.DO_NOTHING -> {
             StashExoPlayer.addListener(
                 object :
                     Player.Listener {

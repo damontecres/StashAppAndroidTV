@@ -243,7 +243,7 @@ fun checkIfAlwaysTranscode(
     alwaysTarget: Resolution,
 ): String? {
     val format = streamChoice.label
-    return if (alwaysTarget != Resolution.RESOLUTION_UNSPECIFIED && alwaysTarget != Resolution.UNRECOGNIZED) {
+    return if (alwaysTarget != Resolution.UNSPECIFIED && alwaysTarget != Resolution.UNRECOGNIZED) {
         scene.streams.keys.firstOrNull { it.startsWith(format) && it.contains(alwaysTarget.label) }
     } else {
         null
@@ -487,7 +487,7 @@ fun switchToTranscode(
             currScene,
             PlaybackMode.ForcedTranscode(prefs.streamChoice.label),
             prefs.streamChoice,
-            Resolution.RESOLUTION_UNSPECIFIED,
+            Resolution.UNSPECIFIED,
             CodecSupport.getSupportedCodecs(prefs),
         )
     return buildMediaItem(context, transcodeDecision, currScene) {
@@ -498,42 +498,42 @@ fun switchToTranscode(
 val StreamChoice.label: String
     get() =
         when (this) {
-            StreamChoice.STREAM_CHOICE_HLS -> "HLS"
-            StreamChoice.STREAM_CHOICE_DASH -> "DASH"
-            StreamChoice.STREAM_CHOICE_MP4 -> "MP4"
-            StreamChoice.STREAM_CHOICE_WEBM -> "WEBM"
+            StreamChoice.HLS -> "HLS"
+            StreamChoice.DASH -> "DASH"
+            StreamChoice.MP4 -> "MP4"
+            StreamChoice.WEBM -> "WEBM"
             StreamChoice.UNRECOGNIZED -> "Disabled"
         }
 
 fun streamChoiceFromLabel(label: String): StreamChoice =
     when (label.uppercase(Locale.getDefault())) {
-        "HLS" -> StreamChoice.STREAM_CHOICE_HLS
-        "DASH" -> StreamChoice.STREAM_CHOICE_DASH
-        "MP4" -> StreamChoice.STREAM_CHOICE_MP4
-        "WEBM" -> StreamChoice.STREAM_CHOICE_WEBM
+        "HLS" -> StreamChoice.HLS
+        "DASH" -> StreamChoice.DASH
+        "MP4" -> StreamChoice.MP4
+        "WEBM" -> StreamChoice.WEBM
         else -> StreamChoice.UNRECOGNIZED
     }
 
 val Resolution.label: String
     get() =
         when (this) {
-            Resolution.RESOLUTION_2160P -> "2160p"
-            Resolution.RESOLUTION_1080P -> "1080p"
-            Resolution.RESOLUTION_720P -> "720p"
-            Resolution.RESOLUTION_480P -> "480p"
-            Resolution.RESOLUTION_240P -> "240p"
+            Resolution.RES_2160P -> "2160p"
+            Resolution.RES_1080P -> "1080p"
+            Resolution.RES_720P -> "720p"
+            Resolution.RES_480P -> "480p"
+            Resolution.RES_240P -> "240p"
             Resolution.UNRECOGNIZED -> "Unrecognized"
-            Resolution.RESOLUTION_UNSPECIFIED -> "Unspecified"
+            Resolution.UNSPECIFIED -> "Unspecified"
         }
 
 fun resolutionFromLabel(label: String): Resolution =
     when (label.uppercase(Locale.getDefault())) {
-        "2160P" -> Resolution.RESOLUTION_2160P
-        "1080P" -> Resolution.RESOLUTION_1080P
-        "720P" -> Resolution.RESOLUTION_720P
-        "480P" -> Resolution.RESOLUTION_480P
-        "240P" -> Resolution.RESOLUTION_240P
-        else -> Resolution.RESOLUTION_UNSPECIFIED
+        "2160P" -> Resolution.RES_2160P
+        "1080P" -> Resolution.RES_1080P
+        "720P" -> Resolution.RES_720P
+        "480P" -> Resolution.RES_480P
+        "240P" -> Resolution.RES_240P
+        else -> Resolution.UNSPECIFIED
     }
 
 fun getStreamChoiceFromPreferences(context: Context): StreamChoice {
@@ -550,7 +550,7 @@ fun getTranscodeAboveFromPreferences(context: Context): Resolution {
             .getDefaultSharedPreferences(context)
             .getString(
                 context.getString(R.string.pref_key_playback_always_transcode),
-                Resolution.RESOLUTION_UNSPECIFIED.label,
+                Resolution.UNSPECIFIED.label,
             )
-    return resolutionFromLabel(resolution ?: Resolution.RESOLUTION_UNSPECIFIED.label)
+    return resolutionFromLabel(resolution ?: Resolution.UNSPECIFIED.label)
 }

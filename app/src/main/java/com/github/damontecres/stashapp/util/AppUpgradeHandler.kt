@@ -243,9 +243,9 @@ class AppUpgradeHandler(
                                         "system",
                                     ).let {
                                         when (it.lowercase()) {
-                                            "dark" -> ThemeStyle.THEME_STYLE_DARK
-                                            "light" -> ThemeStyle.THEME_STYLE_LIGHT
-                                            else -> ThemeStyle.THEME_STYLE_SYSTEM
+                                            "dark" -> ThemeStyle.DARK
+                                            "light" -> ThemeStyle.LIGHT
+                                            else -> ThemeStyle.SYSTEM
                                         }
                                     }
                                 showProgressWhenSkipping =
@@ -290,10 +290,10 @@ class AppUpgradeHandler(
                                             ?: "Do nothing"
                                     ).let {
                                         when (it) {
-                                            "Do nothing" -> PlaybackFinishBehavior.PLAYBACK_FINISH_BEHAVIOR_DO_NOTHING
-                                            "Repeat scene" -> PlaybackFinishBehavior.PLAYBACK_FINISH_BEHAVIOR_REPEAT
-                                            "Return to scene details" -> PlaybackFinishBehavior.PLAYBACK_FINISH_BEHAVIOR_GO_BACK
-                                            else -> PlaybackFinishBehavior.PLAYBACK_FINISH_BEHAVIOR_DO_NOTHING
+                                            "Do nothing" -> PlaybackFinishBehavior.DO_NOTHING
+                                            "Repeat scene" -> PlaybackFinishBehavior.REPEAT
+                                            "Return to scene details" -> PlaybackFinishBehavior.GO_BACK
+                                            else -> PlaybackFinishBehavior.DO_NOTHING
                                         }
                                     }
                                 streamChoice =
@@ -324,9 +324,9 @@ class AppUpgradeHandler(
                                 playbackHttpClient =
                                     string(R.string.pref_key_playback_http_client, "okhttp").let {
                                         when (it) {
-                                            "okhttp" -> PlaybackHttpClient.PLAYBACK_HTTP_CLIENT_OKHTTP
-                                            "default" -> PlaybackHttpClient.PLAYBACK_HTTP_CLIENT_BUILTIN
-                                            else -> PlaybackHttpClient.PLAYBACK_HTTP_CLIENT_OKHTTP
+                                            "okhttp" -> PlaybackHttpClient.OKHTTP
+                                            "default" -> PlaybackHttpClient.BUILTIN
+                                            else -> PlaybackHttpClient.OKHTTP
                                         }
                                     }
 

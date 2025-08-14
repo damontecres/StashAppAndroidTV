@@ -10,9 +10,9 @@ message PinPreferences {
 }
 
 enum ThemeStyle {
-  THEME_STYLE_SYSTEM = 0;
-  THEME_STYLE_LIGHT = 1;
-  THEME_STYLE_DARK = 2;
+  SYSTEM = 0;
+  LIGHT = 1;
+  DARK = 2;
 }
 
 message InterfacePreferences {
@@ -47,21 +47,21 @@ message InterfacePreferences {
 }
 
 enum TabType {
-  TAB_TYPE_DETAILS = 0;
-  TAB_TYPE_GALLERIES = 1;
-  TAB_TYPE_GROUPS = 2;
-  TAB_TYPE_PERFORMERS = 3;
-  TAB_TYPE_STUDIOS = 4;
-  TAB_TYPE_TAGS = 5;
-  TAB_TYPE_SCENES = 6;
-  TAB_TYPE_APPEARS_WITH = 7;
-  TAB_TYPE_MARKERS = 8;
-  TAB_TYPE_IMAGES = 9;
-  TAB_TYPE_CONTAINING_GROUPS = 10;
-  TAB_TYPE_SUB_GROUPS = 11;
-  TAB_TYPE_SUBSIDIARY_STUDIOS = 12;
-  TAB_TYPE_SUB_TAGS = 13;
-  TAB_TYPE_PARENT_TAGS = 14;
+  DETAILS = 0;
+  GALLERIES = 1;
+  GROUPS = 2;
+  PERFORMERS = 3;
+  STUDIOS = 4;
+  TAGS = 5;
+  SCENES = 6;
+  APPEARS_WITH = 7;
+  MARKERS = 8;
+  IMAGES = 9;
+  CONTAINING_GROUPS = 10;
+  SUB_GROUPS = 11;
+  SUBSIDIARY_STUDIOS = 12;
+  SUB_TAGS = 13;
+  PARENT_TAGS = 14;
 }
 
 message TabPreferences {
@@ -73,30 +73,30 @@ message TabPreferences {
 }
 
 enum PlaybackFinishBehavior {
-  PLAYBACK_FINISH_BEHAVIOR_DO_NOTHING = 0;
-  PLAYBACK_FINISH_BEHAVIOR_REPEAT = 1;
-  PLAYBACK_FINISH_BEHAVIOR_GO_BACK = 2;
+  DO_NOTHING = 0;
+  REPEAT = 1;
+  GO_BACK = 2;
 }
 
 enum StreamChoice{
-  STREAM_CHOICE_HLS = 0;
-  STREAM_CHOICE_DASH = 1;
-  STREAM_CHOICE_MP4 = 2;
-  STREAM_CHOICE_WEBM = 3;
+  HLS = 0;
+  DASH = 1;
+  MP4 = 2;
+  WEBM = 3;
 }
 
 enum Resolution {
-  RESOLUTION_UNSPECIFIED = 0;
-  RESOLUTION_240P = 1;
-  RESOLUTION_480P = 2;
-  RESOLUTION_720P = 3;
-  RESOLUTION_1080P = 4;
-  RESOLUTION_2160P = 6;
+  UNSPECIFIED = 0;
+  RES_240P = 1;
+  RES_480P = 2;
+  RES_720P = 3;
+  RES_1080P = 4;
+  RES_2160P = 6;
 }
 
 enum PlaybackHttpClient{
-  PLAYBACK_HTTP_CLIENT_OKHTTP = 0;
-  PLAYBACK_HTTP_CLIENT_BUILTIN = 1;
+  OKHTTP = 0;
+  BUILTIN = 1;
 }
 
 message PlaybackPreferences {

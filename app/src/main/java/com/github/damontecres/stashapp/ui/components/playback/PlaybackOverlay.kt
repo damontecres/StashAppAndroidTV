@@ -631,7 +631,7 @@ private fun PlaybackOverlayPreview() {
                     videoSupported = true,
                     audioSupported = true,
                     containerSupported = true,
-                    streamChoice = StreamChoice.STREAM_CHOICE_HLS,
+                    streamChoice = StreamChoice.HLS,
                 ),
             oCounter = 1,
             playerControls = FakePlayerControls,

@@ -211,14 +211,14 @@ fun createTabFunc(
             StashApplication.getApplication().getString(initialFilter.dataType.pluralStringId)
         val type =
             when (initialFilter.dataType) {
-                DataType.SCENE -> TabType.TAB_TYPE_SCENES
-                DataType.GROUP -> TabType.TAB_TYPE_GROUPS
-                DataType.MARKER -> TabType.TAB_TYPE_MARKERS
-                DataType.PERFORMER -> TabType.TAB_TYPE_PERFORMERS
-                DataType.STUDIO -> TabType.TAB_TYPE_STUDIOS
-                DataType.TAG -> TabType.TAB_TYPE_TAGS
-                DataType.IMAGE -> TabType.TAB_TYPE_IMAGES
-                DataType.GALLERY -> TabType.TAB_TYPE_GALLERIES
+                DataType.SCENE -> TabType.SCENES
+                DataType.GROUP -> TabType.GROUPS
+                DataType.MARKER -> TabType.MARKERS
+                DataType.PERFORMER -> TabType.PERFORMERS
+                DataType.STUDIO -> TabType.STUDIOS
+                DataType.TAG -> TabType.TAGS
+                DataType.IMAGE -> TabType.IMAGES
+                DataType.GALLERY -> TabType.GALLERIES
             }
         TabProvider(name, type) { positionCallback ->
             var filter by rememberSaveable(name, saver = filterArgsSaver) {

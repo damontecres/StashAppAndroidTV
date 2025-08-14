@@ -110,7 +110,7 @@ fun TagPage(
             remember {
                 TabProvider(
                     context.getString(R.string.stashapp_details),
-                    TabType.TAB_TYPE_DETAILS,
+                    TabType.DETAILS,
                 ) {
                     TagDetails(
                         modifier = Modifier.fillMaxSize(),
@@ -161,7 +161,7 @@ fun TagPage(
             remember(scenesFilter, scenesSubTags) {
                 TabProvider(
                     context.getString(R.string.stashapp_scenes),
-                    TabType.TAB_TYPE_SCENES,
+                    TabType.SCENES,
                 ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_scenes),
@@ -196,7 +196,7 @@ fun TagPage(
             remember(galleriesSubTags, galleriesFilter) {
                 TabProvider(
                     context.getString(R.string.stashapp_galleries),
-                    TabType.TAB_TYPE_GALLERIES,
+                    TabType.GALLERIES,
                 ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_galleries),
@@ -230,7 +230,7 @@ fun TagPage(
             remember(imagesSubTags, imagesFilter) {
                 TabProvider(
                     context.getString(R.string.stashapp_images),
-                    TabType.TAB_TYPE_IMAGES,
+                    TabType.IMAGES,
                 ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_images),
@@ -264,7 +264,7 @@ fun TagPage(
             remember(markersSubTags, markersFilter) {
                 TabProvider(
                     context.getString(R.string.stashapp_markers),
-                    TabType.TAB_TYPE_MARKERS,
+                    TabType.MARKERS,
                 ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_markers),
@@ -299,7 +299,7 @@ fun TagPage(
             remember(performersSubTags, performersFilter) {
                 TabProvider(
                     context.getString(R.string.stashapp_performers),
-                    TabType.TAB_TYPE_PERFORMERS,
+                    TabType.PERFORMERS,
                 ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_performers),
@@ -334,7 +334,7 @@ fun TagPage(
             remember(studiosSubTags, studiosFilter) {
                 TabProvider(
                     context.getString(R.string.stashapp_studios),
-                    TabType.TAB_TYPE_STUDIOS,
+                    TabType.STUDIOS,
                 ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_studios),

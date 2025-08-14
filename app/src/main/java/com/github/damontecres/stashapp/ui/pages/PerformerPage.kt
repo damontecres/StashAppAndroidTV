@@ -332,7 +332,7 @@ fun PerformerDetailsPage(
     val createTab = createTabFunc(server, itemOnClick, longClicker, uiConfig)
     val tabs =
         listOf(
-            TabProvider(stringResource(R.string.stashapp_details), TabType.TAB_TYPE_DETAILS) {
+            TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
                 PerformerDetails(
                     perf = perf,
                     tags = tags,
@@ -386,7 +386,7 @@ fun PerformerDetailsPage(
             ),
             TabProvider(
                 stringResource(R.string.stashapp_appears_with),
-                TabType.TAB_TYPE_APPEARS_WITH,
+                TabType.APPEARS_WITH,
             ) {
                 val context = LocalContext.current
                 val navigationManager = LocalGlobalContext.current.navigationManager
