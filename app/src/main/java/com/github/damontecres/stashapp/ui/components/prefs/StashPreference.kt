@@ -3,9 +3,12 @@ package com.github.damontecres.stashapp.ui.components.prefs
 import android.content.Context
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
+import androidx.core.content.edit
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.LicenseFragment
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.PlaybackFinishBehavior
 import com.github.damontecres.stashapp.proto.PlaybackHttpClient
@@ -971,8 +974,19 @@ sealed interface StashPreference<T> {
             StashSwitchPreference(
                 title = R.string.crash_reporting,
                 defaultValue = true,
-                getter = { true },
-                setter = { prefs, value -> prefs },
+                getter = {
+                    PreferenceManager
+                        .getDefaultSharedPreferences(StashApplication.getApplication())
+                        .getBoolean("acra.enable", true)
+                },
+                setter = { prefs, value ->
+                    PreferenceManager
+                        .getDefaultSharedPreferences(StashApplication.getApplication())
+                        .edit(true) {
+                            putBoolean("acra.enable", value)
+                        }
+                    prefs
+                },
                 summaryOn = R.string.stashapp_actions_enable,
                 summaryOff = R.string.transcode_options_disabled,
             )

@@ -265,7 +265,6 @@ class AppUpgradeHandler(
                                     bool(R.string.pref_key_remote_page_buttons, true)
                                 dpadSkipIndicator = bool(R.string.pref_key_show_dpad_skip, true)
 
-                                // TODO
                                 tabPreferences =
                                     TabPreferences
                                         .newBuilder()
@@ -388,19 +387,11 @@ class AppUpgradeHandler(
                             .newBuilder()
                             .apply {
                                 networkCacheSize =
-                                    (
-                                        int(
-                                            R.string.pref_key_network_cache_size,
-                                            10,
-                                        ) * 1024 * 1024
-                                    ).toLong()
+                                    int(R.string.pref_key_network_cache_size, 10)
+                                        .toLong() * 1024 * 1024
                                 imageDiskCacheSize =
-                                    (
-                                        int(
-                                            R.string.pref_key_image_cache_size,
-                                            100,
-                                        ) * 1024 * 1024
-                                    ).toLong()
+                                    int(R.string.pref_key_image_cache_size, 10)
+                                        .toLong() * 1024 * 1024
                                 cacheExpirationTime = pm.getInt("networkCacheDuration", 6)
                                 logCacheHits = pm.getBoolean("networkCacheLogging", false)
                             }.build()
