@@ -83,7 +83,7 @@ fun SliderPreference(
                 Slider(
                     value = value.toFloat(),
                     valueRange = preference.min.toFloat()..preference.max.toFloat(),
-                    steps = (preference.max - preference.min) / preference.interval,
+                    steps = (preference.max - preference.min) / preference.interval - 1,
                     onValueChange = { onChange.invoke(it.roundToInt()) },
                     onValueChangeFinished = { onChange.invoke(value) },
                     colors =

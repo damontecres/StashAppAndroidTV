@@ -280,7 +280,7 @@ sealed interface StashPreference<T> {
                         slideShowIntervalMs = value.toLong()
                     }
                 },
-                summarizer = { value -> value?.let { "${value / 1000} seconds" } },
+                summarizer = { value -> value?.let { "${value / 1000.0} seconds" } },
             )
 
         val SlideshowImageClipDelay =
@@ -877,10 +877,10 @@ sealed interface StashPreference<T> {
                 min = 25,
                 max = 500,
                 interval = 25,
-                getter = { (it.cachePreferences.networkCacheSize / (1024 * 1024)).toInt() },
+                getter = { (it.cachePreferences.networkCacheSize / (1024.0 * 1024.0)).toInt() },
                 setter = { prefs, value ->
                     prefs.updateCachePreferences {
-                        networkCacheSize = (value * 1024 * 1024).toLong()
+                        networkCacheSize = (value * 1024.0 * 1024.0).toLong()
                     }
                 },
                 summarizer = { "${it}MB" },
@@ -893,10 +893,10 @@ sealed interface StashPreference<T> {
                 min = 25,
                 max = 500,
                 interval = 25,
-                getter = { (it.cachePreferences.imageDiskCacheSize / (1024 * 1024)).toInt() },
+                getter = { (it.cachePreferences.imageDiskCacheSize / (1024.0 * 1024.0)).toInt() },
                 setter = { prefs, value ->
                     prefs.updateCachePreferences {
-                        imageDiskCacheSize = (value * 1024 * 1024).toLong()
+                        imageDiskCacheSize = (value * 1024.0 * 1024.0).toLong()
                     }
                 },
                 summarizer = { "${it}MB" },
