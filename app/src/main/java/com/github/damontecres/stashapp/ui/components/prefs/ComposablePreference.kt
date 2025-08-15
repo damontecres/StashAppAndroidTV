@@ -36,6 +36,7 @@ import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
+import coil3.imageLoader
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.navigation.NavigationManager
@@ -45,12 +46,14 @@ import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.components.server.ConfigurePin
 import com.github.damontecres.stashapp.ui.pages.DialogParams
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import com.github.damontecres.stashapp.util.testStashConnection
+import com.github.damontecres.stashapp.views.formatBytes
 import kotlinx.coroutines.launch
 
 @Suppress("UNCHECKED_CAST")
@@ -115,6 +118,67 @@ fun <T> ComposablePreference(
                 interactionSource = interactionSource,
                 modifier = modifier,
             )
+
+        StashPreference.NetworkCache -> {
+            preference as StashSliderPreference
+            val summary =
+                preference.summary(context, value)
+                    ?: preference.summary?.let { stringResource(it) }
+            SliderPreference(
+                preference = preference,
+                title = title,
+                summary = summary,
+                value = value as Int,
+                onChange = { onValueChange(it as T) },
+                summaryBelow = false,
+                interactionSource = interactionSource,
+                modifier = modifier,
+                heightAdjustment = 16.dp,
+            ) {
+                val size = remember { formatBytes(Constants.getNetworkCache(context).size()) }
+                Text(
+                    text = "Using $size",
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+
+        StashPreference.ImageDiskCache -> {
+            preference as StashSliderPreference
+            val summary =
+                preference.summary(context, value)
+                    ?: preference.summary?.let { stringResource(it) }
+            SliderPreference(
+                preference = preference,
+                title = title,
+                summary = summary,
+                value = value as Int,
+                onChange = { onValueChange(it as T) },
+                summaryBelow = false,
+                interactionSource = interactionSource,
+                modifier = modifier,
+                heightAdjustment = 32.dp,
+            ) {
+                val memoryUsed =
+                    remember { formatBytes(context.imageLoader.memoryCache?.size ?: 0L) }
+                val memoryMax =
+                    remember { formatBytes(context.imageLoader.memoryCache?.maxSize ?: 0L) }
+                val diskUsed =
+                    remember { formatBytes(context.imageLoader.diskCache?.size ?: 0L) }
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = "Memory used: $memoryUsed / $memoryMax",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        text = "Disk used: $diskUsed",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
 
         is StashDestinationPreference ->
             ClickPreference(
@@ -195,7 +259,9 @@ fun <T> ComposablePreference(
                             },
                         )
                 },
-                summary = preference.summary(context, value),
+                summary =
+                    preference.summary(context, value)
+                        ?: preference.summary?.let { stringResource(it) },
                 interactionSource = interactionSource,
                 modifier = modifier,
             )

@@ -398,7 +398,7 @@ fun maybeMuteAudio(
 ) {
     maybeMuteAudio(
         preferences.interfacePreferences.videoPreviewAudio,
-        preferences.playbackPreferences.startWithNoAudio,
+        preferences.playbackPreferences.startPlaybackMuted,
         checkPreviewAudioPref,
         player,
     )

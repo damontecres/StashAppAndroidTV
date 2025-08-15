@@ -108,11 +108,11 @@ message PlaybackPreferences {
   bool show_debug_info = 6;
   int32 controller_timeout_ms = 7;
   bool save_play_history = 8;
-  bool start_with_no_audio = 9;
+  bool start_playback_muted = 9;
   Resolution transcode_above_resolution = 10;
-  bool enable_video_filters = 11;
+  bool video_filters_enabled = 11;
   bool save_video_filters = 12;
-  bool enable_debug_logging = 13;
+  bool debug_logging_enabled = 13;
   PlaybackHttpClient playback_http_client = 14;
   int32 seek_bar_steps = 15;
 
@@ -136,7 +136,7 @@ message UpdatePreferences {
 message AdvancedPreferences {
   //  bool enable_crash_reporting = 1; Must be in shared preferences
   bool log_errors_to_server = 2;
-  bool enable_experimental_features = 3;
+  bool experimental_features_enabled = 3;
   int64 network_timeout_ms = 4;
   bool trust_self_signed_certificates = 5;
   int32 image_thread_count = 6;

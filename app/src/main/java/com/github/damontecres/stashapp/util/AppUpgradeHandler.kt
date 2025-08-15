@@ -307,7 +307,7 @@ class AppUpgradeHandler(
                                 controllerTimeoutMs = pm.getInt("controllerShowTimeoutMs", 3_500)
                                 savePlayHistory =
                                     bool(R.string.pref_key_playback_track_activity, true)
-                                startWithNoAudio =
+                                startPlaybackMuted =
                                     bool(R.string.pref_key_playback_start_muted, false)
                                 transcodeAboveResolution =
                                     resolutionFromLabel(
@@ -316,10 +316,10 @@ class AppUpgradeHandler(
                                             "",
                                         ),
                                     )
-                                enableVideoFilters = bool(R.string.pref_key_video_filters, false)
+                                videoFiltersEnabled = bool(R.string.pref_key_video_filters, false)
                                 saveVideoFilters =
                                     bool(R.string.pref_key_playback_save_effects, true)
-                                enableDebugLogging =
+                                debugLoggingEnabled =
                                     bool(R.string.pref_key_playback_debug_logging, false)
                                 playbackHttpClient =
                                     string(R.string.pref_key_playback_http_client, "okhttp").let {
@@ -367,6 +367,8 @@ class AppUpgradeHandler(
                         AdvancedPreferences
                             .newBuilder()
                             .apply {
+                                experimentalFeaturesEnabled =
+                                    bool(R.string.experimental_features, false)
                                 logErrorsToServer = bool(R.string.pref_key_log_to_server, true)
                                 networkTimeoutMs =
                                     pm

@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,8 +20,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.ProvideTextStyle
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.SliderBar
 import kotlin.math.roundToInt
@@ -35,6 +38,8 @@ fun SliderPreference(
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     summaryBelow: Boolean = false,
+    heightAdjustment: Dp = 0.dp,
+    additionalSummary: @Composable (ColumnScope.() -> Unit)? = null,
 ) {
     val focused = interactionSource.collectIsFocusedAsState().value
     val background =
@@ -54,12 +59,16 @@ fun SliderPreference(
         modifier =
             modifier
 //                .height(80.dp) // not dense
-                .height(72.dp) // dense
+                .height(72.dp + heightAdjustment) // dense
                 .fillMaxWidth()
                 .background(background, shape = RoundedCornerShape(8.dp))
                 .padding(PaddingValues(horizontal = 12.dp, vertical = 10.dp)), // dense,
     ) {
         PreferenceTitle(title, color = contentColor)
+
+        ProvideTextStyle(PreferenceSummaryStyle.copy(color = contentColor)) {
+            additionalSummary?.invoke(this)
+        }
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),

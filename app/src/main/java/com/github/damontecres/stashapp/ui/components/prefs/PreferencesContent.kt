@@ -62,7 +62,6 @@ private val basicPreferences =
             listOf(
                 StashPreference.PinCode,
                 StashPreference.ReadOnlyMode,
-                StashPreference.AutoSubmitPin,
                 StashPreference.CardSize,
                 StashPreference.PlayVideoPreviews,
                 StashPreference.MoreUiSettings,
@@ -97,6 +96,7 @@ private val uiPreferences =
         PreferenceGroup(
             R.string.advanced_ui,
             listOf(
+                StashPreference.AutoSubmitPin,
                 StashPreference.RememberTab,
                 StashPreference.VideoPreviewDelay,
                 StashPreference.SlideshowDuration,

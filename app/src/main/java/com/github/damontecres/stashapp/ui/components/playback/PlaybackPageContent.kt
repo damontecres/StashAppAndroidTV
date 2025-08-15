@@ -413,7 +413,7 @@ fun PlaybackPageContent(
                 playlistPager.size > 1 &&
                 uiConfig.preferences.interfacePreferences.useUpDownPreviousNext
         }
-    val useVideoFilters = uiConfig.preferences.playbackPreferences.enableVideoFilters
+    val useVideoFilters = uiConfig.preferences.playbackPreferences.videoFiltersEnabled
 
     val controllerViewState =
         remember {

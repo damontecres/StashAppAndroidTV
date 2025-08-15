@@ -802,9 +802,9 @@ sealed interface StashPreference<T> {
                 StashSwitchPreference(
                     title = R.string.start_playback_without_audio,
                     defaultValue = false,
-                    getter = { it.playbackPreferences.startWithNoAudio },
+                    getter = { it.playbackPreferences.startPlaybackMuted },
                     setter = { prefs, value ->
-                        prefs.updatePlaybackPreferences { startWithNoAudio = value }
+                        prefs.updatePlaybackPreferences { startPlaybackMuted = value }
                     },
                     summaryOn = R.string.playback_start_muted_summary_on,
                     summaryOff = R.string.playback_start_muted_summary_off,
@@ -827,9 +827,9 @@ sealed interface StashPreference<T> {
             StashSwitchPreference(
                 title = R.string.enable_video_filters,
                 defaultValue = false,
-                getter = { it.playbackPreferences.enableVideoFilters },
+                getter = { it.playbackPreferences.videoFiltersEnabled },
                 setter = { prefs, value ->
-                    prefs.updatePlaybackPreferences { enableVideoFilters = value }
+                    prefs.updatePlaybackPreferences { videoFiltersEnabled = value }
                 },
                 summaryOn = R.string.stashapp_actions_enable,
                 summaryOff = R.string.transcode_options_disabled,
@@ -1006,9 +1006,9 @@ sealed interface StashPreference<T> {
             StashSwitchPreference(
                 title = R.string.experimental_features,
                 defaultValue = false,
-                getter = { it.advancedPreferences.enableExperimentalFeatures },
+                getter = { it.advancedPreferences.experimentalFeaturesEnabled },
                 setter = { prefs, value ->
-                    prefs.updateAdvancedPreferences { enableExperimentalFeatures = value }
+                    prefs.updateAdvancedPreferences { experimentalFeaturesEnabled = value }
                 },
                 summaryOn = R.string.stashapp_actions_enable,
                 summaryOff = R.string.transcode_options_disabled,
@@ -1034,9 +1034,9 @@ sealed interface StashPreference<T> {
             StashSwitchPreference(
                 title = R.string.playback_debug_logging,
                 defaultValue = false,
-                getter = { it.playbackPreferences.enableDebugLogging },
+                getter = { it.playbackPreferences.debugLoggingEnabled },
                 setter = { prefs, value ->
-                    prefs.updatePlaybackPreferences { enableDebugLogging = value }
+                    prefs.updatePlaybackPreferences { debugLoggingEnabled = value }
                 },
                 summaryOn = R.string.stashapp_actions_enable,
                 summaryOff = R.string.transcode_options_disabled,
