@@ -231,5 +231,7 @@
     <string name="trust_certificates_summary">Restart may be required after changing this</string>
     <string name="effects_filters">Effect filters</string>
     <string name="cache">Cache</string>
+    <string name="trigger_scan">Trigger Library Scan</string>
+    <string name="trigger_generate">Trigger Generate Task</string>
 
 </resources>

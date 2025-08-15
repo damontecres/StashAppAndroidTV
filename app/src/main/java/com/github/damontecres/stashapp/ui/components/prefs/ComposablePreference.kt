@@ -45,6 +45,7 @@ import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.components.server.ConfigurePin
 import com.github.damontecres.stashapp.ui.pages.DialogParams
+import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -72,61 +73,48 @@ fun <T> ComposablePreference(
 
     val title = stringResource(preference.title)
 
+    val onClick: () -> Unit = {
+        scope.launch(StashCoroutineExceptionHandler()) {
+            when (preference) {
+                StashPreference.CurrentServer -> {
+                    testStashConnection(context, true, server.apolloClient)
+                }
+
+                StashPreference.SendLogs -> {
+                    CompanionPlugin.sendLogCat(context, server, false)
+                }
+
+                StashPreference.CacheClear -> SettingsFragment.clearCaches(context)
+
+                StashPreference.TriggerScan -> MutationEngine(server).triggerScan()
+
+                StashPreference.TriggerGenerate -> MutationEngine(server).triggerGenerate()
+
+                else -> {}
+            }
+        }
+    }
+    val onLongClick: () -> Unit = {
+        scope.launch(StashCoroutineExceptionHandler()) {
+            when (preference) {
+                StashPreference.SendLogs -> {
+                    CompanionPlugin.sendLogCat(context, server, true)
+                }
+
+                else -> null
+            }
+        }
+    }
+
     when (preference) {
-        StashPreference.CurrentServer -> {
+        StashPreference.CurrentServer ->
             ClickPreference(
                 title = title,
-                onClick = {
-                    scope.launch(StashCoroutineExceptionHandler()) {
-                        testStashConnection(context, true, server.apolloClient)
-                    }
-                },
+                onClick = onClick,
                 summary = server.url,
                 interactionSource = interactionSource,
                 modifier = modifier,
             )
-        }
-
-        StashPreference.SendLogs -> {
-            ClickPreference(
-                title = title,
-                onClick = {
-                    scope.launch(StashCoroutineExceptionHandler()) {
-                        CompanionPlugin.sendLogCat(
-                            context,
-                            server,
-                            false,
-                        )
-                    }
-                },
-                onLongClick = {
-                    scope.launch(StashCoroutineExceptionHandler()) {
-                        CompanionPlugin.sendLogCat(
-                            context,
-                            server,
-                            true,
-                        )
-                    }
-                },
-                summary = preference.summary(context, value),
-                interactionSource = interactionSource,
-                modifier = modifier,
-            )
-        }
-
-        StashPreference.CacheClear -> {
-            ClickPreference(
-                title = title,
-                onClick = {
-                    scope.launch(StashCoroutineExceptionHandler()) {
-                        SettingsFragment.clearCaches(context)
-                    }
-                },
-                summary = preference.summary(context, value),
-                interactionSource = interactionSource,
-                modifier = modifier,
-            )
-        }
 
         is StashDestinationPreference ->
             ClickPreference(
@@ -142,7 +130,8 @@ fun <T> ComposablePreference(
         is StashClickablePreference ->
             ClickPreference(
                 title = title,
-                onClick = {},
+                onClick = onClick,
+                onLongClick = onLongClick,
                 summary = preference.summary(context, value),
                 interactionSource = interactionSource,
                 modifier = modifier,

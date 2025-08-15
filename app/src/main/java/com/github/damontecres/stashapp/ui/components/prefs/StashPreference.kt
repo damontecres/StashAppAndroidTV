@@ -1083,6 +1083,18 @@ sealed interface StashPreference<T> {
                 },
                 summary = R.string.trust_certificates_summary,
             )
+
+        val TriggerScan =
+            StashClickablePreference(
+                title = R.string.trigger_scan,
+                summary = R.string.stashapp_config_tasks_scan_for_content_desc,
+            )
+
+        val TriggerGenerate =
+            StashClickablePreference(
+                title = R.string.trigger_generate,
+                summary = R.string.stashapp_config_tasks_generate_desc,
+            )
     }
 }
 

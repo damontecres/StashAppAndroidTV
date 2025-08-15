@@ -5,13 +5,16 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -153,6 +157,13 @@ private val advancedPreferences =
             ),
         ),
         PreferenceGroup(
+            R.string.stashapp_config_tasks_job_queue,
+            listOf(
+                StashPreference.TriggerScan,
+                StashPreference.TriggerGenerate,
+            ),
+        ),
+        PreferenceGroup(
             R.string.stashapp_config_categories_about,
             listOf(
                 StashPreference.CheckForUpdates,
@@ -182,6 +193,7 @@ fun PreferencesContent(
     initialPreferences: StashPreferences,
     preferenceScreenOption: PreferenceScreenOption,
     modifier: Modifier = Modifier,
+    viewModel: PreferencesViewModel = viewModel(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -213,6 +225,12 @@ fun PreferencesContent(
             PreferenceScreenOption.ADVANCED -> "Advanced Preferences"
             PreferenceScreenOption.USER_INTERFACE -> "User Interface Preferences"
         }
+    LaunchedEffect(Unit) {
+        if (preferenceScreenOption == PreferenceScreenOption.ADVANCED) {
+            viewModel.init(server)
+        }
+    }
+    val jobQueue by viewModel.runningJobs.observeAsState(listOf())
 
     LaunchedEffect(Unit) {
         focusRequester.tryRequestFocus()
@@ -417,6 +435,27 @@ fun PreferencesContent(
                                         Modifier.focusRequester(focusRequester),
                                     ),
                             )
+                        }
+                    }
+                }
+            }
+            if (preferenceScreenOption == PreferenceScreenOption.ADVANCED && group.title == R.string.stashapp_config_tasks_job_queue) {
+                if (jobQueue.isEmpty()) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.stashapp_config_tasks_empty_queue),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier =
+                                Modifier
+                                    .padding(horizontal = 8.dp, vertical = 16.dp),
+                        )
+                    }
+                } else {
+                    item {
+                        Spacer(Modifier.height(8.dp))
+                        jobQueue.forEach {
+                            JobDisplay(it, Modifier.padding(horizontal = 8.dp))
                         }
                     }
                 }
