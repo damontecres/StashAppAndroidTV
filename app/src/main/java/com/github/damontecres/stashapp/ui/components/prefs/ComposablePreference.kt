@@ -325,6 +325,15 @@ fun <T> ComposablePreference(
                     list
                 }
 
+            val onClick = { item: Any ->
+                if (selectedValues.contains(item)) {
+                    selectedValues.remove(item)
+                } else {
+                    selectedValues.add(item)
+                }
+                onValueChange.invoke(selectedValues.toList() as T)
+            }
+
             ClickPreference(
                 title = title,
                 summary = summary,
@@ -342,17 +351,12 @@ fun <T> ComposablePreference(
                                             Switch(
                                                 checked = selectedValues.contains(item),
                                                 onCheckedChange = {
-                                                    // no-op
+                                                    onClick.invoke(item)
                                                 },
                                             )
                                         },
                                         onClick = {
-                                            if (selectedValues.contains(item)) {
-                                                selectedValues.remove(item)
-                                            } else {
-                                                selectedValues.add(item)
-                                            }
-                                            onValueChange.invoke(selectedValues.toList() as T)
+                                            onClick.invoke(item)
                                         },
                                     )
                                 },
