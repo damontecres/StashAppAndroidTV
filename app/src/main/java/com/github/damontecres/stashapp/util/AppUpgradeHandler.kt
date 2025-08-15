@@ -25,7 +25,7 @@ import com.github.damontecres.stashapp.proto.UpdatePreferences
 import com.github.damontecres.stashapp.ui.components.prefs.StashPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
@@ -156,7 +156,7 @@ class AppUpgradeHandler(
                 val preferencesMigratedV1 =
                     context.preferences.data
                         .map { it.preferencesMigratedV1 }
-                        .first()
+                        .firstOrNull() ?: false
                 if (!preferencesMigratedV1) {
                     migratePreferences()
                 }

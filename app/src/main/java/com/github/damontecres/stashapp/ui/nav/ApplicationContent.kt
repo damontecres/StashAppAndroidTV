@@ -141,8 +141,9 @@ fun ApplicationContent(
             navigationManager.previousDestination = destination
             navigationManager.serverViewModel.setCurrentDestination(destination)
         }
+        val fullScreen = if (isTvDevice) destination.fullScreen else destination.fullScreenTouch
 
-        if (destination.fullScreen) {
+        if (fullScreen) {
             FullScreenContent(
                 server = server,
                 destination = destination,

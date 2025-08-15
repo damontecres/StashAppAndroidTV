@@ -17,6 +17,7 @@ import com.github.damontecres.stashapp.ui.pages.MarkerPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
 import com.github.damontecres.stashapp.ui.pages.SceneDetailsPage
 import com.github.damontecres.stashapp.ui.pages.SearchPage
+import com.github.damontecres.stashapp.ui.pages.SettingsPage
 import com.github.damontecres.stashapp.ui.pages.StudioPage
 import com.github.damontecres.stashapp.ui.pages.TagPage
 import com.github.damontecres.stashapp.util.StashServer
@@ -167,6 +168,16 @@ fun NavDrawerContent(
 
                 else -> FragmentView(navManager, destination, modifier)
             }
+        }
+
+        is Destination.Settings -> {
+            SettingsPage(
+                server = server,
+                navigationManager = navManager,
+                preferenceScreenOption = destination.screenOption,
+                uiConfig = composeUiConfig,
+                modifier = modifier,
+            )
         }
 
         else -> {

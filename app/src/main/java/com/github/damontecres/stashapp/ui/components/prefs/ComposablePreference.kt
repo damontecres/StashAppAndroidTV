@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
@@ -274,6 +276,7 @@ fun <T> ComposablePreference(
                     ?: preference
                         .valueToIndex(value as T)
                         .let { values[it] }
+            val selectedIndex = remember(value) { preference.valueToIndex.invoke(value as T) }
             ClickPreference(
                 title = title,
                 summary = summary,
@@ -284,13 +287,24 @@ fun <T> ComposablePreference(
                             fromLongClick = false,
                             items =
                                 values.mapIndexed { index, it ->
-                                    DialogItem(
-                                        text = it,
-                                        onClick = {
-                                            onValueChange(preference.indexToValue(index))
-                                            dialogParams = null
-                                        },
-                                    )
+                                    if (index == selectedIndex) {
+                                        DialogItem(
+                                            text = it,
+                                            icon = Icons.Default.Done,
+                                            onClick = {
+                                                onValueChange(preference.indexToValue(index))
+                                                dialogParams = null
+                                            },
+                                        )
+                                    } else {
+                                        DialogItem(
+                                            text = it,
+                                            onClick = {
+                                                onValueChange(preference.indexToValue(index))
+                                                dialogParams = null
+                                            },
+                                        )
+                                    }
                                 },
                         )
                 },

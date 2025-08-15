@@ -50,7 +50,7 @@ fun SwitchPreference(
         trailingContent = {
             androidx.tv.material3.Switch(
                 checked = value,
-                onCheckedChange = { },
+                onCheckedChange = { onClick.invoke() },
                 colors =
                     androidx.tv.material3.SwitchDefaults
                         .colors(),

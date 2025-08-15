@@ -108,7 +108,6 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                 )
                             } else {
                                 server?.let { currentServer ->
-                                    Log.v(TAG, "currentServer=$currentServer")
                                     CompositionLocalProvider(
                                         LocalGlobalContext provides
                                             GlobalContext(

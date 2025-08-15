@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicLong
 @Serializable
 sealed class Destination(
     val fullScreen: Boolean = false,
+    val fullScreenTouch: Boolean = fullScreen,
 ) : Parcelable {
     protected val destId = counter.getAndIncrement()
 
@@ -53,7 +54,7 @@ sealed class Destination(
     @Serializable
     data class Settings(
         val screenOption: PreferenceScreenOption,
-    ) : Destination(true)
+    ) : Destination(true, false)
 
     @Serializable
     data object Search : Destination()
