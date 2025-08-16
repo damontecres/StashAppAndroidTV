@@ -27,14 +27,19 @@ fun Restring.clear() {
 fun parseDictionary(
     data: JsonObject,
     keys: List<String>,
+    appSpecific: Boolean,
 ): List<Entry> {
     val result = mutableListOf<Entry>()
     data.keys.map { key ->
+        if (key == "StashAppAndroidTV" && !appSpecific) {
+            // Skip the app specific messages
+            return@map
+        }
         val newKeys = keys.toMutableList()
         newKeys.add(key)
         val value = data[key]!!
         if (value is JsonObject) {
-            result += parseDictionary(value, newKeys)
+            result += parseDictionary(value, newKeys, appSpecific)
         } else if (value is JsonPrimitive && value.isString) {
             result += createEntry(newKeys, value.content)
         } else {

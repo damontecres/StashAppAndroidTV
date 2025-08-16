@@ -126,8 +126,19 @@ class ServerPreferences(
                         parseDictionary(
                             root.jsonObject,
                             listOf("stashapp"),
+                            false,
                         ).associate { it.key to it.value }
                     Restring.putStrings(Restring.locale, map)
+
+                    if (root.containsKey("StashAppAndroidTV") && root.jsonObject["StashAppAndroidTV"] is JsonObject) {
+                        val appMap =
+                            parseDictionary(
+                                root.jsonObject["StashAppAndroidTV"]!!.jsonObject,
+                                listOf(),
+                                true,
+                            ).associate { it.key to it.value }
+                        Restring.putStrings(Restring.locale, appMap)
+                    }
                 } else {
                     Restring.clear()
                 }
