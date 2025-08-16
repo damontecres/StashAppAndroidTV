@@ -273,6 +273,9 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.navigation.reimagined)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(libs.restring)
+    implementation(libs.viewpump)
+    implementation(libs.reword)
 
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.junit)

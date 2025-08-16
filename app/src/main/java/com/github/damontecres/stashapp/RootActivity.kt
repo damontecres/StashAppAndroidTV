@@ -11,12 +11,14 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.app.ViewPumpAppCompatDelegate
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
@@ -33,13 +35,14 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.maybeGetDestination
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.models.ServerViewModel
+import dev.b3nedikt.restring.Restring
 import kotlin.properties.Delegates
 
 /**
  * The only activity in the app
  */
 class RootActivity :
-    FragmentActivity(),
+    AppCompatActivity(),
     NavigationListener {
     private val serverViewModel by viewModels<ServerViewModel>()
     private var useCompose by Delegates.notNull<Boolean>()
@@ -294,6 +297,16 @@ class RootActivity :
             super.onKeyMultiple(keyCode, repeatCount, event)
         }
     }
+
+    private val appCompatDelegate: AppCompatDelegate by lazy {
+        ViewPumpAppCompatDelegate(
+            baseDelegate = super.getDelegate(),
+            baseContext = this,
+            wrapContext = Restring::wrapContext,
+        )
+    }
+
+    override fun getDelegate(): AppCompatDelegate = appCompatDelegate
 
     private fun setUpLifeCycleListeners() {
         if (DEBUG) {

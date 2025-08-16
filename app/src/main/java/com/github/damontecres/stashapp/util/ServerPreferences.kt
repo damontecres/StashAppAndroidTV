@@ -9,6 +9,10 @@ import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
+import dev.b3nedikt.restring.Restring
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -55,6 +59,13 @@ class ServerPreferences(
 
     val abbreviateCounters get() = preferences.getBoolean(PREF_INTERFACE_ABBREV_COUNTERS, false)
 
+    val customLocalesEnabled
+        get() =
+            preferences.getBoolean(
+                PREF_INTERFACE_CUSTOM_LOCALES_ENABLED,
+                false,
+            )
+
     val companionPluginVersion
         get() =
             preferences.getString(
@@ -97,7 +108,37 @@ class ServerPreferences(
                 PREF_INTERFACE_STUDIOS_AS_TEXT,
                 config.configuration.`interface`.showStudioAsText ?: false,
             )
+            putBoolean(
+                PREF_INTERFACE_CUSTOM_LOCALES_ENABLED,
+                config.configuration.`interface`.customLocalesEnabled == true &&
+                    config.configuration.`interface`.customLocales
+                        .isNotNullOrBlank(),
+            )
         }
+        if (config.configuration.`interface`.customLocalesEnabled == true &&
+            config.configuration.`interface`.customLocales
+                .isNotNullOrBlank()
+        ) {
+            try {
+                val root = Json.parseToJsonElement(config.configuration.`interface`.customLocales)
+                if (root is JsonObject) {
+                    val map =
+                        parseDictionary(
+                            root.jsonObject,
+                            listOf("stashapp"),
+                        ).associate { it.key to it.value }
+                    Restring.putStrings(Restring.locale, map)
+                } else {
+                    Restring.clear()
+                }
+            } catch (ex: Exception) {
+                Log.w(TAG, "Error parsing custom locales", ex)
+                Restring.clear()
+            }
+        } else {
+            Restring.clear()
+        }
+
         val ui = config.configuration.ui
         if (ui !is Map<*, *>) {
             Log.w(TAG, "config.configuration.ui is not a map")
@@ -388,6 +429,7 @@ class ServerPreferences(
         const val PREF_INTERFACE_MENU_ITEMS = "interface.menuItems"
         const val PREF_INTERFACE_STUDIOS_AS_TEXT = "interface.showStudioAsText"
         const val PREF_INTERFACE_ABBREV_COUNTERS = "interface.abbreviateCounters"
+        const val PREF_INTERFACE_CUSTOM_LOCALES_ENABLED = "interface.customLocalesEnabled"
 
         const val PREF_JOB_SCAN = "app.job.scan"
         const val PREF_JOB_GENERATE = "app.job.generate"
