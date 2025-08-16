@@ -9,6 +9,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
@@ -29,6 +30,7 @@ import com.github.damontecres.stashapp.ui.components.server.InitialSetup
 import com.github.damontecres.stashapp.ui.components.server.ManageServers
 import com.github.damontecres.stashapp.ui.nav.ApplicationContent
 import com.github.damontecres.stashapp.ui.nav.CoilConfig
+import com.github.damontecres.stashapp.util.preferences
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
 import dev.olshevski.navigation.reimagined.NavController
@@ -57,84 +59,100 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 val server by serverViewModel.currentServer.observeAsState()
-                CoilConfig(serverViewModel)
+                val preferences by context.preferences.data.collectAsState(null)
                 val isSystemInDarkTheme = isSystemInDarkTheme()
-                var colorScheme by
-                    remember { mutableStateOf(getTheme(requireContext(), true, isSystemInDarkTheme)) }
-                AppTheme(colorScheme = colorScheme, forceDark = true) {
-                    key(server) {
-                        val navController = rememberNavController<Destination>(Destination.Main)
-                        this@NavDrawerFragment.navController = navController
-                        NavBackHandler(navController)
-                        val navManager =
-                            (serverViewModel.navigationManager as NavigationManagerCompose)
+                preferences?.let { preferences ->
+                    CoilConfig(serverViewModel, preferences)
+                    var colorScheme by
+                        remember {
+                            mutableStateOf(
+                                getTheme(
+                                    requireContext(),
+                                    preferences.interfacePreferences.themeStyle,
+                                    preferences.interfacePreferences.theme,
+                                    isSystemInDarkTheme,
+                                ),
+                            )
+                        }
+                    AppTheme(colorScheme = colorScheme) {
+                        key(server) {
+                            val navController = rememberNavController<Destination>(Destination.Main)
+                            this@NavDrawerFragment.navController = navController
+                            NavBackHandler(navController)
+                            val navManager =
+                                (serverViewModel.navigationManager as NavigationManagerCompose)
 //                        navManager.controller = navController
 
-                        val navCommand by serverViewModel.command.observeAsState()
-                        LaunchedEffect(navCommand) {
-                            navCommand?.let { cmd ->
-                                Log.v(TAG, "cmd=$cmd, server=$server")
-                                if (cmd.popUpToMain) {
-                                    navController.popUpTo { it == Destination.Main }
+                            val navCommand by serverViewModel.command.observeAsState()
+                            LaunchedEffect(navCommand) {
+                                navCommand?.let { cmd ->
+                                    Log.v(TAG, "cmd=$cmd, server=$server")
+                                    if (cmd.popUpToMain) {
+                                        navController.popUpTo { it == Destination.Main }
+                                    }
+                                    navController.navigate(cmd.destination)
                                 }
-                                navController.navigate(cmd.destination)
                             }
-                        }
-                        if (server == null && serverViewModel.destination.value is Destination.Setup) {
-                            InitialSetup(
-                                onServerConfigure = { serverViewModel.switchServer(it) },
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        } else if (server == null &&
-                            (navCommand?.destination is Destination.ManageServers || navCommand?.destination is Destination.Main)
-                        ) {
-                            ManageServers(
-                                currentServer = null,
-                                onSwitchServer = serverViewModel::switchServer,
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        } else {
-                            server?.let { currentServer ->
-                                Log.v(TAG, "currentServer=$currentServer")
-                                CompositionLocalProvider(
-                                    LocalGlobalContext provides
-                                        GlobalContext(
-                                            currentServer,
-                                            navManager,
-                                        ),
-                                ) {
-                                    ApplicationContent(
-                                        server = currentServer,
-                                        navigationManager = navManager,
-                                        navController = navController,
-                                        onSwitchServer = { serverViewModel.switchServer(it) },
-                                        onChangeTheme = { name ->
-                                            try {
-                                                colorScheme =
-                                                    chooseColorScheme(
-                                                        requireContext(),
-                                                        isSystemInDarkTheme,
-                                                        if (name.isNullOrBlank() || name == "default") {
-                                                            defaultColorSchemeSet
-                                                        } else {
-                                                            readThemeJson(requireContext(), name)
-                                                        },
-                                                    )
-                                                Log.i(TAG, "Updated theme")
-                                            } catch (ex: Exception) {
-                                                Log.e(TAG, "Exception changing theme", ex)
-                                                Toast
-                                                    .makeText(
-                                                        requireContext(),
-                                                        "Error changing theme: ${ex.localizedMessage}",
-                                                        Toast.LENGTH_LONG,
-                                                    ).show()
-                                            }
-                                        },
-                                        modifier = Modifier.background(MaterialTheme.colorScheme.background),
-                                        // TODO could use onKeyEvent here to make focus/movement sounds everywhere
-                                        // But it wouldn't know if the focus would actually change
-                                    )
+                            if (server == null && serverViewModel.destination.value is Destination.Setup) {
+                                InitialSetup(
+                                    onServerConfigure = { serverViewModel.switchServer(it) },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            } else if (server == null &&
+                                (navCommand?.destination is Destination.ManageServers || navCommand?.destination is Destination.Main)
+                            ) {
+                                ManageServers(
+                                    currentServer = null,
+                                    onSwitchServer = serverViewModel::switchServer,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            } else {
+                                server?.let { currentServer ->
+                                    CompositionLocalProvider(
+                                        LocalGlobalContext provides
+                                            GlobalContext(
+                                                currentServer,
+                                                navManager,
+                                                preferences,
+                                            ),
+                                    ) {
+                                        ApplicationContent(
+                                            server = currentServer,
+                                            preferences = preferences,
+                                            navigationManager = navManager,
+                                            navController = navController,
+                                            onSwitchServer = { serverViewModel.switchServer(it) },
+                                            onChangeTheme = { name ->
+                                                try {
+                                                    colorScheme =
+                                                        chooseColorScheme(
+                                                            preferences.interfacePreferences.themeStyle,
+                                                            isSystemInDarkTheme,
+                                                            if (name.isNullOrBlank() || name == "default") {
+                                                                defaultColorSchemeSet
+                                                            } else {
+                                                                readThemeJson(
+                                                                    requireContext(),
+                                                                    name,
+                                                                )
+                                                            },
+                                                        )
+                                                    Log.i(TAG, "Updated theme")
+                                                } catch (ex: Exception) {
+                                                    Log.e(TAG, "Exception changing theme", ex)
+                                                    Toast
+                                                        .makeText(
+                                                            requireContext(),
+                                                            "Error changing theme: ${ex.localizedMessage}",
+                                                            Toast.LENGTH_LONG,
+                                                        ).show()
+                                                }
+                                            },
+                                            modifier = Modifier.background(MaterialTheme.colorScheme.background),
+                                            // TODO could use onKeyEvent here to make focus/movement sounds everywhere
+                                            // But it wouldn't know if the focus would actually change
+                                        )
+                                    }
                                 }
                             }
                         }

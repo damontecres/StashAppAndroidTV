@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.nav
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -62,7 +61,7 @@ fun NavScaffold(
     var expanded by remember { mutableStateOf(false) }
     var title by remember { mutableStateOf<AnnotatedString?>(null) }
 
-    Log.v("WindowSize", "screenSize=${screenSize()}")
+//    Log.v("WindowSize", "screenSize=${screenSize()}")
 
     val titleStyle =
         when (screenSize()) {

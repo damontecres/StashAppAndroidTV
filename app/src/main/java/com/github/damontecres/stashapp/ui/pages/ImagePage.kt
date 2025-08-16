@@ -58,14 +58,12 @@ import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
@@ -113,11 +111,7 @@ fun ImagePage(
     val context = LocalContext.current
     val isNotTvDevice = isNotTvDevice
     LaunchedEffect(server, filter) {
-        val slideshowDelay =
-            PreferenceManager.getDefaultSharedPreferences(context).getInt(
-                StashApplication.getApplication().getString(R.string.pref_key_slideshow_duration),
-                StashApplication.getApplication().resources.getInteger(R.integer.pref_key_slideshow_duration_default),
-            ) * 1000L
+        val slideshowDelay = uiConfig.preferences.interfacePreferences.slideShowIntervalMs
 
         viewModel.init(
             server,
@@ -261,7 +255,7 @@ fun ImagePage(
     val player =
         remember {
             StashExoPlayer.getInstance(context, server).apply {
-                maybeMuteAudio(context, false, this)
+                maybeMuteAudio(uiConfig.preferences, false, this)
                 repeatMode = Player.REPEAT_MODE_OFF
                 playWhenReady = true
             }
@@ -272,15 +266,7 @@ fun ImagePage(
         }
     }
 
-    val playSlideshowDelay =
-        remember {
-            PreferenceManager
-                .getDefaultSharedPreferences(context)
-                .getInt(
-                    context.getString(R.string.pref_key_slideshow_duration_image_clip),
-                    context.resources.getInteger(R.integer.pref_key_slideshow_duration_default_image_clip),
-                ).toLong()
-        }
+    val playSlideshowDelay = uiConfig.preferences.interfacePreferences.slideShowIntervalMs
     val presentationState = rememberPresentationState(player)
     LaunchedEffect(player) {
         StashExoPlayer.addListener(

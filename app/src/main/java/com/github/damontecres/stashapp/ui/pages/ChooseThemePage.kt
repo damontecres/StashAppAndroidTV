@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,8 +38,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.edit
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -62,9 +61,13 @@ import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.ui.parseThemeJson
 import com.github.damontecres.stashapp.ui.readThemeJson
 import com.github.damontecres.stashapp.ui.uiConfigPreview
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.preferences
+import com.github.damontecres.stashapp.util.updateInterfacePreferences
 import com.github.damontecres.stashapp.views.durationToString
+import kotlinx.coroutines.launch
 import java.io.File
 import java.util.EnumMap
 
@@ -79,14 +82,13 @@ fun ChooseThemePage(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val isSystemInDark = isSystemInDarkTheme()
     val currentColorScheme = MaterialTheme.colorScheme
     var colorScheme by remember { mutableStateOf(currentColorScheme) }
     var name by remember {
         mutableStateOf(
-            PreferenceManager
-                .getDefaultSharedPreferences(context)
-                .getString(context.getString(R.string.pref_key_ui_theme_file), null),
+            uiConfig.preferences.interfacePreferences.theme,
         )
     }
     var json by remember { mutableStateOf<String?>(null) }
@@ -189,13 +191,15 @@ fun ChooseThemePage(
         item {
             Button(
                 onClick = {
-                    PreferenceManager
-                        .getDefaultSharedPreferences(context)
-                        .edit {
-                            putString(context.getString(R.string.pref_key_ui_theme_file), name)
+                    scope.launch(StashCoroutineExceptionHandler()) {
+                        context.preferences.updateData {
+                            it.updateInterfacePreferences {
+                                theme = name ?: "default"
+                            }
                         }
-                    onChooseTheme.invoke(name)
-                    navigationManager.goToMain()
+                        onChooseTheme.invoke(name)
+                        navigationManager.goToMain()
+                    }
                 },
             ) {
                 Text(
@@ -212,7 +216,12 @@ fun ChooseThemePage(
                     Button(
                         onClick = {
                             name = null
-                            colorScheme = chooseColorScheme(context, isSystemInDark, defaultColorSchemeSet).tvColorScheme
+                            colorScheme =
+                                chooseColorScheme(
+                                    uiConfig.preferences.interfacePreferences.themeStyle,
+                                    isSystemInDark,
+                                    defaultColorSchemeSet,
+                                ).tvColorScheme
                         },
                     ) {
                         Text(
@@ -238,7 +247,11 @@ fun ChooseThemePage(
                             name = it
                             val theme = readThemeJson(context, it)
                             colorScheme =
-                                chooseColorScheme(context, isSystemInDark, theme).tvColorScheme
+                                chooseColorScheme(
+                                    uiConfig.preferences.interfacePreferences.themeStyle,
+                                    isSystemInDark,
+                                    theme,
+                                ).tvColorScheme
                         },
                         onLongClick = {
                             if (deleteJson(context, it)) {
@@ -299,7 +312,12 @@ fun ChooseThemePage(
                 }
                 name = item.name
                 json = item.description
-                colorScheme = chooseColorScheme(context, isSystemInDark, colorSchemeSet).tvColorScheme
+                colorScheme =
+                    chooseColorScheme(
+                        uiConfig.preferences.interfacePreferences.themeStyle,
+                        isSystemInDark,
+                        colorSchemeSet,
+                    ).tvColorScheme
                 themes = getThemes(context)
             } else {
                 Toast

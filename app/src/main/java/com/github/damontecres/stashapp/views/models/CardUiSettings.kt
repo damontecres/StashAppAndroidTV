@@ -10,5 +10,5 @@ data class CardUiSettings(
     val columns: Int,
     val showRatings: Boolean,
     val imageCrop: Boolean,
-    val videoDelay: Int,
+    val videoDelay: Long,
 )

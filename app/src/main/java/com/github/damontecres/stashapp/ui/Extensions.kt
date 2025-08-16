@@ -39,6 +39,7 @@ import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.compat.detectTvDevice
 import com.github.damontecres.stashapp.util.StashServer
@@ -50,6 +51,7 @@ import kotlin.time.Duration.Companion.seconds
 data class GlobalContext(
     val server: StashServer,
     val navigationManager: NavigationManager,
+    val preferences: StashPreferences,
 )
 
 val LocalGlobalContext =

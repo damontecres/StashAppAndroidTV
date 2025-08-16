@@ -1,5 +1,6 @@
 import com.android.build.gradle.internal.cxx.io.writeTextIfDifferent
 import com.android.build.gradle.internal.tasks.factory.dependsOn
+import com.google.protobuf.gradle.id
 import java.io.ByteArrayOutputStream
 import java.util.Base64
 import java.util.Properties
@@ -16,6 +17,7 @@ plugins {
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.room)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.protobuf)
 }
 
 fun getVersionCode(): Int {
@@ -196,6 +198,26 @@ tasks.register<com.github.damontecres.buildsrc.ParseStashStrings>("generateStrin
 tasks.preBuild.dependsOn("generateStrings")
 tasks.clean.dependsOn("cleanGraphqlSchema")
 
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:${libs.protobuf.kotlin.lite.get().version}"
+    }
+    generateProtoTasks {
+        all().forEach {
+            it.plugins {
+                id("java") {
+                    option("lite")
+                }
+            }
+            it.builtins {
+                id("kotlin") {
+                    option("lite")
+                }
+            }
+        }
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.leanback)
@@ -276,6 +298,8 @@ dependencies {
     implementation(libs.restring)
     implementation(libs.viewpump)
     implementation(libs.reword)
+    implementation(libs.androidx.datastore)
+    implementation(libs.protobuf.kotlin.lite)
 
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.junit)

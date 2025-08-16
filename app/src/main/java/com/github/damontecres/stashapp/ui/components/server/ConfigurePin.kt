@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.server
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -32,9 +33,12 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
 @Composable
 fun ConfigurePin(
-    onSkip: () -> Unit,
+    onCancel: () -> Unit,
     onSubmit: (String) -> Unit,
     modifier: Modifier = Modifier,
+    @StringRes descriptionString: Int = R.string.set_app_pin_code,
+    @StringRes submitString: Int = R.string.stashapp_actions_submit,
+    @StringRes cancelString: Int = R.string.stashapp_actions_skip,
 ) {
     var pin1 by remember { mutableStateOf("") }
     var pin2 by remember { mutableStateOf("") }
@@ -57,7 +61,7 @@ fun ConfigurePin(
         }
         item {
             Text(
-                text = "If set, it must be entered whenever the app is opened",
+                text = stringResource(descriptionString),
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
@@ -124,11 +128,11 @@ fun ConfigurePin(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Button(
-                    onClick = onSkip,
+                    onClick = onCancel,
                     enabled = true,
                 ) {
                     Text(
-                        text = stringResource(R.string.stashapp_actions_skip),
+                        text = stringResource(cancelString),
                     )
                 }
                 Button(
@@ -136,7 +140,7 @@ fun ConfigurePin(
                     enabled = pin1.isNotBlank() && valid,
                 ) {
                     Text(
-                        text = stringResource(R.string.stashapp_actions_submit),
+                        text = stringResource(submitString),
                     )
                 }
             }
@@ -152,6 +156,7 @@ private fun ConfigurePinPreview() {
             {},
             {},
             Modifier,
+            descriptionString = R.string.read_only_pin_description,
         )
     }
 }

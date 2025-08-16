@@ -18,12 +18,7 @@ class ReadOnlyPinConfigFragment : GuidedStepSupportFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
         GuidanceStylist.Guidance(
             "Read Only Mode",
-            """Enabling this will prevent the app from making any server side changes.
-                |
-                |If Scene Play history is enabled on the server and in app, then it will still be saved to the server.
-                |
-                |Additionally, the PIN will be required to change any app settings.
-            """.trimMargin(),
+            getString(R.string.read_only_pin_description).trimMargin(),
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )

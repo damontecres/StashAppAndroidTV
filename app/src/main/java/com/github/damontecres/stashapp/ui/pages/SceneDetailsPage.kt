@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -71,6 +70,7 @@ import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
@@ -93,6 +93,7 @@ import com.github.damontecres.stashapp.ui.components.scene.sceneDetailsBody
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.asString
 import com.github.damontecres.stashapp.util.fakeMarker
 import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.titleOrFilename
@@ -116,6 +117,10 @@ fun SceneDetailsPage(
             MutableCreationExtras().apply {
                 set(SceneDetailsViewModel.SERVER_KEY, server)
                 set(SceneDetailsViewModel.SCENE_ID_KEY, sceneId)
+                set(
+                    SceneDetailsViewModel.PAGE_SIZE_KEY,
+                    uiConfig.preferences.searchPreferences.maxResults,
+                )
             },
         )[SceneDetailsViewModel::class]
     val loadingState by viewModel.loadingState.observeAsState()
@@ -501,6 +506,7 @@ fun SceneDetails(
                                     playOnClick = playOnClick,
                                     showDurationDialog = { showMarkerDurationDialog = true },
                                     detailsOnClick = { showDetailsDialog = true },
+                                    streamChoice = uiConfig.preferences.playbackPreferences.streamChoice,
                                 ),
                         )
                 },
@@ -607,6 +613,7 @@ fun moreOptionsItems(
     navigationManager: NavigationManager,
     scene: FullSceneData,
     markers: List<MarkerData>,
+    streamChoice: StreamChoice,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     showDurationDialog: () -> Unit,
     detailsOnClick: () -> Unit,
@@ -640,10 +647,7 @@ fun moreOptionsItems(
                 Icons.Default.PlayArrow,
             ) {
                 // TODO show options for other resolutions
-                val format =
-                    PreferenceManager
-                        .getDefaultSharedPreferences(context)
-                        .getString("stream_choice", "HLS")!!
+                val format = streamChoice.asString
                 playOnClick(
                     if (server.serverPreferences.alwaysStartFromBeginning) {
                         0L

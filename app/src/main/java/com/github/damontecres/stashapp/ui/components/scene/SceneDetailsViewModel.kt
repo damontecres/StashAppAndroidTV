@@ -7,9 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
-import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -42,6 +40,7 @@ import kotlinx.coroutines.launch
 class SceneDetailsViewModel(
     val server: StashServer,
     val sceneId: String,
+    val pageSize: Int,
 ) : ViewModel() {
     private val queryEngine = QueryEngine(server)
     private val mutationEngine = MutationEngine(server)
@@ -111,15 +110,6 @@ class SceneDetailsViewModel(
                 suggestions.value = listOf()
                 val filterArgs = createSceneSuggestionFilter(it)
                 if (filterArgs != null) {
-                    val pageSize =
-                        PreferenceManager
-                            .getDefaultSharedPreferences(StashApplication.getApplication())
-                            .getInt(
-                                StashApplication
-                                    .getApplication()
-                                    .getString(R.string.pref_key_max_search_results),
-                                25,
-                            )
                     val supplier =
                         DataSupplierFactory(server.version)
                             .create<Query.Data, SlimSceneData, Query.Data>(filterArgs)
@@ -319,12 +309,14 @@ class SceneDetailsViewModel(
     companion object {
         val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
         val SCENE_ID_KEY = object : CreationExtras.Key<String> {}
+        val PAGE_SIZE_KEY = object : CreationExtras.Key<Int> {}
         val Factory: ViewModelProvider.Factory =
             viewModelFactory {
                 initializer {
                     val server = this[SERVER_KEY]!!
                     val sceneId = this[SCENE_ID_KEY]!!
-                    SceneDetailsViewModel(server, sceneId)
+                    val pageSize = this[PAGE_SIZE_KEY]!!
+                    SceneDetailsViewModel(server, sceneId, pageSize)
                 }
             }
     }
