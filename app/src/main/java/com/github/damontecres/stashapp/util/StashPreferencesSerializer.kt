@@ -72,6 +72,7 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                             controllerTimeoutMs = 3500
                             savePlayHistory = true
                             saveVideoFilters = true
+                            seekBarSteps = 16
 
                             addAllDirectPlayVideo(StashPreference.DirectPlayVideo.defaultValue)
                             addAllDirectPlayAudio(StashPreference.DirectPlayAudio.defaultValue)

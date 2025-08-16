@@ -160,6 +160,11 @@ class AppUpgradeHandler(
                 if (!preferencesMigratedV1) {
                     migratePreferences()
                 }
+                context.preferences.updateData {
+                    it.updatePlaybackPreferences {
+                        seekBarSteps = 16
+                    }
+                }
             }
         }
     }
