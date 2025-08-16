@@ -43,10 +43,13 @@ previewseekbar = "3.1.1"
 previewseekbar-media3 = "1.1.1.0"
 protobuf = "0.9.5"
 protobuf-javalite = "4.31.1"
+restring = "6.0.0"
+reword = "4.0.4"
 room = "2.7.2"
 swiperefreshlayout = "1.1.0"
 tv-foundation = "1.0.0-alpha12"
 tv-material = "1.0.1"
+viewpump = "4.0.14"
 zoomlayout = "1.9.0"
 
 [libraries]
@@ -113,6 +116,9 @@ androidx-preference-ktx = { module = "androidx.preference:preference-ktx", versi
 previewseekbar = { module = "com.github.rubensousa:previewseekbar", version.ref = "previewseekbar" }
 previewseekbar-media3 = { module = "com.github.rubensousa:previewseekbar-media3", version.ref = "previewseekbar-media3" }
 navigation-reimagined = { module = "dev.olshevski.navigation:reimagined", version.ref = "navigation-reimagined" }
+restring = { module = "dev.b3nedikt.restring:restring", version.ref = "restring" }
+reword = { module = "dev.b3nedikt.reword:reword", version.ref = "reword" }
+viewpump = { module = "dev.b3nedikt.viewpump:viewpump", version.ref = "viewpump" }
 protobuf-kotlin-lite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobuf-javalite" }
 zoomlayout = { module = "com.otaliastudios:zoomlayout", version.ref = "zoomlayout" }
 

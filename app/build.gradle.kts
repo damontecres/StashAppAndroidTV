@@ -295,6 +295,9 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.navigation.reimagined)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(libs.restring)
+    implementation(libs.viewpump)
+    implementation(libs.reword)
     implementation(libs.androidx.datastore)
     implementation(libs.protobuf.kotlin.lite)
 

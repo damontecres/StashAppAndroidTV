@@ -28,6 +28,8 @@ query Configuration {
     interface {
       menuItems
       showStudioAsText
+      customLocalesEnabled
+      customLocales
     }
     ui
   }

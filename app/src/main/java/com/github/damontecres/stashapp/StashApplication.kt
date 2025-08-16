@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.app.Application
+import android.content.res.Resources
 import android.graphics.Typeface
 import android.os.Build
 import android.util.Log
@@ -19,6 +20,7 @@ import com.github.damontecres.stashapp.util.AppUpgradeHandler
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.Version
+import dev.b3nedikt.restring.Restring
 import org.acra.ACRA
 import org.acra.ReportField
 import org.acra.config.dialog
@@ -33,6 +35,8 @@ class StashApplication : Application() {
 
         val pkgInfo = packageManager.getPackageInfo(packageName, 0)
         val versionNameStr = pkgInfo.versionName ?: "Unknown version"
+
+        Restring.init(this)
 
         initAcra {
             buildConfigClass = BuildConfig::class.java
@@ -116,6 +120,8 @@ class StashApplication : Application() {
 
         setupDB()
     }
+
+    override fun getResources(): Resources = Restring.wrapResources(applicationContext, super.getResources())
 
     private fun setupDB() {
         val dbName = getString(R.string.app_name)
