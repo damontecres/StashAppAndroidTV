@@ -187,7 +187,7 @@ private fun PlayButtonsPreview() {
             oCounterOnClick = { },
             oCounterOnLongClick = {},
             buttonOnFocusChanged = {},
-            focusRequester = FocusRequester(),
+            focusRequester = remember { FocusRequester() },
             alwaysStartFromBeginning = false,
             showEditButton = true,
             modifier = Modifier,
