@@ -665,7 +665,7 @@ private fun PlaybackButtonsPreview() {
     PreviewTheme {
         PlaybackButtons(
             player = FakePlayerControls,
-            initialFocusRequester = FocusRequester(),
+            initialFocusRequester = remember { FocusRequester() },
             onControllerInteraction = {},
             showPlay = true,
             previousEnabled = true,
