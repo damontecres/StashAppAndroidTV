@@ -31,8 +31,8 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.util.StashServer
-import dev.olshevski.navigation.reimagined.AnimatedNavHost
 import dev.olshevski.navigation.reimagined.NavController
+import dev.olshevski.navigation.reimagined.NavHost
 
 /**
  * Shows the actual compose content of the application
@@ -128,9 +128,14 @@ fun ApplicationContent(
     val defaultSelection: DrawerPage = DrawerPage.HomePage
     var selectedScreen by rememberSaveable { mutableStateOf<DrawerPage?>(defaultSelection) }
 
-    AnimatedNavHost(
+    // TODO Using AnimatedNavHost breaks the grid focus restoration
+//    AnimatedNavHost(
+//        controller = navController,
+//        transitionSpec = DestinationTransitionSpec(),
+//        modifier = modifier,
+//    ) { destination ->
+    NavHost(
         controller = navController,
-        transitionSpec = DestinationTransitionSpec(),
         modifier = modifier,
     ) { destination ->
         LaunchedEffect(Unit) {
