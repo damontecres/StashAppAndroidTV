@@ -20,7 +20,9 @@ import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.StashPlayerView
 import com.github.damontecres.stashapp.playback.buildMediaItem
+import com.github.damontecres.stashapp.playback.getStreamChoiceFromPreferences
 import com.github.damontecres.stashapp.playback.getStreamDecision
+import com.github.damontecres.stashapp.playback.getTranscodeAboveFromPreferences
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -73,9 +75,17 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
             if (duration == null) {
                 return@observe
             }
+            val streamChoice = getStreamChoiceFromPreferences(requireContext())
+            val transcodeResolution = getTranscodeAboveFromPreferences(requireContext())
             val scene = Scene.fromVideoSceneData(marker.scene.videoSceneData)
             val streamDecision =
-                getStreamDecision(requireContext(), scene, PlaybackMode.Choose)
+                getStreamDecision(
+                    requireContext(),
+                    scene,
+                    PlaybackMode.Choose,
+                    streamChoice,
+                    transcodeResolution,
+                )
             val mediaItem = buildMediaItem(requireContext(), streamDecision, scene)
 
             StashExoPlayer.releasePlayer()

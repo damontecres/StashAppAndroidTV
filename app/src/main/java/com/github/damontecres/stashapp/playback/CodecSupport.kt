@@ -7,6 +7,7 @@ import android.os.Build
 import android.util.Log
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.proto.PlaybackPreferences
 
 /**
  * List the supported video and audio codecs
@@ -55,6 +56,13 @@ data class CodecSupport(
                 }
             }.toMap()
 
+        fun getSupportedCodecs(prefs: PlaybackPreferences): CodecSupport {
+            val videoCodecs = prefs.directPlayVideoList.toMutableSet()
+            val audioCodecs = prefs.directPlayAudioList.toMutableSet()
+            val containers = prefs.directPlayFormatList.toMutableSet()
+            return getSupportedCodecs(videoCodecs, audioCodecs, containers)
+        }
+
         fun getSupportedCodecs(context: Context): CodecSupport {
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
 
@@ -79,7 +87,14 @@ data class CodecSupport(
                     context.getString(R.string.pref_key_default_forced_direct_containers),
                     setOf(*context.resources.getStringArray(R.array.default_force_container_formats)),
                 )!!
+            return getSupportedCodecs(videoCodecs, audioCodecs, containers)
+        }
 
+        private fun getSupportedCodecs(
+            videoCodecs: MutableSet<String>,
+            audioCodecs: MutableSet<String>,
+            containers: MutableSet<String>,
+        ): CodecSupport {
             Log.v(
                 TAG,
                 "Default forced direct: video=$videoCodecs, audio=$audioCodecs, containers=$containers",

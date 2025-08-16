@@ -3,3 +3,9 @@ query SystemStatus {
     status
   }
 }
+
+query JobQueue {
+  jobQueue {
+    ...StashJob
+  }
+}

@@ -27,7 +27,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.ui.PlayerView
-import androidx.preference.PreferenceManager
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
@@ -42,11 +41,11 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.enableMarquee
-import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.updateLayoutParams
 import com.github.damontecres.stashapp.views.FontSpan
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
+import com.github.damontecres.stashapp.views.models.CardUiSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -56,6 +55,7 @@ import java.util.EnumMap
 
 class StashImageCardView(
     context: Context,
+    val cardSettings: CardUiSettings,
 ) : ImageCardView(context) {
     companion object {
         private const val TAG = "StashImageCardView"
@@ -108,11 +108,6 @@ class StashImageCardView(
     private val topRightImageOverlay = findViewById<ImageView>(R.id.card_overlay_top_right_image)
 
     private var imageDimensionsSet = false
-
-    private var videoPreviewAudio: Boolean = false
-    private var playVideoPreviews = true
-    private var videoDelay =
-        context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default).toLong()
 
     private val listener =
         object : Player.Listener {
@@ -184,7 +179,7 @@ class StashImageCardView(
     ) {
         mSelected = selected
         delayJob?.cancel()
-        if (playVideoPreviews && videoUrl.isNotNullOrBlank()) {
+        if (cardSettings.playVideoPreviews && videoUrl.isNotNullOrBlank()) {
             if (selected) {
                 initPlayer()
                 videoView?.player?.seekToDefaultPosition()
@@ -197,12 +192,12 @@ class StashImageCardView(
             }
         }
         if (selected) {
-            if (!overrideDelay && videoDelay > 0) {
+            if (!overrideDelay && cardSettings.videoDelay > 0) {
                 val scope = findViewTreeLifecycleOwner()?.lifecycleScope
                 if (scope != null) {
                     delayJob =
                         scope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                            delay(videoDelay)
+                            delay(cardSettings.videoDelay)
                             withContext(Dispatchers.Main) {
                                 hideOverlayAndPlayVideo()
                             }
@@ -221,7 +216,7 @@ class StashImageCardView(
         }
         updateCardBackgroundColor(selected)
         if (selected) {
-            this.postDelayed(selectedMessage, videoDelay.coerceAtLeast(500L))
+            this.postDelayed(selectedMessage, cardSettings.videoDelay.coerceAtLeast(500L))
         } else {
             this.removeCallbacks(selectedMessage)
             super.setSelected(false)
@@ -251,10 +246,7 @@ class StashImageCardView(
         height: Int,
         paddingDp: Int,
     ) {
-        val cardSize =
-            PreferenceManager
-                .getDefaultSharedPreferences(context)
-                .getInt("cardSize", context.getString(R.string.card_size_default))
+        val cardSize = cardSettings.columns
         val scaledWidth = (width * 5.0 / cardSize).toInt()
         val scaledHeight = (height * 5.0 / cardSize).toInt()
         val lp = mainView.layoutParams
@@ -307,7 +299,7 @@ class StashImageCardView(
 
         videoView!!.player = player
         player.setMediaItem(mediaItem, if (videoPosition > 0) videoPosition else C.TIME_UNSET)
-        if (videoPreviewAudio) {
+        if (cardSettings.videoPreviewAudio) {
             player.volume = 1f
         } else {
             if (C.TRACK_TYPE_AUDIO !in player.trackSelectionParameters.disabledTrackTypes) {
@@ -321,7 +313,7 @@ class StashImageCardView(
         }
         player.prepare()
         player.repeatMode = Player.REPEAT_MODE_ONE
-        player.playWhenReady = videoDelay <= 0
+        player.playWhenReady = cardSettings.videoDelay <= 0
     }
 
     fun setUpExtraRow(
@@ -417,11 +409,7 @@ class StashImageCardView(
     }
 
     fun setRating100(rating100: Int?) {
-        val showRatings =
-            PreferenceManager
-                .getDefaultSharedPreferences(context)
-                .getBoolean(context.getString(R.string.pref_key_show_rating), true)
-        if (rating100 != null && rating100 > 0 && showRatings) {
+        if (rating100 != null && rating100 > 0 && cardSettings.showRatings) {
             val serverPrefs = StashServer.requireCurrentServer().serverPreferences
             val ratingText =
                 getRatingAsDecimalString(rating100, serverPrefs.ratingsAsStars)
@@ -466,22 +454,6 @@ class StashImageCardView(
         val bgColor = if (blackImageBackground) blackColor else sDefaultBackgroundColor
         mainView.setBackgroundColor(bgColor)
         imageView.setBackgroundColor(bgColor)
-
-        val prefs =
-            PreferenceManager
-                .getDefaultSharedPreferences(context)
-        playVideoPreviews = prefs.getBoolean("playVideoPreviews", true)
-        videoDelay =
-            prefs
-                .getInt(
-                    context.getString(R.string.pref_key_ui_card_overlay_delay),
-                    context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
-                ).toLong()
-        videoPreviewAudio = prefs.getBoolean("videoPreviewAudio", false) &&
-            !prefs.getBoolean(
-                context.getString(R.string.pref_key_playback_start_muted),
-                false,
-            )
     }
 
     fun onUnbindViewHolder() {

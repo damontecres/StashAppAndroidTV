@@ -26,7 +26,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
@@ -163,15 +162,8 @@ fun SearchForPage(
     val scope = rememberCoroutineScope()
     val queryEngine = QueryEngine(server)
 
-    val searchDelay =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getInt(context.getString(R.string.pref_key_search_delay), 500)
-            .toLong()
-    val perPage =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getInt("maxSearchResults", 25)
+    val searchDelay = uiConfig.preferences.searchPreferences.searchDelayMs
+    val perPage = uiConfig.preferences.searchPreferences.maxResults
 
     var searchQuery by remember { mutableStateOf(startingSearchQuery) }
 

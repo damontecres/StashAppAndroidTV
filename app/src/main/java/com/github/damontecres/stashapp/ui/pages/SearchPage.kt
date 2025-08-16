@@ -4,7 +4,6 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -31,10 +30,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
@@ -90,19 +87,19 @@ class SearchViewModel : ViewModel() {
     fun init(
         server: StashServer,
         initialQuery: String,
+        perPage: Int,
     ) {
         this.server = server
-        search(initialQuery)
+        search(initialQuery, perPage)
     }
 
-    fun search(query: String) {
+    fun search(
+        query: String,
+        perPage: Int,
+    ) {
         if (query.isNotBlank() && query != this.currentQuery) {
             this.currentQuery = query
             val queryEngine = QueryEngine(server)
-            val perPage =
-                PreferenceManager
-                    .getDefaultSharedPreferences(StashApplication.getApplication())
-                    .getInt("maxSearchResults", 25)
             DataType.entries.forEach {
                 val data = mapping[it]!!
                 data.value = listOf()
@@ -150,7 +147,7 @@ fun SearchPage(
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
-    modifier: Modifier = Modifier.fillMaxSize(),
+    modifier: Modifier = Modifier,
     initialQuery: String = "",
     viewModel: SearchViewModel = viewModel(),
 ) {
@@ -159,6 +156,7 @@ fun SearchPage(
     val focusRequester = remember { FocusRequester() }
 
     var searchQuery by rememberSaveable { mutableStateOf(initialQuery) }
+    val perPage = uiConfig.preferences.searchPreferences.maxResults
 
     val scenes by viewModel.scenes.observeAsState(listOf())
     val groups by viewModel.groups.observeAsState(listOf())
@@ -182,7 +180,7 @@ fun SearchPage(
         )
 
     OneTimeLaunchedEffect {
-        viewModel.init(server, initialQuery)
+        viewModel.init(server, initialQuery, perPage)
 //        focusRequester.tryRequestFocus()
     }
 
@@ -204,11 +202,7 @@ fun SearchPage(
     ) {
         stickyHeader {
             var job: Job? = null
-            val searchDelay =
-                PreferenceManager
-                    .getDefaultSharedPreferences(context)
-                    .getInt(context.getString(R.string.pref_key_search_delay), 500)
-                    .toLong()
+            val searchDelay = uiConfig.preferences.searchPreferences.searchDelayMs
             SearchEditTextBox(
                 modifier = Modifier.ifElse(focusedRow < 0, Modifier.focusRequester(focusRequester)),
                 value = searchQuery,
@@ -218,12 +212,12 @@ fun SearchPage(
                     job =
                         scope.launch(StashCoroutineExceptionHandler()) {
                             delay(searchDelay)
-                            viewModel.search(searchQuery)
+                            viewModel.search(searchQuery, perPage)
                         }
                 },
                 onSearchClick = {
                     job?.cancel()
-                    viewModel.search(searchQuery)
+                    viewModel.search(searchQuery, perPage)
                 },
             )
         }

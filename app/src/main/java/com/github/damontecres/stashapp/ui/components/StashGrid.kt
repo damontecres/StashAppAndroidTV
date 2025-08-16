@@ -50,7 +50,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
@@ -259,11 +258,7 @@ fun StashGridControls(
                     }
 
                     var job: Job? = null
-                    val searchDelay =
-                        PreferenceManager
-                            .getDefaultSharedPreferences(context)
-                            .getInt(context.getString(R.string.pref_key_search_delay), 500)
-                            .toLong()
+                    val searchDelay = uiConfig.preferences.searchPreferences.searchDelayMs
                     item {
                         SearchEditTextBox(
                             modifier =
@@ -438,19 +433,9 @@ fun StashGrid(
         alphabetFocus = false
     }
 
-    val prefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
-
-    val useBackToJump =
-        remember { prefs.getBoolean(context.getString(R.string.pref_key_back_button_scroll), true) }
-    val showFooter =
-        remember { prefs.getBoolean(context.getString(R.string.pref_key_show_grid_footer), true) }
-    val useJumpRemoteButtons =
-        remember {
-            prefs.getBoolean(
-                context.getString(R.string.pref_key_remote_page_buttons),
-                true,
-            )
-        }
+    val useBackToJump = uiConfig.preferences.interfacePreferences.scrollTopOnBack
+    val showFooter = uiConfig.preferences.interfacePreferences.showPositionFooter
+    val useJumpRemoteButtons = uiConfig.preferences.interfacePreferences.pageWithRemoteButtons
     val jump2 =
         remember {
             if (pager.size >= 25_000) {

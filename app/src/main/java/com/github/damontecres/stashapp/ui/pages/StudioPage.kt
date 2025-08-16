@@ -32,6 +32,7 @@ import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
@@ -112,7 +113,7 @@ fun StudioPage(
         }
 
         val detailsTab =
-            TabProvider(stringResource(R.string.stashapp_details)) {
+            TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
                 StudioDetails(
                     studio = studio,
                     parentStudio = parentStudio,
@@ -214,7 +215,10 @@ fun StudioPage(
         }
         val scenesTab =
             remember(scenesFilter, scenesSubTags) {
-                TabProvider(context.getString(R.string.stashapp_scenes)) { positionCallback ->
+                TabProvider(
+                    context.getString(R.string.stashapp_scenes),
+                    TabType.SCENES,
+                ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_scenes),
                         server = server,
@@ -246,7 +250,10 @@ fun StudioPage(
         }
         val galleriesTab =
             remember(galleriesSubTags, galleriesFilter) {
-                TabProvider(context.getString(R.string.stashapp_galleries)) { positionCallback ->
+                TabProvider(
+                    context.getString(R.string.stashapp_galleries),
+                    TabType.GALLERIES,
+                ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_galleries),
                         server = server,
@@ -277,7 +284,10 @@ fun StudioPage(
         }
         val imagesTab =
             remember(imagesSubTags, imagesFilter) {
-                TabProvider(context.getString(R.string.stashapp_images)) { positionCallback ->
+                TabProvider(
+                    context.getString(R.string.stashapp_images),
+                    TabType.IMAGES,
+                ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_images),
                         server = server,
@@ -314,7 +324,10 @@ fun StudioPage(
         }
         val markersTab =
             remember(markersSubTags, markersFilter) {
-                TabProvider(context.getString(R.string.stashapp_markers)) { positionCallback ->
+                TabProvider(
+                    context.getString(R.string.stashapp_markers),
+                    TabType.MARKERS,
+                ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_markers),
                         server = server,
@@ -346,7 +359,10 @@ fun StudioPage(
         }
         val performersTab =
             remember(performersSubTags, performersFilter) {
-                TabProvider(context.getString(R.string.stashapp_performers)) { positionCallback ->
+                TabProvider(
+                    context.getString(R.string.stashapp_performers),
+                    TabType.PERFORMERS,
+                ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_performers),
                         server = server,
@@ -378,7 +394,10 @@ fun StudioPage(
         }
         val groupsTab =
             remember(groupsSubTags, groupsFilter) {
-                TabProvider(context.getString(R.string.stashapp_groups)) { positionCallback ->
+                TabProvider(
+                    context.getString(R.string.stashapp_groups),
+                    TabType.GROUPS,
+                ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_groups),
                         server = server,
@@ -416,7 +435,10 @@ fun StudioPage(
             )
         }
         val subStudiosTab =
-            TabProvider(stringResource(R.string.stashapp_subsidiary_studios)) { positionCallback ->
+            TabProvider(
+                stringResource(R.string.stashapp_subsidiary_studios),
+                TabType.SUBSIDIARY_STUDIOS,
+            ) { positionCallback ->
                 StashGridTab(
                     name = stringResource(R.string.stashapp_subsidiary_studios),
                     server = server,
@@ -431,7 +453,8 @@ fun StudioPage(
                 )
             }
 
-        val uiTabs = getUiTabs(context, DataType.STUDIO)
+        val uiTabs =
+            getUiTabs(uiConfig.preferences.interfacePreferences.tabPreferences, DataType.STUDIO)
         val tabs =
             listOf(
                 detailsTab,
@@ -442,10 +465,17 @@ fun StudioPage(
                 groupsTab,
                 markersTab,
                 subStudiosTab,
-            ).filter { it.name in uiTabs }
+            ).filter { it.type in uiTabs }
         val title = AnnotatedString(studio.name)
         LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
-        TabPage(title, tabs, DataType.STUDIO, modifier, onUpdateTitle == null)
+        TabPage(
+            title,
+            uiConfig.preferences.interfacePreferences.rememberSelectedTab,
+            tabs,
+            DataType.STUDIO,
+            modifier,
+            onUpdateTitle == null,
+        )
     }
 }
 

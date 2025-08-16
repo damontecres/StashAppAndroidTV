@@ -48,10 +48,12 @@ import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.ui.AppColors
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.SwitchWithLabel
@@ -80,6 +82,7 @@ private const val TAG = "MarkerTimestampPage"
 fun MarkerTimestampPage(
     server: StashServer,
     navigationManager: NavigationManager,
+    uiConfig: ComposeUiConfig,
     markerId: String,
     modifier: Modifier = Modifier,
     viewModel: MarkerDetailsViewModel = viewModel(),
@@ -110,7 +113,14 @@ fun MarkerTimestampPage(
                 remember {
                     val scene = Scene.fromVideoSceneData(marker.scene.videoSceneData)
                     val streamDecision =
-                        getStreamDecision(context, scene, PlaybackMode.Choose)
+                        getStreamDecision(
+                            context,
+                            scene,
+                            PlaybackMode.Choose,
+                            uiConfig.preferences.playbackPreferences.streamChoice,
+                            uiConfig.preferences.playbackPreferences.transcodeAboveResolution,
+                            CodecSupport.getSupportedCodecs(uiConfig.preferences.playbackPreferences),
+                        )
                     buildMediaItem(context, streamDecision, scene)
                 }
 

@@ -59,6 +59,7 @@ import com.github.damontecres.stashapp.presenters.ImagePresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.proto.TabPreferences
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import com.github.damontecres.stashapp.views.fileNameFromPath
@@ -669,12 +670,12 @@ fun NestedScrollView.onlyScrollIfNeeded() {
 fun SharedPreferences.getStringNotNull(
     key: String,
     defValue: String,
-): String = getString(key, defValue)!!
+): String = getString(key, defValue) ?: defValue
 
 fun SharedPreferences.getInt(
     key: String,
     defValue: String,
-): Int = getStringNotNull(key, defValue).toInt()
+): Int = getStringNotNull(key, defValue).toIntOrNull() ?: defValue.toInt()
 
 fun ArrayObjectAdapter.isEmpty(): Boolean = size() == 0
 
@@ -937,6 +938,18 @@ fun showDebugInfo(): Boolean {
         .getDefaultSharedPreferences(context)
         .getBoolean(context.getString(R.string.pref_key_show_playback_debug_info), false)
 }
+
+fun getUiTabs(
+    tabPreferences: TabPreferences,
+    dataType: DataType,
+) = when (dataType) {
+    DataType.PERFORMER -> tabPreferences.performerList
+    DataType.GALLERY -> tabPreferences.galleryList
+    DataType.GROUP -> tabPreferences.groupList
+    DataType.STUDIO -> tabPreferences.studioList
+    DataType.TAG -> tabPreferences.tagsList
+    else -> throw UnsupportedOperationException("$dataType not supported")
+}.toSet()
 
 fun getUiTabs(
     context: Context,

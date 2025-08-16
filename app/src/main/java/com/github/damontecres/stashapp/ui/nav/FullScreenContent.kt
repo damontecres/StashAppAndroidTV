@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.ui.pages.ImagePage
 import com.github.damontecres.stashapp.ui.pages.MarkerTimestampPage
 import com.github.damontecres.stashapp.ui.pages.PlaybackPage
 import com.github.damontecres.stashapp.ui.pages.PlaylistPlaybackPage
+import com.github.damontecres.stashapp.ui.pages.SettingsPage
 import com.github.damontecres.stashapp.util.StashServer
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -61,6 +62,16 @@ fun FullScreenContent(
 //                        preventBack = false,
 //                        modifier = Modifier.fillMaxSize(),
 //                    )
+
+        is Destination.Settings -> {
+            SettingsPage(
+                server = server,
+                navigationManager = navigationManager,
+                preferenceScreenOption = destination.screenOption,
+                uiConfig = composeUiConfig,
+                modifier = modifier,
+            )
+        }
 
         is Destination.ManageServers -> {
             ManageServers(
@@ -130,6 +141,7 @@ fun FullScreenContent(
             MarkerTimestampPage(
                 server = server,
                 navigationManager = navigationManager,
+                uiConfig = composeUiConfig,
                 markerId = destination.markerId,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -137,6 +149,7 @@ fun FullScreenContent(
         is Destination.Debug ->
             DebugPage(
                 server = server,
+                uiConfig = composeUiConfig,
                 modifier = Modifier.fillMaxSize(),
             )
 

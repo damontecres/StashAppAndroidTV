@@ -13,7 +13,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.DialogProperties
-import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
@@ -21,6 +20,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.NavDrawerFragment.Companion.TAG
@@ -31,8 +31,8 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.util.StashServer
+import dev.olshevski.navigation.reimagined.AnimatedNavHost
 import dev.olshevski.navigation.reimagined.NavController
-import dev.olshevski.navigation.reimagined.NavHost
 
 /**
  * Shows the actual compose content of the application
@@ -42,6 +42,7 @@ import dev.olshevski.navigation.reimagined.NavHost
 @Composable
 fun ApplicationContent(
     server: StashServer,
+    preferences: StashPreferences,
     navigationManager: NavigationManagerCompose,
     navController: NavController<Destination>,
     onChangeTheme: (String?) -> Unit,
@@ -52,16 +53,13 @@ fun ApplicationContent(
     var composeUiConfig by remember(server) {
         mutableStateOf(
             ComposeUiConfig.fromStashServer(
-                context,
+                preferences,
                 server,
             ),
         )
     }
 
-    val scrollToNextPage =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getBoolean("scrollToNextResult", true)
+    val scrollToNextPage = preferences.interfacePreferences.scrollNextViewAll
 
     val itemOnClick =
         ItemOnClicker { item: Any, filterAndPosition ->
@@ -130,17 +128,22 @@ fun ApplicationContent(
     val defaultSelection: DrawerPage = DrawerPage.HomePage
     var selectedScreen by rememberSaveable { mutableStateOf<DrawerPage?>(defaultSelection) }
 
-    NavHost(navController, modifier = modifier) { destination ->
+    AnimatedNavHost(
+        controller = navController,
+        transitionSpec = DestinationTransitionSpec(),
+        modifier = modifier,
+    ) { destination ->
         LaunchedEffect(Unit) {
             // Refresh server preferences on each page change
             navigationManager.serverViewModel.updateServerPreferences()
-            composeUiConfig = ComposeUiConfig.fromStashServer(context, server)
+            composeUiConfig = ComposeUiConfig.fromStashServer(preferences, server)
 
             navigationManager.previousDestination = destination
             navigationManager.serverViewModel.setCurrentDestination(destination)
         }
+        val fullScreen = if (isTvDevice) destination.fullScreen else destination.fullScreenTouch
 
-        if (destination.fullScreen) {
+        if (fullScreen) {
             FullScreenContent(
                 server = server,
                 destination = destination,

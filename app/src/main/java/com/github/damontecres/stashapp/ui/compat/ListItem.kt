@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.compat
 
-import android.util.Log
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -40,32 +39,51 @@ fun ListItem(
     border: ListItemBorder = ListItemDefaults.border(),
     glow: ListItemGlow = ListItemDefaults.glow(),
     interactionSource: MutableInteractionSource? = null,
+    dense: Boolean = false,
 ) {
     if (LocalDeviceType.current == DeviceType.TV) {
-        androidx.tv.material3.ListItem(
-            selected = selected,
-            onClick = onClick,
-            headlineContent = headlineContent,
-            modifier = modifier,
-            enabled = enabled,
-            onLongClick = onLongClick,
-            overlineContent = overlineContent,
-            supportingContent = supportingContent,
-            leadingContent = leadingContent,
-            trailingContent = trailingContent,
-            tonalElevation = tonalElevation,
-            shape = shape,
-            colors = colors,
-            scale = scale,
-            border = border,
-            glow = glow,
-            interactionSource = interactionSource,
-        )
+        if (dense) {
+            androidx.tv.material3.DenseListItem(
+                selected = selected,
+                onClick = onClick,
+                headlineContent = headlineContent,
+                modifier = modifier,
+                enabled = enabled,
+                onLongClick = onLongClick,
+                overlineContent = overlineContent,
+                supportingContent = supportingContent,
+                leadingContent = leadingContent,
+                trailingContent = trailingContent,
+                tonalElevation = tonalElevation,
+                shape = shape,
+                colors = colors,
+                scale = scale,
+                border = border,
+                glow = glow,
+                interactionSource = interactionSource,
+            )
+        } else {
+            androidx.tv.material3.ListItem(
+                selected = selected,
+                onClick = onClick,
+                headlineContent = headlineContent,
+                modifier = modifier,
+                enabled = enabled,
+                onLongClick = onLongClick,
+                overlineContent = overlineContent,
+                supportingContent = supportingContent,
+                leadingContent = leadingContent,
+                trailingContent = trailingContent,
+                tonalElevation = tonalElevation,
+                shape = shape,
+                colors = colors,
+                scale = scale,
+                border = border,
+                glow = glow,
+                interactionSource = interactionSource,
+            )
+        }
     } else {
-        Log.v(
-            "ListItem",
-            "colors.=${colors.disabledContentColor}, colors.contentColor=${colors.contentColor}",
-        )
         // TODO this is kind of hack to force tv.Text to use the right color
         CompositionLocalProvider(
             LocalContentColor provides colors.contentColor,

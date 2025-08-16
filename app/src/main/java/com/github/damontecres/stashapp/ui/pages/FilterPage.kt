@@ -7,16 +7,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
-import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -53,10 +50,7 @@ fun FilterPage(
 
     val initialPosition =
         if (scrollToNextPage) {
-            PreferenceManager
-                .getDefaultSharedPreferences(
-                    LocalContext.current,
-                ).getInt(LocalContext.current.getString(R.string.pref_key_page_size), 25)
+            uiConfig.preferences.searchPreferences.maxResults
         } else {
             0
         }

@@ -55,7 +55,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.media3.common.util.UnstableApi
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
@@ -127,6 +126,7 @@ fun PlaybackControls(
     audioOptions: List<String>,
     playbackSpeed: Float,
     scale: ContentScale,
+    seekBarIntervals: Int,
     modifier: Modifier = Modifier,
     initialFocusRequester: FocusRequester = remember { FocusRequester() },
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -162,6 +162,7 @@ fun PlaybackControls(
             onSeekProgress = onSeekProgress,
             interactionSource = seekBarInteractionSource,
             isEnabled = seekEnabled,
+            intervals = seekBarIntervals,
             modifier =
                 Modifier
                     .padding(vertical = 8.dp)
@@ -214,18 +215,12 @@ fun SeekBar(
     scene: Scene,
     player: PlayerControls,
     isEnabled: Boolean,
+    intervals: Int,
     controllerViewState: ControllerViewState,
     onSeekProgress: (Float) -> Unit,
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    val context = LocalContext.current
-    val intervals =
-        remember {
-            PreferenceManager
-                .getDefaultSharedPreferences(context)
-                .getInt(context.getString(R.string.pref_key_playback_seek_count), 16)
-        }
     var bufferedProgress by remember(player) { mutableFloatStateOf(player.bufferedPosition.toFloat() / player.duration) }
     var position by remember(player) { mutableLongStateOf(player.currentPosition) }
     var progress by remember(player) { mutableFloatStateOf(player.currentPosition.toFloat() / player.duration) }

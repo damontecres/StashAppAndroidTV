@@ -21,7 +21,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
@@ -33,10 +32,12 @@ import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.PlaylistFragment
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
+import com.github.damontecres.stashapp.proto.PlaybackPreferences
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -53,6 +54,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -89,13 +91,31 @@ fun PlaybackPage(
     scene?.let {
         val player =
             remember {
-                StashExoPlayer.getInstance(context, server).apply {
+                val skipParams =
+                    uiConfig.preferences.playbackPreferences.let {
+                        SkipParams.Values(
+                            it.skipForwardMs,
+                            it.skipBackwardMs,
+                        )
+                    }
+
+                StashExoPlayer.getInstance(context, server, skipParams).apply {
                     repeatMode = Player.REPEAT_MODE_OFF
                     playWhenReady = true
                 }
             }
         val playbackScene = remember { Scene.fromFullSceneData(it) }
-        val decision = remember { getStreamDecision(context, playbackScene, playbackMode) }
+        val decision =
+            remember {
+                getStreamDecision(
+                    context,
+                    playbackScene,
+                    playbackMode,
+                    uiConfig.preferences.playbackPreferences.streamChoice,
+                    uiConfig.preferences.playbackPreferences.transcodeAboveResolution,
+                    CodecSupport.getSupportedCodecs(uiConfig.preferences.playbackPreferences),
+                )
+            }
         val media =
             remember {
                 buildMediaItem(context, decision, playbackScene) {
@@ -192,6 +212,7 @@ fun PlaylistPlaybackPage(
                             add(
                                 convertToMediaItem(
                                     context,
+                                    uiConfig.preferences.playbackPreferences,
                                     filterArgs.dataType,
                                     clipDuration,
                                     item,
@@ -206,19 +227,22 @@ fun PlaylistPlaybackPage(
     if (playlist.isNotEmpty()) {
         val player =
             remember {
+                val skipForward =
+                    uiConfig.preferences.playbackPreferences.skipForwardMs.milliseconds
+                val skipBack =
+                    uiConfig.preferences.playbackPreferences.skipBackwardMs.milliseconds
                 val skipParams =
                     if (viewModel.dataType == DataType.MARKER) {
-                        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-                        val skipForward = prefs.getInt("skip_forward_time", 30).seconds
-                        val skipBack = prefs.getInt("skip_back_time", 10).seconds
-
                         // Override the skip forward/back since many users will have default seeking values larger than the duration
                         SkipParams.Values(
                             (clipDuration / 4).coerceAtMost(skipForward).inWholeMilliseconds,
                             (clipDuration / 4).coerceAtMost(skipBack).inWholeMilliseconds,
                         )
                     } else {
-                        SkipParams.Default
+                        SkipParams.Values(
+                            skipForward.inWholeMilliseconds,
+                            skipBack.inWholeMilliseconds,
+                        )
                     }
                 StashExoPlayer.getInstance(context, server, skipParams).apply {
                     repeatMode = Player.REPEAT_MODE_OFF
@@ -247,6 +271,7 @@ fun PlaylistPlaybackPage(
                                                 pager.getBlocking(index)?.let { item ->
                                                     convertToMediaItem(
                                                         context,
+                                                        uiConfig.preferences.playbackPreferences,
                                                         filterArgs.dataType,
                                                         clipDuration,
                                                         item,
@@ -286,6 +311,7 @@ fun PlaylistPlaybackPage(
                                         pager.getBlocking(index)?.let { item ->
                                             convertToMediaItem(
                                                 context,
+                                                uiConfig.preferences.playbackPreferences,
                                                 filterArgs.dataType,
                                                 clipDuration,
                                                 item,
@@ -311,6 +337,7 @@ fun PlaylistPlaybackPage(
  */
 private fun convertToMediaItem(
     context: Context,
+    prefs: PlaybackPreferences,
     dataType: DataType,
     clipDuration: Duration,
     item: StashData,
@@ -318,7 +345,15 @@ private fun convertToMediaItem(
     if (dataType == DataType.SCENE) {
         item as VideoSceneData
         val scene = Scene.fromVideoSceneData(item)
-        val decision = getStreamDecision(context, scene, PlaybackMode.Choose)
+        val decision =
+            getStreamDecision(
+                context,
+                scene,
+                PlaybackMode.Choose,
+                prefs.streamChoice,
+                prefs.transcodeAboveResolution,
+                CodecSupport.getSupportedCodecs(prefs),
+            )
         return buildMediaItem(context, decision, scene) {
             setTag(PlaylistFragment.MediaItemTag(scene, decision))
         }
@@ -326,7 +361,15 @@ private fun convertToMediaItem(
         // Markers
         item as FullMarkerData
         val scene = Scene.fromMarkerData(item)
-        val decision = getStreamDecision(context, scene, PlaybackMode.Choose)
+        val decision =
+            getStreamDecision(
+                context,
+                scene,
+                PlaybackMode.Choose,
+                prefs.streamChoice,
+                prefs.transcodeAboveResolution,
+                CodecSupport.getSupportedCodecs(prefs),
+            )
         val mediaItem =
             buildMediaItem(context, decision, scene) {
                 setTag(PlaylistFragment.MediaItemTag(scene, decision))

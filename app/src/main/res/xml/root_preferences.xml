@@ -22,7 +22,7 @@
             app:summary="Add, remove, or change servers" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="Interface">
+    <PreferenceCategory app:title="@string/basic_interface">
         <EditTextPreference
             app:key="@string/pref_key_pin_code"
             app:title="Protect with PIN Code"

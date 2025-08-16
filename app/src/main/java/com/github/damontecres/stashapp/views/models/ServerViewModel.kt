@@ -14,12 +14,14 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.getStringNotNull
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -112,8 +114,17 @@ open class ServerViewModel : ViewModel() {
     }
 
     fun maybeShowUpdate(context: Context) {
+        val pref = PreferenceManager.getDefaultSharedPreferences(context)
+        if (!pref.getBoolean("autoCheckForUpdates", true)) {
+            return
+        }
+        val updateUrl =
+            pref.getStringNotNull(
+                "updateCheckUrl",
+                context.getString(R.string.app_update_url),
+            )
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
-            UpdateChecker.maybeShowUpdateToast(context, false)
+            UpdateChecker.maybeShowUpdateToast(context, updateUrl, false)
         }
     }
 
@@ -155,10 +166,11 @@ open class ServerViewModel : ViewModel() {
             val imageCrop =
                 manager.getBoolean(context.getString(R.string.pref_key_crop_card_images), true)
             val videoDelay =
-                manager.getInt(
-                    context.getString(R.string.pref_key_ui_card_overlay_delay),
-                    context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
-                )
+                manager
+                    .getInt(
+                        context.getString(R.string.pref_key_ui_card_overlay_delay),
+                        context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
+                    ).toLong()
             return CardUiSettings(
                 maxSearchResults,
                 playVideoPreviews,
@@ -169,6 +181,18 @@ open class ServerViewModel : ViewModel() {
                 videoDelay,
             )
         }
+
+        val StashPreferences.cardSettings: CardUiSettings
+            get() =
+                CardUiSettings(
+                    maxSearchResults = searchPreferences.maxResults,
+                    playVideoPreviews = interfacePreferences.playVideoPreviews,
+                    videoPreviewAudio = interfacePreferences.videoPreviewAudio,
+                    columns = interfacePreferences.cardSize,
+                    showRatings = interfacePreferences.showRatingOnCards,
+                    imageCrop = true,
+                    videoDelay = interfacePreferences.cardPreviewDelayMs,
+                )
     }
 
     // For compose navigation

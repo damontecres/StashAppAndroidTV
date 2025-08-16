@@ -713,7 +713,6 @@ abstract class PlaybackFragment(
             Log.v(TAG, "Adding TrackActivityPlaybackListener")
             trackActivityListener =
                 TrackActivityPlaybackListener(
-                    context = requireContext(),
                     server = server,
                     scene = scene,
                     getCurrentPosition = ::currentVideoPosition,

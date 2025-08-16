@@ -61,6 +61,8 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationListener
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.GlobalContext
@@ -325,11 +327,12 @@ fun PerformerDetailsPage(
                 modifier = CriterionModifier.INCLUDES_ALL,
             ),
         )
-    val uiTabs = getUiTabs(LocalContext.current, DataType.PERFORMER)
+    val uiTabs =
+        getUiTabs(uiConfig.preferences.interfacePreferences.tabPreferences, DataType.PERFORMER)
     val createTab = createTabFunc(server, itemOnClick, longClicker, uiConfig)
     val tabs =
         listOf(
-            TabProvider(stringResource(R.string.stashapp_details)) {
+            TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
                 PerformerDetails(
                     perf = perf,
                     tags = tags,
@@ -381,7 +384,10 @@ fun PerformerDetailsPage(
                     objectFilter = SceneMarkerFilterType(performers = performers),
                 ),
             ),
-            TabProvider(stringResource(R.string.stashapp_appears_with)) {
+            TabProvider(
+                stringResource(R.string.stashapp_appears_with),
+                TabType.APPEARS_WITH,
+            ) {
                 val context = LocalContext.current
                 val navigationManager = LocalGlobalContext.current.navigationManager
                 StashGridTab(
@@ -444,7 +450,7 @@ fun PerformerDetailsPage(
                     modifier = Modifier,
                 )
             },
-        ).filter { it.name in uiTabs }
+        ).filter { it.type in uiTabs }
     val title =
         buildAnnotatedString {
             withStyle(SpanStyle(color = Color.White, fontSize = 40.sp)) {
@@ -459,7 +465,14 @@ fun PerformerDetailsPage(
         }
     LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
 
-    TabPage(title, tabs, DataType.PERFORMER, modifier, showTitle = onUpdateTitle == null)
+    TabPage(
+        title,
+        uiConfig.preferences.interfacePreferences.rememberSelectedTab,
+        tabs,
+        DataType.PERFORMER,
+        modifier,
+        showTitle = onUpdateTitle == null,
+    )
     dialogParams?.let {
         DialogPopup(
             showDialog = true,
@@ -710,6 +723,7 @@ private fun PerformerDetailsPreview() {
                         override fun addListener(listener: NavigationListener) {
                         }
                     },
+                    StashPreferences.getDefaultInstance(),
                 ),
         ) {
             PerformerDetails(
