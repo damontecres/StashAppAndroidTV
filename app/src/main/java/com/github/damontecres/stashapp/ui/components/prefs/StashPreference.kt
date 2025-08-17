@@ -5,7 +5,6 @@ import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.LicenseFragment
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
@@ -967,7 +966,7 @@ sealed interface StashPreference<T> {
         val OssLicenseInfo =
             StashDestinationPreference(
                 title = R.string.oss_license_info,
-                destination = Destination.Fragment(LicenseFragment::class.qualifiedName!!),
+                destination = Destination.LicenseInfo,
             )
 
         val CrashReporting =

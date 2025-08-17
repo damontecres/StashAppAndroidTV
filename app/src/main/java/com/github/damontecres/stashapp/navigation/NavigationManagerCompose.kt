@@ -5,10 +5,12 @@ import android.util.Log
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.leanback.app.GuidedStepSupportFragment
+import com.github.damontecres.stashapp.LicenseFragment
 import com.github.damontecres.stashapp.PinFragment
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.UpdateAppFragment
+import com.github.damontecres.stashapp.UpdateChangelogFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
 import com.github.damontecres.stashapp.ui.NavDrawerFragment
 import com.github.damontecres.stashapp.util.putDestination
@@ -74,15 +76,11 @@ class NavigationManagerCompose(
 //                Destination.Setup -> SetupFragment()
 
                 is Destination.UpdateApp -> UpdateAppFragment()
+                is Destination.ReleaseChangelog -> UpdateChangelogFragment()
 //                is Destination.ManageServers -> ManageServersFragment()
 //                is Destination.CreateFilter -> CreateFilterFragment()
 //                is Destination.UpdateMarker -> MarkerPickerFragment()
-                is Destination.Fragment -> {
-                    fragmentManager.fragmentFactory.instantiate(
-                        activity.classLoader,
-                        destination.className,
-                    )
-                }
+                is Destination.LicenseInfo -> LicenseFragment()
 
                 else -> {
                     if (getCurrentFragment() != navDrawerFragment) {
@@ -156,10 +154,11 @@ class NavigationManagerCompose(
             Destination.SettingsPin,
             Destination.Setup,
             is Destination.UpdateApp,
+            is Destination.ReleaseChangelog,
             is Destination.ManageServers,
             is Destination.CreateFilter,
             is Destination.UpdateMarker,
-            is Destination.Fragment,
+            is Destination.LicenseInfo,
             -> navigate(destination)
 
             Destination.Main,

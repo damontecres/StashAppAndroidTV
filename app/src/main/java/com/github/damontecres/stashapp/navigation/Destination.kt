@@ -131,6 +131,13 @@ sealed class Destination(
     }
 
     @Serializable
+    data class ReleaseChangelog(
+        val release: Release,
+    ) : Destination(true) {
+        override fun toString(): String = "ReleaseChangelog(version=${release.version})"
+    }
+
+    @Serializable
     data class ManageServers(
         val overrideReadOnly: Boolean,
     ) : Destination(true)
@@ -149,13 +156,8 @@ sealed class Destination(
     @Serializable
     data object Debug : Destination(true)
 
-    /**
-     * An arbitrary fragment that requires no arguments
-     */
     @Serializable
-    data class Fragment(
-        val className: String,
-    ) : Destination(true)
+    data object LicenseInfo : Destination(true)
 
     override fun describeContents(): Int = 0
 

@@ -627,7 +627,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
 
             findPreference<Preference>("license")!!.setOnPreferenceClickListener {
-                serverViewModel.navigationManager.navigate(Destination.Fragment(LicenseFragment::class.qualifiedName!!))
+                serverViewModel.navigationManager.navigate(Destination.LicenseInfo)
                 true
             }
 
