@@ -30,6 +30,7 @@ import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.BasicItemInfo
@@ -62,6 +63,7 @@ fun TagPage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var tag by remember { mutableStateOf<TagData?>(null) }
@@ -101,11 +103,15 @@ fun TagPage(
         val subToggleLabel = stringResource(R.string.stashapp_include_sub_tag_content)
         val subToggleEnabled = tag.child_count > 0
 
-        val uiTabs = getUiTabs(context, DataType.TAG)
+        val uiTabs =
+            getUiTabs(uiConfig.preferences.interfacePreferences.tabPreferences, DataType.TAG)
 
         val detailsTab =
             remember {
-                TabProvider(context.getString(R.string.stashapp_details)) {
+                TabProvider(
+                    context.getString(R.string.stashapp_details),
+                    TabType.DETAILS,
+                ) {
                     TagDetails(
                         modifier = Modifier.fillMaxSize(),
                         uiConfig = uiConfig,
@@ -153,7 +159,10 @@ fun TagPage(
         }
         val scenesTab =
             remember(scenesFilter, scenesSubTags) {
-                TabProvider(context.getString(R.string.stashapp_scenes)) { positionCallback ->
+                TabProvider(
+                    context.getString(R.string.stashapp_scenes),
+                    TabType.SCENES,
+                ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_scenes),
                         server = server,
@@ -185,7 +194,10 @@ fun TagPage(
         }
         val galleriesTab =
             remember(galleriesSubTags, galleriesFilter) {
-                TabProvider(context.getString(R.string.stashapp_galleries)) { positionCallback ->
+                TabProvider(
+                    context.getString(R.string.stashapp_galleries),
+                    TabType.GALLERIES,
+                ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_galleries),
                         server = server,
@@ -216,7 +228,10 @@ fun TagPage(
         }
         val imagesTab =
             remember(imagesSubTags, imagesFilter) {
-                TabProvider(context.getString(R.string.stashapp_images)) { positionCallback ->
+                TabProvider(
+                    context.getString(R.string.stashapp_images),
+                    TabType.IMAGES,
+                ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_images),
                         server = server,
@@ -247,7 +262,10 @@ fun TagPage(
         }
         val markersTab =
             remember(markersSubTags, markersFilter) {
-                TabProvider(context.getString(R.string.stashapp_markers)) { positionCallback ->
+                TabProvider(
+                    context.getString(R.string.stashapp_markers),
+                    TabType.MARKERS,
+                ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_markers),
                         server = server,
@@ -279,7 +297,10 @@ fun TagPage(
         }
         val performersTab =
             remember(performersSubTags, performersFilter) {
-                TabProvider(context.getString(R.string.stashapp_performers)) { positionCallback ->
+                TabProvider(
+                    context.getString(R.string.stashapp_performers),
+                    TabType.PERFORMERS,
+                ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_performers),
                         server = server,
@@ -311,7 +332,10 @@ fun TagPage(
         }
         val studiosTab =
             remember(studiosSubTags, studiosFilter) {
-                TabProvider(context.getString(R.string.stashapp_studios)) { positionCallback ->
+                TabProvider(
+                    context.getString(R.string.stashapp_studios),
+                    TabType.STUDIOS,
+                ) { positionCallback ->
                     StashGridTab(
                         name = context.getString(R.string.stashapp_studios),
                         server = server,
@@ -339,9 +363,17 @@ fun TagPage(
                 markersTab,
                 performersTab,
                 studiosTab,
-            ).filter { it.name in uiTabs }
+            ).filter { it.type in uiTabs }
         val title = AnnotatedString(tag.name)
-        TabPage(title, tabs, DataType.TAG, modifier)
+        LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
+        TabPage(
+            title,
+            uiConfig.preferences.interfacePreferences.rememberSelectedTab,
+            tabs,
+            DataType.TAG,
+            modifier,
+            onUpdateTitle == null,
+        )
     }
 }
 
@@ -388,6 +420,8 @@ fun TagDetails(
         basicItemInfo = BasicItemInfo(tag.id, tag.created_at, tag.updated_at),
         itemOnClick = itemOnClick,
         longClicker = longClicker,
+        onEdit = {},
+        editableTypes = setOf(),
     ) {
         if (parentTags.isNotEmpty()) {
             item {

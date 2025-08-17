@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.ui.pages
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,21 +22,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.preference.PreferenceManager
-import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.findActivity
 
 @Composable
 fun PinEntryPage(
-    @StringRes pinPreference: Int,
+    requiredPin: String,
     title: String,
     onCorrectPin: () -> Unit,
     preventBack: Boolean,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -45,9 +45,7 @@ fun PinEntryPage(
         context.findActivity()?.finish()
     }
 
-    val prefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
-    val requiredPin = remember { prefs.getString(context.getString(pinPreference), null)!! }
-    val autoSubmit = remember { prefs.getBoolean(context.getString(R.string.pref_key_pin_code_auto), true) }
+    val autoSubmit = uiConfig.preferences.pinPreferences.autoSubmit
 
     val validate = { input: String ->
         input == requiredPin

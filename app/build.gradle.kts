@@ -1,5 +1,6 @@
 import com.android.build.gradle.internal.cxx.io.writeTextIfDifferent
 import com.android.build.gradle.internal.tasks.factory.dependsOn
+import com.google.protobuf.gradle.id
 import java.io.ByteArrayOutputStream
 import java.util.Base64
 import java.util.Properties
@@ -16,6 +17,7 @@ plugins {
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.room)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.protobuf)
 }
 
 fun getVersionCode(): Int {
@@ -149,6 +151,8 @@ tasks.register("createGraphqlSchema") {
     doFirst {
         File("$projectDir/src/main/graphql/schema.graphqls").writeTextIfDifferent(
             "# Auto-generated do not edit\n\n" +
+                File("$projectDir/src/main/graphql/client_schema.graphqls").readText() +
+                "\n\n" +
                 fileTree("../stash-server/graphql/schema/")
                     .filter { it.extension == "graphql" }
                     .files
@@ -194,6 +198,26 @@ tasks.register<com.github.damontecres.buildsrc.ParseStashStrings>("generateStrin
 tasks.preBuild.dependsOn("generateStrings")
 tasks.clean.dependsOn("cleanGraphqlSchema")
 
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:${libs.protobuf.kotlin.lite.get().version}"
+    }
+    generateProtoTasks {
+        all().forEach {
+            it.plugins {
+                id("java") {
+                    option("lite")
+                }
+            }
+            it.builtins {
+                id("kotlin") {
+                    option("lite")
+                }
+            }
+        }
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.leanback)
@@ -231,6 +255,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
 
     implementation(libs.zoomlayout)
+    implementation(libs.compose.wheel.picker)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.markwon.core)
     implementation(libs.parcelable.core)
@@ -252,6 +277,8 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.material3.android)
+    implementation(libs.androidx.material3.adaptive)
+    implementation(libs.androidx.material3.window.size)
     debugImplementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.tv.foundation)
     implementation(libs.androidx.tv.material)
@@ -268,6 +295,11 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.navigation.reimagined)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(libs.restring)
+    implementation(libs.viewpump)
+    implementation(libs.reword)
+    implementation(libs.androidx.datastore)
+    implementation(libs.protobuf.kotlin.lite)
 
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.junit)

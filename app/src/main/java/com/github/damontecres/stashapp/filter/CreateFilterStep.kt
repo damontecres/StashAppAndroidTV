@@ -134,10 +134,10 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
             viewModel.resultCount.observe(viewLifecycleOwner) { count ->
                 val countStr = formatNumber(count, viewModel.abbreviateCounters)
                 if (count >= 0) {
-                    findActionById(SUBMIT).description = "$countStr results"
+                    findActionById(SUBMIT)!!.description = "$countStr results"
                     notifyActionChanged(findActionPositionById(SUBMIT))
                 } else {
-                    findActionById(SUBMIT).description = "Querying..."
+                    findActionById(SUBMIT)!!.description = "Querying..."
                     notifyActionChanged(findActionPositionById(SUBMIT))
                 }
             }

@@ -129,7 +129,7 @@ class MultiCriterionFragment(
         items: List<String>,
         include: Boolean,
     ) {
-        val action = findActionById(if (include) INCLUDE_LIST else EXCLUDE_LIST)
+        val action = findActionById(if (include) INCLUDE_LIST else EXCLUDE_LIST)!!
         action.subActions = createItemList(items, include)
         action.description = "${items.size} ${getString(dataType.pluralStringId)}"
         notifyActionChanged(findActionPositionById(if (include) INCLUDE_LIST else EXCLUDE_LIST))
@@ -148,7 +148,7 @@ class MultiCriterionFragment(
         if (action.id >= MODIFIER_OFFSET) {
             val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
             curVal = curVal.copy(modifier = newModifier)
-            findActionById(MODIFIER).description = newModifier.getString(requireContext())
+            findActionById(MODIFIER)!!.description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
         } else if (action.id >= EXCLUDE_OFFSET) {
             val index = action.id - EXCLUDE_OFFSET

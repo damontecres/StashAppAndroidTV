@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.util
 
 import android.util.Log
+import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.exception.ApolloHttpException
 import com.apollographql.apollo.exception.ApolloNetworkException
@@ -9,11 +10,13 @@ import com.apollographql.apollo.exception.ApolloNetworkException
  * Super class for "engines" that interact with the server
  */
 abstract class StashEngine(
-    val server: StashServer,
+    protected val client: ApolloClient,
+    protected val server: StashServer?,
 ) {
-    protected val client = server.apolloClient
-    protected val serverPreferences = server.serverPreferences
-    protected val serverVersion = serverPreferences.serverVersion
+    constructor(server: StashServer) : this(server.apolloClient, server)
+
+    protected val serverPreferences = server?.serverPreferences
+    protected val serverVersion = serverPreferences?.serverVersion
 
     protected fun <T : ServerCommunicationException> createException(
         id: Int,

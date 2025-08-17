@@ -48,13 +48,10 @@ class UpdateChecker {
 
         suspend fun maybeShowUpdateToast(
             context: Context,
+            updateUrl: String,
             showNegativeToast: Boolean = false,
         ) {
             val pref = PreferenceManager.getDefaultSharedPreferences(context)
-            if (!pref.getBoolean("autoCheckForUpdates", true)) {
-                return
-            }
-
             val now = Date()
             val lastUpdateCheckThreshold =
                 pref
@@ -68,7 +65,7 @@ class UpdateChecker {
             val timeSince = (now.time - lastUpdateCheck).milliseconds
             Log.v(TAG, "Last successful update check was $timeSince ago")
             val installedVersion = getInstalledVersion(context)
-            val latestRelease = getLatestRelease(context)
+            val latestRelease = getLatestRelease(context, updateUrl)
             if (latestRelease != null && latestRelease.version.isGreaterThan(installedVersion)) {
                 Log.v(TAG, "Update available $installedVersion => ${latestRelease.version}")
                 pref.edit {
@@ -105,7 +102,10 @@ class UpdateChecker {
             return Version.fromString(pkgInfo.versionName!!)
         }
 
-        suspend fun getLatestRelease(context: Context): Release? {
+        suspend fun getLatestRelease(
+            context: Context,
+            updateUrl: String,
+        ): Release? {
             return withContext(Dispatchers.IO) {
                 val preferredAsset =
                     if (PreferenceManager
@@ -116,13 +116,6 @@ class UpdateChecker {
                     } else {
                         DEBUG_ASSET_NAME
                     }
-                val updateUrl =
-                    PreferenceManager.getDefaultSharedPreferences(context).getStringNotNull(
-                        "updateCheckUrl",
-                        context.getString(
-                            R.string.app_update_url,
-                        ),
-                    )
 
                 val client = StashClient.okHttpClient
                 val request =

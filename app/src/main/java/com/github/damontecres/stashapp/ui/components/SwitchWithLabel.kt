@@ -20,11 +20,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
-import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.PreviewTheme
+import com.github.damontecres.stashapp.ui.compat.Button
 
 @Composable
 fun SwitchWithLabel(
@@ -55,6 +55,7 @@ fun SwitchWithLabel(
                         if (enabled) {
                             onStateChange(!checked)
                         } else {
+                            // TODO there are other uses, so shouldn't hardcode this toast
                             Toast
                                 .makeText(context, "Item has no children", Toast.LENGTH_SHORT)
                                 .show()
@@ -74,7 +75,7 @@ fun SwitchWithLabel(
             checked = checked,
             enabled = enabled,
             onCheckedChange = {
-                // no op, handled above
+                onStateChange(!checked)
             },
         )
     }
@@ -83,7 +84,7 @@ fun SwitchWithLabel(
 @Preview
 @Composable
 private fun SwitchWithLabelPreview() {
-    AppTheme(forceDark = true) {
+    PreviewTheme {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Button(onClick = {}) { Text(text = "Create Filter") }
             SwitchWithLabel(

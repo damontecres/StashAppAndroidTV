@@ -59,6 +59,7 @@ import com.github.damontecres.stashapp.presenters.ImagePresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.proto.TabPreferences
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import com.github.damontecres.stashapp.views.fileNameFromPath
@@ -172,7 +173,7 @@ sealed interface TestResult {
     }
 
     data object AuthRequired : TestResult {
-        override val message: String = "API key is required"
+        override val message: String = "Credentials are required"
     }
 
     data class Error(
@@ -294,6 +295,8 @@ suspend fun testStashConnection(
                             when (val cause = ex.cause) {
                                 is UnknownHostException, is ConnectException -> cause.localizedMessage
                                 is SSLHandshakeException -> "server may be using a self-signed certificate"
+                                // TODO handle case where cert is for a different host
+//                                is SSLPeerUnverifiedException->
                                 is IOException -> cause.localizedMessage
                                 else -> ex.localizedMessage
                             }
@@ -520,8 +523,6 @@ val FullSceneData.asVideoSceneData: VideoSceneData
             resume_time,
             rating100,
             o_counter,
-            created_at,
-            updated_at,
             files.map { VideoSceneData.File("", it.videoFile) },
             VideoSceneData.Paths(
                 paths.caption,
@@ -543,8 +544,6 @@ val FullSceneData.asMinimalSceneData: MinimalSceneData
             date,
             rating100,
             o_counter,
-            created_at,
-            updated_at,
             files.map { MinimalSceneData.File("", it.videoFile) },
         )
 
@@ -671,12 +670,12 @@ fun NestedScrollView.onlyScrollIfNeeded() {
 fun SharedPreferences.getStringNotNull(
     key: String,
     defValue: String,
-): String = getString(key, defValue)!!
+): String = getString(key, defValue) ?: defValue
 
 fun SharedPreferences.getInt(
     key: String,
     defValue: String,
-): Int = getStringNotNull(key, defValue).toInt()
+): Int = getStringNotNull(key, defValue).toIntOrNull() ?: defValue.toInt()
 
 fun ArrayObjectAdapter.isEmpty(): Boolean = size() == 0
 
@@ -790,6 +789,8 @@ fun getMaxMeasuredWidth(
 val SlimSceneData.resume_position get() = resume_time?.toLongMilliseconds
 
 val FullSceneData.resume_position get() = resume_time?.toLongMilliseconds
+
+val Duration.toSeconds get() = this.inWholeMilliseconds.toSeconds
 
 val Long.toSeconds get() = this / 1000.0
 
@@ -937,6 +938,18 @@ fun showDebugInfo(): Boolean {
         .getDefaultSharedPreferences(context)
         .getBoolean(context.getString(R.string.pref_key_show_playback_debug_info), false)
 }
+
+fun getUiTabs(
+    tabPreferences: TabPreferences,
+    dataType: DataType,
+) = when (dataType) {
+    DataType.PERFORMER -> tabPreferences.performerList
+    DataType.GALLERY -> tabPreferences.galleryList
+    DataType.GROUP -> tabPreferences.groupList
+    DataType.STUDIO -> tabPreferences.studioList
+    DataType.TAG -> tabPreferences.tagsList
+    else -> throw UnsupportedOperationException("$dataType not supported")
+}.toSet()
 
 fun getUiTabs(
     context: Context,
@@ -1091,7 +1104,7 @@ fun StashDataFilter.toReadableString(newlines: Boolean = false): String =
         append(")")
     }.replace(Optional.absent().toString(), "Absent")
 
-fun Any.toReadableString() =
+fun Any.toReadableString(newlines: Boolean = false) =
     buildString {
         append(this@toReadableString::class.simpleName)
         append("(")
@@ -1103,6 +1116,8 @@ fun Any.toReadableString() =
                     val value = param.get(this@toReadableString)
                     if (value is Optional<*>) {
                         "${param.name}=${value.getOrNull()}"
+                    } else if (value is StashDataFilter) {
+                        "${param.name}=${value.toReadableString(newlines)}"
                     } else {
                         "${param.name}=$value"
                     }

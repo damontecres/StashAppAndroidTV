@@ -8,6 +8,8 @@ interface PlayerControls {
     val currentPosition: Long
     val bufferedPosition: Long
 
+    val isPlaying: Boolean
+
     fun seekTo(position: Long)
 
     fun seekBack()
@@ -21,6 +23,10 @@ interface PlayerControls {
     fun hasNextMediaItem(): Boolean
 
     fun playOrPause()
+
+    fun play()
+
+    fun pause()
 }
 
 class PlayerControlsImpl(
@@ -32,6 +38,9 @@ class PlayerControlsImpl(
         get() = player.currentPosition
     override val bufferedPosition: Long
         get() = player.bufferedPosition
+
+    override val isPlaying: Boolean
+        get() = player.isPlaying
 
     override fun seekTo(position: Long) {
         player.seekTo(position)
@@ -58,6 +67,14 @@ class PlayerControlsImpl(
     override fun playOrPause() {
         Util.handlePlayPauseButtonAction(player)
     }
+
+    override fun play() {
+        player.play()
+    }
+
+    override fun pause() {
+        player.pause()
+    }
 }
 
 val FakePlayerControls =
@@ -68,6 +85,8 @@ val FakePlayerControls =
             get() = 25000
         override val bufferedPosition: Long
             get() = 35000
+        override val isPlaying: Boolean
+            get() = true
 
         override fun seekTo(position: Long) {
         }
@@ -87,5 +106,11 @@ val FakePlayerControls =
         override fun hasNextMediaItem(): Boolean = true
 
         override fun playOrPause() {
+        }
+
+        override fun play() {
+        }
+
+        override fun pause() {
         }
     }

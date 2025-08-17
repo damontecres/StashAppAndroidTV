@@ -36,9 +36,12 @@ import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.compat.detectTvDevice
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.name
@@ -48,6 +51,7 @@ import kotlin.time.Duration.Companion.seconds
 data class GlobalContext(
     val server: StashServer,
     val navigationManager: NavigationManager,
+    val preferences: StashPreferences,
 )
 
 val LocalGlobalContext =
@@ -66,6 +70,13 @@ object PlayerContext {
 
 val LocalPlayerContext =
     compositionLocalOf<PlayerContext> { PlayerContext }
+
+enum class DeviceType {
+    TV,
+    TOUCH,
+}
+
+val LocalDeviceType = compositionLocalOf { if (detectTvDevice) DeviceType.TV else DeviceType.TOUCH }
 
 fun Modifier.enableMarquee(focused: Boolean) =
     if (focused) {
@@ -119,7 +130,9 @@ fun showAddGroup(group: GroupData) = showShort("Added group '${group.name}'")
 
 fun showAddMarker(marker: MarkerData) = showShort("Added marker at ${marker.seconds.seconds}")
 
-fun showSetStudio(studio: StudioData) = showShort("Set studio to '${studio.name}'")
+fun showSetStudio(studioName: String) = showShort("Set studio to '$studioName'")
+
+fun showSetStudio(studio: StudioData) = showSetStudio(studio.name)
 
 fun showAddGallery(gallery: GalleryData) = showShort("Added group '${gallery.name}'")
 
@@ -162,5 +175,17 @@ val FloatCriterionInput.valid: Boolean
             return val2 != null && value < val2
         } else {
             return true
+        }
+    }
+
+/**
+ * Get the gallery ID for the filter iff it has a single gallery associated
+ */
+val ImageFilterType.galleryId: String?
+    get() {
+        return galleries.getOrNull()?.let { multi ->
+            multi.value.getOrNull()?.let {
+                if (multi.modifier != CriterionModifier.EXCLUDES && it.size == 1) it[0] else null
+            }
         }
     }

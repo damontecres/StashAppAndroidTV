@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -25,14 +24,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.playback.PlaybackMode
-import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.PreviewTheme
+import com.github.damontecres.stashapp.ui.compat.Button
+import com.github.damontecres.stashapp.ui.components.EditButton
 import com.github.damontecres.stashapp.ui.components.OCounterButton
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -117,24 +117,10 @@ fun PlayButtons(
         // Edit button
         if (showEditButton) {
             item {
-                Button(
+                EditButton(
                     onClick = editOnClick,
-                    onLongClick = {},
-                    modifier =
-                        Modifier
-                            .onFocusChanged(buttonOnFocusChanged),
-                    contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = null,
-                    )
-                    Spacer(Modifier.size(8.dp))
-                    Text(
-                        text = stringResource(R.string.stashapp_actions_edit),
-                        style = MaterialTheme.typography.titleSmall,
-                    )
-                }
+                    modifier = Modifier.onFocusChanged(buttonOnFocusChanged),
+                )
             }
         }
 
@@ -191,7 +177,7 @@ fun PlayButton(
 @Preview(widthDp = 800)
 @Composable
 private fun PlayButtonsPreview() {
-    AppTheme {
+    PreviewTheme {
         PlayButtons(
             resumePosition = 1000L,
             oCount = 10,
@@ -201,7 +187,7 @@ private fun PlayButtonsPreview() {
             oCounterOnClick = { },
             oCounterOnLongClick = {},
             buttonOnFocusChanged = {},
-            focusRequester = FocusRequester(),
+            focusRequester = remember { FocusRequester() },
             alwaysStartFromBeginning = false,
             showEditButton = true,
             modifier = Modifier,

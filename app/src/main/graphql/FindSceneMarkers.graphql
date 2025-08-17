@@ -44,8 +44,6 @@ fragment MinimalSceneData on Scene {
   date
   rating100
   o_counter
-  created_at
-  updated_at
   files {
     ...VideoFile
   }
@@ -59,8 +57,6 @@ fragment VideoSceneData on Scene {
   resume_time
   rating100
   o_counter
-  created_at
-  updated_at
   files {
     ...VideoFile
   }
@@ -84,8 +80,8 @@ fragment VideoSceneData on Scene {
 fragment MarkerData on SceneMarker {
   id
   title
-  created_at
-  updated_at
+  created_at @catch(to: NULL)
+  updated_at @catch(to: NULL)
   stream
   screenshot
   seconds
@@ -107,8 +103,8 @@ fragment MarkerData on SceneMarker {
 fragment FullMarkerData on SceneMarker {
   id
   title
-  created_at
-  updated_at
+  created_at @catch(to: NULL)
+  updated_at @catch(to: NULL)
   stream
   screenshot
   seconds
@@ -116,7 +112,6 @@ fragment FullMarkerData on SceneMarker {
   preview
   primary_tag {
     ...TagData
-    __typename
   }
   tags {
     ...TagData
@@ -124,5 +119,4 @@ fragment FullMarkerData on SceneMarker {
   scene {
     ...VideoSceneData
   }
-  __typename
 }

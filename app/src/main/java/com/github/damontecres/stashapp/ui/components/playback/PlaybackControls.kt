@@ -1,3 +1,5 @@
+@file:kotlin.OptIn(ExperimentalMaterial3Api::class)
+
 package com.github.damontecres.stashapp.ui.components.playback
 
 import android.util.Log
@@ -22,6 +24,9 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,24 +48,26 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.media3.common.util.UnstableApi
-import androidx.preference.PreferenceManager
-import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
-import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.TrackSupport
 import com.github.damontecres.stashapp.ui.AppColors
-import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.PreviewTheme
+import com.github.damontecres.stashapp.ui.compat.Button
+import com.github.damontecres.stashapp.ui.compat.ListItem
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
+import com.github.damontecres.stashapp.ui.components.PlaybackOCountButton
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import kotlinx.coroutines.delay
@@ -119,6 +126,7 @@ fun PlaybackControls(
     audioOptions: List<String>,
     playbackSpeed: Float,
     scale: ContentScale,
+    seekBarIntervals: Int,
     modifier: Modifier = Modifier,
     initialFocusRequester: FocusRequester = remember { FocusRequester() },
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -154,6 +162,7 @@ fun PlaybackControls(
             onSeekProgress = onSeekProgress,
             interactionSource = seekBarInteractionSource,
             isEnabled = seekEnabled,
+            intervals = seekBarIntervals,
             modifier =
                 Modifier
                     .padding(vertical = 8.dp)
@@ -200,24 +209,18 @@ fun PlaybackControls(
     }
 }
 
-@OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SeekBar(
     scene: Scene,
     player: PlayerControls,
     isEnabled: Boolean,
+    intervals: Int,
     controllerViewState: ControllerViewState,
     onSeekProgress: (Float) -> Unit,
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    val context = LocalContext.current
-    val intervals =
-        remember {
-            PreferenceManager
-                .getDefaultSharedPreferences(context)
-                .getInt(context.getString(R.string.pref_key_playback_seek_count), 16)
-        }
     var bufferedProgress by remember(player) { mutableFloatStateOf(player.bufferedPosition.toFloat() / player.duration) }
     var position by remember(player) { mutableLongStateOf(player.currentPosition) }
     var progress by remember(player) { mutableFloatStateOf(player.currentPosition.toFloat() / player.duration) }
@@ -235,20 +238,41 @@ fun SeekBar(
     ) {
         val aspectRatio =
             if (scene.videoWidth != null && scene.videoHeight != null) scene.videoWidth.toFloat() / scene.videoHeight else 16f / 9
-        SeekBarImpl(
-            progress = progress,
-            bufferedProgress = bufferedProgress,
-            duration = player.duration,
-            onSeek = {
-                onSeekProgress(it)
-            },
-            controllerViewState = controllerViewState,
-            intervals = intervals,
-            aspectRatio = aspectRatio,
-            previewImageUrl = scene.spriteUrl,
-            modifier = Modifier.fillMaxWidth(),
-            interactionSource = interactionSource,
-        )
+        if (isTvDevice) {
+            SeekBarImpl(
+                progress = progress,
+                bufferedProgress = bufferedProgress,
+                duration = player.duration,
+                onSeek = {
+                    onSeekProgress(it)
+                },
+                controllerViewState = controllerViewState,
+                intervals = intervals,
+                aspectRatio = aspectRatio,
+                previewImageUrl = scene.spriteUrl,
+                modifier = Modifier.fillMaxWidth(),
+                interactionSource = interactionSource,
+            )
+        } else {
+            var seekProgress by remember { mutableFloatStateOf(progress) }
+            Slider(
+                value = seekProgress,
+                onValueChange = {
+                    seekProgress = it
+                    onSeekProgress(seekProgress)
+                },
+                onValueChangeFinished = { onSeekProgress(seekProgress) },
+                interactionSource = interactionSource,
+                thumb = {
+                    SliderDefaults.Thumb(
+                        thumbSize = DpSize(4.dp, 24.dp),
+                        interactionSource = interactionSource,
+                        modifier = Modifier,
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -304,8 +328,7 @@ fun LeftPlaybackButtons(
             horizontalArrangement = Arrangement.spacedBy(2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PlaybackButton(
-                iconRes = R.drawable.sweat_drops,
+            PlaybackOCountButton(
                 onClick = {
                     onControllerInteraction.invoke()
                     onPlaybackActionClick.invoke(PlaybackAction.OCount)
@@ -639,10 +662,10 @@ private fun BottomDialog(
 @Preview
 @Composable
 private fun PlaybackButtonsPreview() {
-    AppTheme {
+    PreviewTheme {
         PlaybackButtons(
             player = FakePlayerControls,
-            initialFocusRequester = FocusRequester(),
+            initialFocusRequester = remember { FocusRequester() },
             onControllerInteraction = {},
             showPlay = true,
             previousEnabled = true,
@@ -654,7 +677,7 @@ private fun PlaybackButtonsPreview() {
 @Preview
 @Composable
 private fun RightPlaybackButtonsPreview() {
-    AppTheme {
+    PreviewTheme {
         RightPlaybackButtons(
             captions = listOf(),
             onControllerInteraction = {},

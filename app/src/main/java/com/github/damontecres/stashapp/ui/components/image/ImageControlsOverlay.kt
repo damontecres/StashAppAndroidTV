@@ -5,6 +5,7 @@ import androidx.annotation.OptIn
 import androidx.annotation.StringRes
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -26,14 +27,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
-import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.FontAwesome
+import com.github.damontecres.stashapp.ui.PreviewTheme
+import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.OCounterButton
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -72,6 +73,7 @@ fun ImageControlsOverlay(
         modifier =
             modifier
                 .focusGroup(),
+        contentPadding = PaddingValues(horizontal = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -210,7 +212,7 @@ fun ImageControlButton(
 @Preview(widthDp = 800)
 @Composable
 private fun ImageControlsOverlayPreview() {
-    AppTheme {
+    PreviewTheme {
         ImageControlsOverlay(
             isImageClip = false,
             oCount = 10,

@@ -45,8 +45,8 @@ fragment GalleryData on Gallery {
   rating100
   code
   photographer
-  created_at
-  updated_at
+  created_at @catch(to: NULL)
+  updated_at @catch(to: NULL)
   files {
     path
   }

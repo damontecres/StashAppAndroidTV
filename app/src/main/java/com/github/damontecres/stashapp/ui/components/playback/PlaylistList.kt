@@ -29,13 +29,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Card
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.PlaylistItem
-import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.PreviewTheme
+import com.github.damontecres.stashapp.ui.compat.Card
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
@@ -186,7 +186,7 @@ fun PlaylistItemCompose(
 @Preview(widthDp = 600)
 @Composable
 private fun PlaylistItemPreview() {
-    AppTheme {
+    PreviewTheme {
         PlaylistList(
             mediaItemCount = 10,
             mediaItemCountOffset = 0,

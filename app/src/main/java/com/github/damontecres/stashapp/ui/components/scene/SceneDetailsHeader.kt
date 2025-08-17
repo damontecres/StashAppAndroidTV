@@ -14,17 +14,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -49,23 +44,23 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
-import com.github.damontecres.stashapp.ui.components.ScrollableDialog
 import com.github.damontecres.stashapp.ui.components.TitleValueText
+import com.github.damontecres.stashapp.ui.components.ratingBarHeight
+import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.ui.util.playOnClickSound
 import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
-import com.github.damontecres.stashapp.views.formatBytes
 import kotlinx.coroutines.launch
 
 @Composable
@@ -79,6 +74,7 @@ fun SceneDetailsHeader(
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     editOnClick: () -> Unit,
     moreOnClick: () -> Unit,
+    detailsOnClick: () -> Unit,
     oCounterOnClick: () -> Unit,
     oCounterOnLongClick: () -> Unit,
     onRatingChange: (Int) -> Unit,
@@ -136,26 +132,18 @@ fun SceneDetailsHeader(
                         },
             )
         }
-        Column(modifier = Modifier.fillMaxWidth(0.8f)) {
-            Spacer(modifier = Modifier.height(60.dp))
+        Column(modifier = Modifier.ifElse(isTvDevice, Modifier.fillMaxWidth(0.8f))) {
+            if (isTvDevice) Spacer(modifier = Modifier.height(60.dp))
             SceneDetailsHeaderInfo(
                 scene = scene,
                 studio = studio,
                 rating100 = rating100,
-                oCount = oCount,
                 uiConfig = uiConfig,
                 itemOnClick = itemOnClick,
-                playOnClick = playOnClick,
-                editOnClick = editOnClick,
-                moreOnClick = moreOnClick,
-                oCounterOnClick = oCounterOnClick,
-                oCounterOnLongClick = oCounterOnLongClick,
+                detailsOnClick = detailsOnClick,
                 onRatingChange = onRatingChange,
-                focusRequester = focusRequester,
                 bringIntoViewRequester = bringIntoViewRequester,
                 removeLongClicker = removeLongClicker,
-                showEditButton = showEditButton,
-                alwaysStartFromBeginning = alwaysStartFromBeginning,
                 modifier = Modifier.padding(start = 16.dp),
                 showRatingBar = showRatingBar,
             )
@@ -187,20 +175,12 @@ fun SceneDetailsHeaderInfo(
     scene: FullSceneData,
     studio: StudioData?,
     rating100: Int,
-    oCount: Int,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
-    playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
-    editOnClick: () -> Unit,
-    moreOnClick: () -> Unit,
-    oCounterOnClick: () -> Unit,
-    oCounterOnLongClick: () -> Unit,
+    detailsOnClick: () -> Unit,
     onRatingChange: (Int) -> Unit,
-    focusRequester: FocusRequester,
     bringIntoViewRequester: BringIntoViewRequester,
     removeLongClicker: LongClicker<Any>,
-    showEditButton: Boolean,
-    alwaysStartFromBeginning: Boolean,
     modifier: Modifier = Modifier,
     showRatingBar: Boolean = true,
 ) {
@@ -212,7 +192,7 @@ fun SceneDetailsHeaderInfo(
         // Title
         Text(
             text = scene.titleOrFilename ?: "",
-            color = Color.LightGray,
+            color = MaterialTheme.colorScheme.onSurface,
             style =
                 MaterialTheme.typography.displayMedium.copy(
                     shadow =
@@ -238,7 +218,7 @@ fun SceneDetailsHeaderInfo(
                     enabled = true,
                     modifier =
                         Modifier
-                            .height(32.dp)
+                            .height(ratingBarHeight)
                             .padding(start = 12.dp),
                 )
             }
@@ -264,7 +244,6 @@ fun SceneDetailsHeaderInfo(
                     } else {
                         Color.Unspecified
                     }
-                var showDetailsDialog by remember { mutableStateOf(false) }
                 Box(
                     modifier =
                         Modifier
@@ -280,7 +259,7 @@ fun SceneDetailsHeaderInfo(
                                 indication = LocalIndication.current,
                             ) {
                                 if (uiConfig.playSoundOnFocus) playOnClickSound(context)
-                                showDetailsDialog = true
+                                detailsOnClick.invoke()
                             },
                 ) {
                     Text(
@@ -291,45 +270,6 @@ fun SceneDetailsHeaderInfo(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(8.dp),
                     )
-                }
-                if (showDetailsDialog) {
-                    ScrollableDialog(
-                        onDismissRequest = { showDetailsDialog = false },
-                        modifier = Modifier,
-                    ) {
-                        item {
-                            Text(
-                                text = scene.details,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth(),
-                            )
-                        }
-                        if (scene.files.isNotEmpty()) {
-                            item {
-                                HorizontalDivider()
-                                Text(
-                                    stringResource(R.string.stashapp_files) + ":",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                )
-                            }
-                        }
-                        items(scene.files.map { it.videoFile }) {
-                            val size =
-                                it.size
-                                    .toString()
-                                    .toIntOrNull()
-                                    ?.let(::formatBytes)
-                            Text(
-                                text = listOf(it.path, size).joinNotNullOrBlank(" - "),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onBackground,
-                            )
-                        }
-                    }
                 }
             }
             // Key-Values

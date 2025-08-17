@@ -26,22 +26,22 @@ class DurationPicker2(
     private var secondsEnabled = true
 
     private var hours: Int
-        get() = getColumnAt(0).currentValue
+        get() = getColumnAt(0)!!.currentValue
         set(value) {
             setColumnValue(0, value, false)
         }
     private var minutes: Int
-        get() = getColumnAt(columnsCount - 3).currentValue
+        get() = getColumnAt(columnsCount - 3)!!.currentValue
         set(value) {
             setColumnValue(columnsCount - 3, value, false)
         }
     private var seconds: Int
-        get() = getColumnAt(columnsCount - 2).currentValue
+        get() = getColumnAt(columnsCount - 2)!!.currentValue
         set(value) {
             setColumnValue(columnsCount - 2, value, false)
         }
     private var milliseconds: Int
-        get() = getColumnAt(columnsCount - 1).currentValue
+        get() = getColumnAt(columnsCount - 1)!!.currentValue
         set(value) {
             setColumnValue(columnsCount - 1, value, false)
         }
@@ -119,12 +119,12 @@ class DurationPicker2(
         private const val TAG = "DurationPicker"
         private const val MILLISECONDS_STEP = 50
 
-        private fun getHours(value: Long) = (value / (3600 * 1000)).toInt()
+        fun getHours(value: Long) = (value / (3600 * 1000)).toInt()
 
-        private fun getMinutes(value: Long) = ((value % (3600 * 1000)) / (60 * 1000)).toInt()
+        fun getMinutes(value: Long) = ((value % (3600 * 1000)) / (60 * 1000)).toInt()
 
-        private fun getSeconds(value: Long) = (value % (60 * 1000) / 1000).toInt()
+        fun getSeconds(value: Long) = (value % (60 * 1000) / 1000).toInt()
 
-        private fun getMilliseconds(value: Long) = (value % 1000).toInt()
+        fun getMilliseconds(value: Long) = (value % 1000).toInt()
     }
 }

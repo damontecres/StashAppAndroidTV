@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -24,22 +26,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
-import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.VideoFilter
-import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.DeviceType
+import com.github.damontecres.stashapp.ui.PreviewTheme
+import com.github.damontecres.stashapp.ui.compat.Button
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.SliderBar
+import kotlin.math.roundToInt
+
+const val DRAG_THROTTLE_DELAY = 50L
 
 @Composable
 fun ImageFilterSliders(
     filter: VideoFilter,
     showVideoOptions: Boolean,
     showSaveButton: Boolean,
+    showSaveGalleryButton: Boolean,
     onChange: (VideoFilter) -> Unit,
     onClickSave: () -> Unit,
+    onClickSaveGallery: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -149,6 +158,13 @@ fun ImageFilterSliders(
                             Text(text = stringResource(R.string.stashapp_actions_save))
                         }
                     }
+                    if (showSaveGalleryButton) {
+                        Button(
+                            onClick = onClickSaveGallery,
+                        ) {
+                            Text(text = stringResource(R.string.save_for_gallery))
+                        }
+                    }
                     Button(
                         onClick = { onChange(VideoFilter()) },
                     ) {
@@ -181,18 +197,35 @@ fun SliderBarRow(
         Text(
             text = stringResource(title),
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.width(88.dp),
+            modifier = Modifier.width(96.dp),
         )
-        SliderBar(
-            value = value,
-            min = min,
-            max = max,
-            interval = interval,
-            onChange = onChange,
-            color = color,
-            interactionSource = interactionSource,
-            modifier = Modifier.weight(1f),
-        )
+        if (isTvDevice) {
+            SliderBar(
+                value = value,
+                min = min,
+                max = max,
+                interval = interval,
+                onChange = onChange,
+                color = color,
+                interactionSource = interactionSource,
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            Slider(
+                value = value.toFloat(),
+                valueRange = min.toFloat()..max.toFloat(),
+                onValueChange = { onChange.invoke(it.roundToInt()) },
+                onValueChangeFinished = { onChange.invoke(value) },
+                colors =
+                    SliderDefaults
+                        .colors()
+                        .copy(
+                            activeTrackColor = color,
+                            inactiveTrackColor = color.copy(alpha = .15f),
+                        ),
+                modifier = Modifier.weight(1f),
+            )
+        }
         Text(
             text = valueFormater(value),
             color = MaterialTheme.colorScheme.onSurface,
@@ -205,15 +238,17 @@ fun SliderBarRow(
 fun ImageFilterDialog(
     filter: VideoFilter,
     showVideoOptions: Boolean,
+    showSaveGalleryButton: Boolean,
     uiConfig: ComposeUiConfig,
     onChange: (VideoFilter) -> Unit,
     onClickSave: () -> Unit,
+    onClickSaveGallery: () -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Dialog(
         onDismissRequest = onDismissRequest,
-        properties = DialogProperties(usePlatformDefaultWidth = true),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         val dialogWindowProvider = LocalView.current.parent as? DialogWindowProvider
         dialogWindowProvider?.window?.let { window ->
@@ -226,14 +261,17 @@ fun ImageFilterDialog(
                 modifier
                     .wrapContentSize()
                     .padding(8.dp)
-                    .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .4f)),
+                    .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .4f))
+                    .fillMaxWidth(.4f),
         ) {
             ImageFilterSliders(
                 filter = filter,
                 showVideoOptions = showVideoOptions,
                 showSaveButton = uiConfig.persistVideoFilters,
+                showSaveGalleryButton = showSaveGalleryButton && uiConfig.persistVideoFilters,
                 onChange = onChange,
                 onClickSave = onClickSave,
+                onClickSaveGallery = onClickSaveGallery,
                 modifier = Modifier.padding(8.dp),
             )
         }
@@ -243,13 +281,15 @@ fun ImageFilterDialog(
 @Preview
 @Composable
 private fun ImageFilterSlidersPreview() {
-    AppTheme {
+    PreviewTheme(DeviceType.TV) {
         ImageFilterSliders(
             filter = VideoFilter(),
             showVideoOptions = true,
             onChange = {},
             onClickSave = {},
+            onClickSaveGallery = {},
             showSaveButton = true,
+            showSaveGalleryButton = true,
             modifier = Modifier.padding(8.dp),
         )
     }

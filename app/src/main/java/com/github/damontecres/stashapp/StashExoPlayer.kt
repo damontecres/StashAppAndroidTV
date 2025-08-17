@@ -13,7 +13,10 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.util.EventLogger
+import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.extractor.ts.TsExtractor
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.StashExoPlayer.Companion.getInstance
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.StashClient
@@ -81,7 +84,7 @@ class StashExoPlayer private constructor() {
                 ) {
                     context.getString(R.string.playback_http_client_okhttp) -> {
                         OkHttpDataSource
-                            .Factory(server.okHttpClient)
+                            .Factory(server.streamingOkHttpClient)
                     }
 
                     context.getString(R.string.playback_http_client_default) -> {
@@ -115,12 +118,19 @@ class StashExoPlayer private constructor() {
             trackSelector.parameters =
                 trackSelector
                     .buildUponParameters()
+                    .setAllowInvalidateSelectionsOnRendererCapabilitiesChange(true)
                     .setAudioOffloadPreferences(
                         TrackSelectionParameters.AudioOffloadPreferences
                             .Builder()
                             .setAudioOffloadMode(TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED)
                             .build(),
                     ).build()
+            val extractorsFactory =
+                DefaultExtractorsFactory().apply {
+                    setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3)
+                    setConstantBitrateSeekingEnabled(true)
+                    setConstantBitrateSeekingAlwaysEnabled(true)
+                }
             return ExoPlayer
                 .Builder(context)
 //                .setLoadControl(
@@ -131,13 +141,12 @@ class StashExoPlayer private constructor() {
 //                            30_000,
 //                            DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
 //                            DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
-//                        ).setPrioritizeTimeOverSizeThresholds(false)
+//                        ).setTargetBufferBytes(64_000_000)
+//                        .setPrioritizeTimeOverSizeThresholds(false)
 //                        .build(),
 //                )
                 .setMediaSourceFactory(
-                    DefaultMediaSourceFactory(context).setDataSourceFactory(
-                        dataSourceFactory,
-                    ),
+                    DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory),
                 ).setRenderersFactory(
                     DefaultRenderersFactory(context)
                         .setEnableDecoderFallback(true)

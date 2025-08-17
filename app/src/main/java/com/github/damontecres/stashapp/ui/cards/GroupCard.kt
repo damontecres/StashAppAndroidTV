@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -55,7 +56,7 @@ fun GroupCard(
         imageUrl = imageUrl,
         defaultImageDrawableRes = R.drawable.default_group,
         videoUrl = null,
-        title = title,
+        title = AnnotatedString(title),
         subtitle = {
             Text(details)
         },

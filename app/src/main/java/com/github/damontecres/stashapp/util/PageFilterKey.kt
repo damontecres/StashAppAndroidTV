@@ -5,7 +5,7 @@ import com.github.damontecres.stashapp.data.DataType
 /**
  * List of keys to look up how to sort items in a tab on a page
  *
- * https://github.com/philMorel/stash/blob/develop/ui/v2.5/src/components/List/views.ts
+ * https://github.com/stashapp/stash/blob/develop/ui/v2.5/src/components/List/views.ts
  */
 enum class PageFilterKey(
     val dataType: DataType,

@@ -80,14 +80,14 @@ class StringPickerFragment(
                 value = "",
                 modifier = newModifier,
             )
-            findActionById(MODIFIER).description = newModifier.getString(requireContext())
+            findActionById(MODIFIER)!!.description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
             if (newModifier.isNullModifier()) {
-                findActionById(VALUE).isEnabled = false
+                findActionById(VALUE)!!.isEnabled = false
                 notifyActionChanged(findActionPositionById(VALUE))
                 enableFinish(true)
             } else {
-                val valueAction = findActionById(VALUE)
+                val valueAction = findActionById(VALUE)!!
                 valueAction.isEnabled = true
                 notifyActionChanged(findActionPositionById(VALUE))
                 enableFinish(valueAction.description.isNotNullOrBlank())
@@ -105,7 +105,7 @@ class StringPickerFragment(
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val newString = findActionById(VALUE).description?.toString()
+            val newString = findActionById(VALUE)!!.description?.toString()
             val modifier = curVal?.modifier ?: CriterionModifier.EQUALS
             val newValue =
                 if (modifier.isNullModifier()) {

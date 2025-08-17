@@ -28,6 +28,8 @@ query Configuration {
     interface {
       menuItems
       showStudioAsText
+      customLocalesEnabled
+      customLocales
     }
     ui
   }
@@ -47,6 +49,18 @@ query ConfigurationUI {
   configuration {
     ui
   }
+}
+
+query Credentials {
+  configuration {
+    general {
+      apiKey
+    }
+  }
+}
+
+mutation GenerateApiKey{
+  generateAPIKey(input: {clear: false})
 }
 
 mutation MetadataScan($input: ScanMetadataInput!){

@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
+import androidx.annotation.XmlRes
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.preference.LeanbackEditTextPreferenceDialogFragmentCompat
@@ -46,6 +47,7 @@ import com.github.damontecres.stashapp.util.SubscriptionEngine
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.getDestination
+import com.github.damontecres.stashapp.util.getStringNotNull
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchIO
@@ -63,10 +65,12 @@ import okhttp3.Cache
 import java.io.File
 
 @Serializable
-enum class PreferenceScreenOption {
-    BASIC,
-    ADVANCED,
-    USER_INTERFACE,
+enum class PreferenceScreenOption(
+    @XmlRes val preferenceRes: Int,
+) {
+    BASIC(R.xml.root_preferences),
+    ADVANCED(R.xml.advanced_preferences),
+    USER_INTERFACE(R.xml.ui_preferences),
     ;
 
     companion object {
@@ -198,19 +202,27 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             versionPref.setOnPreferenceClickListener {
                 if (clickCount > 2) {
                     clickCount = 0
-                    serverViewModel.navigationManager.navigate(Destination.Fragment(DebugFragment::class.qualifiedName!!))
+                    serverViewModel.navigationManager.navigate(Destination.Debug)
                 } else {
                     clickCount++
                 }
                 true
             }
 
+            val updateUrl =
+                PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
+                    .getStringNotNull(
+                        "updateCheckUrl",
+                        requireContext().getString(R.string.app_update_url),
+                    )
+
             val checkForUpdatePref = findPreference<LongClickPreference>("checkForUpdate")!!
             val installUpdate = findPreference<LongClickPreference>("installUpdate")!!
             listOf(checkForUpdatePref, installUpdate).forEach { pref ->
                 pref.setOnPreferenceClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        val release = UpdateChecker.getLatestRelease(requireContext())
+                        val release = UpdateChecker.getLatestRelease(requireContext(), updateUrl)
                         if (release != null) {
                             if (release.version.isGreaterThan(installedVersion)) {
                                 serverViewModel.navigationManager.navigate(
@@ -239,7 +251,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 }
                 pref.setOnLongClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        val release = UpdateChecker.getLatestRelease(requireContext())
+                        val release = UpdateChecker.getLatestRelease(requireContext(), updateUrl)
                         if (release != null) {
                             serverViewModel.navigationManager.navigate(Destination.UpdateApp(release))
                         } else {
@@ -296,7 +308,14 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 val updatePrefs = listOf(checkForUpdatePref, installUpdate)
 
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val release = UpdateChecker.getLatestRelease(requireContext())
+                    val updateUrl =
+                        PreferenceManager
+                            .getDefaultSharedPreferences(requireContext())
+                            .getStringNotNull(
+                                "updateCheckUrl",
+                                requireContext().getString(R.string.app_update_url),
+                            )
+                    val release = UpdateChecker.getLatestRelease(requireContext(), updateUrl)
                     val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
                     if (release != null) {
                         if (release.version.isGreaterThan(installedVersion)) {
@@ -608,7 +627,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
 
             findPreference<Preference>("license")!!.setOnPreferenceClickListener {
-                serverViewModel.navigationManager.navigate(Destination.Fragment(LicenseFragment::class.qualifiedName!!))
+                serverViewModel.navigationManager.navigate(Destination.LicenseInfo)
                 true
             }
 

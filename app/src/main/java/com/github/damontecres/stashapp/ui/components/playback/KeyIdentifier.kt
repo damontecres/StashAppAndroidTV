@@ -16,6 +16,8 @@ fun isDirectionalDpad(event: KeyEvent): Boolean =
 
 fun isDpad(event: KeyEvent): Boolean = event.key == Key.DirectionCenter || isDirectionalDpad(event)
 
+fun isEnterKey(event: KeyEvent) = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
+
 fun isMedia(event: KeyEvent): Boolean =
     event.key == Key.MediaPlay ||
         event.key == Key.MediaPause ||

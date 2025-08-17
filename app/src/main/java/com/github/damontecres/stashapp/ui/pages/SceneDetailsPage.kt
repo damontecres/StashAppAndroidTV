@@ -29,11 +29,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -70,6 +70,7 @@ import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
@@ -83,6 +84,7 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.components.RowColumn
+import com.github.damontecres.stashapp.ui.components.scene.SceneDescriptionDialog
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeader
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsViewModel
@@ -91,8 +93,10 @@ import com.github.damontecres.stashapp.ui.components.scene.sceneDetailsBody
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.asString
 import com.github.damontecres.stashapp.util.fakeMarker
 import com.github.damontecres.stashapp.util.resume_position
+import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.toSeconds
 import com.github.damontecres.stashapp.views.durationToString
 
@@ -104,6 +108,7 @@ fun SceneDetailsPage(
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     val viewModel =
         ViewModelProvider.create(
@@ -112,6 +117,10 @@ fun SceneDetailsPage(
             MutableCreationExtras().apply {
                 set(SceneDetailsViewModel.SERVER_KEY, server)
                 set(SceneDetailsViewModel.SCENE_ID_KEY, sceneId)
+                set(
+                    SceneDetailsViewModel.PAGE_SIZE_KEY,
+                    uiConfig.preferences.searchPreferences.maxResults,
+                )
             },
         )[SceneDetailsViewModel::class]
     val loadingState by viewModel.loadingState.observeAsState()
@@ -139,7 +148,12 @@ fun SceneDetailsPage(
 
         SceneLoadingState.Loading -> CircularProgress()
 
-        is SceneLoadingState.Success ->
+        is SceneLoadingState.Success -> {
+            LaunchedEffect(Unit) {
+                state.scene.titleOrFilename?.let {
+                    onUpdateTitle?.invoke(AnnotatedString(it))
+                }
+            }
             SceneDetails(
                 server = server,
                 scene = state.scene,
@@ -188,6 +202,7 @@ fun SceneDetailsPage(
                 },
                 modifier = modifier.animateContentSize(),
             )
+        }
 
         null -> {}
     }
@@ -231,6 +246,7 @@ fun SceneDetails(
     val navigationManager = LocalGlobalContext.current.navigationManager
 
     var showDialog by remember { mutableStateOf<DialogParams?>(null) }
+    var showDetailsDialog by remember { mutableStateOf(false) }
     var searchForDataType by remember { mutableStateOf<SearchForParams?>(null) }
 
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -331,6 +347,20 @@ fun SceneDetails(
                                             )
                                         },
                                     )
+                                    if (uiConfig.readOnlyModeDisabled) {
+                                        add(
+                                            DialogItem(
+                                                context.getString(R.string.timestamps),
+                                                Icons.Default.Edit,
+                                            ) {
+                                                navigationManager.navigate(
+                                                    Destination.UpdateMarker(
+                                                        item.id,
+                                                    ),
+                                                )
+                                            },
+                                        )
+                                    }
                                 }
                                 if (uiConfig.readOnlyModeDisabled && item !is SlimSceneData) {
                                     if (item is StudioData) {
@@ -475,9 +505,12 @@ fun SceneDetails(
                                     markers = markers,
                                     playOnClick = playOnClick,
                                     showDurationDialog = { showMarkerDurationDialog = true },
+                                    detailsOnClick = { showDetailsDialog = true },
+                                    streamChoice = uiConfig.preferences.playbackPreferences.streamChoice,
                                 ),
                         )
                 },
+                detailsOnClick = { showDetailsDialog = true },
                 oCounterOnClick = { oCountAction.invoke(MutationEngine::incrementOCounter) },
                 oCounterOnLongClick = {
                     showDialog =
@@ -567,6 +600,11 @@ fun SceneDetails(
             headerFocusRequester.tryRequestFocus()
         }
     }
+    SceneDescriptionDialog(
+        show = showDetailsDialog,
+        scene = scene,
+        onDismissRequest = { showDetailsDialog = false },
+    )
 }
 
 fun moreOptionsItems(
@@ -575,10 +613,19 @@ fun moreOptionsItems(
     navigationManager: NavigationManager,
     scene: FullSceneData,
     markers: List<MarkerData>,
+    streamChoice: StreamChoice,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     showDurationDialog: () -> Unit,
+    detailsOnClick: () -> Unit,
 ): List<DialogItem> =
     buildList {
+        add(
+            DialogItem(
+                context.getString(R.string.stashapp_details),
+                Icons.Default.Info,
+                detailsOnClick,
+            ),
+        )
         add(
             DialogItem(
                 context.getString(R.string.play_direct),
@@ -600,10 +647,7 @@ fun moreOptionsItems(
                 Icons.Default.PlayArrow,
             ) {
                 // TODO show options for other resolutions
-                val format =
-                    PreferenceManager
-                        .getDefaultSharedPreferences(context)
-                        .getString("stream_choice", "HLS")!!
+                val format = streamChoice.asString
                 playOnClick(
                     if (server.serverPreferences.alwaysStartFromBeginning) {
                         0L
@@ -614,18 +658,20 @@ fun moreOptionsItems(
                 )
             },
         )
-        add(
-            DialogItem(
-                context.getString(R.string.play_all_markers),
-                Icons.Default.Place,
-            ) {
-                if (markers.firstOrNull { it.end_seconds == null } != null) {
-                    showDurationDialog.invoke()
-                } else {
-                    playAllMarkers(navigationManager, scene.id, 0)
-                }
-            },
-        )
+        if (markers.isNotEmpty()) {
+            add(
+                DialogItem(
+                    context.getString(R.string.play_all_markers),
+                    Icons.Default.Place,
+                ) {
+                    if (markers.firstOrNull { it.end_seconds == null } != null) {
+                        showDurationDialog.invoke()
+                    } else {
+                        playAllMarkers(navigationManager, scene.id, 0)
+                    }
+                },
+            )
+        }
     }
 
 fun playAllMarkers(

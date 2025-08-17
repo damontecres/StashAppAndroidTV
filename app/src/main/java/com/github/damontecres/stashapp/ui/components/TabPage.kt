@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -37,10 +39,12 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.filterArgsSaver
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
@@ -49,21 +53,32 @@ import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TabPage(
     name: AnnotatedString,
+    rememberTab: Boolean,
     tabs: List<TabProvider>,
     dataType: DataType,
     modifier: Modifier = Modifier,
+    showTitle: Boolean = true,
 ) {
     val context = LocalContext.current
     val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-    val rememberTab =
-        preferences.getBoolean(context.getString(R.string.pref_key_ui_remember_tab), false)
     val rememberTabKey = context.getString(R.string.pref_key_ui_remember_tab) + ".${dataType.name}"
-    val rememberedTabIndex = if (rememberTab) preferences.getInt(rememberTabKey, 0) else 0
 
-    var selectedTabIndex by rememberSaveable { mutableIntStateOf(rememberedTabIndex) }
+    var selectedTabIndex by rememberSaveable {
+        mutableIntStateOf(
+            if (rememberTab) {
+                preferences.getInt(
+                    rememberTabKey,
+                    0,
+                )
+            } else {
+                0
+            },
+        )
+    }
     val tabRowFocusRequester = remember { FocusRequester() }
     var showTabRowRaw by rememberSaveable { mutableStateOf(true) }
     val showTabRow by remember { derivedStateOf { showTabRowRaw } }
@@ -85,45 +100,81 @@ fun TabPage(
     Column(
         modifier = modifier.fillMaxSize(),
     ) {
-        Text(
-            text = name,
-            color = MaterialTheme.colorScheme.onBackground,
-            style = MaterialTheme.typography.headlineLarge,
-            modifier =
-                Modifier
-                    .align(Alignment.CenterHorizontally),
-        )
+        if (showTitle) {
+            Text(
+                text = name,
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.headlineLarge,
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterHorizontally),
+            )
+        }
         AnimatedVisibility(
             showTabRow,
             modifier = Modifier.align(Alignment.CenterHorizontally),
         ) {
-            TabRow(
-                selectedTabIndex = selectedTabIndex,
-                modifier =
-                    Modifier
-                        .focusRestorer(focusRequesters[selectedTabIndex])
-                        .focusRequester(tabRowFocusRequester),
-            ) {
-                tabs.forEachIndexed { index, tab ->
-                    key(index) {
-                        Tab(
-                            selected = index == selectedTabIndex,
-                            onFocus = { selectedTabIndex = index },
-                            modifier =
-                                Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .focusRequester(focusRequesters[index]),
-                        ) {
-                            ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                                Text(
-                                    text = tab.name,
-                                    modifier =
-                                        Modifier.padding(
-                                            horizontal = 16.dp,
-                                            vertical = 6.dp,
-                                        ),
-                                )
+            if (isTvDevice) {
+                TabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    modifier =
+                        Modifier
+                            .focusRestorer(focusRequesters[selectedTabIndex])
+                            .focusRequester(tabRowFocusRequester),
+                ) {
+                    tabs.forEachIndexed { index, tab ->
+                        key(index) {
+                            Tab(
+                                selected = index == selectedTabIndex,
+                                onFocus = { selectedTabIndex = index },
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.CenterHorizontally)
+                                        .focusRequester(focusRequesters[index]),
+                            ) {
+                                ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                                    Text(
+                                        text = tab.name,
+                                        modifier =
+                                            Modifier.padding(
+                                                horizontal = 16.dp,
+                                                vertical = 6.dp,
+                                            ),
+                                    )
+                                }
                             }
+                        }
+                    }
+                }
+            } else {
+                // Not tv
+                PrimaryScrollableTabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    modifier = Modifier,
+                ) {
+                    tabs.forEachIndexed { index, tab ->
+                        key(index) {
+                            androidx.compose.material3.Tab(
+                                selected = index == selectedTabIndex,
+                                onClick = { selectedTabIndex = index },
+                                selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                                unselectedContentColor = MaterialTheme.colorScheme.onSurface,
+                                text = {
+                                    androidx.compose.material3.Text(
+                                        text = tab.name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier =
+                                            Modifier.padding(
+                                                horizontal = 16.dp,
+                                                vertical = 6.dp,
+                                            ),
+                                    )
+                                },
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.CenterHorizontally)
+                                        .focusRequester(focusRequesters[index]),
+                            )
                         }
                     }
                 }
@@ -140,6 +191,7 @@ fun TabPage(
 
 data class TabProvider(
     val name: String,
+    val type: TabType,
     val content: @Composable ColumnScope.(
         /**
          * Callback when grid position changes, passed to [StashGrid]. None-StashGrid can probably ignore this
@@ -157,7 +209,18 @@ fun createTabFunc(
     { initialFilter ->
         val name =
             StashApplication.getApplication().getString(initialFilter.dataType.pluralStringId)
-        TabProvider(name) { positionCallback ->
+        val type =
+            when (initialFilter.dataType) {
+                DataType.SCENE -> TabType.SCENES
+                DataType.GROUP -> TabType.GROUPS
+                DataType.MARKER -> TabType.MARKERS
+                DataType.PERFORMER -> TabType.PERFORMERS
+                DataType.STUDIO -> TabType.STUDIOS
+                DataType.TAG -> TabType.TAGS
+                DataType.IMAGE -> TabType.IMAGES
+                DataType.GALLERY -> TabType.GALLERIES
+            }
+        TabProvider(name, type) { positionCallback ->
             var filter by rememberSaveable(name, saver = filterArgsSaver) {
                 mutableStateOf(
                     initialFilter,

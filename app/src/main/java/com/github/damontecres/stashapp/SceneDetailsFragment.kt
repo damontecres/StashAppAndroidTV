@@ -49,6 +49,7 @@ import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.findPossibleTranscodeLabels
+import com.github.damontecres.stashapp.playback.streamChoiceFromLabel
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
@@ -204,7 +205,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private var scenePresenter: SceneDetailsPresenter? = null
     private var detailsPresenter: FullWidthDetailsOverviewRowPresenter? = null
 
-    override fun onInflateTitleView(
+    @Deprecated("Deprecated in Java")
+    override fun inflateTitle(
         inflater: LayoutInflater?,
         parent: ViewGroup?,
         savedInstanceState: Bundle?,
@@ -693,9 +695,14 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         ) {
             if (item is StashAction) {
                 if (item == StashAction.FORCE_TRANSCODE) {
+                    val format =
+                        PreferenceManager
+                            .getDefaultSharedPreferences(requireContext())
+                            .getString("stream_choice", "HLS")!!
                     val options =
                         findPossibleTranscodeLabels(
                             requireContext(),
+                            streamChoiceFromLabel(format),
                             viewModel.scene.value?.sceneStreams,
                         )
                     Log.d(TAG, "options=$options")

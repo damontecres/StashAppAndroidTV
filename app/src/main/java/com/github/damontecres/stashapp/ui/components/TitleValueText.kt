@@ -16,6 +16,7 @@
 
 package com.github.damontecres.stashapp.ui.components
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -33,10 +34,13 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.ui.util.playOnClickSound
 
@@ -66,6 +70,7 @@ fun TitleValueText(
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Normal),
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -118,3 +123,30 @@ private fun MaybeClickColumn(
         Column(content = content, modifier = modifier)
     }
 }
+
+@Composable
+fun TimestampValueText(
+    @StringRes title: Int,
+    timestamp: Any?,
+    modifier: Modifier = Modifier,
+) {
+    val value =
+        if (timestamp != null && timestamp.toString().length >= 10) {
+            timestamp.toString().substring(0..<10)
+        } else {
+            stringResource(R.string.stashapp_unknown_date)
+        }
+    TitleValueText(stringResource(title), value, modifier)
+}
+
+@Composable
+fun CreatedTimestamp(
+    timestamp: Any?,
+    modifier: Modifier = Modifier,
+) = TimestampValueText(R.string.stashapp_created_at, timestamp, modifier)
+
+@Composable
+fun UpdatedTimestamp(
+    timestamp: Any?,
+    modifier: Modifier = Modifier,
+) = TimestampValueText(R.string.stashapp_updated_at, timestamp, modifier)

@@ -3,10 +3,18 @@ package com.github.damontecres.stashapp.ui.pages
 import android.annotation.SuppressLint
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -15,7 +23,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,6 +42,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -45,18 +53,17 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
-import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
@@ -66,15 +73,18 @@ import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.image.DRAG_THROTTLE_DELAY
 import com.github.damontecres.stashapp.ui.components.image.ImageDetailsViewModel
 import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
 import com.github.damontecres.stashapp.ui.components.image.ImageOverlay
 import com.github.damontecres.stashapp.ui.components.image.SlideshowControls
 import com.github.damontecres.stashapp.ui.components.playback.isDirectionalDpad
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -84,7 +94,7 @@ private const val TAG = "ImagePage"
 private const val DEBUG = false
 
 @SuppressLint("ConfigurationScreenWidthHeight")
-@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
 fun ImagePage(
     server: StashServer,
@@ -99,12 +109,9 @@ fun ImagePage(
     viewModel: ImageDetailsViewModel = viewModel(),
 ) {
     val context = LocalContext.current
+    val isNotTvDevice = isNotTvDevice
     LaunchedEffect(server, filter) {
-        val slideshowDelay =
-            PreferenceManager.getDefaultSharedPreferences(context).getInt(
-                StashApplication.getApplication().getString(R.string.pref_key_slideshow_duration),
-                StashApplication.getApplication().resources.getInteger(R.integer.pref_key_slideshow_duration_default),
-            ) * 1000L
+        val slideshowDelay = uiConfig.preferences.interfacePreferences.slideShowIntervalMs
 
         viewModel.init(
             server,
@@ -114,6 +121,10 @@ fun ImagePage(
             slideshowDelay,
             uiConfig.persistVideoFilters,
         )
+        if (isNotTvDevice) {
+            // Reduce the throttling for touch devices since a delay when dragging feels like lag
+            viewModel.imageFilter.startThrottling(DRAG_THROTTLE_DELAY)
+        }
     }
 
     val imageState by viewModel.image.observeAsState()
@@ -128,11 +139,12 @@ fun ImagePage(
 
     var zoomFactor by rememberSaveable { mutableFloatStateOf(1f) }
     val isZoomed = zoomFactor * 100 > 102
-    var rotation by rememberSaveable { mutableIntStateOf(0) }
+    var rotation by rememberSaveable { mutableFloatStateOf(0f) }
     var showOverlay by rememberSaveable { mutableStateOf(false) }
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
     var panX by rememberSaveable { mutableFloatStateOf(0f) }
     var panY by rememberSaveable { mutableFloatStateOf(0f) }
+    val galleryId by viewModel.galleryId.observeAsState(null)
 
     val slideshowControls =
         object : SlideshowControls {
@@ -147,7 +159,7 @@ fun ImagePage(
         }
 
     val rotateAnimation: Float by animateFloatAsState(
-        targetValue = rotation.toFloat(),
+        targetValue = rotation,
         label = "image_rotation",
     )
     val zoomAnimation: Float by animateFloatAsState(
@@ -162,6 +174,14 @@ fun ImagePage(
         targetValue = panY,
         label = "image_panY",
     )
+
+    val state =
+        rememberTransformableState { zoomChange, offsetChange, rotationChange ->
+            zoomFactor *= zoomChange
+            rotation += rotationChange
+            panX += offsetChange.x
+            panY += offsetChange.y
+        }
 
     val slideshowEnabled by viewModel.slideshow.observeAsState(false)
     val slideshowActive by viewModel.slideshowActive.observeAsState(false)
@@ -183,7 +203,7 @@ fun ImagePage(
         zoomFactor = 1f
         panX = 0f
         panY = 0f
-        if (resetRotate) rotation = 0
+        if (resetRotate) rotation = 0f
     }
 
     fun pan(
@@ -235,7 +255,7 @@ fun ImagePage(
     val player =
         remember {
             StashExoPlayer.getInstance(context, server).apply {
-                maybeMuteAudio(context, false, this)
+                maybeMuteAudio(uiConfig.preferences, false, this)
                 repeatMode = Player.REPEAT_MODE_OFF
                 playWhenReady = true
             }
@@ -246,15 +266,7 @@ fun ImagePage(
         }
     }
 
-    val playSlideshowDelay =
-        remember {
-            PreferenceManager
-                .getDefaultSharedPreferences(context)
-                .getInt(
-                    context.getString(R.string.pref_key_slideshow_duration_image_clip),
-                    context.resources.getInteger(R.integer.pref_key_slideshow_duration_default_image_clip),
-                ).toLong()
-        }
+    val playSlideshowDelay = uiConfig.preferences.interfacePreferences.slideShowIntervalMs
     val presentationState = rememberPresentationState(player)
     LaunchedEffect(player) {
         StashExoPlayer.addListener(
@@ -272,6 +284,65 @@ fun ImagePage(
     }
 
     var longPressing by remember { mutableStateOf(false) }
+
+    var dragXAmount by remember { mutableFloatStateOf(0f) }
+
+    // TODO move content into a function
+    val contentModifier =
+        Modifier.ifElse(
+            isNotTvDevice,
+            Modifier
+                .clickable(
+                    interactionSource = null,
+                    indication = null,
+                    onClick = {
+                        showOverlay = !showOverlay
+                    },
+                ).pointerInput(isZoomed) {
+                    detectTapGestures(
+                        onTap = {
+                            showOverlay = !showOverlay
+                        },
+                        onDoubleTap = {
+                            if (!showOverlay) {
+                                if (isZoomed) {
+                                    reset(false)
+                                } else {
+                                    zoom(1.5f)
+                                }
+                            }
+                        },
+                    )
+                }.ifElse(
+                    condition = isZoomed || showOverlay,
+                    Modifier
+                        .transformable(
+                            state = state,
+                            enabled = !showOverlay,
+                            lockRotationOnZoomPan = true,
+                        ),
+                    Modifier
+                        .transformable(state, lockRotationOnZoomPan = true)
+                        .pointerInput(Unit) {
+                            // TODO use https://developer.android.com/develop/ui/compose/touch-input/pointer-input/drag-swipe-fling#swiping
+                            detectDragGestures(
+                                onDragStart = { dragXAmount = 0f },
+                                onDragCancel = { dragXAmount = 0f },
+                                onDragEnd = {
+                                    if (dragXAmount > 300f) {
+                                        viewModel.previousImage()
+                                    } else if (dragXAmount < -300f) {
+                                        viewModel.nextImage()
+                                    }
+                                    dragXAmount = 0f
+                                },
+                            ) { change, dragAmount ->
+                                dragXAmount += dragAmount.x
+                                change.consume()
+                            }
+                        },
+                ),
+        )
 
     Box(
         modifier =
@@ -384,7 +455,10 @@ fun ImagePage(
                     }
                     val contentScale = ContentScale.Fit
                     val scaledModifier =
-                        Modifier.resizeWithContentScale(contentScale, presentationState.videoSizeDp)
+                        contentModifier.resizeWithContentScale(
+                            contentScale,
+                            presentationState.videoSizeDp,
+                        )
                     PlayerSurface(
                         player = player,
                         surfaceType = SURFACE_TYPE_SURFACE_VIEW,
@@ -408,7 +482,7 @@ fun ImagePage(
                 } else {
                     SubcomposeAsyncImage(
                         modifier =
-                            Modifier
+                            contentModifier
                                 .fillMaxSize()
                                 .graphicsLayer {
                                     scaleX = zoomAnimation
@@ -436,7 +510,7 @@ fun ImagePage(
                                 .crossfade(true)
                                 .build(),
                         contentDescription = null,
-                        contentScale = ContentScale.FillHeight,
+                        contentScale = ContentScale.Fit,
                         colorFilter =
                             if (imageFilter.hasImageFilter()) {
                                 ColorMatrixColorFilter(
@@ -486,10 +560,14 @@ fun ImagePage(
                 Text("No image URL")
             }
             val focusManager = LocalFocusManager.current
-            AnimatedVisibility(showOverlay) {
+            AnimatedVisibility(
+                showOverlay,
+                enter = slideInVertically { it },
+                exit = slideOutVertically { it },
+            ) {
                 ImageOverlay(
                     modifier =
-                        Modifier
+                        contentModifier
                             .fillMaxSize()
                             .background(AppColors.TransparentBlack50),
                     server = server,
@@ -538,9 +616,11 @@ fun ImagePage(
                 ImageFilterDialog(
                     filter = imageFilter,
                     showVideoOptions = false,
+                    showSaveGalleryButton = galleryId != null,
                     uiConfig = uiConfig,
                     onChange = viewModel::updateImageFilter,
                     onClickSave = viewModel::saveImageFilter,
+                    onClickSaveGallery = viewModel::saveGalleryFilter,
                     onDismissRequest = {
                         showFilterDialog = false
                         viewModel.unpauseSlideshow()

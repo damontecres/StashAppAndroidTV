@@ -4,37 +4,28 @@ import android.content.res.Configuration
 import android.os.Build
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.MutableLiveData
@@ -46,13 +37,8 @@ import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
@@ -75,25 +61,27 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationListener
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.ui.AppTheme
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.GlobalContext
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.PreviewTheme
+import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
-import com.github.damontecres.stashapp.ui.components.ItemDetailsFooter
+import com.github.damontecres.stashapp.ui.components.EditItem
+import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
-import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.StashGridTab
 import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
-import com.github.damontecres.stashapp.ui.components.TableRowComposable
 import com.github.damontecres.stashapp.ui.components.createTabFunc
+import com.github.damontecres.stashapp.ui.components.scene.AddRemove
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.ui.performerPreview
 import com.github.damontecres.stashapp.ui.tagPreview
@@ -154,11 +142,10 @@ class PerformerDetailsViewModel(
         this@PerformerDetailsViewModel.performer = performer
 
         loadingState.value = PerformerLoadingState.Success(performer)
-        if (performer.tags.isNotEmpty()) {
-            tags.value =
-                queryEngine.getTags(performer.tags.map { it.slimTagData.id })
-            Log.v(TAG, "Got ${tags.value?.size} tags")
-        }
+
+        tags.value = queryEngine.getTags(performer.tags.map { it.slimTagData.id })
+        Log.v(TAG, "Got ${tags.value?.size} tags")
+
         studios.value =
             queryEngine.findStudios(
                 studioFilter =
@@ -252,6 +239,7 @@ fun PerformerPage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     val viewModel =
         ViewModelProvider.create(
@@ -296,7 +284,17 @@ fun PerformerPage(
                 onRatingChange = viewModel::updateRating,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
-                modifier = Modifier.fillMaxSize(),
+                onUpdateTitle = onUpdateTitle,
+                onEdit = { edit ->
+                    if (edit.dataType == DataType.TAG) {
+                        if (edit.action == AddRemove.ADD) {
+                            viewModel.addTag(edit.id)
+                        } else {
+                            viewModel.removeTag(edit.id)
+                        }
+                    }
+                },
+                modifier = modifier.fillMaxSize(),
             )
 
         null -> {}
@@ -316,7 +314,9 @@ fun PerformerDetailsPage(
     onRatingChange: (Int) -> Unit,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    onEdit: (EditItem) -> Unit,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
 
@@ -327,24 +327,26 @@ fun PerformerDetailsPage(
                 modifier = CriterionModifier.INCLUDES_ALL,
             ),
         )
-    val uiTabs = getUiTabs(LocalContext.current, DataType.PERFORMER)
+    val uiTabs =
+        getUiTabs(uiConfig.preferences.interfacePreferences.tabPreferences, DataType.PERFORMER)
     val createTab = createTabFunc(server, itemOnClick, longClicker, uiConfig)
     val tabs =
         listOf(
-            TabProvider(stringResource(R.string.stashapp_details)) {
+            TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
                 PerformerDetails(
-                    modifier = Modifier.fillMaxSize(),
                     perf = perf,
                     tags = tags,
                     studios = studios,
-                    uiConfig = uiConfig,
                     favorite = favorite,
                     favoriteClick = onFavoriteClick,
                     rating100 = rating100,
                     rating100Click = onRatingChange,
+                    uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
                     onShowDialog = { dialogParams = it },
+                    onEdit = onEdit,
+                    modifier = Modifier.fillMaxSize(),
                 )
             },
             createTab(
@@ -382,7 +384,10 @@ fun PerformerDetailsPage(
                     objectFilter = SceneMarkerFilterType(performers = performers),
                 ),
             ),
-            TabProvider(stringResource(R.string.stashapp_appears_with)) {
+            TabProvider(
+                stringResource(R.string.stashapp_appears_with),
+                TabType.APPEARS_WITH,
+            ) {
                 val context = LocalContext.current
                 val navigationManager = LocalGlobalContext.current.navigationManager
                 StashGridTab(
@@ -445,7 +450,7 @@ fun PerformerDetailsPage(
                     modifier = Modifier,
                 )
             },
-        ).filter { it.name in uiTabs }
+        ).filter { it.type in uiTabs }
     val title =
         buildAnnotatedString {
             withStyle(SpanStyle(color = Color.White, fontSize = 40.sp)) {
@@ -458,7 +463,16 @@ fun PerformerDetailsPage(
                 }
             }
         }
-    TabPage(title, tabs, DataType.PERFORMER, modifier)
+    LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
+
+    TabPage(
+        title,
+        uiConfig.preferences.interfacePreferences.rememberSelectedTab,
+        tabs,
+        DataType.PERFORMER,
+        modifier,
+        showTitle = onUpdateTitle == null,
+    )
     dialogParams?.let {
         DialogPopup(
             showDialog = true,
@@ -495,6 +509,7 @@ fun PerformerDetails(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     onShowDialog: (DialogParams) -> Unit,
+    onEdit: (EditItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
@@ -514,258 +529,159 @@ fun PerformerDetails(
         }
 
     val tableRows =
-        buildList {
-            if (perf.alias_list.isNotEmpty()) {
-                add(
-                    TableRow.from(
-                        R.string.stashapp_aliases,
-                        perf.alias_list.joinToString(", "),
-                    ),
-                )
-            }
-            if (!perf.birthdate.isNullOrBlank()) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val age = perf.ageInYears.toString()
-                    add(TableRow.from(R.string.stashapp_age, "$age (${perf.birthdate})"))
+        remember {
+            buildList {
+                if (perf.alias_list.isNotEmpty()) {
+                    add(
+                        TableRow.from(
+                            context,
+                            R.string.stashapp_aliases,
+                            perf.alias_list.joinToString(", "),
+                        ),
+                    )
                 }
-            }
-            add(TableRow.from(R.string.stashapp_death_date, perf.death_date))
-            add(
-                TableRow.from(R.string.stashapp_country, perf.country) {
-                    navigateTo(
-                        R.string.stashapp_country,
-                        perf.country!!,
-                        PerformerFilterType(country = stringCriterion(perf.country!!)),
-                    )
-                },
-            )
-            add(
-                TableRow.from(R.string.stashapp_ethnicity, perf.ethnicity) {
-                    navigateTo(
-                        R.string.stashapp_ethnicity,
-                        perf.ethnicity!!,
-                        PerformerFilterType(ethnicity = stringCriterion(perf.ethnicity!!)),
-                    )
-                },
-            )
-            add(
-                TableRow.from(R.string.stashapp_hair_color, perf.hair_color) {
-                    navigateTo(
-                        R.string.stashapp_hair_color,
-                        perf.hair_color!!,
-                        PerformerFilterType(hair_color = stringCriterion(perf.hair_color!!)),
-                    )
-                },
-            )
-            add(
-                TableRow.from(R.string.stashapp_eye_color, perf.eye_color) {
-                    navigateTo(
-                        R.string.stashapp_eye_color,
-                        perf.eye_color!!,
-                        PerformerFilterType(eye_color = stringCriterion(perf.eye_color!!)),
-                    )
-                },
-            )
-            if (perf.height_cm != null) {
-                val feet = floor(perf.height_cm / 30.48).toInt()
-                val inches = (perf.height_cm / 2.54 - feet * 12).roundToInt()
-                add(
-                    TableRow.from(
-                        R.string.stashapp_height,
-                        "${perf.height_cm} cm ($feet'$inches\")",
-                    ),
-                )
-            }
-            if (perf.weight != null) {
-                val pounds = (perf.weight * 2.2).roundToInt()
-                add(TableRow.from(R.string.stashapp_weight, "${perf.weight} kg ($pounds lbs)"))
-            }
-            if (perf.penis_length != null) {
-                val inches = round(perf.penis_length / 2.54 * 100) / 100
-                add(
-                    TableRow.from(
-                        R.string.stashapp_penis_length,
-                        "${perf.penis_length} cm ($inches\")",
-                    ),
-                )
-            }
-            val circString =
-                when (perf.circumcised) {
-                    CircumisedEnum.CUT -> stringResource(R.string.stashapp_circumcised_types_CUT)
-                    CircumisedEnum.UNCUT -> stringResource(R.string.stashapp_circumcised_types_UNCUT)
-                    CircumisedEnum.UNKNOWN__, null -> null
-                }
-            add(TableRow.from(R.string.stashapp_circumcised, circString))
-
-            add(TableRow.from(R.string.stashapp_tattoos, perf.tattoos))
-            add(TableRow.from(R.string.stashapp_piercings, perf.piercings))
-            add(TableRow.from(R.string.stashapp_career_length, perf.career_length))
-        }.filterNotNull()
-    Row(
-        modifier =
-            modifier
-                .fillMaxSize(),
-    ) {
-        if (perf.image_path.isNotNullOrBlank()) {
-            val gradientColor = MaterialTheme.colorScheme.background
-            AsyncImage(
-                modifier =
-                    Modifier
-                        .padding(8.dp)
-                        .fillMaxWidth(.4f)
-                        .fillMaxHeight()
-                        .drawWithContent {
-                            drawContent()
-                            drawRect(
-                                Brush.verticalGradient(
-                                    colors = listOf(Color.Transparent, gradientColor),
-                                    startY = 200f,
-                                ),
-                            )
-                            drawRect(
-                                Brush.horizontalGradient(
-                                    colors = listOf(gradientColor, Color.Transparent),
-                                    endX = 200f,
-                                    startX = 50f,
-                                ),
-                            )
-                        },
-                model =
-                    ImageRequest
-                        .Builder(LocalContext.current)
-                        .data(perf.image_path)
-                        .crossfade(true)
-                        .build(),
-                contentDescription = null,
-                contentScale = ContentScale.FillHeight,
-            )
-        }
-        val topPadding = 12.dp
-        LazyColumn(
-            modifier =
-                Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth(),
-        ) {
-            val color = if (favorite) Color.Red else Color.LightGray
-            item {
-                ProvideTextStyle(MaterialTheme.typography.displayLarge.copy(color = color)) {
-                    Button(
-                        onClick = favoriteClick,
-                    ) {
-                        Text(text = stringResource(R.string.fa_heart), fontFamily = FontAwesome)
+                if (!perf.birthdate.isNullOrBlank()) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val age = perf.ageInYears.toString()
+                        add(
+                            TableRow.from(
+                                context,
+                                R.string.stashapp_age,
+                                "$age (${perf.birthdate})",
+                            ),
+                        )
                     }
                 }
-            }
-
-            item {
-                Rating100(
-                    rating100 = rating100,
-                    uiConfig = uiConfig,
-                    onRatingChange = rating100Click,
-                    enabled = true,
-                    modifier =
-                        Modifier
-                            .height(32.dp)
-                            .padding(start = 12.dp),
+                add(TableRow.from(context, R.string.stashapp_death_date, perf.death_date))
+                add(
+                    TableRow.from(context, R.string.stashapp_country, perf.country) {
+                        navigateTo(
+                            R.string.stashapp_country,
+                            perf.country!!,
+                            PerformerFilterType(country = stringCriterion(perf.country)),
+                        )
+                    },
                 )
-            }
-
-            items(tableRows) { row ->
-                TableRowComposable(row)
-            }
-
-            if (tags.isNotEmpty()) {
-                item {
-                    ItemsRow(
-                        title = titleCount(R.string.stashapp_tags, tags),
-                        items = tags,
-                        uiConfig = uiConfig,
-                        itemOnClick = itemOnClick,
-                        longClicker = longClicker,
-                        modifier = Modifier.padding(top = topPadding),
+                add(
+                    TableRow.from(context, R.string.stashapp_ethnicity, perf.ethnicity) {
+                        navigateTo(
+                            R.string.stashapp_ethnicity,
+                            perf.ethnicity!!,
+                            PerformerFilterType(ethnicity = stringCriterion(perf.ethnicity)),
+                        )
+                    },
+                )
+                add(
+                    TableRow.from(context, R.string.stashapp_hair_color, perf.hair_color) {
+                        navigateTo(
+                            R.string.stashapp_hair_color,
+                            perf.hair_color!!,
+                            PerformerFilterType(hair_color = stringCriterion(perf.hair_color)),
+                        )
+                    },
+                )
+                add(
+                    TableRow.from(context, R.string.stashapp_eye_color, perf.eye_color) {
+                        navigateTo(
+                            R.string.stashapp_eye_color,
+                            perf.eye_color!!,
+                            PerformerFilterType(eye_color = stringCriterion(perf.eye_color)),
+                        )
+                    },
+                )
+                if (perf.height_cm != null) {
+                    val feet = floor(perf.height_cm / 30.48).toInt()
+                    val inches = (perf.height_cm / 2.54 - feet * 12).roundToInt()
+                    add(
+                        TableRow.from(
+                            context,
+                            R.string.stashapp_height,
+                            "${perf.height_cm} cm ($feet'$inches\")",
+                        ),
                     )
                 }
-            }
-            if (studios.isNotEmpty()) {
-                item {
-                    ItemsRow(
-                        title = titleCount(R.string.stashapp_studios, studios),
-                        items = studios,
-                        uiConfig = uiConfig,
-                        itemOnClick = itemOnClick,
-                        longClicker = { item, _ ->
-                            item as StudioData
-                            val dialogItems =
-                                listOf(
-                                    DialogItem(
-                                        context.getString(R.string.go_to),
-                                        Icons.Default.Info,
-                                    ) {
-                                        itemOnClick.onClick(item, null)
-                                    },
-                                    DialogItem(
-                                        context.getString(R.string.stashapp_scenes),
-                                        Icons.Default.PlayArrow,
-                                    ) {
-                                        val title = "${item.name} & ${perf.name}"
-                                        val filter =
-                                            FilterArgs(
-                                                dataType = DataType.SCENE,
-                                                name = title,
-                                                findFilter = null,
-                                                objectFilter =
-                                                    SceneFilterType(
-                                                        performers =
-                                                            Optional.present(
-                                                                MultiCriterionInput(
-                                                                    value =
-                                                                        Optional.presentIfNotNull(
-                                                                            listOf(
-                                                                                perf.id,
-                                                                            ),
-                                                                        ),
-                                                                    modifier = CriterionModifier.INCLUDES,
-                                                                ),
-                                                            ),
-                                                        studios =
-                                                            Optional.present(
-                                                                HierarchicalMultiCriterionInput(
-                                                                    value =
-                                                                        Optional.present(
-                                                                            listOf(
-                                                                                item.id,
-                                                                            ),
-                                                                        ),
-                                                                    modifier = CriterionModifier.EQUALS,
-                                                                ),
-                                                            ),
-                                                    ),
-                                            )
-                                        navigationManager.navigate(
-                                            Destination.Filter(
-                                                filterArgs = filter,
-                                                false,
-                                            ),
-                                        )
-                                    },
-                                )
-                            onShowDialog.invoke(DialogParams(true, item.name, dialogItems))
-                        },
-                        modifier = Modifier.padding(top = topPadding),
+                if (perf.weight != null) {
+                    val pounds = (perf.weight * 2.2).roundToInt()
+                    add(
+                        TableRow.from(
+                            context,
+                            R.string.stashapp_weight,
+                            "${perf.weight} kg ($pounds lbs)",
+                        ),
                     )
                 }
-            }
+                if (perf.penis_length != null) {
+                    val inches = round(perf.penis_length / 2.54 * 100) / 100
+                    add(
+                        TableRow.from(
+                            context,
+                            R.string.stashapp_penis_length,
+                            "${perf.penis_length} cm ($inches\")",
+                        ),
+                    )
+                }
+                val circString =
+                    when (perf.circumcised) {
+                        CircumisedEnum.CUT -> context.getString(R.string.stashapp_circumcised_types_CUT)
+                        CircumisedEnum.UNCUT -> context.getString(R.string.stashapp_circumcised_types_UNCUT)
+                        CircumisedEnum.UNKNOWN__, null -> null
+                    }
+                add(TableRow.from(context, R.string.stashapp_circumcised, circString))
 
+                add(TableRow.from(context, R.string.stashapp_tattoos, perf.tattoos))
+                add(TableRow.from(context, R.string.stashapp_piercings, perf.piercings))
+                add(TableRow.from(context, R.string.stashapp_career_length, perf.career_length))
+            }.filterNotNull()
+        }
+    ItemDetails(
+        uiConfig = uiConfig,
+        imageUrl = perf.image_path,
+        tableRows = tableRows,
+        itemOnClick = itemOnClick,
+        longClicker = longClicker,
+        modifier = modifier,
+        favorite = favorite,
+        favoriteClick = favoriteClick,
+        rating100 = rating100,
+        rating100Click = rating100Click,
+        basicItemInfo = BasicItemInfo(perf.id, perf.created_at, perf.updated_at),
+        tags = tags,
+        onEdit = onEdit,
+        editableTypes = setOf(DataType.TAG),
+    ) {
+        if (studios.isNotEmpty()) {
             item {
-                ItemDetailsFooter(
-                    id = perf.id,
-                    createdAt = perf.created_at.toString(),
-                    updatedAt = perf.updated_at.toString(),
-                    modifier =
-                        Modifier
-                            .padding(top = topPadding)
-                            .fillMaxWidth(),
+                ItemsRow(
+                    title = titleCount(R.string.stashapp_studios, studios),
+                    items = studios,
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = { item, _ ->
+                        item as StudioData
+                        val dialogItems =
+                            listOf(
+                                DialogItem(
+                                    context.getString(R.string.go_to),
+                                    Icons.Default.Info,
+                                ) {
+                                    itemOnClick.onClick(item, null)
+                                },
+                                DialogItem(
+                                    context.getString(R.string.stashapp_scenes),
+                                    Icons.Default.PlayArrow,
+                                ) {
+                                    val filter = performerStudioFilter(perf, item)
+                                    navigationManager.navigate(
+                                        Destination.Filter(
+                                            filterArgs = filter,
+                                            false,
+                                        ),
+                                    )
+                                },
+                            )
+                        onShowDialog.invoke(DialogParams(true, item.name, dialogItems))
+                    },
+                    modifier = Modifier.animateItem(),
                 )
             }
         }
@@ -782,39 +698,34 @@ private fun PerformerDetailsPreview() {
     val longClicker =
         LongClicker<Any> { item, filterAndPosition ->
         }
+    PreviewTheme {
+        CompositionLocalProvider(
+            LocalGlobalContext provides
+                GlobalContext(
+                    StashServer("http://0.0.0.0", null),
+                    object : NavigationManager {
+                        override var previousDestination: Destination?
+                            get() = null
+                            set(value) {}
 
-    CompositionLocalProvider(
-        LocalGlobalContext provides
-            GlobalContext(
-                StashServer("http://0.0.0.0", null),
-                object : NavigationManager {
-                    override var previousDestination: Destination?
-                        get() = TODO("Not yet implemented")
-                        set(value) {}
+                        override fun navigate(destination: Destination) {
+                        }
 
-                    override fun navigate(destination: Destination) {
-                        TODO("Not yet implemented")
-                    }
+                        override fun goBack() {
+                        }
 
-                    override fun goBack() {
-                        TODO("Not yet implemented")
-                    }
+                        override fun goToMain() {
+                        }
 
-                    override fun goToMain() {
-                        TODO("Not yet implemented")
-                    }
+                        override fun clearPinFragment() {
+                        }
 
-                    override fun clearPinFragment() {
-                        TODO("Not yet implemented")
-                    }
-
-                    override fun addListener(listener: NavigationListener) {
-                        TODO("Not yet implemented")
-                    }
-                },
-            ),
-    ) {
-        AppTheme {
+                        override fun addListener(listener: NavigationListener) {
+                        }
+                    },
+                    StashPreferences.getDefaultInstance(),
+                ),
+        ) {
             PerformerDetails(
                 perf = performer,
                 tags = listOf(tagPreview, tagPreview.copy(id = "723")),
@@ -827,6 +738,7 @@ private fun PerformerDetailsPreview() {
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 onShowDialog = {},
+                onEdit = {},
                 modifier =
                     Modifier
                         .fillMaxSize()
@@ -835,3 +747,39 @@ private fun PerformerDetailsPreview() {
         }
     }
 }
+
+private fun performerStudioFilter(
+    perf: PerformerData,
+    studio: StudioData,
+) = FilterArgs(
+    dataType = DataType.SCENE,
+    name = "${studio.name} & ${perf.name}",
+    findFilter = null,
+    objectFilter =
+        SceneFilterType(
+            performers =
+                Optional.present(
+                    MultiCriterionInput(
+                        value =
+                            Optional.presentIfNotNull(
+                                listOf(
+                                    perf.id,
+                                ),
+                            ),
+                        modifier = CriterionModifier.INCLUDES,
+                    ),
+                ),
+            studios =
+                Optional.present(
+                    HierarchicalMultiCriterionInput(
+                        value =
+                            Optional.present(
+                                listOf(
+                                    studio.id,
+                                ),
+                            ),
+                        modifier = CriterionModifier.EQUALS,
+                    ),
+                ),
+        ),
+)

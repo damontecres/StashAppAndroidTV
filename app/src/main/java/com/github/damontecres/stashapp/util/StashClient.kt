@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.annotations.ApolloExperimental
@@ -16,7 +17,10 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import okhttp3.CacheControl
 import okhttp3.Call
+import okhttp3.Cookie
+import okhttp3.CookieJar
 import okhttp3.EventListener
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import java.security.SecureRandom
@@ -245,10 +249,28 @@ class StashClient private constructor() {
                 // Assume http
                 cleanedStashUrl = "http://$cleanedStashUrl"
             }
-            var url = Uri.parse(cleanedStashUrl)
+            var url = cleanedStashUrl.toUri()
             val pathSegments = url.pathSegments.toMutableList()
-            if (pathSegments.isEmpty() || pathSegments.last() != "graphql") {
+            if (url.host.isNotNullOrBlank() && (pathSegments.isEmpty() || pathSegments.last() != "graphql")) {
                 pathSegments.add("graphql")
+            }
+            url =
+                url
+                    .buildUpon()
+                    .path(pathSegments.joinToString("/")) // Ensure the URL is the graphql endpoint
+                    .build()
+            return url.toString()
+        }
+
+        fun createLoginUrl(stashUrl: String): String {
+            val cleanedStashUrl = cleanServerUrl(stashUrl)
+            var url = cleanedStashUrl.toUri()
+            val pathSegments = url.pathSegments.toMutableList()
+            if (url.host.isNotNullOrBlank() && pathSegments.isNotEmpty() && pathSegments.last() == "graphql") {
+                pathSegments.removeLastOrNull()
+            }
+            if (url.host.isNotNullOrBlank()) {
+                pathSegments.add("login")
             }
             url =
                 url
@@ -330,6 +352,44 @@ class StashClient private constructor() {
                 .serverUrl(url)
                 .httpEngine(DefaultHttpEngine(httpClient))
                 .build()
+        }
+
+        /**
+         * Build an [ApolloClient] suitable for testing connectivity for the specified server.
+         */
+        fun createCookieHttpClient(trustCerts: Boolean): OkHttpClient {
+            var builder =
+                okHttpClient
+                    .newBuilder()
+                    .cookieJar(
+                        object : CookieJar {
+                            private val cookies = mutableMapOf<String, List<Cookie>>()
+
+                            override fun loadForRequest(url: HttpUrl): List<Cookie> = cookies[url.host] ?: listOf()
+
+                            override fun saveFromResponse(
+                                url: HttpUrl,
+                                cookies: List<Cookie>,
+                            ) {
+                                this.cookies[url.host] = cookies
+                            }
+                        },
+                    ).readTimeout(30, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
+
+            if (trustCerts) {
+                val sslContext = SSLContext.getInstance("SSL")
+                sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
+                builder =
+                    builder
+                        .sslSocketFactory(
+                            sslContext.socketFactory,
+                            TRUST_ALL_CERTS,
+                        ).hostnameVerifier { _, _ ->
+                            true
+                        }
+            }
+            return builder.build()
         }
     }
 }

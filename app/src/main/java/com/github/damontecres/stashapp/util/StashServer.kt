@@ -21,7 +21,7 @@ data class StashServer(
      *
      * Note: needs to populated via [updateServerPrefs]!
      */
-    val serverPreferences = ServerPreferences(this)
+    val serverPreferences by lazy { ServerPreferences(this) }
 
     /**
      * The server's version
@@ -35,6 +35,7 @@ data class StashServer(
 
     val okHttpClient by lazy { StashClient.createOkHttpClient(this) }
     val apolloClient by lazy { StashClient.createApolloClient(this) }
+    val streamingOkHttpClient by lazy { okHttpClient.newBuilder().cache(null).build() }
 
     /**
      * Query the server for preferences

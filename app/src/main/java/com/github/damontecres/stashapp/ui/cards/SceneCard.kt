@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
@@ -65,7 +66,7 @@ fun SceneCard(
         imageUrl = item?.paths?.screenshot,
         defaultImageDrawableRes = R.drawable.default_scene,
         videoUrl = item?.paths?.preview,
-        title = item?.titleOrFilename ?: "",
+        title = AnnotatedString(item?.titleOrFilename ?: ""),
         subtitle = { Text(item?.date ?: "") },
         description = {
             IconRowText(

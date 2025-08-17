@@ -1,0 +1,160 @@
+syntax = "proto3";
+
+option java_package = "com.github.damontecres.stashapp.proto";
+option java_multiple_files = true;
+
+message PinPreferences {
+  string pin = 1;
+  string read_only_pin = 2;
+  bool auto_submit = 3;
+}
+
+enum ThemeStyle {
+  SYSTEM = 0;
+  LIGHT = 1;
+  DARK = 2;
+}
+
+message InterfacePreferences {
+  bool use_compose_ui = 1;
+  int32 card_size = 2;
+  bool play_video_previews = 3;
+  bool remember_selected_tab = 4;
+  int64 card_preview_delay_ms = 5;
+  int64 slide_show_interval_ms = 6;
+  int64 slide_show_image_clip_pause_ms = 7;
+
+  bool show_grid_jump_buttons = 8;
+
+  string theme = 9;
+  ThemeStyle theme_style = 10;
+
+  bool show_progress_when_skipping = 11;
+  bool play_movement_sounds = 12;
+  bool use_up_down_previous_next = 13;
+  bool captions_by_default = 14;
+
+  TabPreferences tab_preferences = 15;
+
+  bool scroll_next_view_all = 16;
+  bool scroll_top_on_back = 17;
+  bool show_position_footer = 18;
+  bool show_rating_on_cards = 19;
+  bool video_preview_audio = 20;
+  bool page_with_remote_buttons = 21;
+
+  bool dpad_skip_indicator = 22;
+}
+
+enum TabType {
+  DETAILS = 0;
+  GALLERIES = 1;
+  GROUPS = 2;
+  PERFORMERS = 3;
+  STUDIOS = 4;
+  TAGS = 5;
+  SCENES = 6;
+  APPEARS_WITH = 7;
+  MARKERS = 8;
+  IMAGES = 9;
+  CONTAINING_GROUPS = 10;
+  SUB_GROUPS = 11;
+  SUBSIDIARY_STUDIOS = 12;
+  SUB_TAGS = 13;
+  PARENT_TAGS = 14;
+}
+
+message TabPreferences {
+  repeated TabType gallery = 1;
+  repeated TabType group = 2;
+  repeated TabType performer = 3;
+  repeated TabType studio = 4;
+  repeated TabType tags = 5;
+}
+
+enum PlaybackFinishBehavior {
+  DO_NOTHING = 0;
+  REPEAT = 1;
+  GO_BACK = 2;
+}
+
+enum StreamChoice{
+  HLS = 0;
+  DASH = 1;
+  MP4 = 2;
+  WEBM = 3;
+}
+
+enum Resolution {
+  UNSPECIFIED = 0;
+  RES_240P = 1;
+  RES_480P = 2;
+  RES_720P = 3;
+  RES_1080P = 4;
+  RES_2160P = 6;
+}
+
+enum PlaybackHttpClient{
+  OKHTTP = 0;
+  BUILTIN = 1;
+}
+
+message PlaybackPreferences {
+  int64 skip_forward_ms = 1;
+  int64 skip_backward_ms = 2;
+  PlaybackFinishBehavior playback_finish_behavior = 3;
+  bool dpad_skipping = 4;
+  StreamChoice stream_choice = 5;
+  bool show_debug_info = 6;
+  int32 controller_timeout_ms = 7;
+  bool save_play_history = 8;
+  bool start_playback_muted = 9;
+  Resolution transcode_above_resolution = 10;
+  bool video_filters_enabled = 11;
+  bool save_video_filters = 12;
+  bool debug_logging_enabled = 13;
+  PlaybackHttpClient playback_http_client = 14;
+  int32 seek_bar_steps = 15;
+
+  repeated string direct_play_video = 16;
+  repeated string direct_play_audio = 17;
+  repeated string direct_play_format = 18;
+}
+
+message CachePreferences {
+  int64 network_cache_size = 1;
+  int64 image_disk_cache_size = 2;
+  int32 cache_expiration_time = 3;
+  bool log_cache_hits = 4;
+}
+
+message UpdatePreferences {
+  bool check_for_updates = 1;
+  string update_url = 2;
+}
+
+message AdvancedPreferences {
+  //  bool enable_crash_reporting = 1; Must be in shared preferences
+  bool log_errors_to_server = 2;
+  bool experimental_features_enabled = 3;
+  int64 network_timeout_ms = 4;
+  bool trust_self_signed_certificates = 5;
+  int32 image_thread_count = 6;
+}
+
+message SearchPreferences {
+  int32 max_results = 1;
+  int64 search_delay_ms = 2;
+}
+
+message StashPreferences {
+  PinPreferences pin_preferences = 1;
+  InterfacePreferences interface_preferences = 2;
+  PlaybackPreferences playback_preferences = 3;
+  CachePreferences cache_preferences = 4;
+  UpdatePreferences update_preferences = 5;
+  AdvancedPreferences advanced_preferences = 6;
+  SearchPreferences search_preferences = 7;
+
+  bool preferences_migrated_v1 = 8;
+}

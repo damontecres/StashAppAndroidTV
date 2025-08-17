@@ -37,7 +37,7 @@ class ClassPresenterSelector : PresenterSelector() {
         presenterSelector: PresenterSelector,
     ): ClassPresenterSelector {
         mClassMap[cls] = presenterSelector
-        val innerPresenters = presenterSelector.presenters
+        val innerPresenters = presenterSelector.presenters ?: arrayOf()
         for (i in innerPresenters.indices) {
             if (!mPresenters.contains(innerPresenters[i])) {
                 mPresenters.add(innerPresenters[i])
@@ -46,8 +46,8 @@ class ClassPresenterSelector : PresenterSelector() {
         return this
     }
 
-    override fun getPresenter(item: Any): Presenter {
-        var cls: Class<*>? = item.javaClass
+    override fun getPresenter(item: Any?): Presenter {
+        var cls: Class<*>? = item?.javaClass
         var presenter: Any? = null
 
         do {

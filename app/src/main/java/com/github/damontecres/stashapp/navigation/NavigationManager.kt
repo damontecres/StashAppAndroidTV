@@ -8,9 +8,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.leanback.app.GuidedStepSupportFragment
+import com.github.damontecres.stashapp.DebugFragment
 import com.github.damontecres.stashapp.FilterFragment
 import com.github.damontecres.stashapp.GalleryFragment
 import com.github.damontecres.stashapp.GroupFragment
+import com.github.damontecres.stashapp.LicenseFragment
 import com.github.damontecres.stashapp.MainFragment
 import com.github.damontecres.stashapp.MarkerDetailsFragment
 import com.github.damontecres.stashapp.PerformerFragment
@@ -24,6 +26,7 @@ import com.github.damontecres.stashapp.StashSearchFragment
 import com.github.damontecres.stashapp.StudioFragment
 import com.github.damontecres.stashapp.TagFragment
 import com.github.damontecres.stashapp.UpdateAppFragment
+import com.github.damontecres.stashapp.UpdateChangelogFragment
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterFragment
 import com.github.damontecres.stashapp.image.ImageFragment
@@ -146,6 +149,7 @@ class NavigationManagerLeanback(
                 Destination.Setup -> SetupFragment()
 
                 is Destination.UpdateApp -> UpdateAppFragment()
+                is Destination.ReleaseChangelog -> UpdateChangelogFragment()
                 is Destination.ManageServers -> ManageServersFragment()
                 is Destination.CreateFilter -> CreateFilterFragment()
 
@@ -180,12 +184,9 @@ class NavigationManagerLeanback(
                     }
                 }
 
-                is Destination.Fragment -> {
-                    fragmentManager.fragmentFactory.instantiate(
-                        activity.classLoader,
-                        destination.className,
-                    )
-                }
+                is Destination.Debug -> DebugFragment()
+
+                is Destination.LicenseInfo -> LicenseFragment()
 
                 Destination.ChooseTheme -> throw IllegalArgumentException("ChooseTheme not supported unless using Compose")
             }

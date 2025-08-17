@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.image
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -33,6 +34,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -136,8 +138,16 @@ fun ImageOverlay(
             onClick = { if (slideshowEnabled) slideshowControls.stopSlideshow() else slideshowControls.startSlideshow() },
         )
 
+    val horizontalPadding = if (isNotTvDevice) 8.dp else 16.dp
     LazyColumn(
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 135.dp),
+        contentPadding =
+            PaddingValues(
+                start = horizontalPadding,
+                end = horizontalPadding,
+                top = 16.dp,
+                bottom = 135.dp,
+            ),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier.fillMaxSize(),
     ) {
         item {

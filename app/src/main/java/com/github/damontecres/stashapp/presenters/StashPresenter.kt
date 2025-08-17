@@ -26,11 +26,11 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.OCounter
-import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpAction
-import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpFilter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
+import com.github.damontecres.stashapp.views.models.CardUiSettings
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 abstract class StashPresenter<T>(
     private var callback: LongClickCallBack<T>? = null,
@@ -43,8 +43,10 @@ abstract class StashPresenter<T>(
             return callback!!
         }
 
+    private val cardsSettings: CardUiSettings by lazy { ServerViewModel.createUiSettings() }
+
     final override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
-        val cardView = StashImageCardView(parent.context)
+        val cardView = StashImageCardView(parent.context, cardsSettings)
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = false
         return ViewHolder(cardView)
@@ -67,7 +69,7 @@ abstract class StashPresenter<T>(
                 },
             )
 
-            cardView.mainImageView.visibility = View.VISIBLE
+            cardView.imageView.visibility = View.VISIBLE
             cardView.updateImageLayoutParams(imageMatchParent(item))
             doOnBindViewHolder(viewHolder.view as StashImageCardView, item)
         } else if (this is NullPresenter) {
@@ -80,7 +82,7 @@ abstract class StashPresenter<T>(
         cardView: StashImageCardView,
         @DrawableRes defaultDrawable: Int,
     ) {
-        cardView.mainImageView.setImageDrawable(
+        cardView.imageView.setImageDrawable(
             ContextCompat.getDrawable(
                 cardView.context,
                 defaultDrawable,
@@ -103,7 +105,7 @@ abstract class StashPresenter<T>(
         } else if (url.isNullOrBlank()) {
             throw IllegalStateException("Url is null or blank with no default image")
         } else if (forceCrop) {
-            cardView.mainImageView.scaleType = ImageView.ScaleType.CENTER_CROP
+            cardView.imageView.scaleType = ImageView.ScaleType.CENTER_CROP
             StashGlide
                 .with(cardView.context, url)
 //                .override(Target.SIZE_ORIGINAL)
@@ -111,7 +113,7 @@ abstract class StashPresenter<T>(
                 .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)
         } else {
-            cardView.mainImageView.scaleType = ImageView.ScaleType.FIT_CENTER
+            cardView.imageView.scaleType = ImageView.ScaleType.FIT_CENTER
             StashGlide
                 .with(cardView.context, url)
 //                .override(Target.SIZE_ORIGINAL)
@@ -129,7 +131,7 @@ abstract class StashPresenter<T>(
 
     override fun onUnbindViewHolder(viewHolder: ViewHolder) {
         val cardView = viewHolder.view as StashImageCardView
-        StashGlide.clear(cardView.mainImageView)
+        StashGlide.clear(cardView.imageView)
         cardView.onUnbindViewHolder()
         cardView.setOnLongClickListener(null)
     }

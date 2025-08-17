@@ -40,10 +40,10 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
@@ -59,13 +59,15 @@ import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
-import com.github.damontecres.stashapp.ui.cards.TagCard
+import com.github.damontecres.stashapp.ui.compat.Button
+import com.github.damontecres.stashapp.ui.components.CreatedTimestamp
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.TitleValueText
+import com.github.damontecres.stashapp.ui.components.UpdatedTimestamp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -81,6 +83,7 @@ fun MarkerPage(
     itemOnClick: ItemOnClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: MarkerDetailsViewModel = viewModel(),
 ) {
     LaunchedEffect(Unit) {
@@ -129,9 +132,17 @@ fun MarkerPage(
         }
 
     if (marker != null && primaryTag != null) {
+        val title =
+            if (marker!!.title.isNotNullOrBlank()) {
+                marker!!.title
+            } else {
+                primaryTag!!.name
+            }
+        onUpdateTitle?.invoke(AnnotatedString(title))
         MarkerPageContent(
             server = server,
             marker = marker!!,
+            markerTitle = if (onUpdateTitle == null) title else null,
             primaryTag = primaryTag!!,
             tags = tags,
             itemOnClick = itemOnClick,
@@ -158,6 +169,7 @@ fun MarkerPage(
 fun MarkerPageContent(
     server: StashServer,
     marker: FullMarkerData,
+    markerTitle: String?,
     primaryTag: TagData,
     tags: List<TagData>,
     itemOnClick: ItemOnClicker<Any>,
@@ -213,27 +225,24 @@ fun MarkerPageContent(
                     .fillMaxWidth()
                     .padding(16.dp),
         ) {
-            Text(
-                modifier = Modifier,
-                text =
-                    if (marker.title.isNotNullOrBlank()) {
-                        marker.title
-                    } else {
-                        primaryTag.name
-                    },
-                color = MaterialTheme.colorScheme.onBackground,
-                style =
-                    MaterialTheme.typography.displayMedium.copy(
-                        shadow =
-                            Shadow(
-                                color = Color.DarkGray,
-                                offset = Offset(5f, 2f),
-                                blurRadius = 2f,
-                            ),
-                    ),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            markerTitle?.let {
+                Text(
+                    modifier = Modifier,
+                    text = it,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style =
+                        MaterialTheme.typography.displayMedium.copy(
+                            shadow =
+                                Shadow(
+                                    color = Color.DarkGray,
+                                    offset = Offset(5f, 2f),
+                                    blurRadius = 2f,
+                                ),
+                        ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
 
             val interactionSource = remember { MutableInteractionSource() }
             val isFocused = interactionSource.collectIsFocusedAsState().value
@@ -332,36 +341,19 @@ fun MarkerPageContent(
                     modifier = Modifier,
                 )
             }
-        }
-
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier =
-                Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-        ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(32.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Column(
-                    modifier = Modifier,
-                ) {
-                    Text(
-                        text = stringResource(R.string.stashapp_primary_tag),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                    TagCard(
-                        modifier = Modifier.padding(top = 16.dp),
-                        uiConfig = uiConfig,
-                        item = primaryTag,
-                        onClick = { itemOnClick.onClick(primaryTag, null) },
-                        longClicker = { _, _ -> },
-                        getFilterAndPosition = null,
-                    )
-                }
+                ItemsRow(
+                    title = stringResource(R.string.stashapp_primary_tag),
+                    items = listOf(primaryTag),
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = { _, _ -> },
+                )
+
                 if (tags.isNotEmpty()) {
                     ItemsRow(
                         title = stringResource(DataType.TAG.pluralStringId),
@@ -376,18 +368,8 @@ fun MarkerPageContent(
                 modifier = Modifier,
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                if (marker.created_at.toString().length >= 10) {
-                    TitleValueText(
-                        stringResource(R.string.stashapp_created_at),
-                        marker.created_at.toString().substring(0..<10),
-                    )
-                }
-                if (marker.updated_at.toString().length >= 10) {
-                    TitleValueText(
-                        stringResource(R.string.stashapp_updated_at),
-                        marker.updated_at.toString().substring(0..<10),
-                    )
-                }
+                CreatedTimestamp(marker.created_at)
+                UpdatedTimestamp(marker.updated_at)
                 TitleValueText(
                     stringResource(R.string.id),
                     marker.id,

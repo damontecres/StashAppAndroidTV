@@ -9,9 +9,12 @@ import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
+import dev.b3nedikt.restring.Restring
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.FileNotFoundException
 
 /**
  * Represents configuration that users have set server-side
@@ -33,23 +36,6 @@ class ServerPreferences(
     var uiConfiguration: Map<*, *>? = null
         private set
 
-    init {
-        try {
-            val jsonStr =
-                StashApplication
-                    .getApplication()
-                    .openFileInput("${serverKey}_ui.json")
-                    .bufferedReader()
-                    .use { it.readText() }
-            readUIConfig(JSONObject(jsonStr).toMap())
-        } catch (ex: FileNotFoundException) {
-            Log.w(TAG, "UI config file not found")
-            // no-op
-        } catch (ex: Exception) {
-            Log.e(TAG, "Exception reading UI config", ex)
-        }
-    }
-
     // Properties stored in preferences
     val serverVersion: Version
         get() {
@@ -65,13 +51,20 @@ class ServerPreferences(
 
     val showStudioAsText get() = preferences.getBoolean(PREF_INTERFACE_STUDIOS_AS_TEXT, false)
 
-    val minimumPlayPercent get() = preferences.getInt(PREF_MINIMUM_PLAY_PERCENT, 20)
+    val minimumPlayPercent get() = preferences.getInt(PREF_MINIMUM_PLAY_PERCENT, 0)
 
     val ratingsAsStars get() = preferences.getString(PREF_RATING_TYPE, "stars") == "stars"
 
     val alwaysStartFromBeginning get() = preferences.getBoolean(PREF_ALWAYS_START_BEGINNING, false)
 
     val abbreviateCounters get() = preferences.getBoolean(PREF_INTERFACE_ABBREV_COUNTERS, false)
+
+    val customLocalesEnabled
+        get() =
+            preferences.getBoolean(
+                PREF_INTERFACE_CUSTOM_LOCALES_ENABLED,
+                false,
+            )
 
     val companionPluginVersion
         get() =
@@ -115,23 +108,52 @@ class ServerPreferences(
                 PREF_INTERFACE_STUDIOS_AS_TEXT,
                 config.configuration.`interface`.showStudioAsText ?: false,
             )
+            putBoolean(
+                PREF_INTERFACE_CUSTOM_LOCALES_ENABLED,
+                config.configuration.`interface`.customLocalesEnabled == true &&
+                    config.configuration.`interface`.customLocales
+                        .isNotNullOrBlank(),
+            )
         }
+        if (config.configuration.`interface`.customLocalesEnabled == true &&
+            config.configuration.`interface`.customLocales
+                .isNotNullOrBlank()
+        ) {
+            try {
+                val root = Json.parseToJsonElement(config.configuration.`interface`.customLocales)
+                if (root is JsonObject) {
+                    val map =
+                        parseDictionary(
+                            root.jsonObject,
+                            listOf("stashapp"),
+                            false,
+                        ).associate { it.key to it.value }
+                    Restring.putStrings(Restring.locale, map)
+
+                    if (root.containsKey("StashAppAndroidTV") && root.jsonObject["StashAppAndroidTV"] is JsonObject) {
+                        val appMap =
+                            parseDictionary(
+                                root.jsonObject["StashAppAndroidTV"]!!.jsonObject,
+                                listOf(),
+                                true,
+                            ).associate { it.key to it.value }
+                        Restring.putStrings(Restring.locale, appMap)
+                    }
+                } else {
+                    Restring.clear()
+                }
+            } catch (ex: Exception) {
+                Log.w(TAG, "Error parsing custom locales", ex)
+                Restring.clear()
+            }
+        } else {
+            Restring.clear()
+        }
+
         val ui = config.configuration.ui
         if (ui !is Map<*, *>) {
             Log.w(TAG, "config.configuration.ui is not a map")
         } else {
-            try {
-                val jsonStr = JSONObject(ui).toString()
-                StashApplication
-                    .getApplication()
-                    .openFileOutput("${serverKey}_ui.json", Context.MODE_PRIVATE)
-                    .use {
-                        it.write(jsonStr.toByteArray())
-                    }
-            } catch (ex: Exception) {
-                Log.e(TAG, "Exception writing UI JSON", ex)
-            }
-
             preferences.edit {
                 val taskDefaults = ui.getCaseInsensitive("taskDefaults") as Map<String, *>?
                 try {
@@ -162,11 +184,7 @@ class ServerPreferences(
                 }
             }
             val minPlayPercent = ui.getCaseInsensitive(PREF_MINIMUM_PLAY_PERCENT)
-            try {
-                putInt(PREF_MINIMUM_PLAY_PERCENT, minPlayPercent?.toString()?.toInt() ?: 20)
-            } catch (ex: NumberFormatException) {
-                Log.w(TAG, "$PREF_MINIMUM_PLAY_PERCENT is not an integer: '$minPlayPercent'")
-            }
+            putInt(PREF_MINIMUM_PLAY_PERCENT, minPlayPercent?.toString()?.toIntOrNull() ?: 0)
 
             val ratingSystemOptionsRaw = ui.getCaseInsensitive("ratingSystemOptions")
 
@@ -181,7 +199,7 @@ class ServerPreferences(
                         "half" -> 0.5f
                         "quarter" -> 0.25f
                         "tenth" -> 0.1f
-                        else -> 0.5f
+                        else -> 1.0f
                     }
                 putString(PREF_RATING_TYPE, type)
                 putFloat(PREF_RATING_PRECISION, starPrecision)
@@ -189,6 +207,7 @@ class ServerPreferences(
                 Log.e(
                     TAG,
                     "Exception parsing ratingSystemOptions: $ratingSystemOptionsRaw",
+                    ex,
                 )
             }
 
@@ -421,6 +440,7 @@ class ServerPreferences(
         const val PREF_INTERFACE_MENU_ITEMS = "interface.menuItems"
         const val PREF_INTERFACE_STUDIOS_AS_TEXT = "interface.showStudioAsText"
         const val PREF_INTERFACE_ABBREV_COUNTERS = "interface.abbreviateCounters"
+        const val PREF_INTERFACE_CUSTOM_LOCALES_ENABLED = "interface.customLocalesEnabled"
 
         const val PREF_JOB_SCAN = "app.job.scan"
         const val PREF_JOB_GENERATE = "app.job.generate"

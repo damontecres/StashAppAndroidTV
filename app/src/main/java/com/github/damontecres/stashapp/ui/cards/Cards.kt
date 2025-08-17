@@ -60,19 +60,18 @@ import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
-import androidx.preference.PreferenceManager
-import androidx.tv.material3.Card
 import androidx.tv.material3.CardBorder
 import androidx.tv.material3.CardColors
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.CardGlow
 import androidx.tv.material3.CardScale
 import androidx.tv.material3.CardShape
-import androidx.tv.material3.ClassicCard
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import coil3.imageLoader
+import coil3.request.Disposable
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
@@ -96,6 +95,7 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.LocalPlayerContext
+import com.github.damontecres.stashapp.ui.compat.Card
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.ui.util.playOnClickSound
@@ -116,10 +116,7 @@ fun ImageOverlay(
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     val context = LocalContext.current
-    val showRatings =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getBoolean(context.getString(R.string.pref_key_show_rating), true)
+    val showRatings = LocalGlobalContext.current.preferences.interfacePreferences.showRatingOnCards
 
     Box(modifier = modifier.fillMaxSize()) {
         if (showRatings && rating100 != null && rating100 >= 0) {
@@ -222,64 +219,7 @@ fun IconRowText(
 }
 
 /**
- * Main card based on [ClassicCard]
- */
-@OptIn(UnstableApi::class)
-@Composable
-fun RootCard(
-    item: Any?,
-    onClick: () -> Unit,
-    title: String,
-    uiConfig: ComposeUiConfig,
-    imageWidth: Dp,
-    imageHeight: Dp,
-    longClicker: LongClicker<Any>,
-    getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
-    modifier: Modifier = Modifier,
-    imageUrl: String? = null,
-    @DrawableRes defaultImageDrawableRes: Int? = null,
-    imageContent: @Composable (BoxScope.() -> Unit)? = null,
-    videoUrl: String? = null,
-    imageOverlay: @Composable AnimatedVisibilityScope.() -> Unit = {},
-    subtitle: @Composable (focused: Boolean) -> Unit = {},
-    description: @Composable BoxScope.(focused: Boolean) -> Unit = {},
-    shape: CardShape = CardDefaults.shape(),
-    colors: CardColors = CardDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-    scale: CardScale = CardDefaults.scale(),
-    border: CardBorder = CardDefaults.border(),
-    glow: CardGlow = CardDefaults.glow(),
-    contentPadding: PaddingValues = PaddingValues(),
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    imagePadding: Dp = 0.dp,
-) = RootCard(
-    item,
-    onClick,
-    AnnotatedString(title),
-    uiConfig,
-    imageWidth,
-    imageHeight,
-    longClicker,
-    getFilterAndPosition,
-    modifier,
-    imageUrl,
-    defaultImageDrawableRes,
-    imageContent,
-    videoUrl,
-    imageOverlay,
-    subtitle,
-    description,
-    shape,
-    colors,
-    scale,
-    border,
-    glow,
-    contentPadding,
-    interactionSource,
-    imagePadding,
-)
-
-/**
- * Main card based on [ClassicCard]
+ * Main card based on [Card]
  */
 @OptIn(UnstableApi::class)
 @Composable
@@ -307,28 +247,16 @@ fun RootCard(
     glow: CardGlow = CardDefaults.glow(),
     contentPadding: PaddingValues = PaddingValues(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    imagePadding: Dp = 0.dp,
     extraImageUrls: List<String> = listOf(),
 ) {
     val context = LocalContext.current
-    val videoDelay =
-        remember {
-            PreferenceManager
-                .getDefaultSharedPreferences(context)
-                .getInt(
-                    context.getString(R.string.pref_key_ui_card_overlay_delay),
-                    context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
-                ).toLong()
-        }
+    val videoDelay = uiConfig.preferences.interfacePreferences.cardPreviewDelayMs
 
-    var focused = interactionSource.collectIsFocusedAsState().value
+    val focused = interactionSource.collectIsFocusedAsState().value
     var focusedAfterDelay by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
-    val playVideoPreviews =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getBoolean("playVideoPreviews", true)
+    val playVideoPreviews = uiConfig.preferences.interfacePreferences.playVideoPreviews
 
     if (focused) {
         LaunchedEffect(Unit) {
@@ -337,6 +265,15 @@ fun RootCard(
                 focusedAfterDelay = true
             } else {
                 focusedAfterDelay = false
+            }
+        }
+        if (extraImageUrls.isNotEmpty()) {
+            val disposable =
+                context.imageLoader.enqueue(
+                    ImageRequest.Builder(context).data(extraImageUrls.first()).build(),
+                )
+            DisposableEffect(Unit) {
+                onDispose { disposable.dispose() }
             }
         }
     } else {
@@ -391,7 +328,7 @@ fun RootCard(
                         LocalGlobalContext.current.server,
                     )
                 LaunchedEffect(player) {
-                    maybeMuteAudio(context, true, player)
+                    maybeMuteAudio(uiConfig.preferences, true, player)
                     val mediaItem =
                         MediaItem
                             .Builder()
@@ -431,22 +368,31 @@ fun RootCard(
                                         .background(Color.Black),
                                 )
                             },
-                        modifier = Modifier.padding(imagePadding),
+                        modifier = Modifier.padding(contentPadding),
                     )
                 }
             } else {
                 var extraImageUrl by remember(imageUrl) { mutableStateOf(imageUrl) }
                 if (playVideoPreviews && focusedAfterDelay && extraImageUrls.isNotEmpty()) {
+                    var enqueued by remember { mutableStateOf<Disposable?>(null) }
                     LaunchedEffect(Unit) {
                         var idx = 0
                         while (true) {
                             extraImageUrl = extraImageUrls[idx]
                             if (++idx >= extraImageUrls.size) idx = 0
+                            // Prefetch next image
+                            enqueued =
+                                context.imageLoader.enqueue(
+                                    ImageRequest.Builder(context).data(extraImageUrls[idx]).build(),
+                                )
                             delay(2000L)
                         }
                     }
                     DisposableEffect(Unit) {
-                        onDispose { extraImageUrl = imageUrl }
+                        onDispose {
+                            extraImageUrl = imageUrl
+                            enqueued?.dispose()
+                        }
                     }
                 }
                 CardImage(
@@ -455,7 +401,7 @@ fun RootCard(
                     defaultImageDrawableRes = defaultImageDrawableRes,
                     imageContent = imageContent,
                     crossFade = false,
-                    modifier = Modifier.padding(imagePadding),
+                    modifier = Modifier.padding(contentPadding),
                 )
             }
             this@Card.AnimatedVisibility(
@@ -667,7 +613,7 @@ fun StashCard(
         is CreateNew -> {
             RootCard(
                 item = item,
-                title = StashAction.CREATE_NEW.actionName,
+                title = AnnotatedString(StashAction.CREATE_NEW.actionName),
                 subtitle = {
                     Text(text = item.name.replaceFirstChar(Char::titlecase))
                 },

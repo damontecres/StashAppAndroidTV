@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicLong
 @Serializable
 sealed class Destination(
     val fullScreen: Boolean = false,
+    val fullScreenTouch: Boolean = fullScreen,
 ) : Parcelable {
     protected val destId = counter.getAndIncrement()
 
@@ -53,7 +54,7 @@ sealed class Destination(
     @Serializable
     data class Settings(
         val screenOption: PreferenceScreenOption,
-    ) : Destination(true)
+    ) : Destination(true, false)
 
     @Serializable
     data object Search : Destination()
@@ -130,6 +131,13 @@ sealed class Destination(
     }
 
     @Serializable
+    data class ReleaseChangelog(
+        val release: Release,
+    ) : Destination(true) {
+        override fun toString(): String = "ReleaseChangelog(version=${release.version})"
+    }
+
+    @Serializable
     data class ManageServers(
         val overrideReadOnly: Boolean,
     ) : Destination(true)
@@ -145,13 +153,11 @@ sealed class Destination(
     @Serializable
     data object ChooseTheme : Destination(true)
 
-    /**
-     * An arbitrary fragment that requires no arguments
-     */
     @Serializable
-    data class Fragment(
-        val className: String,
-    ) : Destination(true)
+    data object Debug : Destination(true)
+
+    @Serializable
+    data object LicenseInfo : Destination(true)
 
     override fun describeContents(): Int = 0
 

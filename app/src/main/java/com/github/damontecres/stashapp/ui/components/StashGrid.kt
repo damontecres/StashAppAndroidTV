@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components
 
+import android.content.res.Configuration
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -15,9 +16,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -28,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -41,11 +46,11 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.preference.PreferenceManager
-import androidx.tv.material3.Button
+import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
@@ -62,6 +67,8 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.cards.StashCard
+import com.github.damontecres.stashapp.ui.compat.Button
+import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.playback.isBackwardButton
 import com.github.damontecres.stashapp.ui.components.playback.isForwardButton
 import com.github.damontecres.stashapp.ui.isPlayKeyUp
@@ -146,124 +153,140 @@ fun StashGridControls(
 
     Column(modifier = modifier) {
         if (showTopRow) {
-            Row(
-                modifier =
-                    Modifier
-                        .padding(8.dp)
-                        .focusGroup()
-                        .onFocusChanged {
-                            if (it.isFocused) rowFocusRequester.tryRequestFocus()
-                        }.focusable(true),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+            ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                LazyRow(
+                    modifier =
+                        Modifier
+                            .padding(8.dp)
+                            .focusGroup()
+                            .onFocusChanged {
+                                if (it.isFocused) rowFocusRequester.tryRequestFocus()
+                            }.focusable(true),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     if (filterUiMode == FilterUiMode.SAVED_FILTERS) {
-                        SavedFiltersButton(
+                        item {
+                            SavedFiltersButton(
+                                modifier =
+                                    Modifier
+                                        .focusRequester(rowFocusRequester)
+                                        .focusProperties { down = gridFocusRequester },
+                                dataType = dataType,
+                                onFilterChange = { updateFilter(it) },
+                                onCreateFilter = { createFilter.invoke(CreateFilter.NEW_FILTER) },
+                                onFCreateFromFilter = { createFilter.invoke(CreateFilter.FROM_CURRENT) },
+                            )
+                        }
+                    }
+                    item {
+                        SortByButton(
                             modifier =
                                 Modifier
-                                    .focusRequester(rowFocusRequester)
-                                    .focusProperties { down = gridFocusRequester },
+                                    .ifElse(
+                                        filterUiMode != FilterUiMode.SAVED_FILTERS,
+                                        { Modifier.focusRequester(rowFocusRequester) },
+                                    ).focusProperties { down = gridFocusRequester },
                             dataType = dataType,
-                            onFilterChange = { updateFilter(it) },
-                            onCreateFilter = { createFilter.invoke(CreateFilter.NEW_FILTER) },
-                            onFCreateFromFilter = { createFilter.invoke(CreateFilter.FROM_CURRENT) },
+                            current = filterArgs.sortAndDirection,
+                            onSortChange = {
+                                updateFilter(filterArgs.with(it).withResolvedRandom())
+                            },
                         )
                     }
-                    SortByButton(
-                        modifier =
-                            Modifier
-                                .ifElse(
-                                    filterUiMode != FilterUiMode.SAVED_FILTERS,
-                                    { Modifier.focusRequester(rowFocusRequester) },
-                                ).focusProperties { down = gridFocusRequester },
-                        dataType = dataType,
-                        current = filterArgs.sortAndDirection,
-                        onSortChange = {
-                            updateFilter(filterArgs.with(it).withResolvedRandom())
-                        },
-                    )
                     if (dataType.supportsPlaylists || dataType == DataType.IMAGE) {
-                        Button(
-                            onClick = {
-                                when (dataType) {
-                                    DataType.IMAGE -> {
-                                        navManager.navigate(
-                                            Destination.Slideshow(
-                                                filterArgs,
-                                                0,
-                                                true,
-                                            ),
-                                        )
-                                    }
+                        item {
+                            Button(
+                                onClick = {
+                                    when (dataType) {
+                                        DataType.IMAGE -> {
+                                            navManager.navigate(
+                                                Destination.Slideshow(
+                                                    filterArgs,
+                                                    0,
+                                                    true,
+                                                ),
+                                            )
+                                        }
 
-                                    DataType.MARKER -> {
-                                        showMarkerDialog = true
-                                    }
+                                        DataType.MARKER -> {
+                                            showMarkerDialog = true
+                                        }
 
-                                    else -> {
-                                        navManager.navigate(Destination.Playlist(filterArgs, 0, 0))
+                                        else -> {
+                                            navManager.navigate(
+                                                Destination.Playlist(
+                                                    filterArgs,
+                                                    0,
+                                                    0,
+                                                ),
+                                            )
+                                        }
                                     }
-                                }
-                            },
-                            modifier = Modifier.focusProperties { down = gridFocusRequester },
-                        ) {
-                            Text(text = stringResource(R.string.play_all))
+                                },
+                                modifier = Modifier.focusProperties { down = gridFocusRequester },
+                            ) {
+                                Text(text = stringResource(R.string.play_all))
+                            }
                         }
                     }
                     if (filterUiMode == FilterUiMode.CREATE_FILTER) {
-                        Button(
-                            onClick = {
-                                createFilter.invoke(CreateFilter.FROM_CURRENT)
-                            },
-                            modifier = Modifier.focusProperties { down = gridFocusRequester },
-                        ) {
-                            Text(text = "Create Filter")
+                        item {
+                            Button(
+                                onClick = {
+                                    createFilter.invoke(CreateFilter.FROM_CURRENT)
+                                },
+                                modifier = Modifier.focusProperties { down = gridFocusRequester },
+                            ) {
+                                Text(text = "Create Filter")
+                            }
                         }
                     }
                     if (subToggleLabel != null) {
-                        SwitchWithLabel(
-                            modifier = Modifier.focusProperties { down = gridFocusRequester },
-                            label = subToggleLabel,
-                            checked = checked,
-                            enabled = subToggleEnabled,
-                            onStateChange = { isChecked ->
-                                checked = isChecked
-                                onSubToggleCheck?.invoke(isChecked)
+                        item {
+                            SwitchWithLabel(
+                                modifier = Modifier.focusProperties { down = gridFocusRequester },
+                                label = subToggleLabel,
+                                checked = checked,
+                                enabled = subToggleEnabled,
+                                onStateChange = { isChecked ->
+                                    checked = isChecked
+                                    onSubToggleCheck?.invoke(isChecked)
+                                },
+                            )
+                        }
+                    }
+
+                    var job: Job? = null
+                    val searchDelay = uiConfig.preferences.searchPreferences.searchDelayMs
+                    item {
+                        SearchEditTextBox(
+                            modifier =
+                                Modifier.focusProperties { down = gridFocusRequester },
+                            value = searchQuery,
+                            onValueChange = { newQuery ->
+                                shouldRequestFocus = false
+                                searchQuery = newQuery
+                                job?.cancel()
+                                job =
+                                    scope.launch {
+                                        delay(searchDelay)
+                                        if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
+                                            updateFilter(filterArgs.withQuery(searchQuery))
+                                        }
+                                    }
+                            },
+                            onSearchClick = {
+                                shouldRequestFocus = true
+                                job?.cancel()
+                                if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
+                                    updateFilter(filterArgs.withQuery(searchQuery))
+                                }
+                                gridFocusRequester.tryRequestFocus()
                             },
                         )
                     }
                 }
-                var job: Job? = null
-                val searchDelay =
-                    PreferenceManager
-                        .getDefaultSharedPreferences(context)
-                        .getInt(context.getString(R.string.pref_key_search_delay), 500)
-                        .toLong()
-                SearchEditTextBox(
-                    modifier =
-                        Modifier.focusProperties { down = gridFocusRequester },
-                    value = searchQuery,
-                    onValueChange = { newQuery ->
-                        shouldRequestFocus = false
-                        searchQuery = newQuery
-                        job?.cancel()
-                        job =
-                            scope.launch {
-                                delay(searchDelay)
-                                if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
-                                    updateFilter(filterArgs.withQuery(searchQuery))
-                                }
-                            }
-                    },
-                    onSearchClick = {
-                        shouldRequestFocus = true
-                        job?.cancel()
-                        if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
-                            updateFilter(filterArgs.withQuery(searchQuery))
-                        }
-                        gridFocusRequester.tryRequestFocus()
-                    },
-                )
             }
         }
         StashGrid(
@@ -318,10 +341,15 @@ fun StashGrid(
     initialPosition: Int = 0,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
 ) {
+    val orientation = LocalConfiguration.current.orientation
     val navigationManager = LocalGlobalContext.current.navigationManager
     val startPosition = initialPosition.coerceIn(0, (pager.size - 1).coerceAtLeast(0))
     val columns =
-        (uiConfig.cardSettings.columns * (ScenePresenter.CARD_WIDTH.toDouble() / pager.filter.dataType.defaultCardWidth)).toInt()
+        (
+            uiConfig.cardSettings.columns * (ScenePresenter.CARD_WIDTH.toDouble() / pager.filter.dataType.defaultCardWidth) +
+                // TODO better sizing
+                if (isNotTvDevice && orientation == Configuration.ORIENTATION_LANDSCAPE) 1 else 0
+        ).toInt()
 
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
@@ -385,6 +413,18 @@ fun StashGrid(
         focusedIndex = index
     }
 
+    if (isNotTvDevice) {
+        // Only focusing invokes positionCallback, so on touch, listen to changes
+        // TODO Maybe can use this for both tv & touch?
+        LaunchedEffect(gridState) {
+            snapshotFlow { gridState.firstVisibleItemIndex }
+                .collect {
+                    positionCallback?.invoke(columns, it)
+                    focusOn.invoke(it)
+                }
+        }
+    }
+
     // Wait for a recomposition to focus
     LaunchedEffect(alphabetFocus) {
         if (alphabetFocus) {
@@ -393,19 +433,9 @@ fun StashGrid(
         alphabetFocus = false
     }
 
-    val prefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
-
-    val useBackToJump =
-        remember { prefs.getBoolean(context.getString(R.string.pref_key_back_button_scroll), true) }
-    val showFooter =
-        remember { prefs.getBoolean(context.getString(R.string.pref_key_show_grid_footer), true) }
-    val useJumpRemoteButtons =
-        remember {
-            prefs.getBoolean(
-                context.getString(R.string.pref_key_remote_page_buttons),
-                true,
-            )
-        }
+    val useBackToJump = uiConfig.preferences.interfacePreferences.scrollTopOnBack
+    val showFooter = uiConfig.preferences.interfacePreferences.showPositionFooter
+    val useJumpRemoteButtons = uiConfig.preferences.interfacePreferences.pageWithRemoteButtons
     val jump2 =
         remember {
             if (pager.size >= 25_000) {
@@ -441,6 +471,18 @@ fun StashGrid(
             gridState.scrollToItem(newPosition, 0)
         }
     }
+    val jumpToTop = {
+        scope.launch(StashCoroutineExceptionHandler()) {
+            if (focusedIndex < (columns * 6)) {
+                // If close, animate the scroll
+                gridState.animateScrollToItem(0, 0)
+            } else {
+                gridState.scrollToItem(0, 0)
+            }
+            focusOn(0)
+            zeroFocus.tryRequestFocus()
+        }
+    }
     val server = LocalGlobalContext.current.server
 
     var longPressing by remember { mutableStateOf(false) }
@@ -473,16 +515,7 @@ fun StashGrid(
                     if (it.type != KeyEventType.KeyUp) {
                         return@onKeyEvent false
                     } else if (useBackToJump && it.key == Key.Back && focusedIndex > 0) {
-                        scope.launch(StashCoroutineExceptionHandler()) {
-                            if (focusedIndex < (columns * 6)) {
-                                // If close, animate the scroll
-                                gridState.animateScrollToItem(0, 0)
-                            } else {
-                                gridState.scrollToItem(0, 0)
-                            }
-                            focusOn(0)
-                            zeroFocus.tryRequestFocus()
-                        }
+                        jumpToTop()
                         return@onKeyEvent true
                     } else if (isPlayKeyUp(it)) {
                         val destination =
@@ -643,10 +676,27 @@ fun StashGrid(
                     )
                 }
             }
+            if (isNotTvDevice) {
+                androidx.compose.animation.AnimatedVisibility(
+                    focusedIndex > columns,
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                ) {
+                    // Can use material3 here since it's only for non-TV
+                    androidx.compose.material3.Button(
+                        onClick = { jumpToTop() },
+                        modifier = Modifier.padding(32.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowUp,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp),
+                        )
+                    }
+                }
+            }
         }
         // Letters
-        if (showJumpButtons &&
-            pager.size > 0 &&
+        if (pager.isNotEmpty() &&
             SortOption.isJumpSupported(
                 filterArgs.dataType,
                 filterArgs.sortAndDirection.sort,
@@ -726,12 +776,4 @@ fun AlphabetButtons(
             }
         }
     }
-}
-
-@Composable
-fun SearchQuery(
-    query: String?,
-    onQueryChange: (String?) -> Unit,
-    modifier: Modifier = Modifier,
-) {
 }

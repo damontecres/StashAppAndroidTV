@@ -1,5 +1,7 @@
 package com.github.damontecres.stashapp
 
+import android.app.ActivityManager
+import android.content.Context.ACTIVITY_SERVICE
 import android.graphics.Color
 import android.graphics.Typeface
 import android.media.MediaCodecList
@@ -121,6 +123,10 @@ class DebugFragment : Fragment(R.layout.debug) {
                 StashClient.createUserAgent(requireContext()),
             ),
         )
+
+        val activityManager = requireContext().getSystemService(ACTIVITY_SERVICE) as ActivityManager
+        otherTable.addView(createRow("isLowRam", activityManager.isLowRamDevice.toString()))
+
         otherTable.isStretchAllColumns = true
 
         viewLifecycleOwner.lifecycleScope.launch(

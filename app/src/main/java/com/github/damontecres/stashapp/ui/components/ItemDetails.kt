@@ -1,6 +1,8 @@
 package com.github.damontecres.stashapp.ui.components
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,15 +12,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.tv.material3.Button
+import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
@@ -26,9 +37,18 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.filter.extractTitle
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
+import com.github.damontecres.stashapp.ui.compat.Button
+import com.github.damontecres.stashapp.ui.components.scene.AddRemove
+import com.github.damontecres.stashapp.ui.pages.DialogParams
+import com.github.damontecres.stashapp.ui.pages.SearchForDialog
+import com.github.damontecres.stashapp.ui.pages.SearchForParams
 import com.github.damontecres.stashapp.ui.titleCount
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
@@ -39,6 +59,8 @@ fun ItemDetails(
     tableRows: List<TableRow>,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    onEdit: (EditItem) -> Unit,
+    editableTypes: Set<DataType>,
     modifier: Modifier = Modifier,
     favorite: Boolean? = null,
     favoriteClick: (() -> Unit)? = null,
@@ -48,6 +70,65 @@ fun ItemDetails(
     tags: List<TagData>? = null,
     bodyContent: (LazyListScope.() -> Unit)? = null,
 ) {
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+
+    var showDialog by remember { mutableStateOf<DialogParams?>(null) }
+    var searchForDataType by remember { mutableStateOf<SearchForParams?>(null) }
+
+    val removeLongClicker =
+        remember {
+            LongClicker<Any> { item, filterAndPosition ->
+                item as StashData
+                val dataType = Destination.getDataType(item)
+                showDialog =
+                    DialogParams(
+                        title = extractTitle(item) ?: "",
+                        fromLongClick = true,
+                        items =
+                            buildList {
+                                add(
+                                    DialogItem(
+                                        context.getString(R.string.go_to),
+                                        Icons.Default.PlayArrow,
+                                    ) {
+                                        itemOnClick.onClick(
+                                            item,
+                                            filterAndPosition,
+                                        )
+                                    },
+                                )
+                                if (uiConfig.readOnlyModeDisabled && dataType in editableTypes) {
+                                    add(
+                                        DialogItem(
+                                            onClick = {
+                                                focusManager.moveFocus(FocusDirection.Previous)
+                                                onEdit.invoke(
+                                                    EditItem(
+                                                        item.id,
+                                                        dataType,
+                                                        AddRemove.REMOVE,
+                                                    ),
+                                                )
+                                            },
+                                            headlineContent = {
+                                                Text(stringResource(R.string.stashapp_actions_remove))
+                                            },
+                                            leadingContent = {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = stringResource(R.string.stashapp_actions_remove),
+                                                    tint = Color.Red,
+                                                )
+                                            },
+                                        ),
+                                    )
+                                }
+                            },
+                    )
+            }
+        }
+
     Row(
         modifier =
             modifier
@@ -64,22 +145,50 @@ fun ItemDetails(
                     ImageRequest
                         .Builder(LocalContext.current)
                         .data(imageUrl)
-                        .crossfade(true)
+                        .crossfade(false)
                         .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
             )
         }
-        LazyColumn(modifier = Modifier.padding(12.dp)) {
-            if (favorite != null && favoriteClick != null) {
-                val color = if (favorite)Color.Red else Color.LightGray
-                item {
-                    ProvideTextStyle(MaterialTheme.typography.displayLarge.copy(color = color)) {
-                        Button(
-                            onClick = favoriteClick,
-                        ) {
-                            Text(text = stringResource(R.string.fa_heart), fontFamily = FontAwesome)
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(top = 16.dp),
+            modifier = Modifier.padding(12.dp),
+        ) {
+            item {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier,
+                ) {
+                    if (favorite != null && favoriteClick != null) {
+                        val color = if (favorite) Color.Red else Color.LightGray
+
+                        ProvideTextStyle(MaterialTheme.typography.displayLarge.copy(color = color)) {
+                            Button(
+                                onClick = favoriteClick,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.fa_heart),
+                                    fontFamily = FontAwesome,
+                                )
+                            }
                         }
+                    }
+                    if (uiConfig.readOnlyModeDisabled && editableTypes.isNotEmpty()) {
+                        EditButton(
+                            onClick = {
+                                showDialog =
+                                    DialogParams(
+                                        false,
+                                        context.getString(R.string.stashapp_actions_edit),
+                                        buildEditList(context, editableTypes) {
+                                            searchForDataType = it
+                                        },
+                                    )
+                            },
+                        )
                     }
                 }
             }
@@ -89,19 +198,17 @@ fun ItemDetails(
                         rating100 = rating100 ?: 0,
                         uiConfig = uiConfig,
                         onRatingChange = rating100Click,
-                        enabled = true,
+                        enabled = uiConfig.readOnlyModeDisabled,
                         modifier =
                             Modifier
-                                .height(32.dp)
-                                .padding(start = 12.dp),
+                                .height(ratingBarHeight)
+                                .padding(start = 0.dp),
                     )
                 }
             }
             items(tableRows) { row ->
                 TableRowComposable(row)
             }
-
-            bodyContent?.invoke(this)
 
             if (!tags.isNullOrEmpty()) {
                 item {
@@ -110,11 +217,17 @@ fun ItemDetails(
                         items = tags,
                         uiConfig = uiConfig,
                         itemOnClick = itemOnClick,
-                        longClicker = longClicker,
-                        modifier = Modifier.padding(top = 12.dp),
+                        longClicker = removeLongClicker,
+                        modifier =
+                            Modifier
+                                .padding(top = 12.dp)
+                                .animateItem(),
                     )
                 }
             }
+
+            bodyContent?.invoke(this)
+
             basicItemInfo?.let {
                 item {
                     ItemDetailsFooter(
@@ -130,6 +243,28 @@ fun ItemDetails(
             }
         }
     }
+
+    showDialog?.let { params ->
+        DialogPopup(
+            showDialog = true,
+            title = params.title,
+            dialogItems = params.items,
+            onDismissRequest = { showDialog = null },
+            waitToLoad = params.fromLongClick,
+        )
+    }
+    SearchForDialog(
+        show = searchForDataType != null,
+        dataType = searchForDataType?.dataType ?: DataType.TAG,
+        onItemClick = { item ->
+            onEdit?.invoke(EditItem(item.id, searchForDataType!!.dataType, AddRemove.ADD))
+            searchForDataType = null
+        },
+        onDismissRequest = { searchForDataType = null },
+        dialogTitle = showDialog?.title,
+        dismissOnClick = false,
+        uiConfig = uiConfig,
+    )
 }
 
 data class BasicItemInfo(
@@ -149,18 +284,72 @@ fun ItemDetailsFooter(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.Start),
     ) {
-        if (createdAt != null && createdAt.length >= 10) {
-            TitleValueText(
-                stringResource(R.string.stashapp_created_at),
-                createdAt.substring(0..<10),
-            )
-        }
-        if (updatedAt != null && updatedAt.length >= 10) {
-            TitleValueText(
-                stringResource(R.string.stashapp_updated_at),
-                updatedAt.substring(0..<10),
-            )
-        }
+        CreatedTimestamp(createdAt)
+        UpdatedTimestamp(updatedAt)
         TitleValueText(stringResource(R.string.id), id)
+    }
+}
+
+data class EditItem(
+    val id: String,
+    val dataType: DataType,
+    val action: AddRemove,
+)
+
+fun buildEditList(
+    context: Context,
+    editableTypes: Set<DataType>,
+    onClick: (SearchForParams) -> Unit,
+) = buildList {
+    if (DataType.TAG in editableTypes) {
+        add(
+            DialogItem(
+                context.getString(R.string.add_tag),
+                DataType.TAG.iconStringId,
+            ) {
+                onClick.invoke(SearchForParams(DataType.TAG))
+            },
+        )
+    }
+    if (DataType.PERFORMER in editableTypes) {
+        add(
+            DialogItem(
+                context.getString(R.string.add_performer),
+                DataType.PERFORMER.iconStringId,
+            ) {
+                onClick.invoke(SearchForParams(DataType.PERFORMER))
+            },
+        )
+    }
+
+    if (DataType.STUDIO in editableTypes) {
+        add(
+            DialogItem(
+                context.getString(R.string.set_studio),
+                DataType.STUDIO.iconStringId,
+            ) {
+                onClick.invoke(SearchForParams(DataType.STUDIO))
+            },
+        )
+    }
+    if (DataType.GROUP in editableTypes) {
+        add(
+            DialogItem(
+                context.getString(R.string.add_group),
+                DataType.GROUP.iconStringId,
+            ) {
+                onClick.invoke(SearchForParams(DataType.GROUP))
+            },
+        )
+    }
+    if (DataType.GALLERY in editableTypes) {
+        add(
+            DialogItem(
+                context.getString(R.string.add_gallery),
+                DataType.GALLERY.iconStringId,
+            ) {
+                onClick.invoke(SearchForParams(DataType.GALLERY))
+            },
+        )
     }
 }
