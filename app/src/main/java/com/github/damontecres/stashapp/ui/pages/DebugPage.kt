@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.content.Context.ACTIVITY_SERVICE
 import android.media.MediaCodecList
 import android.os.Build
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -39,6 +42,7 @@ import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.TableRow
 import com.github.damontecres.stashapp.ui.components.TableRowComposable
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -75,12 +79,12 @@ fun DebugPage(
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
-    val scrollAmount = 150f
     val context = LocalContext.current
     val columnState = rememberLazyListState()
     val scope = rememberCoroutineScope()
-    val prefManager = PreferenceManager.getDefaultSharedPreferences(context)
 
+    val focusRequester = remember { FocusRequester() }
+    val prefManager = remember { PreferenceManager.getDefaultSharedPreferences(context) }
     val playbackEffects = remember { mutableStateListOf<PlaybackEffect>() }
     val logcat = remember { mutableStateListOf<String>() }
 
@@ -101,8 +105,12 @@ fun DebugPage(
             }
         logcat.addAll(lines)
     }
+    LaunchedEffect(Unit) { focusRequester.tryRequestFocus() }
 
-    fun scroll(reverse: Boolean = false) {
+    fun scroll(
+        reverse: Boolean,
+        scrollAmount: Float = 150f,
+    ) {
         scope.launch(StashCoroutineExceptionHandler()) {
             columnState.scrollBy(if (reverse) -scrollAmount else scrollAmount)
         }
@@ -112,21 +120,47 @@ fun DebugPage(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(8.dp),
         modifier =
-            modifier.onKeyEvent {
-                if (it.type == KeyEventType.KeyUp) {
+            modifier
+                .focusRequester(focusRequester)
+                .focusable()
+                .onKeyEvent {
+                    if (it.type == KeyEventType.KeyUp) {
+                        return@onKeyEvent false
+                    }
+                    if (it.key == Key.DirectionDown) {
+                        scroll(false)
+                        return@onKeyEvent true
+                    }
+                    if (it.key == Key.DirectionUp) {
+                        scroll(true)
+                        return@onKeyEvent true
+                    }
+                    if (it.key == Key.MediaFastForward) {
+                        scroll(false, 1500f)
+                        return@onKeyEvent true
+                    }
+                    if (it.key == Key.MediaRewind) {
+                        scroll(true, 1500f)
+                        return@onKeyEvent true
+                    }
                     return@onKeyEvent false
-                }
-                if (it.key == Key.DirectionDown) {
-                    scroll(false)
-                    return@onKeyEvent true
-                }
-                if (it.key == Key.DirectionUp) {
-                    scroll(true)
-                    return@onKeyEvent true
-                }
-                return@onKeyEvent false
-            },
+                },
     ) {
+        // StashPreferences
+        item {
+            Column {
+                Text(
+                    text = "StashPreferences",
+                    style = MaterialTheme.typography.displayMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    text = uiConfig.preferences.toString(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+            }
+        }
         // Preferences
         item {
             val rows =

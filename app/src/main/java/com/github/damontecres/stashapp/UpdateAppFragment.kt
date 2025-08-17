@@ -97,7 +97,7 @@ class UpdateAppFragment : GuidedStepSupportFragment() {
                 UpdateChecker.installRelease(requireActivity(), release)
             }
         } else if (action.id == 1000L) {
-            serverViewModel.navigationManager.navigate(Destination.Fragment(UpdateChangelogFragment::class.qualifiedName!!))
+            serverViewModel.navigationManager.navigate(Destination.ReleaseChangelog(release))
         } else {
             finishGuidedStepSupportFragments()
         }
