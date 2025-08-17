@@ -163,7 +163,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                         ConfirmationDialogFragment.show(
                             childFragmentManager,
                             getString(
-                                R.string.stashapp_dialogs_overwrite_filter_confirm,
+                                R.string.stashapp_dialogs_overwrite_filter_warning,
                                 filterArgs.name,
                             ),
                         ) {
