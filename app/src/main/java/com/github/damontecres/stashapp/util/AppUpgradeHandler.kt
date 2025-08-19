@@ -35,10 +35,6 @@ class AppUpgradeHandler(
     private val previousVersion: Version,
     private val installedVersion: Version,
 ) : Runnable {
-    companion object {
-        private const val TAG = "AppUpgradeHandler"
-    }
-
     override fun run() {
         UpdateChecker.cleanup(context)
 
@@ -158,11 +154,21 @@ class AppUpgradeHandler(
                         .map { it.preferencesMigratedV1 }
                         .firstOrNull() ?: false
                 if (!preferencesMigratedV1) {
-                    migratePreferences()
+                    migratePreferences(context)
                 }
                 context.preferences.updateData {
                     it.updatePlaybackPreferences {
                         seekBarSteps = 16
+
+                        if (directPlayFormatList.isEmpty()) {
+                            // Fix broken migration for formats
+                            addAllDirectPlayFormat(
+                                preferences.getStringSet(
+                                    context.getString(R.string.pref_key_default_forced_direct_containers),
+                                    null,
+                                ) ?: StashPreference.DirectPlayFormat.defaultValue.toSet(),
+                            )
+                        }
                     }
                 }
             }
@@ -188,229 +194,247 @@ class AppUpgradeHandler(
         }
     }
 
-    private suspend fun migratePreferences() {
-        Log.i(TAG, "Starting preferences migration")
-        val pm = PreferenceManager.getDefaultSharedPreferences(context)
-        val s: (Int) -> String = context::getString
-        val bool: (Int, Boolean) -> Boolean = { key, default ->
-            pm.getBoolean(s(key), default)
-        }
-        val int: (Int, Int) -> Int = { key, default ->
-            pm.getInt(s(key), default)
-        }
-        val string: (Int, String) -> String = { key, default ->
-            pm.getString(s(key), default) ?: default
-        }
+    companion object {
+        private const val TAG = "AppUpgradeHandler"
 
-        context.preferences.updateData {
-            it
-                .toBuilder()
-                .apply {
-                    preferencesMigratedV1 = true
-                    pinPreferences =
-                        PinPreferences
-                            .newBuilder()
-                            .apply {
-                                pin = string(R.string.pref_key_pin_code, "")
-                                readOnlyPin = string(R.string.pref_key_read_only_mode_pin, "")
-                                autoSubmit = bool(R.string.pref_key_pin_code_auto, true)
-                            }.build()
-                    interfacePreferences =
-                        InterfacePreferences
-                            .newBuilder()
-                            .apply {
-                                useComposeUi = bool(R.string.pref_key_use_compose_ui, true)
-                                cardSize =
-                                    string(R.string.pref_key_card_size, "5").toIntOrNull() ?: 5
-                                playVideoPreviews = pm.getBoolean("playVideoPreviews", true)
-                                rememberSelectedTab = bool(R.string.pref_key_ui_remember_tab, true)
-                                cardPreviewDelayMs =
-                                    int(
-                                        R.string.pref_key_ui_card_overlay_delay,
-                                        StashPreference.VideoPreviewDelay.defaultValue,
-                                    ).toLong()
-                                slideShowIntervalMs =
-                                    int(
-                                        R.string.pref_key_slideshow_duration,
-                                        5,
-                                    ).seconds.inWholeMilliseconds
-                                slideShowImageClipPauseMs =
-                                    int(
-                                        R.string.pref_key_slideshow_duration_image_clip,
-                                        StashPreference.SlideshowImageClipDelay.defaultValue,
-                                    ).toLong()
-                                showGridJumpButtons =
-                                    bool(R.string.pref_key_ui_grid_jump_controls, true)
-                                theme = string(R.string.pref_key_ui_theme_file, "default")
-                                themeStyle =
-                                    string(
-                                        R.string.pref_key_ui_theme_dark_appearance,
-                                        "system",
-                                    ).let {
-                                        when (it.lowercase()) {
-                                            "dark" -> ThemeStyle.DARK
-                                            "light" -> ThemeStyle.LIGHT
-                                            else -> ThemeStyle.SYSTEM
-                                        }
-                                    }
-                                showProgressWhenSkipping =
-                                    bool(R.string.pref_key_playback_show_skip_progress, true)
-                                playMovementSounds = bool(R.string.pref_key_movement_sounds, true)
-                                useUpDownPreviousNext =
-                                    bool(R.string.pref_key_playback_next_up_down, false)
-                                captionsByDefault =
-                                    bool(R.string.pref_key_captions_on_by_default, true)
-                                scrollNextViewAll = pm.getBoolean("scrollToNextResult", true)
-                                scrollTopOnBack = bool(R.string.pref_key_back_button_scroll, true)
-                                showPositionFooter = bool(R.string.pref_key_show_grid_footer, true)
-                                showRatingOnCards = bool(R.string.pref_key_show_rating, true)
-                                videoPreviewAudio =
-                                    bool(R.string.pref_key_video_preview_audio, false)
-                                pageWithRemoteButtons =
-                                    bool(R.string.pref_key_remote_page_buttons, true)
-                                dpadSkipIndicator = bool(R.string.pref_key_show_dpad_skip, true)
+        suspend fun migratePreferences(context: Context) {
+            Log.i(TAG, "Starting preferences migration")
+            val pm = PreferenceManager.getDefaultSharedPreferences(context)
+            val s: (Int) -> String = context::getString
+            val bool: (Int, Boolean) -> Boolean = { key, default ->
+                pm.getBoolean(s(key), default)
+            }
+            val int: (Int, Int) -> Int = { key, default ->
+                pm.getInt(s(key), default)
+            }
+            val string: (Int, String) -> String = { key, default ->
+                pm.getString(s(key), default) ?: default
+            }
 
-                                tabPreferences =
-                                    TabPreferences
-                                        .newBuilder()
-                                        .apply {
-                                            addAllGallery(StashPreference.GalleryTab.defaultValue)
-                                            addAllGroup(StashPreference.GroupTab.defaultValue)
-                                            addAllPerformer(StashPreference.PerformerTab.defaultValue)
-                                            addAllStudio(StashPreference.StudioTab.defaultValue)
-                                            addAllTags(StashPreference.TagTab.defaultValue)
-                                        }.build()
-                            }.build()
-                    playbackPreferences =
-                        PlaybackPreferences
-                            .newBuilder()
-                            .apply {
-                                skipForwardMs =
-                                    pm.getInt("skip_forward_time", 30).seconds.inWholeMilliseconds
-                                skipBackwardMs =
-                                    pm.getInt("skip_back_time", 10).seconds.inWholeMilliseconds
-                                playbackFinishBehavior =
-                                    (
-                                        pm.getString("playbackFinishedBehavior", null)
-                                            ?: "Do nothing"
-                                    ).let {
-                                        when (it) {
-                                            "Do nothing" -> PlaybackFinishBehavior.DO_NOTHING
-                                            "Repeat scene" -> PlaybackFinishBehavior.REPEAT
-                                            "Return to scene details" -> PlaybackFinishBehavior.GO_BACK
-                                            else -> PlaybackFinishBehavior.DO_NOTHING
-                                        }
-                                    }
-                                streamChoice =
-                                    streamChoiceFromLabel(
-                                        pm.getString("stream_choice", null) ?: "HLS",
-                                    )
-                                showDebugInfo =
-                                    bool(R.string.pref_key_show_playback_debug_info, false)
-                                dpadSkipping =
-                                    bool(R.string.pref_key_playback_skip_left_right, true)
-                                controllerTimeoutMs = pm.getInt("controllerShowTimeoutMs", 3_500)
-                                savePlayHistory =
-                                    bool(R.string.pref_key_playback_track_activity, true)
-                                startPlaybackMuted =
-                                    bool(R.string.pref_key_playback_start_muted, false)
-                                transcodeAboveResolution =
-                                    resolutionFromLabel(
-                                        string(
-                                            R.string.pref_key_playback_always_transcode,
-                                            "",
-                                        ),
-                                    )
-                                videoFiltersEnabled = bool(R.string.pref_key_video_filters, false)
-                                saveVideoFilters =
-                                    bool(R.string.pref_key_playback_save_effects, true)
-                                debugLoggingEnabled =
-                                    bool(R.string.pref_key_playback_debug_logging, false)
-                                playbackHttpClient =
-                                    string(R.string.pref_key_playback_http_client, "okhttp").let {
-                                        when (it) {
-                                            "okhttp" -> PlaybackHttpClient.OKHTTP
-                                            "default" -> PlaybackHttpClient.BUILTIN
-                                            else -> PlaybackHttpClient.OKHTTP
-                                        }
-                                    }
-
-                                clearDirectPlayVideo()
-                                addAllDirectPlayVideo(
-                                    pm.getStringSet(
-                                        s(R.string.pref_key_default_forced_direct_video),
-                                        null,
-                                    ) ?: StashPreference.DirectPlayVideo.defaultValue.toSet(),
-                                )
-                                clearDirectPlayAudio()
-                                addAllDirectPlayAudio(
-                                    pm.getStringSet(
-                                        s(R.string.pref_key_default_forced_direct_audio),
-                                        null,
-                                    ) ?: StashPreference.DirectPlayAudio.defaultValue.toSet(),
-                                )
-                                clearDirectPlayFormat()
-                                addAllDirectPlayAudio(
-                                    pm.getStringSet(
-                                        s(R.string.pref_key_default_forced_direct_containers),
-                                        null,
-                                    ) ?: StashPreference.DirectPlayFormat.defaultValue.toSet(),
-                                )
-                            }.build()
-                    updatePreferences =
-                        UpdatePreferences
-                            .newBuilder()
-                            .apply {
-                                checkForUpdates = pm.getBoolean("autoCheckForUpdates", true)
-                                updateUrl =
-                                    pm.getStringNotNull(
-                                        "updateCheckUrl",
-                                        context.getString(R.string.app_update_url),
-                                    )
-                            }.build()
-                    advancedPreferences =
-                        AdvancedPreferences
-                            .newBuilder()
-                            .apply {
-                                experimentalFeaturesEnabled =
-                                    bool(R.string.experimental_features, false)
-                                logErrorsToServer = bool(R.string.pref_key_log_to_server, true)
-                                networkTimeoutMs =
-                                    pm
-                                        .getInt(
-                                            "networkTimeout",
-                                            15,
+            context.preferences.updateData {
+                it
+                    .toBuilder()
+                    .apply {
+                        preferencesMigratedV1 = true
+                        pinPreferences =
+                            PinPreferences
+                                .newBuilder()
+                                .apply {
+                                    pin = string(R.string.pref_key_pin_code, "")
+                                    readOnlyPin = string(R.string.pref_key_read_only_mode_pin, "")
+                                    autoSubmit = bool(R.string.pref_key_pin_code_auto, true)
+                                }.build()
+                        interfacePreferences =
+                            InterfacePreferences
+                                .newBuilder()
+                                .apply {
+                                    useComposeUi = bool(R.string.pref_key_use_compose_ui, true)
+                                    cardSize =
+                                        string(R.string.pref_key_card_size, "5").toIntOrNull() ?: 5
+                                    playVideoPreviews = pm.getBoolean("playVideoPreviews", true)
+                                    rememberSelectedTab =
+                                        bool(R.string.pref_key_ui_remember_tab, true)
+                                    cardPreviewDelayMs =
+                                        int(
+                                            R.string.pref_key_ui_card_overlay_delay,
+                                            StashPreference.VideoPreviewDelay.defaultValue,
+                                        ).toLong()
+                                    slideShowIntervalMs =
+                                        int(
+                                            R.string.pref_key_slideshow_duration,
+                                            5,
                                         ).seconds.inWholeMilliseconds
-                                trustSelfSignedCertificates =
-                                    bool(R.string.pref_key_trust_certs, false)
-                                imageThreadCount =
-                                    int(
-                                        R.string.pref_key_image_loading_threads,
-                                        Runtime.getRuntime().availableProcessors(),
+                                    slideShowImageClipPauseMs =
+                                        int(
+                                            R.string.pref_key_slideshow_duration_image_clip,
+                                            StashPreference.SlideshowImageClipDelay.defaultValue,
+                                        ).toLong()
+                                    showGridJumpButtons =
+                                        bool(R.string.pref_key_ui_grid_jump_controls, true)
+                                    theme = string(R.string.pref_key_ui_theme_file, "default")
+                                    themeStyle =
+                                        string(
+                                            R.string.pref_key_ui_theme_dark_appearance,
+                                            "system",
+                                        ).let {
+                                            when (it.lowercase()) {
+                                                "dark" -> ThemeStyle.DARK
+                                                "light" -> ThemeStyle.LIGHT
+                                                else -> ThemeStyle.SYSTEM
+                                            }
+                                        }
+                                    showProgressWhenSkipping =
+                                        bool(R.string.pref_key_playback_show_skip_progress, true)
+                                    playMovementSounds =
+                                        bool(R.string.pref_key_movement_sounds, true)
+                                    useUpDownPreviousNext =
+                                        bool(R.string.pref_key_playback_next_up_down, false)
+                                    captionsByDefault =
+                                        bool(R.string.pref_key_captions_on_by_default, true)
+                                    scrollNextViewAll = pm.getBoolean("scrollToNextResult", true)
+                                    scrollTopOnBack =
+                                        bool(R.string.pref_key_back_button_scroll, true)
+                                    showPositionFooter =
+                                        bool(R.string.pref_key_show_grid_footer, true)
+                                    showRatingOnCards = bool(R.string.pref_key_show_rating, true)
+                                    videoPreviewAudio =
+                                        bool(R.string.pref_key_video_preview_audio, false)
+                                    pageWithRemoteButtons =
+                                        bool(R.string.pref_key_remote_page_buttons, true)
+                                    dpadSkipIndicator = bool(R.string.pref_key_show_dpad_skip, true)
+
+                                    tabPreferences =
+                                        TabPreferences
+                                            .newBuilder()
+                                            .apply {
+                                                addAllGallery(StashPreference.GalleryTab.defaultValue)
+                                                addAllGroup(StashPreference.GroupTab.defaultValue)
+                                                addAllPerformer(StashPreference.PerformerTab.defaultValue)
+                                                addAllStudio(StashPreference.StudioTab.defaultValue)
+                                                addAllTags(StashPreference.TagTab.defaultValue)
+                                            }.build()
+                                }.build()
+                        playbackPreferences =
+                            PlaybackPreferences
+                                .newBuilder()
+                                .apply {
+                                    skipForwardMs =
+                                        pm
+                                            .getInt(
+                                                "skip_forward_time",
+                                                30,
+                                            ).seconds.inWholeMilliseconds
+                                    skipBackwardMs =
+                                        pm.getInt("skip_back_time", 10).seconds.inWholeMilliseconds
+                                    playbackFinishBehavior =
+                                        (
+                                            pm.getString("playbackFinishedBehavior", null)
+                                                ?: "Do nothing"
+                                        ).let {
+                                            when (it) {
+                                                "Do nothing" -> PlaybackFinishBehavior.DO_NOTHING
+                                                "Repeat scene" -> PlaybackFinishBehavior.REPEAT
+                                                "Return to scene details" -> PlaybackFinishBehavior.GO_BACK
+                                                else -> PlaybackFinishBehavior.DO_NOTHING
+                                            }
+                                        }
+                                    streamChoice =
+                                        streamChoiceFromLabel(
+                                            pm.getString("stream_choice", null) ?: "HLS",
+                                        )
+                                    showDebugInfo =
+                                        bool(R.string.pref_key_show_playback_debug_info, false)
+                                    dpadSkipping =
+                                        bool(R.string.pref_key_playback_skip_left_right, true)
+                                    controllerTimeoutMs =
+                                        pm.getInt("controllerShowTimeoutMs", 3_500)
+                                    savePlayHistory =
+                                        bool(R.string.pref_key_playback_track_activity, true)
+                                    startPlaybackMuted =
+                                        bool(R.string.pref_key_playback_start_muted, false)
+                                    transcodeAboveResolution =
+                                        resolutionFromLabel(
+                                            string(
+                                                R.string.pref_key_playback_always_transcode,
+                                                "",
+                                            ),
+                                        )
+                                    videoFiltersEnabled =
+                                        bool(R.string.pref_key_video_filters, false)
+                                    saveVideoFilters =
+                                        bool(R.string.pref_key_playback_save_effects, true)
+                                    debugLoggingEnabled =
+                                        bool(R.string.pref_key_playback_debug_logging, false)
+                                    playbackHttpClient =
+                                        string(
+                                            R.string.pref_key_playback_http_client,
+                                            "okhttp",
+                                        ).let {
+                                            when (it) {
+                                                "okhttp" -> PlaybackHttpClient.OKHTTP
+                                                "default" -> PlaybackHttpClient.BUILTIN
+                                                else -> PlaybackHttpClient.OKHTTP
+                                            }
+                                        }
+
+                                    clearDirectPlayVideo()
+                                    addAllDirectPlayVideo(
+                                        pm.getStringSet(
+                                            s(R.string.pref_key_default_forced_direct_video),
+                                            null,
+                                        ) ?: StashPreference.DirectPlayVideo.defaultValue.toSet(),
                                     )
-                            }.build()
-                    cachePreferences =
-                        CachePreferences
-                            .newBuilder()
-                            .apply {
-                                networkCacheSize =
-                                    int(R.string.pref_key_network_cache_size, 10)
-                                        .toLong() * 1024 * 1024
-                                imageDiskCacheSize =
-                                    int(R.string.pref_key_image_cache_size, 10)
-                                        .toLong() * 1024 * 1024
-                                cacheExpirationTime = pm.getInt("networkCacheDuration", 6)
-                                logCacheHits = pm.getBoolean("networkCacheLogging", false)
-                            }.build()
-                    searchPreferences =
-                        SearchPreferences
-                            .newBuilder()
-                            .apply {
-                                maxResults = int(R.string.pref_key_max_search_results, 25)
-                                searchDelayMs = int(R.string.pref_key_search_delay, 1000).toLong()
-                            }.build()
-                }.build()
+                                    clearDirectPlayAudio()
+                                    addAllDirectPlayAudio(
+                                        pm.getStringSet(
+                                            s(R.string.pref_key_default_forced_direct_audio),
+                                            null,
+                                        ) ?: StashPreference.DirectPlayAudio.defaultValue.toSet(),
+                                    )
+                                    clearDirectPlayFormat()
+                                    addAllDirectPlayFormat(
+                                        pm.getStringSet(
+                                            s(R.string.pref_key_default_forced_direct_containers),
+                                            null,
+                                        ) ?: StashPreference.DirectPlayFormat.defaultValue.toSet(),
+                                    )
+                                }.build()
+                        updatePreferences =
+                            UpdatePreferences
+                                .newBuilder()
+                                .apply {
+                                    checkForUpdates = pm.getBoolean("autoCheckForUpdates", true)
+                                    updateUrl =
+                                        pm.getStringNotNull(
+                                            "updateCheckUrl",
+                                            context.getString(R.string.app_update_url),
+                                        )
+                                }.build()
+                        advancedPreferences =
+                            AdvancedPreferences
+                                .newBuilder()
+                                .apply {
+                                    experimentalFeaturesEnabled =
+                                        bool(R.string.experimental_features, false)
+                                    logErrorsToServer = bool(R.string.pref_key_log_to_server, true)
+                                    networkTimeoutMs =
+                                        pm
+                                            .getInt(
+                                                "networkTimeout",
+                                                15,
+                                            ).seconds.inWholeMilliseconds
+                                    trustSelfSignedCertificates =
+                                        bool(R.string.pref_key_trust_certs, false)
+                                    imageThreadCount =
+                                        int(
+                                            R.string.pref_key_image_loading_threads,
+                                            Runtime.getRuntime().availableProcessors(),
+                                        )
+                                }.build()
+                        cachePreferences =
+                            CachePreferences
+                                .newBuilder()
+                                .apply {
+                                    networkCacheSize =
+                                        int(R.string.pref_key_network_cache_size, 10)
+                                            .toLong() * 1024 * 1024
+                                    imageDiskCacheSize =
+                                        int(R.string.pref_key_image_cache_size, 10)
+                                            .toLong() * 1024 * 1024
+                                    cacheExpirationTime = pm.getInt("networkCacheDuration", 6)
+                                    logCacheHits = pm.getBoolean("networkCacheLogging", false)
+                                }.build()
+                        searchPreferences =
+                            SearchPreferences
+                                .newBuilder()
+                                .apply {
+                                    maxResults = int(R.string.pref_key_max_search_results, 25)
+                                    searchDelayMs =
+                                        int(R.string.pref_key_search_delay, 1000).toLong()
+                                }.build()
+                    }.build()
+            }
+            Log.i(TAG, "Finished preferences migration")
         }
-        Log.i(TAG, "Finished preferences migration")
     }
 }

@@ -1094,6 +1094,12 @@ sealed interface StashPreference<T> {
                 title = R.string.trigger_generate,
                 summary = R.string.stashapp_config_tasks_generate_desc,
             )
+
+        val MigratePreferences =
+            StashClickablePreference(
+                title = R.string.migrate_preferences,
+                summary = R.string.migrate_preferences_summary,
+            )
     }
 }
 
