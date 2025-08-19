@@ -182,6 +182,7 @@ private val advancedPreferences =
                 StashPreference.PlaybackStreamingClient,
                 StashPreference.ImageThreads,
                 StashPreference.TrustCertificates,
+                StashPreference.MigratePreferences,
             ),
         ),
     )
@@ -201,6 +202,11 @@ fun PreferencesContent(
     var focusedIndex by rememberSaveable { mutableStateOf(Pair(0, 0)) }
     val state = rememberLazyListState()
     var preferences by remember { mutableStateOf(initialPreferences) }
+    LaunchedEffect(Unit) {
+        context.preferences.data.collect {
+            preferences = it
+        }
+    }
 
     val installedVersion = remember { UpdateChecker.getInstalledVersion(context) }
     var updateVersion by remember { mutableStateOf<Release?>(null) }
@@ -227,10 +233,11 @@ fun PreferencesContent(
         }
     LaunchedEffect(Unit) {
         if (preferenceScreenOption == PreferenceScreenOption.ADVANCED) {
-            viewModel.init(server)
+            viewModel.init(context, server)
         }
     }
     val jobQueue by viewModel.runningJobs.observeAsState(listOf())
+    val cacheUsage by viewModel.cacheUsage.observeAsState(CacheUsage(0, 0, 0, 0))
 
     LaunchedEffect(Unit) {
         focusRequester.tryRequestFocus()
@@ -428,6 +435,8 @@ fun PreferencesContent(
                                         }
                                     }
                                 },
+                                onCacheClear = { viewModel.updateCacheUsage(context) },
+                                cacheUsage = cacheUsage,
                                 interactionSource = interactionSource,
                                 modifier =
                                     Modifier.ifElse(
