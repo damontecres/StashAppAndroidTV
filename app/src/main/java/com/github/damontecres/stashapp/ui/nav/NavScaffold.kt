@@ -56,6 +56,8 @@ fun NavScaffold(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     onSelectScreen: (DrawerPage) -> Unit,
+    onChangeTheme: (String?) -> Unit,
+    onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -178,13 +180,15 @@ fun NavScaffold(
                     .background(androidx.compose.material3.MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            NavDrawerContent(
+            DestinationContent(
                 navManager = navigationManager,
                 server = server,
                 destination = destination,
                 composeUiConfig = composeUiConfig,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
+                onChangeTheme = onChangeTheme,
+                onSwitchServer = onSwitchServer,
                 modifier =
                     Modifier
                         .fillMaxSize(),
