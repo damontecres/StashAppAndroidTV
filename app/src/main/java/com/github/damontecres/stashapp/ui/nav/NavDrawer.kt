@@ -63,6 +63,8 @@ fun NavDrawer(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     onSelectScreen: (DrawerPage) -> Unit,
+    onChangeTheme: (String?) -> Unit,
+    onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -200,13 +202,15 @@ fun NavDrawer(
         CompositionLocalProvider(
             LocalPlayerContext provides PlayerContext,
         ) {
-            NavDrawerContent(
+            DestinationContent(
                 navManager = navigationManager,
                 server = server,
                 destination = destination,
                 composeUiConfig = composeUiConfig,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
+                onChangeTheme = onChangeTheme,
+                onSwitchServer = onSwitchServer,
                 modifier =
                     Modifier
                         .fillMaxSize()

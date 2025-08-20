@@ -39,6 +39,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -77,6 +78,7 @@ fun CreateFilterScreen(
     initialFilter: FilterArgs?,
     navigationManager: NavigationManager,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: CreateFilterViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -89,22 +91,27 @@ fun CreateFilterScreen(
     val objectFilter by viewModel.objectFilter.observeAsState(dataType.filterType.createInstance())
     val resultCount by viewModel.resultCount.observeAsState(-1)
 
+    val title = remember(dataType) { "Create ${context.getString(dataType.stringId)} Filter" }
+    LaunchedEffect(title) { onUpdateTitle?.invoke(AnnotatedString(title)) }
+
     LaunchedEffect(initialFilter) {
         viewModel.initialize(dataType, initialFilter)
         viewModel.updateCount()
     }
 
     Column(modifier = modifier) {
-        Text(
-            text = "Create ${stringResource(dataType.stringId)} Filter",
-            style = MaterialTheme.typography.displaySmall,
-            color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-        )
+        if (onUpdateTitle == null) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.displaySmall,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+            )
+        }
         if (ready) {
             CreateFilterColumns(
                 uiConfig = uiConfig,
@@ -235,7 +242,7 @@ fun CreateFilterColumns(
                             alpha = .25f
                         },
                 ),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         item {

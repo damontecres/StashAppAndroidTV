@@ -140,13 +140,13 @@ sealed class Destination(
     @Serializable
     data class ManageServers(
         val overrideReadOnly: Boolean,
-    ) : Destination(true)
+    ) : Destination(true, false)
 
     @Serializable
     data class CreateFilter(
         val dataType: DataType,
         val startingFilter: FilterArgs?,
-    ) : Destination(true) {
+    ) : Destination(true, false) {
         override fun toString(): String = "CreateFilter(destId=$destId, dataType=$dataType)"
     }
 

@@ -131,7 +131,6 @@ class ControllerViewState internal constructor(
     }
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun PlaybackOverlay(
     uiConfig: ComposeUiConfig,
