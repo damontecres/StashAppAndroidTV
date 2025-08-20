@@ -93,6 +93,7 @@ fun DestinationContent(
             ManageServers(
                 currentServer = server,
                 onSwitchServer = onSwitchServer,
+                onUpdateTitle = onUpdateTitle,
                 modifier = modifier,
             )
         }
@@ -150,6 +151,7 @@ fun DestinationContent(
                 dataType = destination.dataType,
                 initialFilter = destination.startingFilter,
                 navigationManager = navManager,
+                onUpdateTitle = onUpdateTitle,
                 modifier = modifier,
             )
 

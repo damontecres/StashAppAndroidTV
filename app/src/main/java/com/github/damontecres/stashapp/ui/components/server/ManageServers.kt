@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -59,6 +60,7 @@ fun ManageServers(
     currentServer: StashServer?,
     onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: ManageServersViewModel = viewModel(),
 ) {
     val allServers by viewModel.allServers.observeAsState(listOf())
@@ -69,7 +71,11 @@ fun ManageServers(
     var showServerDialog by remember { mutableStateOf<StashServer?>(null) }
 
     val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focusRequester.tryRequestFocus() }
+    val title = stringResource(R.string.manage_servers)
+    LaunchedEffect(Unit) {
+        focusRequester.tryRequestFocus()
+        onUpdateTitle?.invoke(AnnotatedString(title))
+    }
 
     fun switchServer(server: StashServer) {
         val status = serverStatus[server]
@@ -94,16 +100,18 @@ fun ManageServers(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = "Manage Servers",
-            style = MaterialTheme.typography.displaySmall,
-            color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-        )
+        if (onUpdateTitle == null) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.displaySmall,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+            )
+        }
 
         currentServer?.let { current ->
             Text(
