@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -37,6 +38,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.proto.StashPreferences
@@ -46,10 +48,11 @@ import com.github.damontecres.stashapp.util.Release
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.preferences
 import kotlinx.coroutines.launch
 
-private val basicPreferences =
+val basicPreferences =
     listOf(
         PreferenceGroup(
             R.string.app_name_long,
@@ -92,7 +95,7 @@ private val basicPreferences =
         ),
     )
 
-private val uiPreferences =
+val uiPreferences =
     listOf(
         PreferenceGroup(
             R.string.advanced_ui,
@@ -123,7 +126,7 @@ private val uiPreferences =
         ),
     )
 
-private val advancedPreferences =
+val advancedPreferences =
     listOf(
         PreferenceGroup(
             R.string.advanced_ui,
@@ -204,6 +207,7 @@ fun PreferencesContent(
     var focusedIndex by rememberSaveable { mutableStateOf(Pair(0, 0)) }
     val state = rememberLazyListState()
     var preferences by remember { mutableStateOf(initialPreferences) }
+    val sharedPrefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
     LaunchedEffect(Unit) {
         context.preferences.data.collect {
             preferences = it
@@ -417,31 +421,24 @@ fun PreferencesContent(
                                                     context.preferences.updateData { prefs ->
                                                         pref.setter(prefs, newValue)
                                                     }
-                                                // TODO also store some in shared preferences
-                                                if (pref is StashPinPreference) {
-                                                    PreferenceManager
-                                                        .getDefaultSharedPreferences(context)
-                                                        .edit(true) {
-                                                            putString(
-                                                                context.getString(
-                                                                    getPinPreferenceKey(
-                                                                        pref,
-                                                                    ),
-                                                                ),
-                                                                (newValue as String).ifBlank { null },
-                                                            )
-                                                        }
-                                                } else if (pref == StashPreference.UseNewUI) {
-                                                    PreferenceManager
-                                                        .getDefaultSharedPreferences(context)
-                                                        .edit(true) {
-                                                            putBoolean(
-                                                                context.getString(
-                                                                    R.string.pref_key_use_compose_ui,
-                                                                ),
-                                                                newValue as Boolean,
-                                                            )
-                                                        }
+                                                sharedPrefs.edit {
+                                                    pref.prefSetter(context, this, newValue)
+                                                    if (pref == StashPreference.ReadOnlyMode) {
+                                                        // Legacy read only mode has two preferences
+                                                        // New mode just saves the PIN, but need to explicitly enable/disable too for legacy
+                                                        putBoolean(
+                                                            context.getString(R.string.pref_key_read_only_mode),
+                                                            newValue.toString().isNotNullOrBlank(),
+                                                        )
+                                                    }
+                                                }
+                                                if (pref == StashPreference.UseNewUI && newValue is Boolean && !newValue) {
+                                                    context.startActivity(
+                                                        Intent(
+                                                            context,
+                                                            RootActivity::class.java,
+                                                        ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                                                    )
                                                 }
                                             }
                                         }

@@ -32,25 +32,6 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * A group of preferences
- */
-data class PreferenceGroup(
-    @param:StringRes val title: Int,
-    val preferences: List<StashPreference<out Any?>>,
-)
-
-/**
- * Results when validating a preference value.
- */
-sealed interface PreferenceValidation {
-    data object Valid : PreferenceValidation
-
-    data class Invalid(
-        val message: String,
-    ) : PreferenceValidation
-}
-
-/**
  * A preference that can be stored in the shared preferences.
  *
  * @param T The type of the preference value.
@@ -65,7 +46,6 @@ sealed interface StashPreference<T> {
     val defaultValue: T
 
     val getter: (prefs: StashPreferences) -> T
-
     val setter: (prefs: StashPreferences, value: T) -> StashPreferences
 
     val prefGetter: (context: Context, prefs: SharedPreferences) -> T
@@ -176,8 +156,8 @@ sealed interface StashPreference<T> {
                         skipForwardMs = value.seconds.inWholeMilliseconds
                     }
                 },
-                toSharedPrefs = { it.milliseconds.inWholeSeconds.toInt() },
-                fromSharedPrefs = { it.seconds.inWholeMilliseconds.toInt() },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
                 summarizer = { value ->
                     if (value != null) {
                         "$value seconds"
@@ -205,8 +185,8 @@ sealed interface StashPreference<T> {
                         skipBackwardMs = value.seconds.inWholeMilliseconds
                     }
                 },
-                toSharedPrefs = { it.milliseconds.inWholeSeconds.toInt() },
-                fromSharedPrefs = { it.seconds.inWholeMilliseconds.toInt() },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
                 summarizer = { value ->
                     if (value != null) {
                         "$value seconds"
@@ -335,8 +315,8 @@ sealed interface StashPreference<T> {
                         slideShowIntervalMs = value.toLong()
                     }
                 },
-                toSharedPrefs = { it.milliseconds.inWholeSeconds.toInt() },
-                fromSharedPrefs = { it.seconds.inWholeMilliseconds.toInt() },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
                 summarizer = { value -> value?.let { "${value / 1000.0} seconds" } },
             )
 
@@ -1049,8 +1029,8 @@ sealed interface StashPreference<T> {
                         networkCacheSize = (value * 1024.0 * 1024.0).toLong()
                     }
                 },
-                toSharedPrefs = { (it / (1024.0 * 1024.0)).toInt() },
-                fromSharedPrefs = { (it * 1024.0 * 1024.0).toInt() },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
                 summarizer = { "${it}MB" },
             )
 
@@ -1068,8 +1048,8 @@ sealed interface StashPreference<T> {
                         imageDiskCacheSize = (value * 1024.0 * 1024.0).toLong()
                     }
                 },
-                toSharedPrefs = { (it / (1024.0 * 1024.0)).toInt() },
-                fromSharedPrefs = { (it * 1024.0 * 1024.0).toInt() },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
                 summarizer = { "${it}MB" },
             )
 
@@ -1205,8 +1185,8 @@ sealed interface StashPreference<T> {
                         networkTimeoutMs = value.seconds.inWholeMilliseconds
                     }
                 },
-                toSharedPrefs = { it.milliseconds.inWholeSeconds.toInt() },
-                fromSharedPrefs = { it.seconds.inWholeMilliseconds.toInt() },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
                 summarizer = { value -> if (value == 0) "Never" else value?.let { "$value seconds" } },
             )
 
@@ -1474,9 +1454,14 @@ class StashSliderPreference(
     val summarizer: ((Int?) -> String?)? = null,
 ) : StashPreference<Int> {
     override val prefGetter = { context: Context, prefs: SharedPreferences ->
-        fromSharedPrefs.invoke(prefs.getInt(context.getString(prefKey), defaultValue))
+        val value = prefs.getInt(context.getString(prefKey), -1).takeIf { it >= 0 }
+        val result = value?.let { fromSharedPrefs.invoke(it) } ?: defaultValue
+//        Log.d("SharedPreferencesListener", "prefGetter for $prefKey: $value => $result")
+        result
     }
     override val prefSetter = { context: Context, prefs: SharedPreferences.Editor, value: Int ->
+        val newValue = toSharedPrefs.invoke(value)
+//        Log.d("SharedPreferencesListener", "prefGetter for $prefKey: $value => $newValue")
         prefs.putInt(context.getString(prefKey), toSharedPrefs.invoke(value))
     }
 
@@ -1488,19 +1473,3 @@ class StashSliderPreference(
             ?: summary?.let { context.getString(it) }
             ?: value?.toString()
 }
-
-fun toPrefString(value: TabType): String =
-    value.name
-        .split("_")
-        .joinToString(" ") {
-            it.lowercase().replaceFirstChar { it.uppercaseChar() }
-        }
-
-fun fromPrefString(value: String): TabType =
-    try {
-        TabType.valueOf(
-            value.uppercase().replace(" ", "_"),
-        )
-    } catch (_: IllegalArgumentException) {
-        TabType.UNRECOGNIZED
-    }
