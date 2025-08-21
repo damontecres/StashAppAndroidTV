@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
 import androidx.core.content.edit
@@ -58,11 +59,17 @@ sealed interface StashPreference<T> {
     @get:StringRes
     val title: Int
 
+    @get:StringRes
+    val prefKey: Int
+
     val defaultValue: T
 
     val getter: (prefs: StashPreferences) -> T
 
     val setter: (prefs: StashPreferences, value: T) -> StashPreferences
+
+    val prefGetter: (context: Context, prefs: SharedPreferences) -> T
+    val prefSetter: (context: Context, prefs: SharedPreferences.Editor, value: T) -> SharedPreferences.Editor
 
     fun summary(
         context: Context,
@@ -86,6 +93,7 @@ sealed interface StashPreference<T> {
         val AutoSubmitPin =
             StashSwitchPreference(
                 title = R.string.auto_submit_pin,
+                prefKey = R.string.pref_key_pin_code_auto,
                 summary = R.string.auto_submit_pin_summary,
                 defaultValue = true,
                 getter = { it.pinPreferences.autoSubmit },
@@ -96,6 +104,7 @@ sealed interface StashPreference<T> {
         val PinCode =
             StashPinPreference(
                 title = R.string.pin_code,
+                prefKey = R.string.pref_key_pin_code,
                 defaultValue = "",
                 description = R.string.set_app_pin_code,
                 getter = { it.pinPreferences.pin },
@@ -106,6 +115,7 @@ sealed interface StashPreference<T> {
         val CardSize =
             StashChoicePreference<Int>(
                 title = R.string.card_size_title,
+                prefKey = R.string.pref_key_card_size,
                 defaultValue = 5,
                 displayValues = R.array.card_sizes,
                 indexToValue = { listOf(7, 6, 5, 4, 3)[it] },
@@ -114,10 +124,25 @@ sealed interface StashPreference<T> {
                 setter = { prefs, value ->
                     prefs.updateInterfacePreferences { cardSize = value }
                 },
+                prefGetter = { context: Context, prefs: SharedPreferences ->
+                    val value =
+                        prefs.getString(
+                            context.getString(R.string.pref_key_card_size),
+                            null,
+                        )
+                    value?.toIntOrNull() ?: 5
+                },
+                prefSetter = { context: Context, editor: SharedPreferences.Editor, value: Int ->
+                    editor.putString(
+                        context.getString(R.string.pref_key_card_size),
+                        value.toString(),
+                    )
+                },
             )
         val PlayVideoPreviews =
             StashSwitchPreference(
                 title = R.string.play_video_previews,
+                prefKey = R.string.pref_key_card_previews,
                 defaultValue = true,
                 getter = { it.interfacePreferences.playVideoPreviews },
                 setter = { prefs, value ->
@@ -136,6 +161,7 @@ sealed interface StashPreference<T> {
         val SkipForward =
             StashSliderPreference(
                 title = R.string.skip_forward_preference,
+                prefKey = R.string.pref_key_skip_forward_time,
                 defaultValue = 30,
                 min = 10,
                 max = 5.minutes.inWholeSeconds.toInt(),
@@ -162,6 +188,7 @@ sealed interface StashPreference<T> {
         val SkipBack =
             StashSliderPreference(
                 title = R.string.skip_back_preference,
+                prefKey = R.string.pref_key_skip_back_time,
                 defaultValue = 10,
                 min = 5,
                 max = 5.minutes.inWholeSeconds.toInt(),
@@ -187,6 +214,7 @@ sealed interface StashPreference<T> {
         val FinishedBehavior =
             StashChoicePreference<PlaybackFinishBehavior>(
                 title = R.string.playback_finished_behavior,
+                prefKey = R.string.pref_key_playback_finished_behavior,
                 defaultValue = PlaybackFinishBehavior.DO_NOTHING,
                 displayValues = R.array.playback_finished_behavior_options,
                 indexToValue = {
@@ -199,11 +227,27 @@ sealed interface StashPreference<T> {
                         playbackFinishBehavior = value
                     }
                 },
+                prefGetter = { context: Context, prefs: SharedPreferences ->
+                    val value =
+                        prefs.getString(
+                            context.getString(R.string.pref_key_playback_finished_behavior),
+                            null,
+                        )
+                    value?.let { PlaybackFinishBehavior.valueOf(it.uppercase()) }
+                        ?: PlaybackFinishBehavior.DO_NOTHING
+                },
+                prefSetter = { context: Context, editor: SharedPreferences.Editor, value: PlaybackFinishBehavior ->
+                    editor.putString(
+                        context.getString(R.string.pref_key_playback_finished_behavior),
+                        value.name.lowercase(),
+                    )
+                },
             )
 
         val ReadOnlyMode =
             StashPinPreference(
                 title = R.string.read_only_mode,
+                prefKey = R.string.pref_key_read_only_mode_pin,
                 defaultValue = "",
                 description = R.string.read_only_pin_description,
                 getter = { it.pinPreferences.readOnlyPin },
@@ -244,6 +288,7 @@ sealed interface StashPreference<T> {
         val RememberTab =
             StashSwitchPreference(
                 title = R.string.remember_selected_tab,
+                prefKey = R.string.pref_key_ui_remember_tab,
                 defaultValue = true,
                 getter = { it.interfacePreferences.rememberSelectedTab },
                 setter = { prefs, value ->
@@ -256,6 +301,7 @@ sealed interface StashPreference<T> {
         val VideoPreviewDelay =
             StashSliderPreference(
                 title = R.string.video_preview_delay,
+                prefKey = R.string.pref_key_ui_card_overlay_delay,
                 defaultValue = 1_000,
                 min = 0,
                 max = 10_000,
@@ -272,6 +318,7 @@ sealed interface StashPreference<T> {
         val SlideshowDuration =
             StashSliderPreference(
                 title = R.string.slideshow_duration,
+                prefKey = R.string.pref_key_slideshow_duration,
                 defaultValue = 5.seconds.inWholeMilliseconds.toInt(),
                 min = 1.seconds.inWholeMilliseconds.toInt(),
                 max = 60.seconds.inWholeMilliseconds.toInt(),
@@ -288,6 +335,7 @@ sealed interface StashPreference<T> {
         val SlideshowImageClipDelay =
             StashSliderPreference(
                 title = R.string.slideshow_image_clip_delay,
+                prefKey = R.string.pref_key_slideshow_duration_image_clip,
                 defaultValue = 250,
                 min = 0,
                 max = 60.seconds.inWholeMilliseconds.toInt(),
@@ -304,6 +352,7 @@ sealed interface StashPreference<T> {
         val UseNewUI =
             StashSwitchPreference(
                 title = R.string.use_new_ui,
+                prefKey = R.string.pref_key_use_compose_ui,
                 defaultValue = true,
                 getter = { it.interfacePreferences.useComposeUi },
                 setter = { prefs, value ->
@@ -322,6 +371,7 @@ sealed interface StashPreference<T> {
         val GridJumpButtons =
             StashSwitchPreference(
                 title = R.string.show_grid_jump_buttons,
+                prefKey = R.string.pref_key_ui_grid_jump_controls,
                 defaultValue = true,
                 getter = { it.interfacePreferences.showGridJumpButtons },
                 setter = { prefs, value ->
@@ -341,6 +391,7 @@ sealed interface StashPreference<T> {
         val ThemeStylePref =
             StashChoicePreference<ThemeStyle>(
                 title = R.string.theme_style_preference_title,
+                prefKey = R.string.pref_key_ui_theme_dark_appearance,
                 defaultValue = ThemeStyle.SYSTEM,
                 displayValues = R.array.ui_theme_dark_appearance_choices,
                 indexToValue = {
@@ -353,11 +404,27 @@ sealed interface StashPreference<T> {
                         themeStyle = value
                     }
                 },
+                prefGetter = { context: Context, prefs: SharedPreferences ->
+                    val value =
+                        prefs.getString(
+                            context.getString(R.string.pref_key_ui_theme_dark_appearance),
+                            null,
+                        )
+                    value?.let { ThemeStyle.valueOf(it.uppercase()) }
+                        ?: ThemeStyle.SYSTEM
+                },
+                prefSetter = { context: Context, editor: SharedPreferences.Editor, value: ThemeStyle ->
+                    editor.putString(
+                        context.getString(R.string.pref_key_ui_theme_dark_appearance),
+                        value.name.lowercase(),
+                    )
+                },
             )
 
         val ShowProgressSkipping =
             StashSwitchPreference(
                 title = R.string.show_progress_when_skipping,
+                prefKey = R.string.pref_key_playback_show_skip_progress,
                 defaultValue = true,
                 getter = { it.interfacePreferences.showProgressWhenSkipping },
                 setter = { prefs, value ->
@@ -370,6 +437,7 @@ sealed interface StashPreference<T> {
         val MovementSound =
             StashSwitchPreference(
                 title = R.string.movement_sounds,
+                prefKey = R.string.pref_key_movement_sounds,
                 defaultValue = true,
                 getter = { it.interfacePreferences.playMovementSounds },
                 setter = { prefs, value ->
@@ -381,6 +449,7 @@ sealed interface StashPreference<T> {
         val UpDownNextPrevious =
             StashSwitchPreference(
                 title = R.string.up_down_next_previous_pref_title,
+                prefKey = R.string.pref_key_playback_next_up_down,
                 defaultValue = false,
                 getter = { it.interfacePreferences.useUpDownPreviousNext },
                 setter = { prefs, value ->
@@ -393,6 +462,7 @@ sealed interface StashPreference<T> {
         val Captions =
             StashSwitchPreference(
                 title = R.string.captions_default,
+                prefKey = R.string.pref_key_captions_on_by_default,
                 defaultValue = true,
                 getter = { it.interfacePreferences.captionsByDefault },
                 setter = { prefs, value ->
@@ -412,6 +482,7 @@ sealed interface StashPreference<T> {
         val GalleryTab =
             StashMultiChoicePreference<TabType>(
                 title = R.string.stashapp_gallery,
+                prefKey = R.string.pref_key_ui_gallery_tabs,
                 defaultValue = GalleryTabList,
                 allValues = GalleryTabList,
                 displayValues = R.array.gallery_tabs,
@@ -422,6 +493,8 @@ sealed interface StashPreference<T> {
                         addAllGallery(value)
                     }
                 },
+                toSharedPrefs = ::toPrefString,
+                fromSharedPrefs = ::fromPrefString,
             )
 
         private val GroupTabList =
@@ -436,6 +509,7 @@ sealed interface StashPreference<T> {
         val GroupTab =
             StashMultiChoicePreference<TabType>(
                 title = R.string.stashapp_group,
+                prefKey = R.string.pref_key_ui_group_tabs,
                 defaultValue = GroupTabList,
                 allValues = GroupTabList,
                 displayValues = R.array.group_tabs,
@@ -446,6 +520,8 @@ sealed interface StashPreference<T> {
                         addAllGroup(value)
                     }
                 },
+                toSharedPrefs = ::toPrefString,
+                fromSharedPrefs = ::fromPrefString,
             )
 
         val PerformerTabList =
@@ -463,6 +539,7 @@ sealed interface StashPreference<T> {
         val PerformerTab =
             StashMultiChoicePreference<TabType>(
                 title = R.string.stashapp_performer,
+                prefKey = R.string.pref_key_ui_performer_tabs,
                 defaultValue = PerformerTabList,
                 allValues = PerformerTabList,
                 displayValues = R.array.performer_tabs,
@@ -473,6 +550,8 @@ sealed interface StashPreference<T> {
                         addAllPerformer(value)
                     }
                 },
+                toSharedPrefs = ::toPrefString,
+                fromSharedPrefs = ::fromPrefString,
             )
 
         private val StudioTabList =
@@ -490,6 +569,7 @@ sealed interface StashPreference<T> {
         val StudioTab =
             StashMultiChoicePreference<TabType>(
                 title = R.string.stashapp_studio,
+                prefKey = R.string.pref_key_ui_studio_tabs,
                 defaultValue = StudioTabList,
                 allValues = StudioTabList,
                 displayValues = R.array.studio_tabs,
@@ -500,6 +580,8 @@ sealed interface StashPreference<T> {
                         addAllStudio(value)
                     }
                 },
+                toSharedPrefs = ::toPrefString,
+                fromSharedPrefs = ::fromPrefString,
             )
 
         private val TagTabList =
@@ -517,6 +599,7 @@ sealed interface StashPreference<T> {
         val TagTab =
             StashMultiChoicePreference<TabType>(
                 title = R.string.stashapp_tag,
+                prefKey = R.string.pref_key_ui_tag_tabs,
                 defaultValue = TagTabList,
                 allValues = TagTabList,
                 displayValues = R.array.tag_tabs,
@@ -527,6 +610,8 @@ sealed interface StashPreference<T> {
                         addAllTags(value)
                     }
                 },
+                toSharedPrefs = ::toPrefString,
+                fromSharedPrefs = ::fromPrefString,
             )
 
         val TabPrefs =
@@ -543,6 +628,7 @@ sealed interface StashPreference<T> {
             listOf(
                 StashSwitchPreference(
                     title = R.string.scroll_next_view_all,
+                    prefKey = R.string.pref_key_scroll_on_view_all,
                     defaultValue = true,
                     getter = { it.interfacePreferences.scrollNextViewAll },
                     setter = { prefs, value ->
@@ -552,6 +638,7 @@ sealed interface StashPreference<T> {
                 ),
                 StashSwitchPreference(
                     title = R.string.scroll_to_top_back,
+                    prefKey = R.string.scroll_to_top_back,
                     defaultValue = true,
                     getter = { it.interfacePreferences.scrollTopOnBack },
                     setter = { prefs, value ->
@@ -561,6 +648,7 @@ sealed interface StashPreference<T> {
                 ),
                 StashSwitchPreference(
                     title = R.string.grid_position_footer,
+                    prefKey = R.string.pref_key_show_grid_footer,
                     defaultValue = true,
                     getter = { it.interfacePreferences.showPositionFooter },
                     setter = { prefs, value ->
@@ -571,6 +659,7 @@ sealed interface StashPreference<T> {
                 ),
                 StashSwitchPreference(
                     title = R.string.show_card_rating,
+                    prefKey = R.string.pref_key_show_rating,
                     defaultValue = true,
                     getter = { it.interfacePreferences.showRatingOnCards },
                     setter = { prefs, value ->
@@ -581,6 +670,7 @@ sealed interface StashPreference<T> {
                 ),
                 StashSwitchPreference(
                     title = R.string.play_preview_audio,
+                    prefKey = R.string.pref_key_video_preview_audio,
                     defaultValue = false,
                     getter = { it.interfacePreferences.videoPreviewAudio },
                     setter = { prefs, value ->
@@ -591,6 +681,7 @@ sealed interface StashPreference<T> {
                 ),
                 StashSwitchPreference(
                     title = R.string.page_with_remote_buttons,
+                    prefKey = R.string.pref_key_remote_page_buttons,
                     defaultValue = true,
                     getter = { it.interfacePreferences.pageWithRemoteButtons },
                     setter = { prefs, value ->
@@ -604,6 +695,7 @@ sealed interface StashPreference<T> {
         val DirectPlayVideo =
             StashMultiChoicePreference<String>(
                 title = R.string.direct_play_video,
+                prefKey = R.string.pref_key_default_forced_direct_video,
                 summary = R.string.direct_play_video_summary,
                 defaultValue = listOf(),
                 allValues =
@@ -637,11 +729,14 @@ sealed interface StashPreference<T> {
                         addAllDirectPlayVideo(value)
                     }
                 },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
             )
 
         val DirectPlayAudio =
             StashMultiChoicePreference<String>(
                 title = R.string.direct_play_audio,
+                prefKey = R.string.pref_key_default_forced_direct_audio,
                 summary = R.string.direct_play_audio_summary,
                 defaultValue =
                     listOf(
@@ -693,11 +788,14 @@ sealed interface StashPreference<T> {
                         addAllDirectPlayAudio(value)
                     }
                 },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
             )
 
         val DirectPlayFormat =
             StashMultiChoicePreference<String>(
                 title = R.string.direct_play_format,
+                prefKey = R.string.pref_key_default_forced_direct_containers,
                 summary = R.string.direct_play_format_summary,
                 defaultValue =
                     listOf(
@@ -733,12 +831,15 @@ sealed interface StashPreference<T> {
                         addAllDirectPlayFormat(value)
                     }
                 },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
             )
 
         val advancedPlaybackPrefs =
             listOf(
                 StashSwitchPreference(
                     title = R.string.dpad_skipping,
+                    prefKey = R.string.pref_key_skip_with_dpad,
                     defaultValue = true,
                     getter = { it.playbackPreferences.dpadSkipping },
                     setter = { prefs, value ->
@@ -749,6 +850,7 @@ sealed interface StashPreference<T> {
                 ),
                 StashSwitchPreference(
                     title = R.string.dpad_skip_indicator,
+                    prefKey = R.string.pref_key_show_dpad_skip,
                     defaultValue = true,
                     getter = { it.interfacePreferences.dpadSkipIndicator },
                     setter = { prefs, value ->
@@ -759,6 +861,7 @@ sealed interface StashPreference<T> {
                 ),
                 StashChoicePreference<StreamChoice>(
                     title = R.string.stream_choice,
+                    prefKey = R.string.pref_key_stream_choice,
                     summary = R.string.stream_choice_summary,
                     defaultValue = StreamChoice.HLS,
                     displayValues = R.array.stream_options,
@@ -768,12 +871,27 @@ sealed interface StashPreference<T> {
                     setter = { prefs, value ->
                         prefs.updatePlaybackPreferences { streamChoice = value }
                     },
+                    prefGetter = { context: Context, prefs: SharedPreferences ->
+                        val value =
+                            prefs.getString(
+                                context.getString(R.string.pref_key_stream_choice),
+                                null,
+                            )
+                        value?.let { StreamChoice.valueOf(it.uppercase()) } ?: StreamChoice.HLS
+                    },
+                    prefSetter = { context: Context, editor: SharedPreferences.Editor, value: StreamChoice ->
+                        editor.putString(
+                            context.getString(R.string.pref_key_stream_choice),
+                            value.name.lowercase(),
+                        )
+                    },
                 ),
                 DirectPlayVideo,
                 DirectPlayAudio,
                 DirectPlayFormat,
                 StashSwitchPreference(
                     title = R.string.playback_debug_info,
+                    prefKey = R.string.pref_key_show_playback_debug_info,
                     defaultValue = false,
                     getter = { it.playbackPreferences.showDebugInfo },
                     setter = { prefs, value ->
@@ -784,6 +902,7 @@ sealed interface StashPreference<T> {
                 ),
                 StashSliderPreference(
                     title = R.string.hide_controller_timeout,
+                    prefKey = R.string.pref_key_controller_timeout,
                     defaultValue = 3500,
                     min = 500,
                     max = 15.seconds.inWholeMilliseconds.toInt(),
@@ -796,6 +915,7 @@ sealed interface StashPreference<T> {
                 ),
                 StashSwitchPreference(
                     title = R.string.save_play_history,
+                    prefKey = R.string.pref_key_playback_track_activity,
                     defaultValue = true,
                     getter = { it.playbackPreferences.savePlayHistory },
                     setter = { prefs, value ->
@@ -806,6 +926,7 @@ sealed interface StashPreference<T> {
                 ),
                 StashSwitchPreference(
                     title = R.string.start_playback_without_audio,
+                    prefKey = R.string.pref_key_playback_start_muted,
                     defaultValue = false,
                     getter = { it.playbackPreferences.startPlaybackMuted },
                     setter = { prefs, value ->
@@ -816,6 +937,7 @@ sealed interface StashPreference<T> {
                 ),
                 StashChoicePreference<Resolution>(
                     title = R.string.transcode_above_resolution,
+                    prefKey = R.string.pref_key_playback_always_transcode,
                     summary = null,
                     defaultValue = Resolution.UNSPECIFIED,
                     displayValues = R.array.transcode_options,
@@ -825,12 +947,28 @@ sealed interface StashPreference<T> {
                     setter = { prefs, value ->
                         prefs.updatePlaybackPreferences { transcodeAboveResolution = value }
                     },
+                    prefGetter = { context: Context, prefs: SharedPreferences ->
+                        val value =
+                            prefs.getString(
+                                context.getString(R.string.pref_key_playback_always_transcode),
+                                null,
+                            )
+                        value?.let { Resolution.valueOf(it.uppercase()) }
+                            ?: Resolution.UNSPECIFIED
+                    },
+                    prefSetter = { context: Context, editor: SharedPreferences.Editor, value: Resolution ->
+                        editor.putString(
+                            context.getString(R.string.pref_key_playback_always_transcode),
+                            value.name.lowercase(),
+                        )
+                    },
                 ),
             )
 
         val VideoFilter =
             StashSwitchPreference(
                 title = R.string.enable_video_filters,
+                prefKey = R.string.pref_key_video_filters,
                 defaultValue = false,
                 getter = { it.playbackPreferences.videoFiltersEnabled },
                 setter = { prefs, value ->
@@ -843,6 +981,7 @@ sealed interface StashPreference<T> {
         val PersistVideoFilter =
             StashSwitchPreference(
                 title = R.string.persist_video_filters,
+                prefKey = R.string.pref_key_playback_save_effects,
                 defaultValue = false,
                 getter = { it.playbackPreferences.saveVideoFilters },
                 setter = { prefs, value ->
@@ -854,6 +993,7 @@ sealed interface StashPreference<T> {
         val SearchResults =
             StashSliderPreference(
                 title = R.string.search_results_title,
+                prefKey = R.string.pref_key_max_search_results,
                 defaultValue = 25,
                 min = 1,
                 max = 50,
@@ -867,6 +1007,7 @@ sealed interface StashPreference<T> {
         val SearchDelay =
             StashSliderPreference(
                 title = R.string.search_delay,
+                prefKey = R.string.pref_key_search_delay,
                 defaultValue = 750,
                 min = 0,
                 max = 5.seconds.inWholeMilliseconds.toInt(),
@@ -881,6 +1022,7 @@ sealed interface StashPreference<T> {
         val NetworkCache =
             StashSliderPreference(
                 title = R.string.network_cache_size,
+                prefKey = R.string.pref_key_network_cache_size,
                 defaultValue = 100,
                 min = 25,
                 max = 500,
@@ -897,6 +1039,7 @@ sealed interface StashPreference<T> {
         val ImageDiskCache =
             StashSliderPreference(
                 title = R.string.image_disk_cache_size,
+                prefKey = R.string.pref_key_image_cache_size,
                 defaultValue = 100,
                 min = 25,
                 max = 500,
@@ -913,6 +1056,7 @@ sealed interface StashPreference<T> {
         val CacheInvalidation =
             StashSliderPreference(
                 title = R.string.cache_invalidation,
+                prefKey = R.string.pref_key_network_cache_duration,
                 defaultValue = 6,
                 min = 0,
                 max = 10,
@@ -929,6 +1073,7 @@ sealed interface StashPreference<T> {
         val CacheLogging =
             StashSwitchPreference(
                 title = R.string.cache_logging,
+                prefKey = R.string.pref_key_network_cache_logging,
                 defaultValue = false,
                 getter = { it.cachePreferences.logCacheHits },
                 setter = { prefs, value ->
@@ -949,6 +1094,7 @@ sealed interface StashPreference<T> {
         val CheckForUpdates =
             StashSwitchPreference(
                 title = R.string.check_for_updates,
+                prefKey = R.string.pref_key_auto_check_updates,
                 defaultValue = true,
                 getter = { it.updatePreferences.checkForUpdates },
                 setter = { prefs, value ->
@@ -961,6 +1107,7 @@ sealed interface StashPreference<T> {
         val UpdateUrl =
             StashStringPreference(
                 title = R.string.update_url,
+                prefKey = R.string.pref_key_update_url,
                 defaultValue = "https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/latest",
                 getter = { it.updatePreferences.updateUrl },
                 setter = { prefs, value ->
@@ -978,6 +1125,7 @@ sealed interface StashPreference<T> {
         val CrashReporting =
             StashSwitchPreference(
                 title = R.string.crash_reporting,
+                prefKey = R.string.pref_key_acra_enable,
                 defaultValue = true,
                 getter = {
                     PreferenceManager
@@ -999,6 +1147,7 @@ sealed interface StashPreference<T> {
         val LogErrorsToServer =
             StashSwitchPreference(
                 title = R.string.log_errors_to_server,
+                prefKey = R.string.pref_key_log_to_server,
                 defaultValue = true,
                 getter = { it.advancedPreferences.logErrorsToServer },
                 setter = { prefs, value ->
@@ -1010,6 +1159,7 @@ sealed interface StashPreference<T> {
         val ExperimentalFeatures =
             StashSwitchPreference(
                 title = R.string.experimental_features,
+                prefKey = R.string.pref_key_experimental_features,
                 defaultValue = false,
                 getter = { it.advancedPreferences.experimentalFeaturesEnabled },
                 setter = { prefs, value ->
@@ -1022,6 +1172,7 @@ sealed interface StashPreference<T> {
         val NetworkTimeout =
             StashSliderPreference(
                 title = R.string.network_timeout,
+                prefKey = R.string.pref_key_network_timeout,
                 defaultValue = 15,
                 min = 0,
                 max = 120,
@@ -1038,6 +1189,7 @@ sealed interface StashPreference<T> {
         val PlaybackDebugLogging =
             StashSwitchPreference(
                 title = R.string.playback_debug_logging,
+                prefKey = R.string.pref_key_playback_debug_logging,
                 defaultValue = false,
                 getter = { it.playbackPreferences.debugLoggingEnabled },
                 setter = { prefs, value ->
@@ -1050,6 +1202,7 @@ sealed interface StashPreference<T> {
         val PlaybackStreamingClient =
             StashChoicePreference<PlaybackHttpClient>(
                 title = R.string.playback_http_client,
+                prefKey = R.string.pref_key_playback_http_client,
                 defaultValue = PlaybackHttpClient.OKHTTP,
                 displayValues = R.array.playback_http_client,
                 indexToValue = { PlaybackHttpClient.forNumber(it) },
@@ -1058,11 +1211,27 @@ sealed interface StashPreference<T> {
                 setter = { prefs, value ->
                     prefs.updatePlaybackPreferences { playbackHttpClient = value }
                 },
+                prefGetter = { context: Context, prefs: SharedPreferences ->
+                    val value =
+                        prefs.getString(
+                            context.getString(R.string.pref_key_playback_http_client),
+                            null,
+                        )
+                    value?.let { PlaybackHttpClient.valueOf(it.uppercase()) }
+                        ?: PlaybackHttpClient.OKHTTP
+                },
+                prefSetter = { context: Context, editor: SharedPreferences.Editor, value: PlaybackHttpClient ->
+                    editor.putString(
+                        context.getString(R.string.pref_key_playback_http_client),
+                        value.name.lowercase(),
+                    )
+                },
             )
 
         val ImageThreads =
             StashSliderPreference(
                 title = R.string.image_loading_threads,
+                prefKey = R.string.pref_key_image_loading_threads,
                 defaultValue = Runtime.getRuntime().availableProcessors(),
                 min = 1,
                 max = Runtime.getRuntime().availableProcessors() * 2,
@@ -1081,6 +1250,7 @@ sealed interface StashPreference<T> {
         val TrustCertificates =
             StashSwitchPreference(
                 title = R.string.trust_certificates,
+                prefKey = R.string.pref_key_trust_certs,
                 defaultValue = false,
                 getter = { it.advancedPreferences.trustSelfSignedCertificates },
                 setter = { prefs, value ->
@@ -1111,6 +1281,7 @@ sealed interface StashPreference<T> {
 
 data class StashSwitchPreference(
     @get:StringRes override val title: Int,
+    @param:StringRes override val prefKey: Int,
     override val defaultValue: Boolean,
     override val getter: (prefs: StashPreferences) -> Boolean,
     override val setter: (prefs: StashPreferences, value: Boolean) -> StashPreferences,
@@ -1119,6 +1290,13 @@ data class StashSwitchPreference(
     @param:StringRes val summaryOn: Int? = null,
     @param:StringRes val summaryOff: Int? = null,
 ) : StashPreference<Boolean> {
+    override val prefGetter = { context: Context, prefs: SharedPreferences ->
+        prefs.getBoolean(context.getString(prefKey), defaultValue)
+    }
+    override val prefSetter = { context: Context, prefs: SharedPreferences.Editor, value: Boolean ->
+        prefs.putBoolean(context.getString(prefKey), value)
+    }
+
     override fun summary(
         context: Context,
         value: Boolean?,
@@ -1132,11 +1310,19 @@ data class StashSwitchPreference(
 
 open class StashStringPreference(
     @param:StringRes override val title: Int,
+    @param:StringRes override val prefKey: Int,
     override val defaultValue: String,
     override val getter: (StashPreferences) -> String,
     override val setter: (StashPreferences, String) -> StashPreferences,
     @param:StringRes val summary: Int?,
 ) : StashPreference<String> {
+    override val prefGetter = { context: Context, prefs: SharedPreferences ->
+        prefs.getString(context.getString(prefKey), null) ?: defaultValue
+    }
+    override val prefSetter = { context: Context, prefs: SharedPreferences.Editor, value: String ->
+        prefs.putString(context.getString(prefKey), value)
+    }
+
     override fun summary(
         context: Context,
         value: String?,
@@ -1145,12 +1331,14 @@ open class StashStringPreference(
 
 class StashPinPreference(
     @StringRes title: Int,
+    @StringRes prefKey: Int,
     defaultValue: String = "",
     @param:StringRes val description: Int,
     override val getter: (prefs: StashPreferences) -> String,
     override val setter: (prefs: StashPreferences, value: String) -> StashPreferences,
 ) : StashStringPreference(
         title,
+        prefKey,
         defaultValue,
         getter,
         setter,
@@ -1176,17 +1364,21 @@ class StashPinPreference(
 
 data class StashChoicePreference<T>(
     @param:StringRes override val title: Int,
+    @param:StringRes override val prefKey: Int,
     override val defaultValue: T,
     @param:ArrayRes val displayValues: Int,
     val indexToValue: (index: Int) -> T,
     val valueToIndex: (T) -> Int,
     override val getter: (prefs: StashPreferences) -> T,
     override val setter: (prefs: StashPreferences, value: T) -> StashPreferences,
+    override val prefGetter: (Context, SharedPreferences) -> T,
+    override val prefSetter: (Context, SharedPreferences.Editor, T) -> SharedPreferences.Editor,
     @param:StringRes val summary: Int? = null,
 ) : StashPreference<T>
 
 data class StashMultiChoicePreference<T>(
     @param:StringRes override val title: Int,
+    @param:StringRes override val prefKey: Int,
     override val defaultValue: List<T>,
     val allValues: List<T>,
     @param:ArrayRes val displayValues: Int,
@@ -1195,14 +1387,28 @@ data class StashMultiChoicePreference<T>(
     override val getter: (prefs: StashPreferences) -> List<T>,
     override val setter: (prefs: StashPreferences, value: List<T>) -> StashPreferences,
     @param:StringRes val summary: Int? = null,
-) : StashPreference<List<T>>
+    val toSharedPrefs: (T) -> String,
+    val fromSharedPrefs: (String) -> T,
+) : StashPreference<List<T>> {
+    override val prefGetter = { context: Context, prefs: SharedPreferences ->
+        prefs.getStringSet(context.getString(prefKey), null)?.map(fromSharedPrefs) ?: defaultValue
+    }
+    override val prefSetter =
+        { context: Context, editor: SharedPreferences.Editor, value: List<T> ->
+            val values = value.map(toSharedPrefs)
+            editor.putStringSet(context.getString(prefKey), values.toSet())
+        }
+}
 
 data class StashClickablePreference(
     @param:StringRes override val title: Int,
     override val defaultValue: Unit = Unit,
     override val getter: (prefs: StashPreferences) -> Unit = { },
     override val setter: (prefs: StashPreferences, value: Unit) -> StashPreferences = { prefs, _ -> prefs },
+    override val prefGetter: (Context, SharedPreferences) -> Unit = { _, _ -> },
+    override val prefSetter: (Context, SharedPreferences.Editor, Unit) -> SharedPreferences.Editor = { _, editor, _ -> editor },
     @param:StringRes val summary: Int? = null,
+    @param:StringRes override val prefKey: Int = 0,
 ) : StashPreference<Unit> {
     override fun summary(
         context: Context,
@@ -1215,7 +1421,10 @@ data class StashDestinationPreference(
     override val defaultValue: Unit = Unit,
     override val getter: (prefs: StashPreferences) -> Unit = { },
     override val setter: (prefs: StashPreferences, value: Unit) -> StashPreferences = { prefs, _ -> prefs },
+    override val prefGetter: (Context, SharedPreferences) -> Unit = { _, _ -> },
+    override val prefSetter: (Context, SharedPreferences.Editor, Unit) -> SharedPreferences.Editor = { _, editor, _ -> editor },
     @param:StringRes val summary: Int? = null,
+    @param:StringRes override val prefKey: Int = 0,
     val destination: Destination,
 ) : StashPreference<Unit> {
     override fun summary(
@@ -1226,15 +1435,25 @@ data class StashDestinationPreference(
 
 class StashSliderPreference(
     @param:StringRes override val title: Int,
+    @param:StringRes override val prefKey: Int,
     override val defaultValue: Int,
     val min: Int = 0,
     val max: Int = 100,
     val interval: Int = 1,
     override val getter: (prefs: StashPreferences) -> Int,
     override val setter: (prefs: StashPreferences, value: Int) -> StashPreferences,
+    val toSharedPrefs: (Int) -> Int = { it },
+    val fromSharedPrefs: (Int) -> Int = { it },
     @param:StringRes val summary: Int? = null,
     val summarizer: ((Int?) -> String?)? = null,
 ) : StashPreference<Int> {
+    override val prefGetter = { context: Context, prefs: SharedPreferences ->
+        fromSharedPrefs.invoke(prefs.getInt(context.getString(prefKey), defaultValue))
+    }
+    override val prefSetter = { context: Context, prefs: SharedPreferences.Editor, value: Int ->
+        prefs.putInt(context.getString(prefKey), toSharedPrefs.invoke(value))
+    }
+
     override fun summary(
         context: Context,
         value: Int?,
@@ -1243,3 +1462,19 @@ class StashSliderPreference(
             ?: summary?.let { context.getString(it) }
             ?: value?.toString()
 }
+
+fun toPrefString(value: TabType): String =
+    value.name
+        .split("_")
+        .joinToString(" ") {
+            it.lowercase().replaceFirstChar { it.uppercaseChar() }
+        }
+
+fun fromPrefString(value: String): TabType =
+    try {
+        TabType.valueOf(
+            value.uppercase().replace(" ", "_"),
+        )
+    } catch (e: IllegalArgumentException) {
+        TabType.UNRECOGNIZED
+    }

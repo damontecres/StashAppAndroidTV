@@ -120,12 +120,20 @@ class StashExoPlayer private constructor() {
             val preferences = PreferenceManager.getDefaultSharedPreferences(context)
             val skipForward =
                 when (skipParams) {
-                    is SkipParams.Default -> preferences.getInt("skip_forward_time", 30) * 1000L
+                    is SkipParams.Default ->
+                        preferences.getInt(
+                            context.getString(R.string.pref_key_skip_forward_time),
+                            30,
+                        ) * 1000L
                     is SkipParams.Values -> skipParams.skipForward
                 }
             val skipBack =
                 when (skipParams) {
-                    is SkipParams.Default -> preferences.getInt("skip_back_time", 10) * 1000L
+                    is SkipParams.Default ->
+                        preferences.getInt(
+                            context.getString(R.string.pref_key_skip_back_time),
+                            10,
+                        ) * 1000L
                     is SkipParams.Values -> skipParams.skipBack
                 }
             val trackSelector = DefaultTrackSelector(context)
