@@ -176,6 +176,8 @@ sealed interface StashPreference<T> {
                         skipForwardMs = value.seconds.inWholeMilliseconds
                     }
                 },
+                toSharedPrefs = { it.milliseconds.inWholeSeconds.toInt() },
+                fromSharedPrefs = { it.seconds.inWholeMilliseconds.toInt() },
                 summarizer = { value ->
                     if (value != null) {
                         "$value seconds"
@@ -203,6 +205,8 @@ sealed interface StashPreference<T> {
                         skipBackwardMs = value.seconds.inWholeMilliseconds
                     }
                 },
+                toSharedPrefs = { it.milliseconds.inWholeSeconds.toInt() },
+                fromSharedPrefs = { it.seconds.inWholeMilliseconds.toInt() },
                 summarizer = { value ->
                     if (value != null) {
                         "$value seconds"
@@ -312,6 +316,8 @@ sealed interface StashPreference<T> {
                         cardPreviewDelayMs = value.toLong()
                     }
                 },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
                 summarizer = { value -> value?.let { "${value / 1000.0} seconds" } },
             )
 
@@ -329,6 +335,8 @@ sealed interface StashPreference<T> {
                         slideShowIntervalMs = value.toLong()
                     }
                 },
+                toSharedPrefs = { it.milliseconds.inWholeSeconds.toInt() },
+                fromSharedPrefs = { it.seconds.inWholeMilliseconds.toInt() },
                 summarizer = { value -> value?.let { "${value / 1000.0} seconds" } },
             )
 
@@ -346,6 +354,8 @@ sealed interface StashPreference<T> {
                         slideShowImageClipPauseMs = value.toLong()
                     }
                 },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
                 summarizer = { value -> value?.let { "${value / 1000.0} seconds" } },
             )
 
@@ -911,6 +921,8 @@ sealed interface StashPreference<T> {
                     setter = { prefs, value ->
                         prefs.updatePlaybackPreferences { controllerTimeoutMs = value }
                     },
+                    toSharedPrefs = { it },
+                    fromSharedPrefs = { it },
                     summarizer = { value -> value?.let { "${value / 1000.0} seconds" } },
                 ),
                 StashSwitchPreference(
@@ -1002,6 +1014,8 @@ sealed interface StashPreference<T> {
                 setter = { prefs, value ->
                     prefs.updateSearchPreferences { maxResults = value }
                 },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
             )
 
         val SearchDelay =
@@ -1017,6 +1031,8 @@ sealed interface StashPreference<T> {
                     prefs.updateSearchPreferences { searchDelayMs = value.toLong() }
                 },
                 summarizer = { "${it}ms" },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
             )
 
         val NetworkCache =
@@ -1033,6 +1049,8 @@ sealed interface StashPreference<T> {
                         networkCacheSize = (value * 1024.0 * 1024.0).toLong()
                     }
                 },
+                toSharedPrefs = { (it / (1024.0 * 1024.0)).toInt() },
+                fromSharedPrefs = { (it * 1024.0 * 1024.0).toInt() },
                 summarizer = { "${it}MB" },
             )
 
@@ -1050,6 +1068,8 @@ sealed interface StashPreference<T> {
                         imageDiskCacheSize = (value * 1024.0 * 1024.0).toLong()
                     }
                 },
+                toSharedPrefs = { (it / (1024.0 * 1024.0)).toInt() },
+                fromSharedPrefs = { (it * 1024.0 * 1024.0).toInt() },
                 summarizer = { "${it}MB" },
             )
 
@@ -1065,6 +1085,8 @@ sealed interface StashPreference<T> {
                 setter = { prefs, value ->
                     prefs.updateCachePreferences { cacheExpirationTime = value }
                 },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
                 summarizer = {
                     cacheDurationPrefToDuration(it ?: 0)?.toString() ?: "Always request from server"
                 },
@@ -1183,6 +1205,8 @@ sealed interface StashPreference<T> {
                         networkTimeoutMs = value.seconds.inWholeMilliseconds
                     }
                 },
+                toSharedPrefs = { it.milliseconds.inWholeSeconds.toInt() },
+                fromSharedPrefs = { it.seconds.inWholeMilliseconds.toInt() },
                 summarizer = { value -> if (value == 0) "Never" else value?.let { "$value seconds" } },
             )
 
@@ -1240,6 +1264,8 @@ sealed interface StashPreference<T> {
                 setter = { prefs, value ->
                     prefs.updateAdvancedPreferences { imageThreadCount = value }
                 },
+                toSharedPrefs = { it },
+                fromSharedPrefs = { it },
                 summarizer = {
                     "$it threads, default is ${
                         Runtime.getRuntime().availableProcessors()
@@ -1442,8 +1468,8 @@ class StashSliderPreference(
     val interval: Int = 1,
     override val getter: (prefs: StashPreferences) -> Int,
     override val setter: (prefs: StashPreferences, value: Int) -> StashPreferences,
-    val toSharedPrefs: (Int) -> Int = { it },
-    val fromSharedPrefs: (Int) -> Int = { it },
+    val toSharedPrefs: (Int) -> Int,
+    val fromSharedPrefs: (Int) -> Int,
     @param:StringRes val summary: Int? = null,
     val summarizer: ((Int?) -> String?)? = null,
 ) : StashPreference<Int> {
@@ -1475,6 +1501,6 @@ fun fromPrefString(value: String): TabType =
         TabType.valueOf(
             value.uppercase().replace(" ", "_"),
         )
-    } catch (e: IllegalArgumentException) {
+    } catch (_: IllegalArgumentException) {
         TabType.UNRECOGNIZED
     }
