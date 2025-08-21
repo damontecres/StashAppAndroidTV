@@ -307,6 +307,12 @@ sealed interface StashPreference<T> {
                 defaultValue = true,
                 getter = { it.interfacePreferences.useComposeUi },
                 setter = { prefs, value ->
+                    val context = StashApplication.getApplication()
+                    PreferenceManager
+                        .getDefaultSharedPreferences(context)
+                        .edit(true) {
+                            putBoolean(context.getString(R.string.pref_key_use_compose_ui), value)
+                        }
                     prefs.updateInterfacePreferences { useComposeUi = value }
                 },
                 summaryOn = R.string.stashapp_actions_enable,

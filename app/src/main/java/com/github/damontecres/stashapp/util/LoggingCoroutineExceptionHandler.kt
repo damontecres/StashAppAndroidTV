@@ -8,6 +8,8 @@ import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlin.coroutines.CoroutineContext
 
 class LoggingCoroutineExceptionHandler(
@@ -31,10 +33,19 @@ class LoggingCoroutineExceptionHandler(
 
         try {
             val context = StashApplication.getApplication()
+            val compose = getPreference(context, R.string.pref_key_use_compose_ui, true)
+            val logToServer =
+                if (compose) {
+                    runBlocking {
+                        context.preferences.data
+                            .first()
+                            .advancedPreferences.logErrorsToServer
+                    }
+                } else {
+                    getPreference(context, R.string.pref_key_log_to_server, true)
+                }
             val destination = StashApplication.navigationManager.previousDestination
-            if (server.serverPreferences.companionPluginInstalled &&
-                getPreference(context, R.string.pref_key_log_to_server, true)
-            ) {
+            if (server.serverPreferences.companionPluginInstalled && logToServer) {
                 val compose = StashApplication.navigationManager is NavigationManagerCompose
                 scope.launchIO {
                     val message =

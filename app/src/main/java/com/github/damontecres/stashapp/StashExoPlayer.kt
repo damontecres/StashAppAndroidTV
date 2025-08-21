@@ -50,13 +50,32 @@ class StashExoPlayer private constructor() {
             context: Context,
             server: StashServer,
             skipParams: SkipParams,
+            httpClientChoice: String =
+                getPreference(
+                    context,
+                    R.string.pref_key_playback_http_client,
+                    context.getString(R.string.playback_http_client_okhttp),
+                )!!,
+            debugLogging: Boolean =
+                getPreference(
+                    context,
+                    R.string.pref_key_playback_debug_logging,
+                    false,
+                ),
         ): ExoPlayer {
             if (instance == null || skipParams != this.skipParams) {
                 synchronized(this) {
                     // synchronized to avoid concurrency problem
                     if (instance == null || skipParams != this.skipParams) {
                         this.skipParams = skipParams
-                        instance = createInstance(context, server, skipParams)
+                        instance =
+                            createInstance(
+                                context,
+                                server,
+                                skipParams,
+                                httpClientChoice,
+                                debugLogging,
+                            )
                     }
                 }
             }
@@ -71,17 +90,12 @@ class StashExoPlayer private constructor() {
             context: Context,
             server: StashServer,
             skipParams: SkipParams,
+            httpClientChoice: String,
+            debugLogging: Boolean,
         ): ExoPlayer {
             releasePlayer()
             val dataSourceFactory =
-                when (
-                    val httpClientChoice =
-                        getPreference(
-                            context,
-                            R.string.pref_key_playback_http_client,
-                            context.getString(R.string.playback_http_client_okhttp),
-                        )
-                ) {
+                when (httpClientChoice.lowercase()) {
                     context.getString(R.string.playback_http_client_okhttp) -> {
                         OkHttpDataSource
                             .Factory(server.streamingOkHttpClient)
@@ -156,12 +170,7 @@ class StashExoPlayer private constructor() {
                 .setTrackSelector(trackSelector)
                 .build()
                 .also {
-                    if (getPreference(
-                            context,
-                            R.string.pref_key_playback_debug_logging,
-                            false,
-                        )
-                    ) {
+                    if (debugLogging) {
                         it.addAnalyticsListener(EventLogger())
                     }
                 }
