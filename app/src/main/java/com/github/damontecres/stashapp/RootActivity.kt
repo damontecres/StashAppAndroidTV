@@ -210,7 +210,7 @@ class RootActivity :
             "onNavigate: $previousDestination=>$nextDestination",
         )
         currentFragment = fragment
-        if (nextDestination == Destination.Main && !hasCheckedForUpdate) {
+        if (!useCompose && nextDestination == Destination.Main && !hasCheckedForUpdate) {
             serverViewModel.maybeShowUpdate(this)
             hasCheckedForUpdate = true
         }

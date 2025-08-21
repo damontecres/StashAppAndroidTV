@@ -80,7 +80,6 @@ import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.defaultCardWidth
-import com.github.damontecres.stashapp.util.getPreference
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -401,8 +400,7 @@ fun StashGrid(
     }
 
     val context = LocalContext.current
-    val showJumpButtons =
-        remember { getPreference(context, R.string.pref_key_ui_grid_jump_controls, true) }
+    val showJumpButtons = uiConfig.preferences.interfacePreferences.showGridJumpButtons
 
     var alphabetFocus by remember { mutableStateOf(false) }
     val focusOn = { index: Int ->

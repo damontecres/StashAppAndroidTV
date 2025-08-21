@@ -18,6 +18,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -51,9 +52,9 @@ import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.components.SwitchWithLabel
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashPreferencesSerializer
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResult
-import com.github.damontecres.stashapp.util.getPreference
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.preferences
 import com.github.damontecres.stashapp.util.updateAdvancedPreferences
@@ -69,6 +70,7 @@ fun AddServer(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val preferences by context.preferences.data.collectAsState(StashPreferencesSerializer.defaultValue)
 
     val testButtonFocusRequester = remember { FocusRequester() }
 
@@ -79,13 +81,7 @@ fun AddServer(
     var usePassword by remember { mutableStateOf(false) }
 
     var trustCerts by remember {
-        mutableStateOf(
-            getPreference(
-                context,
-                R.string.pref_key_trust_certs,
-                false,
-            ),
-        )
+        mutableStateOf(preferences.advancedPreferences.trustSelfSignedCertificates)
     }
 
     val connectionState by viewModel.connectionState.observeAsState(ConnectionState.Inactive)
