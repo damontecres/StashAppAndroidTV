@@ -122,7 +122,7 @@ fun ObjectFilterPicker(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var value by remember { mutableStateOf(initialValue) }
+    var value by remember(filterOption) { mutableStateOf(initialValue) }
 
     fun onChangeCriterionModifier(change: (CriterionModifier) -> Any): () -> Unit =
         {

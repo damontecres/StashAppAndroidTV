@@ -242,7 +242,7 @@ fun CreateFilterColumns(
                             alpha = .25f
                         },
                 ),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         item {

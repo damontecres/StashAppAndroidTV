@@ -42,7 +42,7 @@ fun InitialSetup(
     var showPinDialog by remember { mutableStateOf(false) }
     val isNotTvDevice = isNotTvDevice
 
-    fun submit(pin: String?) {
+    fun submit(pin: String) {
         server?.let {
             viewModel.addServer(it)
             scope.launch(StashCoroutineExceptionHandler()) {
@@ -92,7 +92,7 @@ fun InitialSetup(
                 ),
         ) {
             ConfigurePin(
-                onCancel = { submit(null) },
+                onCancel = { submit("") },
                 onSubmit = { submit(it) },
                 modifier =
                     Modifier
