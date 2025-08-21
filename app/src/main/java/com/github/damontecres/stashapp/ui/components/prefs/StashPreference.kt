@@ -237,8 +237,20 @@ sealed interface StashPreference<T> {
                             context.getString(R.string.pref_key_playback_finished_behavior),
                             null,
                         )
-                    value?.let { PlaybackFinishBehavior.valueOf(it.uppercase()) }
-                        ?: PlaybackFinishBehavior.DO_NOTHING
+                    value?.let {
+                        when (it) {
+                            context.getString(R.string.playback_finished_repeat) ->
+                                PlaybackFinishBehavior.REPEAT
+
+                            context.getString(R.string.playback_finished_return) ->
+                                PlaybackFinishBehavior.GO_BACK
+
+                            context.getString(R.string.playback_finished_do_nothing) ->
+                                PlaybackFinishBehavior.DO_NOTHING
+
+                            else -> PlaybackFinishBehavior.DO_NOTHING
+                        }
+                    } ?: PlaybackFinishBehavior.DO_NOTHING
                 },
                 prefSetter = { context: Context, editor: SharedPreferences.Editor, value: PlaybackFinishBehavior ->
                     editor.putString(
@@ -957,8 +969,10 @@ sealed interface StashPreference<T> {
                                 context.getString(R.string.pref_key_playback_always_transcode),
                                 null,
                             )
-                        value?.let { Resolution.valueOf(it.uppercase()) }
-                            ?: Resolution.UNSPECIFIED
+                        when (value) {
+                            "Disabled", "", null -> Resolution.UNSPECIFIED
+                            else -> value.let { Resolution.valueOf(it.uppercase()) }
+                        }
                     },
                     prefSetter = { context: Context, editor: SharedPreferences.Editor, value: Resolution ->
                         editor.putString(

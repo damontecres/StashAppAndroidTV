@@ -39,9 +39,13 @@ fun toPrefString(value: TabType): String =
 fun fromPrefString(value: String): TabType =
     try {
         TabType.valueOf(
-            value.uppercase().replace(" ", "_"),
+            value
+                .uppercase()
+                .replace("-", "_")
+                .replace(" ", "_"),
         )
     } catch (_: IllegalArgumentException) {
+        Log.e("PreferenceUtils", "Unknown TabType: $value")
         TabType.UNRECOGNIZED
     }
 
