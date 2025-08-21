@@ -122,7 +122,7 @@ fun ObjectFilterPicker(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var value by remember { mutableStateOf(initialValue) }
+    var value by remember(filterOption) { mutableStateOf(initialValue) }
 
     fun onChangeCriterionModifier(change: (CriterionModifier) -> Any): () -> Unit =
         {
@@ -171,14 +171,13 @@ fun ObjectFilterPicker(
                     )
             }
         }
-        value?.let { input ->
+        (value as? IntCriterionInput)?.let { input ->
             val isValid = { str: String ->
                 val range = if (uiConfig.ratingAsStars) 0.0..5.0 else 0.0..100.0
                 str.isNotNullOrBlank() && str.toDoubleOrNull()?.let { it in range } == true
             }
 
             LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-            input as IntCriterionInput
             val keyboardType =
                 if (uiConfig.ratingAsStars) KeyboardType.Decimal else KeyboardType.Number
             val multiplier = if (uiConfig.ratingAsStars) 20.0 else 10.0
@@ -227,9 +226,8 @@ fun ObjectFilterPicker(
                     )
             }
         }
-        value?.let { input ->
+        (value as? IntCriterionInput)?.let { input ->
             LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-            input as IntCriterionInput
             CriterionInputPicker(
                 modifier = modifier,
                 name = stringResource(filterOption.nameStringId),
@@ -286,9 +284,8 @@ fun ObjectFilterPicker(
                             )
                     }
                 }
-                value?.let { input ->
+                (value as? StringCriterionInput)?.let { input ->
                     LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-                    input as StringCriterionInput
                     CriterionInputPicker(
                         modifier = modifier,
                         name = stringResource(filterOption.nameStringId),
@@ -324,9 +321,8 @@ fun ObjectFilterPicker(
                             )
                     }
                 }
-                value?.let { input ->
+                (value as? IntCriterionInput)?.let { input ->
                     LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-                    input as IntCriterionInput
                     CriterionInputPicker(
                         modifier = modifier,
                         name = stringResource(filterOption.nameStringId),
@@ -367,9 +363,8 @@ fun ObjectFilterPicker(
                             )
                     }
                 }
-                value?.let { input ->
+                (value as? FloatCriterionInput)?.let { input ->
                     LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-                    input as FloatCriterionInput
                     CriterionInputPicker(
                         modifier = modifier,
                         name = stringResource(filterOption.nameStringId),
@@ -403,7 +398,7 @@ fun ObjectFilterPicker(
                 LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
                 BooleanPicker(
                     name = stringResource(filterOption.nameStringId),
-                    value = value as Boolean?,
+                    value = value as? Boolean,
                     onSave = { saveObjectFilter(it) },
                     onRemove = { saveObjectFilter(null) },
                     modifier = modifier,
@@ -420,9 +415,8 @@ fun ObjectFilterPicker(
                             )
                     }
                 }
-                value?.let { input ->
+                (value as? ResolutionCriterionInput)?.let { input ->
                     LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-                    input as ResolutionCriterionInput
                     SelectFromListPicker(
                         modifier = modifier,
                         name = stringResource(filterOption.nameStringId),
@@ -466,9 +460,8 @@ fun ObjectFilterPicker(
                             )
                     }
                 }
-                value?.let { input ->
+                (value as? CircumcisionCriterionInput)?.let { input ->
                     LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-                    input as CircumcisionCriterionInput
                     SelectFromListPicker(
                         modifier = modifier,
                         name = stringResource(filterOption.nameStringId),
@@ -528,9 +521,8 @@ fun ObjectFilterPicker(
                             )
                     }
                 }
-                value?.let { input ->
+                (value as? DateCriterionInput)?.let { input ->
                     LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-                    input as DateCriterionInput
                     CriterionInputPicker(
                         modifier = modifier,
                         name = stringResource(filterOption.nameStringId),
@@ -585,9 +577,8 @@ fun ObjectFilterPicker(
                             )
                     }
                 }
-                value?.let { input ->
+                (value as? GenderCriterionInput)?.let { input ->
                     LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-                    input as GenderCriterionInput
                     SelectFromListPicker(
                         modifier = modifier,
                         name = stringResource(filterOption.nameStringId),
@@ -636,9 +627,8 @@ fun ObjectFilterPicker(
                             )
                     }
                 }
-                value?.let { input ->
+                (value as? MultiCriterionInput)?.let { input ->
                     LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-                    input as MultiCriterionInput
                     MultiCriterionPicker(
                         name = stringResource(filterOption.nameStringId),
                         dataType = filterOption.dataType!!,
@@ -706,9 +696,8 @@ fun ObjectFilterPicker(
                             )
                     }
                 }
-                value?.let { input ->
+                (value as? OrientationCriterionInput)?.let { input ->
                     LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-                    input as OrientationCriterionInput
                     SelectFromListPicker(
                         modifier = modifier,
                         name = stringResource(filterOption.nameStringId),
@@ -751,9 +740,8 @@ fun ObjectFilterPicker(
                             )
                     }
                 }
-                value?.let { input ->
+                (value as? HierarchicalMultiCriterionInput)?.let { input ->
                     LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
-                    input as HierarchicalMultiCriterionInput
                     MultiCriterionPicker(
                         name = stringResource(filterOption.nameStringId),
                         dataType = filterOption.dataType!!,

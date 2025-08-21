@@ -85,6 +85,7 @@ fun DestinationContent(
                 navigationManager = navManager,
                 preferenceScreenOption = destination.screenOption,
                 uiConfig = composeUiConfig,
+                onUpdateTitle = onUpdateTitle,
                 modifier = modifier,
             )
         }

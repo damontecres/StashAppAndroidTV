@@ -27,6 +27,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
@@ -194,6 +195,7 @@ fun PreferencesContent(
     initialPreferences: StashPreferences,
     preferenceScreenOption: PreferenceScreenOption,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: PreferencesViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -232,6 +234,7 @@ fun PreferencesContent(
             PreferenceScreenOption.USER_INTERFACE -> "User Interface Preferences"
         }
     LaunchedEffect(Unit) {
+        onUpdateTitle?.invoke(AnnotatedString(screenTitle))
         if (preferenceScreenOption == PreferenceScreenOption.ADVANCED) {
             viewModel.init(context, server)
         }
@@ -249,17 +252,19 @@ fun PreferencesContent(
         contentPadding = PaddingValues(16.dp),
         modifier = modifier,
     ) {
-        stickyHeader {
-            Text(
-                text = screenTitle,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-            )
+        if (onUpdateTitle == null) {
+            stickyHeader {
+                Text(
+                    text = screenTitle,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                )
+            }
         }
         prefList.forEachIndexed { groupIndex, group ->
             item {
