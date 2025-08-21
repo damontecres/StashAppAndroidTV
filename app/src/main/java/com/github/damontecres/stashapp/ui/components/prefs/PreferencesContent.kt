@@ -212,7 +212,8 @@ fun PreferencesContent(
 
     val installedVersion = remember { UpdateChecker.getInstalledVersion(context) }
     var updateVersion by remember { mutableStateOf<Release?>(null) }
-    val updateAvailable = updateVersion?.version?.isGreaterThan(installedVersion) == true
+    val updateAvailable =
+        remember(updateVersion) { updateVersion?.version?.isGreaterThan(installedVersion) == true }
 
     if (preferences.updatePreferences.checkForUpdates) {
         LaunchedEffect(Unit) {
@@ -285,6 +286,12 @@ fun PreferencesContent(
             ) {
                 item {
                     val updateFocusRequester = remember { FocusRequester() }
+                    LaunchedEffect(Unit) {
+                        if (focusedIndex.first == 0 && focusedIndex.second == 0) {
+                            // Only re-focus if the user hasn't moved
+                            updateFocusRequester.tryRequestFocus()
+                        }
+                    }
                     ClickPreference(
                         title = stringResource(R.string.install_update),
                         onClick = {
