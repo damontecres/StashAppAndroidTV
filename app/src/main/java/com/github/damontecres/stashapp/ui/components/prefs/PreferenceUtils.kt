@@ -36,7 +36,7 @@ fun toPrefString(value: TabType): String =
             it.lowercase().replaceFirstChar { it.uppercaseChar() }
         }
 
-fun fromPrefString(value: String): TabType =
+fun fromPrefString(value: String): TabType? =
     try {
         TabType.valueOf(
             value
@@ -46,7 +46,7 @@ fun fromPrefString(value: String): TabType =
         )
     } catch (_: IllegalArgumentException) {
         Log.e("PreferenceUtils", "Unknown TabType: $value")
-        TabType.UNRECOGNIZED
+        null
     }
 
 class SharedPreferencesListener(

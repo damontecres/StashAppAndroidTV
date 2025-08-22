@@ -1466,10 +1466,11 @@ data class StashMultiChoicePreference<T>(
     override val setter: (prefs: StashPreferences, value: List<T>) -> StashPreferences,
     @param:StringRes val summary: Int? = null,
     val toSharedPrefs: (T) -> String,
-    val fromSharedPrefs: (String) -> T,
+    val fromSharedPrefs: (String) -> T?,
 ) : StashPreference<List<T>> {
     override val prefGetter = { context: Context, prefs: SharedPreferences ->
-        prefs.getStringSet(context.getString(prefKey), null)?.map(fromSharedPrefs) ?: defaultValue
+        prefs.getStringSet(context.getString(prefKey), null)?.mapNotNull(fromSharedPrefs)
+            ?: defaultValue
     }
     override val prefSetter =
         { context: Context, editor: SharedPreferences.Editor, value: List<T> ->
