@@ -50,6 +50,8 @@ import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
+import com.github.damontecres.stashapp.ui.util.playOnClickSound
+import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
 import com.github.damontecres.stashapp.util.Release
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -239,6 +241,7 @@ fun PreferencesContent(
         }
     }
 
+    val movementSounds = preferences.interfacePreferences.playMovementSounds
     val installedVersion = remember { UpdateChecker.getInstalledVersion(context) }
     var updateVersion by remember { mutableStateOf<Release?>(null) }
     val updateAvailable =
@@ -336,12 +339,16 @@ fun PreferencesContent(
                         ClickPreference(
                             title = stringResource(R.string.install_update),
                             onClick = {
+                                if (movementSounds) playOnClickSound(context)
                                 updateVersion?.let {
                                     navigationManager.navigate(Destination.UpdateApp(it))
                                 }
                             },
                             summary = updateVersion?.version?.toString(),
-                            modifier = Modifier.focusRequester(updateFocusRequester),
+                            modifier =
+                                Modifier
+                                    .focusRequester(updateFocusRequester)
+                                    .playSoundOnFocus(movementSounds),
                         )
                     }
                 }
@@ -353,6 +360,7 @@ fun PreferencesContent(
                         LaunchedEffect(focused) {
                             if (focused) {
                                 focusedIndex = Pair(groupIndex, prefIndex)
+                                if (movementSounds) playOnClickSound(context)
                             }
                         }
                         when (pref) {
@@ -361,6 +369,7 @@ fun PreferencesContent(
                                 ClickPreference(
                                     title = stringResource(R.string.stashapp_package_manager_installed_version),
                                     onClick = {
+                                        if (movementSounds) playOnClickSound(context)
                                         if (clickCount++ >= 2) {
                                             clickCount = 0
                                             navigationManager.navigate(Destination.Debug)
@@ -369,10 +378,11 @@ fun PreferencesContent(
                                     summary = installedVersion.toString(),
                                     interactionSource = interactionSource,
                                     modifier =
-                                        Modifier.ifElse(
-                                            groupIndex == focusedIndex.first && prefIndex == focusedIndex.second,
-                                            Modifier.focusRequester(focusRequester),
-                                        ),
+                                        Modifier
+                                            .ifElse(
+                                                groupIndex == focusedIndex.first && prefIndex == focusedIndex.second,
+                                                Modifier.focusRequester(focusRequester),
+                                            ),
                                 )
                             }
 
@@ -387,6 +397,7 @@ fun PreferencesContent(
                                             stringResource(R.string.no_update_available)
                                         },
                                     onClick = {
+                                        if (movementSounds) playOnClickSound(context)
                                         if (updateVersion != null && updateAvailable) {
                                             updateVersion?.let {
                                                 navigationManager.navigate(
@@ -411,6 +422,7 @@ fun PreferencesContent(
                                         }
                                     },
                                     onLongClick = {
+                                        if (movementSounds) playOnClickSound(context)
                                         updateVersion?.let {
                                             navigationManager.navigate(
                                                 Destination.UpdateApp(it),
@@ -425,10 +437,11 @@ fun PreferencesContent(
                                         },
                                     interactionSource = interactionSource,
                                     modifier =
-                                        Modifier.ifElse(
-                                            groupIndex == focusedIndex.first && prefIndex == focusedIndex.second,
-                                            Modifier.focusRequester(focusRequester),
-                                        ),
+                                        Modifier
+                                            .ifElse(
+                                                groupIndex == focusedIndex.first && prefIndex == focusedIndex.second,
+                                                Modifier.focusRequester(focusRequester),
+                                            ),
                                 )
                             }
 
@@ -487,10 +500,11 @@ fun PreferencesContent(
                                     cacheUsage = cacheUsage,
                                     interactionSource = interactionSource,
                                     modifier =
-                                        Modifier.ifElse(
-                                            groupIndex == focusedIndex.first && prefIndex == focusedIndex.second,
-                                            Modifier.focusRequester(focusRequester),
-                                        ),
+                                        Modifier
+                                            .ifElse(
+                                                groupIndex == focusedIndex.first && prefIndex == focusedIndex.second,
+                                                Modifier.focusRequester(focusRequester),
+                                            ),
                                 )
                             }
                         }
