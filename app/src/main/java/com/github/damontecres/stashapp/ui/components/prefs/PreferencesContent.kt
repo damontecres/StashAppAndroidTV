@@ -111,36 +111,57 @@ val uiPreferences =
                 StashPreference.VideoPreviewDelay,
                 StashPreference.SlideshowDuration,
                 StashPreference.SlideshowImageClipDelay,
+                StashPreference.ScrollViewAll,
+                StashPreference.ScrollTopOnBack,
+                StashPreference.ShowGridFooter,
+                StashPreference.ShowCardRating,
+                StashPreference.PageRemoteButtons,
+                StashPreference.PlayCardAudio,
             ),
-        ),
-        PreferenceGroup(
-            R.string.show_hide_tabs,
-            StashPreference.TabPrefs,
         ),
         PreferenceGroup(
             R.string.new_ui,
             listOf(
                 StashPreference.UseNewUI,
                 StashPreference.GridJumpButtons,
-                StashPreference.ChooseTheme,
-                StashPreference.ThemeStylePref,
                 StashPreference.ShowProgressSkipping,
                 StashPreference.MovementSound,
                 StashPreference.UpDownNextPrevious,
                 StashPreference.Captions,
+                StashPreference.ThemeStylePref,
+                StashPreference.ChooseTheme,
             ),
+        ),
+        PreferenceGroup(
+            R.string.show_hide_tabs,
+            StashPreference.TabPrefs,
         ),
     )
 
 val advancedPreferences =
     listOf(
         PreferenceGroup(
-            R.string.advanced_ui,
-            StashPreference.advancedUiPrefs,
+            R.string.playback,
+            listOf(
+                StashPreference.SavePlayHistory,
+                StashPreference.DPadSkipping,
+                StashPreference.DPadSkipIndicator,
+                StashPreference.ControllerTimeout,
+                StashPreference.StartPlaybackMuted,
+                StashPreference.PlaybackStreamChoice,
+                StashPreference.TranscodeAboveResolution,
+            ),
         ),
         PreferenceGroup(
-            R.string.playback,
-            StashPreference.advancedPlaybackPrefs,
+            R.string.advanced_playback,
+            listOf(
+                StashPreference.PlaybackDebugInfo,
+                StashPreference.PlaybackDebugLogging,
+                StashPreference.PlaybackStreamingClient,
+                StashPreference.DirectPlayVideo,
+                StashPreference.DirectPlayAudio,
+                StashPreference.DirectPlayFormat,
+            ),
         ),
         PreferenceGroup(
             R.string.effects_filters,
@@ -157,6 +178,13 @@ val advancedPreferences =
             ),
         ),
         PreferenceGroup(
+            R.string.stashapp_config_tasks_job_queue,
+            listOf(
+                StashPreference.TriggerScan,
+                StashPreference.TriggerGenerate,
+            ),
+        ),
+        PreferenceGroup(
             R.string.cache,
             listOf(
                 StashPreference.NetworkCache,
@@ -167,16 +195,9 @@ val advancedPreferences =
             ),
         ),
         PreferenceGroup(
-            R.string.stashapp_config_tasks_job_queue,
-            listOf(
-                StashPreference.TriggerScan,
-                StashPreference.TriggerGenerate,
-            ),
-        ),
-        PreferenceGroup(
             R.string.stashapp_config_categories_about,
             listOf(
-                StashPreference.CheckForUpdates,
+                StashPreference.AutoCheckForUpdates,
                 StashPreference.UpdateUrl,
                 StashPreference.OssLicenseInfo,
             ),
@@ -187,11 +208,9 @@ val advancedPreferences =
                 StashPreference.CrashReporting,
                 StashPreference.LogErrorsToServer,
                 StashPreference.ExperimentalFeatures,
-                StashPreference.NetworkTimeout,
-                StashPreference.PlaybackDebugLogging,
-                StashPreference.PlaybackStreamingClient,
-                StashPreference.ImageThreads,
                 StashPreference.TrustCertificates,
+                StashPreference.NetworkTimeout,
+                StashPreference.ImageThreads,
                 StashPreference.MigratePreferences,
             ),
         ),

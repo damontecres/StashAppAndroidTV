@@ -648,75 +648,83 @@ sealed interface StashPreference<T> {
                 TagTab,
             )
 
-        // Advanced
-        val advancedUiPrefs =
-            listOf(
-                StashSwitchPreference(
-                    title = R.string.scroll_next_view_all,
-                    prefKey = R.string.pref_key_scroll_on_view_all,
-                    defaultValue = true,
-                    getter = { it.interfacePreferences.scrollNextViewAll },
-                    setter = { prefs, value ->
-                        prefs.updateInterfacePreferences { scrollNextViewAll = value }
-                    },
-                    summary = R.string.scroll_next_view_all_summary,
-                ),
-                StashSwitchPreference(
-                    title = R.string.scroll_to_top_back,
-                    prefKey = R.string.scroll_to_top_back,
-                    defaultValue = true,
-                    getter = { it.interfacePreferences.scrollTopOnBack },
-                    setter = { prefs, value ->
-                        prefs.updateInterfacePreferences { scrollTopOnBack = value }
-                    },
-                    summary = R.string.scroll_to_top_back_summary,
-                ),
-                StashSwitchPreference(
-                    title = R.string.grid_position_footer,
-                    prefKey = R.string.pref_key_show_grid_footer,
-                    defaultValue = true,
-                    getter = { it.interfacePreferences.showPositionFooter },
-                    setter = { prefs, value ->
-                        prefs.updateInterfacePreferences { showPositionFooter = value }
-                    },
-                    summaryOn = R.string.stashapp_actions_show,
-                    summaryOff = R.string.stashapp_actions_hide,
-                ),
-                StashSwitchPreference(
-                    title = R.string.show_card_rating,
-                    prefKey = R.string.pref_key_show_rating,
-                    defaultValue = true,
-                    getter = { it.interfacePreferences.showRatingOnCards },
-                    setter = { prefs, value ->
-                        prefs.updateInterfacePreferences { showRatingOnCards = value }
-                    },
-                    summaryOn = R.string.stashapp_actions_show,
-                    summaryOff = R.string.stashapp_actions_hide,
-                ),
-                StashSwitchPreference(
-                    title = R.string.play_preview_audio,
-                    prefKey = R.string.pref_key_video_preview_audio,
-                    defaultValue = false,
-                    getter = { it.interfacePreferences.videoPreviewAudio },
-                    setter = { prefs, value ->
-                        prefs.updateInterfacePreferences { videoPreviewAudio = value }
-                    },
-                    summaryOn = R.string.stashapp_actions_enable,
-                    summaryOff = R.string.transcode_options_disabled,
-                ),
-                StashSwitchPreference(
-                    title = R.string.page_with_remote_buttons,
-                    prefKey = R.string.pref_key_remote_page_buttons,
-                    defaultValue = true,
-                    getter = { it.interfacePreferences.pageWithRemoteButtons },
-                    setter = { prefs, value ->
-                        prefs.updateInterfacePreferences { pageWithRemoteButtons = value }
-                    },
-                    summaryOn = R.string.page_with_remote_buttons_summary_on,
-                    summaryOff = R.string.transcode_options_disabled,
-                ),
+        val ScrollViewAll =
+            StashSwitchPreference(
+                title = R.string.scroll_next_view_all,
+                prefKey = R.string.pref_key_scroll_on_view_all,
+                defaultValue = true,
+                getter = { it.interfacePreferences.scrollNextViewAll },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { scrollNextViewAll = value }
+                },
+                summary = R.string.scroll_next_view_all_summary,
             )
 
+        val ScrollTopOnBack =
+            StashSwitchPreference(
+                title = R.string.scroll_to_top_back,
+                prefKey = R.string.scroll_to_top_back,
+                defaultValue = true,
+                getter = { it.interfacePreferences.scrollTopOnBack },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { scrollTopOnBack = value }
+                },
+                summary = R.string.scroll_to_top_back_summary,
+            )
+
+        val ShowGridFooter =
+            StashSwitchPreference(
+                title = R.string.grid_position_footer,
+                prefKey = R.string.pref_key_show_grid_footer,
+                defaultValue = true,
+                getter = { it.interfacePreferences.showPositionFooter },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { showPositionFooter = value }
+                },
+                summaryOn = R.string.stashapp_actions_show,
+                summaryOff = R.string.stashapp_actions_hide,
+            )
+
+        val ShowCardRating =
+            StashSwitchPreference(
+                title = R.string.show_card_rating,
+                prefKey = R.string.pref_key_show_rating,
+                defaultValue = true,
+                getter = { it.interfacePreferences.showRatingOnCards },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { showRatingOnCards = value }
+                },
+                summaryOn = R.string.stashapp_actions_show,
+                summaryOff = R.string.stashapp_actions_hide,
+            )
+
+        val PlayCardAudio =
+            StashSwitchPreference(
+                title = R.string.play_preview_audio,
+                prefKey = R.string.pref_key_video_preview_audio,
+                defaultValue = false,
+                getter = { it.interfacePreferences.videoPreviewAudio },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { videoPreviewAudio = value }
+                },
+                summaryOn = R.string.stashapp_actions_enable,
+                summaryOff = R.string.transcode_options_disabled,
+            )
+
+        val PageRemoteButtons =
+            StashSwitchPreference(
+                title = R.string.page_with_remote_buttons,
+                prefKey = R.string.pref_key_remote_page_buttons,
+                defaultValue = true,
+                getter = { it.interfacePreferences.pageWithRemoteButtons },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { pageWithRemoteButtons = value }
+                },
+                summaryOn = R.string.page_with_remote_buttons_summary_on,
+                summaryOff = R.string.transcode_options_disabled,
+            )
+
+        // Advanced
         val DirectPlayVideo =
             StashMultiChoicePreference<String>(
                 title = R.string.direct_play_video,
@@ -860,151 +868,160 @@ sealed interface StashPreference<T> {
                 fromSharedPrefs = { it },
             )
 
-        val advancedPlaybackPrefs =
-            listOf(
-                StashSwitchPreference(
-                    title = R.string.dpad_skipping,
-                    prefKey = R.string.pref_key_skip_with_dpad,
-                    defaultValue = true,
-                    getter = { it.playbackPreferences.dpadSkipping },
-                    setter = { prefs, value ->
-                        prefs.updatePlaybackPreferences { dpadSkipping = value }
-                    },
-                    summaryOn = R.string.dpad_skipping_summary_on,
-                    summaryOff = R.string.dpad_skipping_summary_off,
-                ),
-                StashSwitchPreference(
-                    title = R.string.dpad_skip_indicator,
-                    prefKey = R.string.pref_key_show_dpad_skip,
-                    defaultValue = true,
-                    getter = { it.interfacePreferences.dpadSkipIndicator },
-                    setter = { prefs, value ->
-                        prefs.updateInterfacePreferences { dpadSkipIndicator = value }
-                    },
-                    summaryOn = R.string.stashapp_actions_show,
-                    summaryOff = R.string.stashapp_actions_hide,
-                ),
-                StashChoicePreference<StreamChoice>(
-                    title = R.string.stream_choice,
-                    prefKey = R.string.pref_key_stream_choice,
-                    summary = R.string.stream_choice_summary,
-                    defaultValue = StreamChoice.HLS,
-                    displayValues = R.array.stream_options,
-                    indexToValue = { StreamChoice.forNumber(it) },
-                    valueToIndex = { it.number },
-                    getter = { it.playbackPreferences.streamChoice },
-                    setter = { prefs, value ->
-                        prefs.updatePlaybackPreferences { streamChoice = value }
-                    },
-                    prefGetter = { context: Context, prefs: SharedPreferences ->
-                        val value =
-                            prefs.getString(
-                                context.getString(R.string.pref_key_stream_choice),
-                                null,
-                            )
-                        value?.let {
-                            try {
-                                StreamChoice.valueOf(it.uppercase())
-                            } catch (_: IllegalArgumentException) {
-                                Log.w(TAG, "Invalid stream choice value: $it")
-                                StreamChoice.HLS
-                            }
-                        } ?: StreamChoice.HLS
-                    },
-                    prefSetter = { context: Context, editor: SharedPreferences.Editor, value: StreamChoice ->
-                        editor.putString(
+        val DPadSkipping =
+            StashSwitchPreference(
+                title = R.string.dpad_skipping,
+                prefKey = R.string.pref_key_skip_with_dpad,
+                defaultValue = true,
+                getter = { it.playbackPreferences.dpadSkipping },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences { dpadSkipping = value }
+                },
+                summaryOn = R.string.dpad_skipping_summary_on,
+                summaryOff = R.string.dpad_skipping_summary_off,
+            )
+
+        val DPadSkipIndicator =
+            StashSwitchPreference(
+                title = R.string.dpad_skip_indicator,
+                prefKey = R.string.pref_key_show_dpad_skip,
+                defaultValue = true,
+                getter = { it.interfacePreferences.dpadSkipIndicator },
+                setter = { prefs, value ->
+                    prefs.updateInterfacePreferences { dpadSkipIndicator = value }
+                },
+                summaryOn = R.string.stashapp_actions_show,
+                summaryOff = R.string.stashapp_actions_hide,
+            )
+
+        val ControllerTimeout =
+            StashSliderPreference(
+                title = R.string.hide_controller_timeout,
+                prefKey = R.string.pref_key_controller_timeout,
+                defaultValue = 3500,
+                min = 500,
+                max = 15.seconds.inWholeMilliseconds.toInt(),
+                interval = 100,
+                getter = { it.playbackPreferences.controllerTimeoutMs },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences { controllerTimeoutMs = value }
+                },
+                summarizer = { value -> value?.let { "${value / 1000.0} seconds" } },
+            )
+
+        val SavePlayHistory =
+            StashSwitchPreference(
+                title = R.string.save_play_history,
+                prefKey = R.string.pref_key_playback_track_activity,
+                defaultValue = true,
+                getter = { it.playbackPreferences.savePlayHistory },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences { savePlayHistory = value }
+                },
+                summaryOn = R.string.save_play_history_summary_on,
+                summaryOff = R.string.transcode_options_disabled,
+            )
+
+        val StartPlaybackMuted =
+            StashSwitchPreference(
+                title = R.string.start_playback_without_audio,
+                prefKey = R.string.pref_key_playback_start_muted,
+                defaultValue = false,
+                getter = { it.playbackPreferences.startPlaybackMuted },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences { startPlaybackMuted = value }
+                },
+                summaryOn = R.string.playback_start_muted_summary_on,
+                summaryOff = R.string.playback_start_muted_summary_off,
+            )
+
+        val PlaybackStreamChoice =
+            StashChoicePreference<StreamChoice>(
+                title = R.string.stream_choice,
+                prefKey = R.string.pref_key_stream_choice,
+                summary = R.string.stream_choice_summary,
+                defaultValue = StreamChoice.HLS,
+                displayValues = R.array.stream_options,
+                indexToValue = { StreamChoice.forNumber(it) },
+                valueToIndex = { it.number },
+                getter = { it.playbackPreferences.streamChoice },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences { streamChoice = value }
+                },
+                prefGetter = { context: Context, prefs: SharedPreferences ->
+                    val value =
+                        prefs.getString(
                             context.getString(R.string.pref_key_stream_choice),
-                            value.name.lowercase(),
+                            null,
                         )
-                    },
-                ),
-                DirectPlayVideo,
-                DirectPlayAudio,
-                DirectPlayFormat,
-                StashSwitchPreference(
-                    title = R.string.playback_debug_info,
-                    prefKey = R.string.pref_key_show_playback_debug_info,
-                    defaultValue = false,
-                    getter = { it.playbackPreferences.showDebugInfo },
-                    setter = { prefs, value ->
-                        prefs.updatePlaybackPreferences { showDebugInfo = value }
-                    },
-                    summaryOn = R.string.stashapp_actions_show,
-                    summaryOff = R.string.stashapp_actions_hide,
-                ),
-                StashSliderPreference(
-                    title = R.string.hide_controller_timeout,
-                    prefKey = R.string.pref_key_controller_timeout,
-                    defaultValue = 3500,
-                    min = 500,
-                    max = 15.seconds.inWholeMilliseconds.toInt(),
-                    interval = 100,
-                    getter = { it.playbackPreferences.controllerTimeoutMs },
-                    setter = { prefs, value ->
-                        prefs.updatePlaybackPreferences { controllerTimeoutMs = value }
-                    },
-                    summarizer = { value -> value?.let { "${value / 1000.0} seconds" } },
-                ),
-                StashSwitchPreference(
-                    title = R.string.save_play_history,
-                    prefKey = R.string.pref_key_playback_track_activity,
-                    defaultValue = true,
-                    getter = { it.playbackPreferences.savePlayHistory },
-                    setter = { prefs, value ->
-                        prefs.updatePlaybackPreferences { savePlayHistory = value }
-                    },
-                    summaryOn = R.string.save_play_history_summary_on,
-                    summaryOff = R.string.transcode_options_disabled,
-                ),
-                StashSwitchPreference(
-                    title = R.string.start_playback_without_audio,
-                    prefKey = R.string.pref_key_playback_start_muted,
-                    defaultValue = false,
-                    getter = { it.playbackPreferences.startPlaybackMuted },
-                    setter = { prefs, value ->
-                        prefs.updatePlaybackPreferences { startPlaybackMuted = value }
-                    },
-                    summaryOn = R.string.playback_start_muted_summary_on,
-                    summaryOff = R.string.playback_start_muted_summary_off,
-                ),
-                StashChoicePreference<Resolution>(
-                    title = R.string.transcode_above_resolution,
-                    prefKey = R.string.pref_key_playback_always_transcode,
-                    summary = null,
-                    defaultValue = Resolution.UNSPECIFIED,
-                    displayValues = R.array.transcode_options,
-                    indexToValue = { Resolution.forNumber(it) },
-                    valueToIndex = { it.number },
-                    getter = { it.playbackPreferences.transcodeAboveResolution },
-                    setter = { prefs, value ->
-                        prefs.updatePlaybackPreferences { transcodeAboveResolution = value }
-                    },
-                    prefGetter = { context: Context, prefs: SharedPreferences ->
-                        val value =
-                            prefs.getString(
-                                context.getString(R.string.pref_key_playback_always_transcode),
-                                null,
-                            )
-                        when (value) {
-                            "Disabled", "", null -> Resolution.UNSPECIFIED
-                            else ->
-                                value.let {
-                                    try {
-                                        Resolution.valueOf("RES_" + it.uppercase())
-                                    } catch (_: IllegalArgumentException) {
-                                        Log.w(TAG, "Invalid resolution value: $it")
-                                        Resolution.UNSPECIFIED
-                                    }
-                                }
+                    value?.let {
+                        try {
+                            StreamChoice.valueOf(it.uppercase())
+                        } catch (_: IllegalArgumentException) {
+                            Log.w(TAG, "Invalid stream choice value: $it")
+                            StreamChoice.HLS
                         }
-                    },
-                    prefSetter = { context: Context, editor: SharedPreferences.Editor, value: Resolution ->
-                        editor.putString(
+                    } ?: StreamChoice.HLS
+                },
+                prefSetter = { context: Context, editor: SharedPreferences.Editor, value: StreamChoice ->
+                    editor.putString(
+                        context.getString(R.string.pref_key_stream_choice),
+                        value.name.lowercase(),
+                    )
+                },
+            )
+
+        val PlaybackDebugInfo =
+            StashSwitchPreference(
+                title = R.string.playback_debug_info,
+                prefKey = R.string.pref_key_show_playback_debug_info,
+                defaultValue = false,
+                getter = { it.playbackPreferences.showDebugInfo },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences { showDebugInfo = value }
+                },
+                summaryOn = R.string.stashapp_actions_show,
+                summaryOff = R.string.stashapp_actions_hide,
+            )
+
+        val TranscodeAboveResolution =
+            StashChoicePreference<Resolution>(
+                title = R.string.transcode_above_resolution,
+                prefKey = R.string.pref_key_playback_always_transcode,
+                summary = null,
+                defaultValue = Resolution.UNSPECIFIED,
+                displayValues = R.array.transcode_options,
+                indexToValue = { Resolution.forNumber(it) },
+                valueToIndex = { it.number },
+                getter = { it.playbackPreferences.transcodeAboveResolution },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences { transcodeAboveResolution = value }
+                },
+                prefGetter = { context: Context, prefs: SharedPreferences ->
+                    val value =
+                        prefs.getString(
                             context.getString(R.string.pref_key_playback_always_transcode),
-                            value.name.lowercase(),
+                            null,
                         )
-                    },
-                ),
+                    when (value) {
+                        "Disabled", "", null -> Resolution.UNSPECIFIED
+                        else ->
+                            value.let {
+                                try {
+                                    Resolution.valueOf("RES_" + it.uppercase())
+                                } catch (_: IllegalArgumentException) {
+                                    Log.w(TAG, "Invalid resolution value: $it")
+                                    Resolution.UNSPECIFIED
+                                }
+                            }
+                    }
+                },
+                prefSetter = { context: Context, editor: SharedPreferences.Editor, value: Resolution ->
+                    editor.putString(
+                        context.getString(R.string.pref_key_playback_always_transcode),
+                        value.name.lowercase(),
+                    )
+                },
             )
 
         val VideoFilter =
@@ -1133,7 +1150,7 @@ sealed interface StashPreference<T> {
                 setter = { prefs, _ -> prefs },
             )
 
-        val CheckForUpdates =
+        val AutoCheckForUpdates =
             StashSwitchPreference(
                 title = R.string.check_for_updates,
                 prefKey = R.string.pref_key_auto_check_updates,
