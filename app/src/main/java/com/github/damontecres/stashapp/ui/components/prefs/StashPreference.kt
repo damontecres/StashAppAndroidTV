@@ -256,9 +256,16 @@ sealed interface StashPreference<T> {
                     } ?: PlaybackFinishBehavior.DO_NOTHING
                 },
                 prefSetter = { context: Context, editor: SharedPreferences.Editor, value: PlaybackFinishBehavior ->
+                    val stringRes =
+                        when (value) {
+                            PlaybackFinishBehavior.DO_NOTHING -> R.string.playback_finished_do_nothing
+                            PlaybackFinishBehavior.REPEAT -> R.string.playback_finished_repeat
+                            PlaybackFinishBehavior.GO_BACK -> R.string.playback_finished_return
+                            PlaybackFinishBehavior.UNRECOGNIZED -> R.string.playback_finished_do_nothing
+                        }
                     editor.putString(
                         context.getString(R.string.pref_key_playback_finished_behavior),
-                        value.name.lowercase(),
+                        context.getString(stringRes),
                     )
                 },
             )
@@ -442,9 +449,16 @@ sealed interface StashPreference<T> {
                     } ?: ThemeStyle.SYSTEM
                 },
                 prefSetter = { context: Context, editor: SharedPreferences.Editor, value: ThemeStyle ->
+                    val stringRes =
+                        when (value) {
+                            ThemeStyle.SYSTEM -> R.string.ui_theme_dark_appearance_choice_system
+                            ThemeStyle.LIGHT -> R.string.ui_theme_dark_appearance_choice_light
+                            ThemeStyle.DARK -> R.string.ui_theme_dark_appearance_choice_dark
+                            ThemeStyle.UNRECOGNIZED -> R.string.ui_theme_dark_appearance_choice_system
+                        }
                     editor.putString(
                         context.getString(R.string.pref_key_ui_theme_dark_appearance),
-                        value.name.lowercase(),
+                        context.getString(stringRes),
                     )
                 },
             )
@@ -967,9 +981,11 @@ sealed interface StashPreference<T> {
                     } ?: StreamChoice.HLS
                 },
                 prefSetter = { context: Context, editor: SharedPreferences.Editor, value: StreamChoice ->
+                    val newValue =
+                        if (value != StreamChoice.UNRECOGNIZED) value else StreamChoice.HLS
                     editor.putString(
                         context.getString(R.string.pref_key_stream_choice),
-                        value.name.lowercase(),
+                        newValue.name,
                     )
                 },
             )
@@ -1020,9 +1036,17 @@ sealed interface StashPreference<T> {
                     }
                 },
                 prefSetter = { context: Context, editor: SharedPreferences.Editor, value: Resolution ->
+                    val string =
+                        when (value) {
+                            Resolution.UNSPECIFIED,
+                            Resolution.UNRECOGNIZED,
+                            -> context.getString(R.string.transcode_options_disabled)
+
+                            else -> value.name.lowercase()
+                        }
                     editor.putString(
                         context.getString(R.string.pref_key_playback_always_transcode),
-                        value.name.lowercase(),
+                        string,
                     )
                 },
             )
