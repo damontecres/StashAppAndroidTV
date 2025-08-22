@@ -138,6 +138,25 @@ class AppUpgradeHandler(
         }
 
         if (previousVersion.isLessThan(Version.fromString("0.6.11"))) {
+            preferences
+                .getStringSet(context.getString(R.string.pref_key_ui_performer_tabs), null)
+                ?.let {
+                    if (it.contains(context.getString(R.string.stashapp_studio))) {
+                        // Rename studio to studios
+                        val newSet =
+                            it.toMutableSet().apply {
+                                remove(context.getString(R.string.stashapp_studio))
+                                add(context.getString(R.string.stashapp_studios))
+                            }
+                        preferences.edit(true) {
+                            putStringSet(
+                                context.getString(R.string.pref_key_ui_performer_tabs),
+                                newSet,
+                            )
+                        }
+                    }
+                }
+
             CoroutineScope(Dispatchers.IO + StashCoroutineExceptionHandler()).launch {
                 val preferencesMigratedV1 =
                     context.preferences.data
