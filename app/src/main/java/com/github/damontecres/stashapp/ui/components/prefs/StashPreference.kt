@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.ui.components.prefs
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
 import androidx.core.content.edit
@@ -83,6 +84,8 @@ sealed interface StashPreference<T> {
     fun validate(value: T): PreferenceValidation = PreferenceValidation.Valid
 
     companion object {
+        private const val TAG = "StashPreference"
+
         // Basic
         val CurrentServer =
             StashClickablePreference(
@@ -426,8 +429,14 @@ sealed interface StashPreference<T> {
                             context.getString(R.string.pref_key_ui_theme_dark_appearance),
                             null,
                         )
-                    value?.let { ThemeStyle.valueOf(it.uppercase()) }
-                        ?: ThemeStyle.SYSTEM
+                    value?.let {
+                        try {
+                            ThemeStyle.valueOf(it.uppercase())
+                        } catch (_: IllegalArgumentException) {
+                            Log.w(TAG, "Invalid theme style value: $it")
+                            ThemeStyle.SYSTEM
+                        }
+                    } ?: ThemeStyle.SYSTEM
                 },
                 prefSetter = { context: Context, editor: SharedPreferences.Editor, value: ThemeStyle ->
                     editor.putString(
@@ -893,7 +902,14 @@ sealed interface StashPreference<T> {
                                 context.getString(R.string.pref_key_stream_choice),
                                 null,
                             )
-                        value?.let { StreamChoice.valueOf(it.uppercase()) } ?: StreamChoice.HLS
+                        value?.let {
+                            try {
+                                StreamChoice.valueOf(it.uppercase())
+                            } catch (_: IllegalArgumentException) {
+                                Log.w(TAG, "Invalid stream choice value: $it")
+                                StreamChoice.HLS
+                            }
+                        } ?: StreamChoice.HLS
                     },
                     prefSetter = { context: Context, editor: SharedPreferences.Editor, value: StreamChoice ->
                         editor.putString(
@@ -971,7 +987,15 @@ sealed interface StashPreference<T> {
                             )
                         when (value) {
                             "Disabled", "", null -> Resolution.UNSPECIFIED
-                            else -> value.let { Resolution.valueOf(it.uppercase()) }
+                            else ->
+                                value.let {
+                                    try {
+                                        Resolution.valueOf("RES_" + it.uppercase())
+                                    } catch (_: IllegalArgumentException) {
+                                        Log.w(TAG, "Invalid resolution value: $it")
+                                        Resolution.UNSPECIFIED
+                                    }
+                                }
                         }
                     },
                     prefSetter = { context: Context, editor: SharedPreferences.Editor, value: Resolution ->
@@ -1235,13 +1259,29 @@ sealed interface StashPreference<T> {
                             context.getString(R.string.pref_key_playback_http_client),
                             null,
                         )
-                    value?.let { PlaybackHttpClient.valueOf(it.uppercase()) }
-                        ?: PlaybackHttpClient.OKHTTP
+                    when (value?.lowercase()) {
+                        "default", "builtin", "", null -> PlaybackHttpClient.OKHTTP
+                        else -> {
+                            try {
+                                PlaybackHttpClient.valueOf(value.uppercase())
+                            } catch (_: IllegalArgumentException) {
+                                Log.w(TAG, "Invalid PlaybackHttpClient value: $value")
+                                PlaybackHttpClient.OKHTTP
+                            }
+                        }
+                    }
                 },
                 prefSetter = { context: Context, editor: SharedPreferences.Editor, value: PlaybackHttpClient ->
+                    val string =
+                        when (value) {
+                            PlaybackHttpClient.BUILTIN -> "default"
+                            PlaybackHttpClient.OKHTTP,
+                            PlaybackHttpClient.UNRECOGNIZED,
+                            -> "okhttp"
+                        }
                     editor.putString(
                         context.getString(R.string.pref_key_playback_http_client),
-                        value.name.lowercase(),
+                        string,
                     )
                 },
             )

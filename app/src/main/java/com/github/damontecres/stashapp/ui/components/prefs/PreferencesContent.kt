@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -272,7 +273,7 @@ fun PreferencesContent(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(0.dp),
             contentPadding = PaddingValues(16.dp),
-            modifier = Modifier,
+            modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer),
         ) {
             if (onUpdateTitle == null) {
                 stickyHeader {

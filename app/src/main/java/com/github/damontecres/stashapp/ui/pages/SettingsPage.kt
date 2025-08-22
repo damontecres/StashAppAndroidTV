@@ -36,7 +36,7 @@ fun SettingsPage(
                     .align(Alignment.TopEnd)
             } else {
                 Modifier
-            }.background(MaterialTheme.colorScheme.secondaryContainer)
+            }
         PreferencesContent(
             server,
             navigationManager,
