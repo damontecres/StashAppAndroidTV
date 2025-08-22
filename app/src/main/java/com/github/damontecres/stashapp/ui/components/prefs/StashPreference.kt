@@ -338,17 +338,20 @@ sealed interface StashPreference<T> {
             StashSliderPreference(
                 title = R.string.slideshow_duration,
                 prefKey = R.string.pref_key_slideshow_duration,
-                defaultValue = 5.seconds.inWholeMilliseconds.toInt(),
-                min = 1.seconds.inWholeMilliseconds.toInt(),
-                max = 60.seconds.inWholeMilliseconds.toInt(),
-                interval = 1.seconds.inWholeMilliseconds.toInt(),
-                getter = { it.interfacePreferences.slideShowIntervalMs.toInt() },
+                defaultValue = 5,
+                min = 1,
+                max = 60,
+                interval = 1,
+                getter = {
+                    it.interfacePreferences.slideShowIntervalMs.milliseconds.inWholeSeconds
+                        .toInt()
+                },
                 setter = { prefs, value ->
                     prefs.updateInterfacePreferences {
-                        slideShowIntervalMs = value.toLong()
+                        slideShowIntervalMs = value.seconds.inWholeMilliseconds
                     }
                 },
-                summarizer = { value -> value?.let { "${value / 1000.0} seconds" } },
+                summarizer = { value -> value?.let { "$value seconds" } },
             )
 
         val SlideshowImageClipDelay =
