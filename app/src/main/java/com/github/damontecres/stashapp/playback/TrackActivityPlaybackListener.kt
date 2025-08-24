@@ -26,7 +26,7 @@ import kotlin.time.Duration.Companion.seconds
 class TrackActivityPlaybackListener(
     private val server: StashServer,
     dispatcher: CoroutineDispatcher = Dispatchers.Main,
-    private val scene: Scene,
+    val scene: Scene,
     private val getCurrentPosition: () -> Long,
 ) : Player.Listener {
     private val mutationEngine = MutationEngine(server)
@@ -74,12 +74,13 @@ class TrackActivityPlaybackListener(
     }
 
     fun release() {
+        Log.v(TAG, "release for scene=${scene.id}")
         task.cancel()
         TIMER.purge()
     }
 
     fun release(position: Long) {
-        Log.v(TAG, "release: position=$position")
+        Log.v(TAG, "release: scene=${scene.id}, position=$position")
         release()
         if (position >= 0) {
             saveSceneActivity(position, currentDurationMilliseconds.getAndSet(0))
