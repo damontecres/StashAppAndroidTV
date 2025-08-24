@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="pref_key_acra_enable" translatable="false">acra.enable</string>
+    <string name="pref_key_auto_check_updates" translatable="false">autoCheckForUpdates</string>
+    <string name="pref_key_update_url" translatable="false">updateCheckUrl</string>
+    <string name="pref_key_card_previews" translatable="false">playVideoPreviews</string>
     <string name="pref_key_video_preview_audio" translatable="false">videoPreviewAudio</string>
-    <string name="pref_key_network_cache_size">networkCacheSize</string>
-    <string name="pref_key_image_cache_size">iamge.cacheSize</string>
-    <string name="pref_key_salt">salt</string>
+    <string name="pref_key_network_cache_size" translatable="false">networkCacheSize</string>
+    <string name="pref_key_image_cache_size" translatable="false">iamge.cacheSize</string>
+    <string name="pref_key_network_cache_duration" translatable="false">networkCacheDuration</string>
+    <string name="pref_key_network_cache_logging" translatable="false">networkCacheLogging</string>
+    <string name="pref_key_network_timeout" translatable="false">networkTimeout</string>
+    <string name="pref_key_salt" translatable="false">salt</string>
     <string name="pref_key_pin_code" translatable="false">pinCode</string>
     <string name="pref_key_pin_code_auto" translatable="false">pinCodeAuto</string>
     <string name="pref_key_trust_certs" translatable="false">trustAllCerts</string>
@@ -24,6 +31,10 @@
     <string name="pref_key_crop_card_images" translatable="false">card.cropImages</string>
     <string name="pref_key_back_button_scroll" translatable="false">grid_back_button_scroll</string>
     <string name="pref_key_video_filters" translatable="false">playback.videoFilters</string>
+    <string name="pref_key_skip_forward_time" translatable="false">skip_forward_time</string>
+    <string name="pref_key_skip_back_time" translatable="false">skip_back_time</string>
+    <string name="pref_key_skip_with_dpad" translatable="false">skipWithDpad</string>
+    <string name="pref_key_playback_finished_behavior" translatable="false">playbackFinishedBehavior</string>
     <string name="pref_key_show_dpad_skip" translatable="false">playback.showDpadSkip</string>
     <string name="pref_key_playback_debug_logging" translatable="false">playback.debug.logging</string>
     <string name="pref_key_playback_http_client" translatable="false">playback.http.client</string>
@@ -31,13 +42,16 @@
     <string name="pref_key_playback_next_up_down" translatable="false">playback.nextWithUpDown</string>
     <string name="playback_http_client_default" translatable="false">default</string>
     <string name="playback_http_client_okhttp" translatable="false">okhttp</string>
-    <string-array name="playback_http_client">
+    <string-array name="playback_http_client" translatable="false">
         <item>@string/playback_http_client_okhttp</item>
         <item>@string/playback_http_client_default</item>
     </string-array>
     <string name="pref_key_playback_start_muted" translatable="false">playback.startMuted</string>
     <string name="pref_key_playback_always_transcode" translatable="false">playback.alwaysTranscode</string>
     <string name="pref_key_captions_on_by_default" translatable="false">playback.captionsOnByDefault</string>
+    <string name="pref_key_scroll_on_view_all" translatable="false">scrollToNextResult</string>
+    <string name="pref_key_stream_choice" translatable="false">stream_choice</string>
+    <string name="pref_key_controller_timeout" translatable="false">controllerShowTimeoutMs</string>
 
     <string name="pref_key_ui_performer_tabs" translatable="false">ui.tabs.performer</string>
     <string name="pref_key_ui_gallery_tabs" translatable="false">ui.tabs.gallery</string>

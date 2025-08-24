@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.views.models
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.LiveData
@@ -15,6 +16,7 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.ui.components.prefs.SharedPreferencesListener
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -31,6 +33,7 @@ import kotlinx.serialization.Serializable
  * Tracks the current server
  */
 open class ServerViewModel : ViewModel() {
+    private lateinit var preferenceListener: SharedPreferences.OnSharedPreferenceChangeListener
     private val _currentServer = EqualityMutableLiveData<StashServer?>()
     val currentServer: LiveData<StashServer?> = _currentServer
 
@@ -76,13 +79,25 @@ open class ServerViewModel : ViewModel() {
         _cardUiSettings.value = newHash
     }
 
-    fun init(context: Context) {
-        updateUiSettings()
-        val currentServer = StashServer.findConfiguredStashServer(context)
-        switchServer(currentServer)
-    }
-
-    fun init(currentServer: StashServer) {
+    fun init(
+        context: Context,
+        currentServer: StashServer,
+        useCompose: Boolean,
+    ) {
+        if (!this::preferenceListener.isInitialized) {
+            preferenceListener = SharedPreferencesListener(context, viewModelScope)
+        } else {
+            Log.d(TAG, "Removing shared preference listener")
+            PreferenceManager
+                .getDefaultSharedPreferences(context)
+                .unregisterOnSharedPreferenceChangeListener(preferenceListener)
+        }
+        if (!useCompose) {
+            Log.d(TAG, "Registering shared preference listener")
+            PreferenceManager
+                .getDefaultSharedPreferences(context)
+                .registerOnSharedPreferenceChangeListener(preferenceListener)
+        }
         updateUiSettings()
         switchServer(currentServer)
     }

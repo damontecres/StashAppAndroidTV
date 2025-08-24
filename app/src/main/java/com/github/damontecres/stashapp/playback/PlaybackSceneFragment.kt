@@ -39,7 +39,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
                 .getString(
-                    "playbackFinishedBehavior",
+                    requireContext().getString(R.string.pref_key_playback_finished_behavior),
                     getString(R.string.playback_finished_do_nothing),
                 )
         when (finishedBehavior) {

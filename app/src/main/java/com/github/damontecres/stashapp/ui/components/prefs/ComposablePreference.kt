@@ -39,6 +39,7 @@ import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
+import androidx.tv.material3.surfaceColorAtElevation
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.navigation.NavigationManager
@@ -77,6 +78,7 @@ fun <T> ComposablePreference(
     var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
     var showPinDialog by remember { mutableStateOf<StashPinPreference?>(null) }
     var showStringDialog by remember { mutableStateOf<StringInput?>(null) }
+    var showConfirmOldUiDialog by remember { mutableStateOf(false) }
 
     val title = stringResource(preference.title)
 
@@ -129,6 +131,16 @@ fun <T> ComposablePreference(
                 title = title,
                 onClick = onClick,
                 summary = server.url,
+                interactionSource = interactionSource,
+                modifier = modifier,
+            )
+
+        StashPreference.UseNewUI ->
+            SwitchPreference(
+                title = title,
+                value = value as Boolean,
+                onClick = { showConfirmOldUiDialog = true },
+                summary = preference.summary(context, value),
                 interactionSource = interactionSource,
                 modifier = modifier,
             )
@@ -393,6 +405,8 @@ fun <T> ComposablePreference(
         }
     }
 
+    val dialogBackgroundColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+
     AnimatedVisibility(dialogParams != null) {
         dialogParams?.let {
             DialogPopup(
@@ -421,7 +435,7 @@ fun <T> ComposablePreference(
                     modifier =
                         Modifier
                             .background(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                color = dialogBackgroundColor,
                                 shape = RoundedCornerShape(8.dp),
                             ),
                 )
@@ -443,7 +457,7 @@ fun <T> ComposablePreference(
                         Modifier
                             .padding(16.dp)
                             .background(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                color = dialogBackgroundColor,
                                 shape = RoundedCornerShape(8.dp),
                             ),
                 ) {
@@ -496,6 +510,26 @@ fun <T> ComposablePreference(
                     }
                 }
             }
+        }
+    }
+    AnimatedVisibility(showConfirmOldUiDialog) {
+        Dialog(
+            onDismissRequest = { showConfirmOldUiDialog = false },
+        ) {
+            ConfirmOldUi(
+                onCancel = { showConfirmOldUiDialog = false },
+                onConfirm = {
+                    showConfirmOldUiDialog = false
+                    onValueChange.invoke(false as T)
+                },
+                modifier =
+                    Modifier
+                        .padding(16.dp)
+                        .background(
+                            color = dialogBackgroundColor,
+                            shape = RoundedCornerShape(8.dp),
+                        ),
+            )
         }
     }
 }
