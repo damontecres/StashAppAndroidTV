@@ -104,8 +104,9 @@ fun <T> ComposablePreference(
 
                 StashPreference.MigratePreferences -> {
                     scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                        AppUpgradeHandler.migratePreferences(context)
-                        Toast.makeText(context, "Settings migrated", Toast.LENGTH_LONG).show()
+                        if (AppUpgradeHandler.migratePreferences(context)) {
+                            Toast.makeText(context, "Settings migrated", Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
 
