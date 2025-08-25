@@ -206,7 +206,11 @@ class AppUpgradeHandler(
     companion object {
         private const val TAG = "AppUpgradeHandler"
 
-        suspend fun migratePreferences(context: Context) {
+        /**
+         * Migrate preferences from SharedPreferences to Proto DataStore.
+         * Returns true if all preferences were migrated successfully, false if there were any errors.
+         */
+        suspend fun migratePreferences(context: Context): Boolean {
             Log.i(TAG, "Starting preferences migration")
             val pm = PreferenceManager.getDefaultSharedPreferences(context)
 
@@ -218,15 +222,36 @@ class AppUpgradeHandler(
                 return pref.setter.invoke(preferences, value)
             }
 
+            var errors = false
+
             context.preferences.updateData { preferences ->
                 (basicPreferences + uiPreferences + advancedPreferences)
                     .flatMap { it.preferences }
                     .filter { it.prefKey != 0 }
                     .fold(preferences) { prefs, pref ->
-                        set(prefs, pref)
+                        try {
+                            set(prefs, pref)
+                        } catch (ex: Exception) {
+                            errors = true
+                            Log.e(
+                                TAG,
+                                "Error migrating preference ${context.getString(pref.prefKey)}",
+                                ex,
+                            )
+                            prefs
+                        }
                     }
             }
-            Log.i(TAG, "Finished preferences migration")
+            Log.i(TAG, "Finished preferences migration: errors=$errors")
+            if (errors) {
+                Toast
+                    .makeText(
+                        context,
+                        "Some settings could not be migrated. Please check the log for details.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+            }
+            return !errors
         }
     }
 }
