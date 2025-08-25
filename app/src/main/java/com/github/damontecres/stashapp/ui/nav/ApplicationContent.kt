@@ -149,16 +149,17 @@ fun ApplicationContent(
         val fullScreen = if (isTvDevice) destination.fullScreen else destination.fullScreenTouch
 
         if (fullScreen) {
-            FullScreenContent(
+            DestinationContent(
+                navManager = navigationManager,
                 server = server,
                 destination = destination,
-                navigationManager = navigationManager,
+                composeUiConfig = composeUiConfig,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
-                composeUiConfig = composeUiConfig,
                 onChangeTheme = onChangeTheme,
                 onSwitchServer = onSwitchServer,
                 modifier = Modifier.fillMaxSize(),
+                onUpdateTitle = null,
             )
         } else {
             // Highlight on the nav drawer as user navigates around the app
@@ -236,6 +237,8 @@ fun ApplicationContent(
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
                     onSelectScreen = onSelectScreen,
+                    onChangeTheme = onChangeTheme,
+                    onSwitchServer = onSwitchServer,
                     modifier = Modifier,
                 )
             } else {
@@ -249,6 +252,8 @@ fun ApplicationContent(
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
                     onSelectScreen = onSelectScreen,
+                    onChangeTheme = onChangeTheme,
+                    onSwitchServer = onSwitchServer,
                     modifier = Modifier,
                 )
             }

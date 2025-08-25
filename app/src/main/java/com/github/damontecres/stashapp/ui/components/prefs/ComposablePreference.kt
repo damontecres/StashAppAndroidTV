@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -38,7 +39,7 @@ import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
-import coil3.imageLoader
+import androidx.tv.material3.surfaceColorAtElevation
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.navigation.NavigationManager
@@ -48,7 +49,7 @@ import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.components.server.ConfigurePin
 import com.github.damontecres.stashapp.ui.pages.DialogParams
-import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.AppUpgradeHandler
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -66,6 +67,8 @@ fun <T> ComposablePreference(
     preference: StashPreference<T>,
     value: T?,
     onValueChange: (T) -> Unit,
+    cacheUsage: CacheUsage,
+    onCacheClear: () -> Unit,
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
@@ -75,6 +78,7 @@ fun <T> ComposablePreference(
     var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
     var showPinDialog by remember { mutableStateOf<StashPinPreference?>(null) }
     var showStringDialog by remember { mutableStateOf<StringInput?>(null) }
+    var showConfirmOldUiDialog by remember { mutableStateOf(false) }
 
     val title = stringResource(preference.title)
 
@@ -89,11 +93,22 @@ fun <T> ComposablePreference(
                     CompanionPlugin.sendLogCat(context, server, false)
                 }
 
-                StashPreference.CacheClear -> SettingsFragment.clearCaches(context)
+                StashPreference.CacheClear -> {
+                    SettingsFragment.clearCaches(context)
+                    onCacheClear.invoke()
+                }
 
                 StashPreference.TriggerScan -> MutationEngine(server).triggerScan()
 
                 StashPreference.TriggerGenerate -> MutationEngine(server).triggerGenerate()
+
+                StashPreference.MigratePreferences -> {
+                    scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                        if (AppUpgradeHandler.migratePreferences(context)) {
+                            Toast.makeText(context, "Settings migrated", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
 
                 else -> {}
             }
@@ -121,6 +136,16 @@ fun <T> ComposablePreference(
                 modifier = modifier,
             )
 
+        StashPreference.UseNewUI ->
+            SwitchPreference(
+                title = title,
+                value = value as Boolean,
+                onClick = { showConfirmOldUiDialog = true },
+                summary = preference.summary(context, value),
+                interactionSource = interactionSource,
+                modifier = modifier,
+            )
+
         StashPreference.NetworkCache -> {
             preference as StashSliderPreference
             val summary =
@@ -137,7 +162,7 @@ fun <T> ComposablePreference(
                 modifier = modifier,
                 heightAdjustment = 16.dp,
             ) {
-                val size = remember { formatBytes(Constants.getNetworkCache(context).size()) }
+                val size = formatBytes(cacheUsage.networkDiskUsed)
                 Text(
                     text = "Using $size",
                     modifier = Modifier.fillMaxWidth(),
@@ -161,12 +186,9 @@ fun <T> ComposablePreference(
                 modifier = modifier,
                 heightAdjustment = 32.dp,
             ) {
-                val memoryUsed =
-                    remember { formatBytes(context.imageLoader.memoryCache?.size ?: 0L) }
-                val memoryMax =
-                    remember { formatBytes(context.imageLoader.memoryCache?.maxSize ?: 0L) }
-                val diskUsed =
-                    remember { formatBytes(context.imageLoader.diskCache?.size ?: 0L) }
+                val memoryUsed = formatBytes(cacheUsage.imageMemoryUsed)
+                val memoryMax = formatBytes(cacheUsage.imageMemoryMax)
+                val diskUsed = formatBytes(cacheUsage.imageDiskUsed)
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
@@ -384,6 +406,8 @@ fun <T> ComposablePreference(
         }
     }
 
+    val dialogBackgroundColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+
     AnimatedVisibility(dialogParams != null) {
         dialogParams?.let {
             DialogPopup(
@@ -412,7 +436,7 @@ fun <T> ComposablePreference(
                     modifier =
                         Modifier
                             .background(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                color = dialogBackgroundColor,
                                 shape = RoundedCornerShape(8.dp),
                             ),
                 )
@@ -434,7 +458,7 @@ fun <T> ComposablePreference(
                         Modifier
                             .padding(16.dp)
                             .background(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                color = dialogBackgroundColor,
                                 shape = RoundedCornerShape(8.dp),
                             ),
                 ) {
@@ -487,6 +511,26 @@ fun <T> ComposablePreference(
                     }
                 }
             }
+        }
+    }
+    AnimatedVisibility(showConfirmOldUiDialog) {
+        Dialog(
+            onDismissRequest = { showConfirmOldUiDialog = false },
+        ) {
+            ConfirmOldUi(
+                onCancel = { showConfirmOldUiDialog = false },
+                onConfirm = {
+                    showConfirmOldUiDialog = false
+                    onValueChange.invoke(false as T)
+                },
+                modifier =
+                    Modifier
+                        .padding(16.dp)
+                        .background(
+                            color = dialogBackgroundColor,
+                            shape = RoundedCornerShape(8.dp),
+                        ),
+            )
         }
     }
 }

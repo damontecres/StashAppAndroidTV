@@ -1,5 +1,8 @@
 package com.github.damontecres.stashapp.ui
 
+import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -14,6 +17,16 @@ import com.github.damontecres.stashapp.util.toSeconds
 import com.github.damontecres.stashapp.views.models.CardUiSettings
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+
+@Preview(
+    device = "spec:parent=tv_1080p",
+    backgroundColor = 0xFF383535,
+    uiMode = UI_MODE_TYPE_TELEVISION,
+)
+annotation class PreviewTvSpec
+
+@Preview(device = Devices.PIXEL_9, backgroundColor = 0xFF383535)
+annotation class PreviewPhoneSpec
 
 val performerPreview =
     PerformerData(

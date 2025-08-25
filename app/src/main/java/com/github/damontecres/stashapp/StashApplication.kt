@@ -6,6 +6,8 @@ import android.graphics.Typeface
 import android.os.Build
 import android.util.Log
 import androidx.annotation.FontRes
+import androidx.compose.runtime.Composer
+import androidx.compose.runtime.ExperimentalComposeRuntimeApi
 import androidx.core.content.edit
 import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -28,6 +30,7 @@ import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
 
 class StashApplication : Application() {
+    @OptIn(ExperimentalComposeRuntimeApi::class)
     override fun onCreate() {
         super.onCreate()
 
@@ -37,6 +40,7 @@ class StashApplication : Application() {
         val versionNameStr = pkgInfo.versionName ?: "Unknown version"
 
         Restring.init(this)
+        Composer.setDiagnosticStackTraceEnabled(BuildConfig.DEBUG)
 
         initAcra {
             buildConfigClass = BuildConfig::class.java

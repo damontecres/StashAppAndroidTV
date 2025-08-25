@@ -4,7 +4,7 @@
 
     <PreferenceCategory  app:title="Interface">
         <SwitchPreference
-            app:key="scrollToNextResult"
+            app:key="@string/pref_key_scroll_on_view_all"
             app:title="Scroll to next on View All"
             app:summary="Automatically scroll down to the 'next' results when clicking View All on main page"
             app:defaultValue="true" />
@@ -53,7 +53,7 @@
 
     <PreferenceCategory app:title="Playback">
         <SwitchPreference
-            app:key="skipWithDpad"
+            app:key="@string/pref_key_skip_with_dpad"
             app:title="D-Pad skipping"
             app:summaryOn="Skip back/forward with D-Pad left/right"
             app:summaryOff="Don't skip back/forward with D-Pad left/right"
@@ -63,7 +63,7 @@
             app:title="Show D-Pad skipping indicator"
             app:defaultValue="true" />
         <ListPreference
-            app:key="stream_choice"
+            app:key="@string/pref_key_stream_choice"
             app:title="Stream Choice"
             app:summary="Which stream type to use when direct is unavailable"
             app:defaultValue="HLS"
@@ -100,7 +100,7 @@
             app:summaryOff="Hide debug info"
             app:defaultValue="false" />
         <SeekBarPreference
-            app:key="controllerShowTimeoutMs"
+            app:key="@string/pref_key_controller_timeout"
             app:title="Hide controls after (milliseconds)"
             app:seekBarIncrement="100"
             app:showSeekBarValue="true"
@@ -182,14 +182,14 @@
             android:max="1000"
             app:defaultValue="100" />
         <SeekBarPreference
-            app:key="networkCacheDuration"
+            app:key="@string/pref_key_network_cache_duration"
             app:title="Invalidate cache after"
             app:seekBarIncrement="1"
             app:showSeekBarValue="false"
             android:max="10"
             app:defaultValue="6" />
         <SwitchPreference
-            app:key="networkCacheLogging"
+            app:key="@string/pref_key_network_cache_logging"
             app:title="Cache logging"
             app:summaryOn="Log cache hits/misses"
             app:summaryOff="Don't log cache hits/misses"
@@ -202,13 +202,13 @@
 
     <PreferenceCategory app:title="About">
         <SwitchPreference
-            app:key="autoCheckForUpdates"
+            app:key="@string/pref_key_auto_check_updates"
             app:title="Automatically check for updates"
             app:summaryOn="Enabled, on startup"
             app:summaryOff="Disabled, manual"
             app:defaultValue="true"/>
         <EditTextPreference
-            app:key="updateCheckUrl"
+            app:key="@string/pref_key_update_url"
             app:title="Update URL"
             app:summary="Override URL used for update checks"
             app:defaultValue="@string/app_update_url"
@@ -221,7 +221,7 @@
 
     <PreferenceCategory app:title="Advanced">
         <SwitchPreference
-            app:key="acra.enable"
+            app:key="@string/pref_key_acra_enable"
             app:title="Enable crash reporting"
             app:summaryOn="Enabled"
             app:summaryOff="Disabled"
@@ -238,7 +238,7 @@
             app:summaryOff="Disabled"
             app:defaultValue="false" />
         <SeekBarPreference
-            app:key="networkTimeout"
+            app:key="@string/pref_key_network_timeout"
             app:title="Network timeout in seconds"
             app:seekBarIncrement="5"
             app:showSeekBarValue="true"

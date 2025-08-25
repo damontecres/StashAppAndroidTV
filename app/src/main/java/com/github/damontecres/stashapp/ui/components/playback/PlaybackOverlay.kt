@@ -44,7 +44,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Format
@@ -72,7 +71,9 @@ import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.PreviewPhoneSpec
 import com.github.damontecres.stashapp.ui.PreviewTheme
+import com.github.damontecres.stashapp.ui.PreviewTvSpec
 import com.github.damontecres.stashapp.ui.cards.RootCard
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
@@ -131,7 +132,6 @@ class ControllerViewState internal constructor(
     }
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun PlaybackOverlay(
     uiConfig: ComposeUiConfig,
@@ -564,7 +564,8 @@ fun BasicMarkerCard(
 }
 
 @UnstableApi
-@Preview(device = "spec:parent=tv_1080p", backgroundColor = 0xFF383535)
+@PreviewTvSpec
+@PreviewPhoneSpec
 @Composable
 private fun PlaybackOverlayPreview() {
     PreviewTheme {

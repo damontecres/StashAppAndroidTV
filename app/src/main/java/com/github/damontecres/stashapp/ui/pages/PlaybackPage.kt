@@ -98,11 +98,19 @@ fun PlaybackPage(
                             it.skipBackwardMs,
                         )
                     }
-
-                StashExoPlayer.getInstance(context, server, skipParams).apply {
-                    repeatMode = Player.REPEAT_MODE_OFF
-                    playWhenReady = true
-                }
+                val httpClient = uiConfig.preferences.playbackPreferences.playbackHttpClient
+                val debugLogging = uiConfig.preferences.playbackPreferences.debugLoggingEnabled
+                StashExoPlayer
+                    .getInstance(
+                        context,
+                        server,
+                        skipParams,
+                        httpClient.name,
+                        debugLogging,
+                    ).apply {
+                        repeatMode = Player.REPEAT_MODE_OFF
+                        playWhenReady = true
+                    }
             }
         val playbackScene = remember { Scene.fromFullSceneData(it) }
         val decision =
@@ -244,10 +252,14 @@ fun PlaylistPlaybackPage(
                             skipBack.inWholeMilliseconds,
                         )
                     }
-                StashExoPlayer.getInstance(context, server, skipParams).apply {
-                    repeatMode = Player.REPEAT_MODE_OFF
-                    playWhenReady = true
-                }
+                val httpClient = uiConfig.preferences.playbackPreferences.playbackHttpClient
+                val debugLogging = uiConfig.preferences.playbackPreferences.debugLoggingEnabled
+                StashExoPlayer
+                    .getInstance(context, server, skipParams, httpClient.name, debugLogging)
+                    .apply {
+                        repeatMode = Player.REPEAT_MODE_OFF
+                        playWhenReady = true
+                    }
             }
         val mutex = remember { Mutex() }
         LaunchedEffect(Unit) {

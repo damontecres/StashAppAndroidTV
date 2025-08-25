@@ -10,10 +10,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -138,6 +141,10 @@ class PlaybackViewModel : ViewModel() {
     private var saveFilters = true
     private var videoFiltersEnabled = false
 
+    private lateinit var player: Player
+    private var trackActivity by Delegates.notNull<Boolean>()
+    private var trackActivityListener: TrackActivityPlaybackListener? = null
+
     val scene = MutableLiveData<FullSceneData>()
     val performers = MutableLiveData<List<PerformerData>>(listOf())
 
@@ -152,15 +159,27 @@ class PlaybackViewModel : ViewModel() {
 
     fun init(
         server: StashServer,
+        player: Player,
+        trackActivity: Boolean,
         markersEnabled: Boolean,
         saveFilters: Boolean,
         videoFiltersEnabled: Boolean,
     ) {
         this.server = server
+        this.player = player
+        this.trackActivity = trackActivity
         this.markersEnabled = markersEnabled
         this.saveFilters = saveFilters
         this.videoFiltersEnabled = videoFiltersEnabled
         this.exceptionHandler = LoggingCoroutineExceptionHandler(server, viewModelScope)
+        if (trackActivity) {
+            addCloseable("tracking") {
+                trackActivityListener?.let {
+                    it.release(player.currentPosition)
+                    StashExoPlayer.removeListener(it)
+                }
+            }
+        }
     }
 
     private var sceneJob: Job = Job()
@@ -172,6 +191,28 @@ class PlaybackViewModel : ViewModel() {
         this.rating100.value = 0
         this.markers.value = listOf()
         this.spriteImageLoaded.value = false
+
+        if (trackActivity) {
+            Log.v(
+                TAG,
+                "Setting up activity tracking scene ${tag.item.id}, removing=${trackActivityListener?.scene?.id}",
+            )
+            trackActivityListener?.apply {
+                release()
+                StashExoPlayer.removeListener(this)
+            }
+            tag.item.let {
+                trackActivityListener =
+                    TrackActivityPlaybackListener(
+                        server = server,
+                        scene = it,
+                        getCurrentPosition = {
+                            player.currentPosition
+                        },
+                    )
+            }
+            trackActivityListener?.let { StashExoPlayer.addListener(it) }
+        }
 
         refreshScene(tag.item.id)
 
@@ -371,14 +412,12 @@ fun PlaybackPageContent(
     val scene by viewModel.scene.observeAsState()
     val performers by viewModel.performers.observeAsState(listOf())
 
-    var trackActivityListener = remember<TrackActivityPlaybackListener?>(server) { null }
     AmbientPlayerListener(player)
 
     LifecycleStartEffect(Unit) {
         onStopOrDispose {
             savedStartPosition = player.currentPosition
             currentPlaylistIndex = player.currentMediaItemIndex
-            trackActivityListener?.release(player.currentPosition)
             StashExoPlayer.releasePlayer()
         }
     }
@@ -434,7 +473,16 @@ fun PlaybackPageContent(
     val isTvDevice = isTvDevice
 
     LaunchedEffect(Unit) {
-        viewModel.init(server, markersEnabled, uiConfig.persistVideoFilters, useVideoFilters)
+        viewModel.init(
+            server,
+            player,
+            uiConfig.preferences.playbackPreferences.savePlayHistory &&
+                server.serverPreferences.trackActivity &&
+                !isMarkerPlaylist,
+            markersEnabled,
+            uiConfig.persistVideoFilters,
+            useVideoFilters,
+        )
         viewModel.changeScene(playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
         if (!isTvDevice) {
             viewModel.videoFilter.startThrottling(DRAG_THROTTLE_DELAY)
@@ -577,29 +625,6 @@ fun PlaybackPageContent(
         if (useVideoFilters) {
             Log.d(TAG, "Enabling video effects")
             player.setVideoEffects(listOf())
-        }
-    }
-
-    LaunchedEffect(server, currentScene, player) {
-        trackActivityListener?.apply {
-            release()
-            StashExoPlayer.removeListener(this)
-        }
-        currentScene?.let {
-            val appTracking = uiConfig.preferences.playbackPreferences.savePlayHistory
-            trackActivityListener =
-                if (appTracking && server.serverPreferences.trackActivity && !isMarkerPlaylist) {
-                    TrackActivityPlaybackListener(
-                        server = server,
-                        scene = currentScene.item,
-                        getCurrentPosition = {
-                            player.currentPosition
-                        },
-                    )
-                } else {
-                    null
-                }
-            trackActivityListener?.let { StashExoPlayer.addListener(it) }
         }
     }
 
@@ -746,6 +771,7 @@ fun PlaybackPageContent(
                 PlaybackOverlay(
                     modifier =
                         Modifier
+                            .padding(WindowInsets.systemBars.asPaddingValues())
                             .fillMaxSize()
                             .background(Color.Transparent),
                     uiConfig = uiConfig,

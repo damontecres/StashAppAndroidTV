@@ -99,7 +99,6 @@ import com.github.damontecres.stashapp.ui.compat.Card
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.ui.util.playOnClickSound
-import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
 import com.github.damontecres.stashapp.util.CreateNew
 import com.github.damontecres.stashapp.util.asSlimeSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -260,6 +259,7 @@ fun RootCard(
 
     if (focused) {
         LaunchedEffect(Unit) {
+            if (uiConfig.playSoundOnFocus) playOnClickSound(context)
             delay(videoDelay)
             if (focused) {
                 focusedAfterDelay = true
@@ -303,8 +303,7 @@ fun RootCard(
         modifier =
             modifier
                 .padding(0.dp)
-                .width(width)
-                .playSoundOnFocus(uiConfig.playSoundOnFocus),
+                .width(width),
         interactionSource = interactionSource,
         shape = shape,
         colors = colors,

@@ -14,7 +14,6 @@ import com.github.damontecres.stashapp.proto.SearchPreferences
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.proto.TabPreferences
-import com.github.damontecres.stashapp.proto.ThemeStyle
 import com.github.damontecres.stashapp.proto.UpdatePreferences
 import com.github.damontecres.stashapp.ui.components.prefs.StashPreference
 import com.google.protobuf.InvalidProtocolBufferException
@@ -31,26 +30,30 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                     InterfacePreferences
                         .newBuilder()
                         .apply {
-                            useComposeUi = true
-                            cardSize = 5
-                            playVideoPreviews = true
-                            rememberSelectedTab = true
-                            cardPreviewDelayMs = 1000
-                            slideShowIntervalMs = 5000
-                            slideShowImageClipPauseMs = 250
-                            showGridJumpButtons = true
+                            useComposeUi = StashPreference.UseNewUI.defaultValue
+                            cardSize = StashPreference.CardSize.defaultValue
+                            playVideoPreviews = StashPreference.PlayVideoPreviews.defaultValue
+                            rememberSelectedTab = StashPreference.RememberTab.defaultValue
+                            cardPreviewDelayMs =
+                                StashPreference.VideoPreviewDelay.defaultValue.toLong()
+                            slideShowIntervalMs =
+                                StashPreference.SlideshowDuration.defaultValue.seconds.inWholeMilliseconds
+                            slideShowImageClipPauseMs =
+                                StashPreference.SlideshowImageClipDelay.defaultValue.toLong()
+                            showGridJumpButtons = StashPreference.GridJumpButtons.defaultValue
                             theme = "default"
-                            themeStyle = ThemeStyle.DARK
-                            showProgressWhenSkipping = true
-                            playMovementSounds = true
-                            captionsByDefault = true
-                            scrollNextViewAll = true
-                            scrollTopOnBack = true
-                            showPositionFooter = true
-                            showRatingOnCards = true
-                            videoPreviewAudio = false
-                            pageWithRemoteButtons = true
-                            dpadSkipIndicator = true
+                            themeStyle = StashPreference.ThemeStylePref.defaultValue
+                            showProgressWhenSkipping =
+                                StashPreference.ShowProgressSkipping.defaultValue
+                            playMovementSounds = StashPreference.MovementSound.defaultValue
+                            captionsByDefault = StashPreference.CaptionsOnByDefault.defaultValue
+                            scrollNextViewAll = StashPreference.ScrollViewAll.defaultValue
+                            scrollTopOnBack = StashPreference.ScrollTopOnBack.defaultValue
+                            showPositionFooter = StashPreference.ShowGridFooter.defaultValue
+                            showRatingOnCards = StashPreference.ShowCardRating.defaultValue
+                            videoPreviewAudio = StashPreference.PlayCardAudio.defaultValue
+                            pageWithRemoteButtons = StashPreference.PageRemoteButtons.defaultValue
+                            dpadSkipIndicator = StashPreference.DPadSkipIndicator.defaultValue
                             tabPreferences =
                                 TabPreferences
                                     .newBuilder()
@@ -66,12 +69,14 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                     PlaybackPreferences
                         .newBuilder()
                         .apply {
-                            skipForwardMs = 30.seconds.inWholeMilliseconds
-                            skipBackwardMs = 10.seconds.inWholeMilliseconds
-                            dpadSkipping = true
-                            controllerTimeoutMs = 3500
-                            savePlayHistory = true
-                            saveVideoFilters = true
+                            skipForwardMs =
+                                StashPreference.SkipForward.defaultValue.seconds.inWholeMilliseconds
+                            skipBackwardMs =
+                                StashPreference.SkipBack.defaultValue.seconds.inWholeMilliseconds
+                            dpadSkipping = StashPreference.DPadSkipping.defaultValue
+                            controllerTimeoutMs = StashPreference.ControllerTimeout.defaultValue
+                            savePlayHistory = StashPreference.SavePlayHistory.defaultValue
+                            saveVideoFilters = StashPreference.VideoFilter.defaultValue
                             seekBarSteps = 16
 
                             addAllDirectPlayVideo(StashPreference.DirectPlayVideo.defaultValue)
@@ -82,31 +87,34 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                     UpdatePreferences
                         .newBuilder()
                         .apply {
-                            checkForUpdates = true
-                            updateUrl = "https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/latest"
+                            checkForUpdates = StashPreference.AutoCheckForUpdates.defaultValue
+                            updateUrl = StashPreference.UpdateUrl.defaultValue
                         }.build()
                 advancedPreferences =
                     AdvancedPreferences
                         .newBuilder()
                         .apply {
-                            logErrorsToServer = true
-                            networkTimeoutMs = 15.seconds.inWholeMilliseconds
-                            imageThreadCount = Runtime.getRuntime().availableProcessors()
+                            logErrorsToServer = StashPreference.LogErrorsToServer.defaultValue
+                            networkTimeoutMs =
+                                StashPreference.NetworkTimeout.defaultValue.seconds.inWholeMilliseconds
+                            imageThreadCount = StashPreference.ImageThreads.defaultValue
                         }.build()
                 cachePreferences =
                     CachePreferences
                         .newBuilder()
                         .apply {
-                            imageDiskCacheSize = 100 * 1024 * 1024 // 100 MB
-                            networkCacheSize = 10 * 1024 * 1024 // 10 MB
-                            cacheExpirationTime = 6 // TODO
+                            imageDiskCacheSize =
+                                StashPreference.ImageDiskCache.defaultValue * 1024L * 1024L
+                            networkCacheSize =
+                                StashPreference.NetworkCache.defaultValue * 1024L * 1024L
+                            cacheExpirationTime = StashPreference.CacheInvalidation.defaultValue
                         }.build()
                 searchPreferences =
                     SearchPreferences
                         .newBuilder()
                         .apply {
-                            maxResults = 25
-                            searchDelayMs = 1000
+                            maxResults = StashPreference.SearchResults.defaultValue
+                            searchDelayMs = StashPreference.SearchDelay.defaultValue.toLong()
                         }.build()
             }.build()
 

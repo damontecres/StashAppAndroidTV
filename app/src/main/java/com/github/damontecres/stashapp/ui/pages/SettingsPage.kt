@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.navigation.NavigationManager
@@ -23,6 +24,7 @@ fun SettingsPage(
     preferenceScreenOption: PreferenceScreenOption,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     Box(
         modifier = modifier.background(MaterialTheme.colorScheme.background),
@@ -34,13 +36,14 @@ fun SettingsPage(
                     .align(Alignment.TopEnd)
             } else {
                 Modifier
-            }.background(MaterialTheme.colorScheme.secondaryContainer)
+            }
         PreferencesContent(
             server,
             navigationManager,
             uiConfig.preferences,
             preferenceScreenOption,
             newModifier,
+            onUpdateTitle,
         )
     }
 }

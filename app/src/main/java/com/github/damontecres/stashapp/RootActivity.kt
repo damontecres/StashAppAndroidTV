@@ -94,11 +94,11 @@ class RootActivity :
         loadingView = findViewById(R.id.loading_progress_bar)
         bgLogo = findViewById(R.id.background_logo)
 
-        val currentServer = StashServer.findConfiguredStashServer(StashApplication.getApplication())
+        val currentServer = StashServer.findConfiguredStashServer(this)
         if (currentServer != null) {
             Log.i(TAG, "Server configured")
-            StashServer.setCurrentStashServer(StashApplication.getApplication(), currentServer)
-            serverViewModel.init(currentServer)
+            StashServer.setCurrentStashServer(this, currentServer)
+            serverViewModel.init(this, currentServer, useCompose)
 
             serverViewModel.serverConnection.observe(this) { result ->
                 loadingView.hide()
@@ -210,7 +210,7 @@ class RootActivity :
             "onNavigate: $previousDestination=>$nextDestination",
         )
         currentFragment = fragment
-        if (nextDestination == Destination.Main && !hasCheckedForUpdate) {
+        if (!useCompose && nextDestination == Destination.Main && !hasCheckedForUpdate) {
             serverViewModel.maybeShowUpdate(this)
             hasCheckedForUpdate = true
         }
