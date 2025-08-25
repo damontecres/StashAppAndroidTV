@@ -421,7 +421,7 @@ sealed interface StashPreference<T> {
             StashChoicePreference<ThemeStyle>(
                 title = R.string.theme_style_preference_title,
                 prefKey = R.string.pref_key_ui_theme_dark_appearance,
-                defaultValue = ThemeStyle.SYSTEM,
+                defaultValue = ThemeStyle.DARK,
                 displayValues = R.array.ui_theme_dark_appearance_choices,
                 indexToValue = {
                     ThemeStyle.forNumber(it)
@@ -501,7 +501,7 @@ sealed interface StashPreference<T> {
                 summaryOff = R.string.transcode_options_disabled,
             )
 
-        val Captions =
+        val CaptionsOnByDefault =
             StashSwitchPreference(
                 title = R.string.captions_default,
                 prefKey = R.string.pref_key_captions_on_by_default,

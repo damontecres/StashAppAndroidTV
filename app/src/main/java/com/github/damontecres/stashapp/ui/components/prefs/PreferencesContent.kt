@@ -129,7 +129,7 @@ val uiPreferences =
                 StashPreference.ShowProgressSkipping,
                 StashPreference.MovementSound,
                 StashPreference.UpDownNextPrevious,
-                StashPreference.Captions,
+                StashPreference.CaptionsOnByDefault,
                 StashPreference.ThemeStylePref,
                 StashPreference.ChooseTheme,
             ),
