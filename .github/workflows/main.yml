@@ -78,6 +78,11 @@ jobs:
         run: |
           cp "${{ steps.build.outputs.apk }}" "${{ env.APK_SHORT_NAME }}"
           cp "${{ steps.build.outputs.apk_debug }}" "${{ env.APK_DEBUG_SHORT_NAME }}"
+      - name: Checksums
+        run: |
+          echo "SHA256 checksums:"
+          sha256sum "${{ steps.build.outputs.apk }}" "${{ env.APK_SHORT_NAME }}"
+          sha256sum "${{ steps.build.outputs.apk_debug }}" "${{ env.APK_DEBUG_SHORT_NAME }}"
       - name: Delete ${{ env.TAG_NAME }} tag and release
         uses: dev-drprasad/delete-tag-and-release@v1.1
         with:
