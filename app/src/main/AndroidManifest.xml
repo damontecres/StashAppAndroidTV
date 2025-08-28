@@ -25,17 +25,17 @@
     <application
         android:name=".StashApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/stash_logo"
+        android:icon="@drawable/stash_logo_small"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.StashAppAndroidTV"
         android:usesCleartextTraffic="true">
         <activity
             android:name=".RootActivity"
-            android:banner="@mipmap/stash_logo"
+            android:banner="@drawable/stash_logo_small"
             android:exported="true"
-            android:icon="@mipmap/stash_logo"
-            android:logo="@mipmap/stash_logo"
+            android:icon="@drawable/stash_logo_small"
+            android:logo="@drawable/stash_logo_small"
             android:launchMode="singleTop"
             android:configChanges="orientation|screenSize|screenLayout">
             <intent-filter>

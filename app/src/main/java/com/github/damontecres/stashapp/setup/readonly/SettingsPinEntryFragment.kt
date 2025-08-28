@@ -24,7 +24,7 @@ class SettingsPinEntryFragment : GuidedStepSupportFragment() {
             "Enter PIN",
             "PIN for settings access",
             null,
-            ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
+            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo_small),
         )
 
     override fun onCreateActions(

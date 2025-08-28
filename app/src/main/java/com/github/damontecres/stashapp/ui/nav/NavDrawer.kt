@@ -154,7 +154,7 @@ fun NavDrawer(
                         onClick = onClick,
                         leadingContent = {
                             Icon(
-                                painterResource(id = R.mipmap.stash_logo),
+                                painterResource(id = R.drawable.stash_logo_small),
                                 contentDescription = null,
                             )
                         },

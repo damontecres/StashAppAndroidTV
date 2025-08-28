@@ -19,7 +19,7 @@ class SetupStep2Ssl(
             "HTTPS Certificate",
             "Allow self-signed certificates?\n\nNote: if enabled, the app must be restarted/force stopped after completing setup!",
             null,
-            ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
+            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo_small),
         )
 
     override fun onCreateActions(

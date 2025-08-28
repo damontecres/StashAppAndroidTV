@@ -126,7 +126,7 @@ fun AddServer(
                 )
 
                 Icon(
-                    painter = painterResource(R.mipmap.stash_logo),
+                    painter = painterResource(R.drawable.stash_logo_small),
                     contentDescription = null,
                     tint = Color.Unspecified,
                     modifier = Modifier.size(64.dp),
