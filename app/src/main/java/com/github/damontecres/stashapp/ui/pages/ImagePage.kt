@@ -29,6 +29,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
@@ -60,9 +62,11 @@ import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import coil3.compose.AsyncImage
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import coil3.size.Size
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -88,6 +92,7 @@ import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.maxFileSize
 import kotlin.math.abs
 
 private const val TAG = "ImagePage"
@@ -480,6 +485,17 @@ fun ImagePage(
                         )
                     }
                 } else {
+                    val colorFilter =
+                        remember(image.id, imageFilter) {
+                            if (imageFilter.hasImageFilter()) {
+                                ColorMatrixColorFilter(imageFilter.createComposeColorMatrix())
+                            } else {
+                                null
+                            }
+                        }
+                    // If the image loading is large, show the thumbnail while waiting
+                    val showLoadingThumbnail =
+                        image.paths.thumbnail.isNotNullOrBlank() && image.maxFileSize > 1024 * 1024
                     SubcomposeAsyncImage(
                         modifier =
                             contentModifier
@@ -507,18 +523,12 @@ fun ImagePage(
                             ImageRequest
                                 .Builder(LocalContext.current)
                                 .data(image.paths.image)
-                                .crossfade(true)
+                                .size(Size.ORIGINAL)
+                                .crossfade(!showLoadingThumbnail)
                                 .build(),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
-                        colorFilter =
-                            if (imageFilter.hasImageFilter()) {
-                                ColorMatrixColorFilter(
-                                    imageFilter.createComposeColorMatrix(),
-                                )
-                            } else {
-                                null
-                            },
+                        colorFilter = colorFilter,
                         error = {
                             Text(
                                 modifier =
@@ -529,12 +539,33 @@ fun ImagePage(
                             )
                         },
                         loading = {
-                            CircularProgress(
-                                Modifier
-                                    .size(120.dp)
-                                    .align(Alignment.Center),
-                                false,
-                            )
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                if (showLoadingThumbnail) {
+                                    AsyncImage(
+                                        model =
+                                            ImageRequest
+                                                .Builder(LocalContext.current)
+                                                .data(image.paths.thumbnail)
+                                                .crossfade(true)
+                                                .build(),
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Fit,
+                                        colorFilter = colorFilter,
+                                        modifier =
+                                            Modifier
+                                                .fillMaxSize()
+                                                .align(Alignment.Center)
+                                                .alpha(.75f)
+                                                .blur(4.dp),
+                                    )
+                                }
+                                CircularProgress(
+                                    Modifier
+                                        .size(120.dp)
+                                        .align(Alignment.Center),
+                                    false,
+                                )
+                            }
                         },
                         // Ensure that if an image takes a long time to load, it won't be skipped
                         onLoading = {
