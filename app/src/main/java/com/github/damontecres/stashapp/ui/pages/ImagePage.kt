@@ -17,7 +17,6 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,8 +28,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
@@ -62,7 +59,6 @@ import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import coil3.compose.AsyncImage
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
@@ -78,12 +74,12 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
-import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.image.DRAG_THROTTLE_DELAY
 import com.github.damontecres.stashapp.ui.components.image.ImageDetailsViewModel
 import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
+import com.github.damontecres.stashapp.ui.components.image.ImageLoadingPlaceholder
 import com.github.damontecres.stashapp.ui.components.image.ImageOverlay
 import com.github.damontecres.stashapp.ui.components.image.SlideshowControls
 import com.github.damontecres.stashapp.ui.components.playback.isDirectionalDpad
@@ -539,33 +535,12 @@ fun ImagePage(
                             )
                         },
                         loading = {
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                if (showLoadingThumbnail) {
-                                    AsyncImage(
-                                        model =
-                                            ImageRequest
-                                                .Builder(LocalContext.current)
-                                                .data(image.paths.thumbnail)
-                                                .crossfade(true)
-                                                .build(),
-                                        contentDescription = null,
-                                        contentScale = ContentScale.Fit,
-                                        colorFilter = colorFilter,
-                                        modifier =
-                                            Modifier
-                                                .fillMaxSize()
-                                                .align(Alignment.Center)
-                                                .alpha(.75f)
-                                                .blur(4.dp),
-                                    )
-                                }
-                                CircularProgress(
-                                    Modifier
-                                        .size(120.dp)
-                                        .align(Alignment.Center),
-                                    false,
-                                )
-                            }
+                            ImageLoadingPlaceholder(
+                                thumbnailUrl = image.paths.thumbnail,
+                                showThumbnail = showLoadingThumbnail,
+                                colorFilter = colorFilter,
+                                modifier = Modifier.fillMaxSize(),
+                            )
                         },
                         // Ensure that if an image takes a long time to load, it won't be skipped
                         onLoading = {
