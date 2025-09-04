@@ -57,7 +57,6 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
-import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -67,9 +66,7 @@ import androidx.media3.common.text.Cue
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
-import androidx.media3.exoplayer.DecoderReuseEvaluation
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.ui.SubtitleView
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
@@ -503,70 +500,10 @@ fun PlaybackPageContent(
                 controllerViewState.showControls()
             }
         }
-        player.addAnalyticsListener(
-            object : AnalyticsListener {
-                override fun onVideoDecoderInitialized(
-                    eventTime: AnalyticsListener.EventTime,
-                    decoderName: String,
-                    initializedTimestampMs: Long,
-                    initializationDurationMs: Long,
-                ) {
-                    Log.v(TAG, "onVideoDecoderInitialized: $decoderName")
-                    videoDecoder = decoderName
-                }
-
-                override fun onVideoDecoderReleased(
-                    eventTime: AnalyticsListener.EventTime,
-                    decoderName: String,
-                ) {
-                    Log.v(TAG, "onVideoDecoderReleased: $decoderName")
-                }
-
-                override fun onVideoInputFormatChanged(
-                    eventTime: AnalyticsListener.EventTime,
-                    format: Format,
-                    decoderReuseEvaluation: DecoderReuseEvaluation?,
-                ) {
-                    Log.v(
-                        TAG,
-                        "onVideoInputFormatChanged: ${format.sampleMimeType}, decoderName=${decoderReuseEvaluation?.decoderName}",
-                    )
-                    decoderReuseEvaluation?.let {
-                        if (it.result != DecoderReuseEvaluation.REUSE_RESULT_NO) {
-                            videoDecoder = it.decoderName
-                        }
-                    }
-                }
-
-                override fun onAudioDecoderReleased(
-                    eventTime: AnalyticsListener.EventTime,
-                    decoderName: String,
-                ) {
-                    Log.v(TAG, "onAudioDecoderReleased: $decoderName")
-                }
-
-                override fun onAudioDecoderInitialized(
-                    eventTime: AnalyticsListener.EventTime,
-                    decoderName: String,
-                    initializedTimestampMs: Long,
-                    initializationDurationMs: Long,
-                ) {
-                    Log.v(TAG, "onAudioDecoderInitialized: $decoderName")
-                    audioDecoder = decoderName
-                }
-
-                override fun onAudioInputFormatChanged(
-                    eventTime: AnalyticsListener.EventTime,
-                    format: Format,
-                    decoderReuseEvaluation: DecoderReuseEvaluation?,
-                ) {
-                    super.onAudioInputFormatChanged(eventTime, format, decoderReuseEvaluation)
-                    decoderReuseEvaluation?.let {
-                        if (it.result != DecoderReuseEvaluation.REUSE_RESULT_NO) {
-                            audioDecoder = it.decoderName
-                        }
-                    }
-                }
+        StashExoPlayer.addListener(
+            StashAnalyticsListener { audio, video ->
+                audioDecoder = audio
+                videoDecoder = video
             },
         )
         StashExoPlayer.addListener(
