@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
+import android.util.Log
 import androidx.annotation.IntRange
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -87,6 +88,7 @@ import com.github.damontecres.stashapp.views.models.CardUiSettings
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
 import kotlin.time.Duration
@@ -159,6 +161,8 @@ fun PlaybackOverlay(
     playbackSpeed: Float,
     scale: ContentScale,
     playlistInfo: PlaylistInfo?,
+    videoDecoder: String?,
+    audioDecoder: String?,
     modifier: Modifier = Modifier,
     seekPreviewPlaceholder: Painter? = null,
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -171,6 +175,26 @@ fun PlaybackOverlay(
 
     val previewImageUrl = scene.spriteUrl
     val imageLoader = SingletonImageLoader.get(LocalPlatformContext.current)
+
+    if (showDebugInfo) {
+        LaunchedEffect(Unit) {
+            while (true) {
+                val nativeSize = android.os.Debug.getNativeHeapSize()
+                val nativeFree = android.os.Debug.getNativeHeapFreeSize()
+                val nativeAllocated = android.os.Debug.getNativeHeapAllocatedSize()
+                val runtime = Runtime.getRuntime()
+                val freeSize = runtime.freeMemory()
+                val totalSize = runtime.totalMemory()
+                val usedSize = totalSize - freeSize
+
+                val msg =
+                    "Native heap: ${nativeAllocated / 1024}k/${nativeSize / 1024}k, nativeFree=${nativeFree / 1024}k " +
+                        "JVM: ${usedSize / 1024}k/${totalSize / 1024}k"
+                Log.d("PlaybackOverlay", msg)
+                delay(500L)
+            }
+        }
+    }
 
     Box(
         modifier,
@@ -193,12 +217,39 @@ fun PlaybackOverlay(
                             // TODO the width isn't be used correctly
                             .width(248.dp),
                 )
-                PlaybackTrackInfo(
-                    trackSupport = tracks,
-                    modifier =
-                        Modifier
-                            .background(AppColors.TransparentBlack50),
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    PlaybackTrackInfo(
+                        trackSupport = tracks,
+                        modifier =
+                            Modifier
+                                .background(AppColors.TransparentBlack50),
+                    )
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(0.dp),
+                        modifier =
+                            Modifier
+                                .background(AppColors.TransparentBlack50),
+                    ) {
+                        if (videoDecoder.isNotNullOrBlank()) {
+                            Text(
+                                text = "Video decoder: $videoDecoder",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(4.dp),
+                            )
+                        }
+                        if (audioDecoder.isNotNullOrBlank()) {
+                            Text(
+                                text = "Audio decoder: $audioDecoder",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(4.dp),
+                            )
+                        }
+                    }
+                }
             }
         }
         val controlHeight = .4f
@@ -677,6 +728,8 @@ private fun PlaybackOverlayPreview() {
                         format = Format.Builder().build(),
                     ),
                 ),
+            videoDecoder = "OMX.video.decoder",
+            audioDecoder = "OMX.audio.decoder",
         )
     }
 }
