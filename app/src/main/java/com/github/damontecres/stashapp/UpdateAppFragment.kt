@@ -46,7 +46,7 @@ class UpdateAppFragment : GuidedStepSupportFragment() {
             "${getString(R.string.stashapp_package_manager_latest_version)}: ${release.version}",
             description,
             null,
-            AppCompatResources.getDrawable(requireContext(), R.drawable.stash_logo_small),
+            AppCompatResources.getDrawable(requireContext(), R.drawable.stash_logo),
         )
     }
 

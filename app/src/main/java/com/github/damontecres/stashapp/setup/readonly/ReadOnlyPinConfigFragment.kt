@@ -20,7 +20,7 @@ class ReadOnlyPinConfigFragment : GuidedStepSupportFragment() {
             "Read Only Mode",
             getString(R.string.read_only_pin_description).trimMargin(),
             null,
-            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo_small),
+            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo),
         )
 
     override fun onCreateActions(

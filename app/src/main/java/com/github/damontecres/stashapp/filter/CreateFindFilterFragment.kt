@@ -20,7 +20,7 @@ class CreateFindFilterFragment(
             getString(R.string.sort_by),
             "",
             null,
-            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo_small),
+            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo),
         )
 
     override fun onCreateActions(

@@ -20,7 +20,7 @@ class SetupStep1ServerUrl : SetupGuidedStepSupportFragment() {
             getString(R.string.stash_server_url),
             getString(R.string.stash_server_url_desc),
             null,
-            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo_small),
+            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo),
         )
 
     override fun onCreateActions(

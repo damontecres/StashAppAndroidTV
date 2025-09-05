@@ -126,7 +126,7 @@ fun AddServer(
                 )
 
                 Icon(
-                    painter = painterResource(R.drawable.stash_logo_small),
+                    painter = painterResource(R.drawable.stash_logo),
                     contentDescription = null,
                     tint = Color.Unspecified,
                     modifier = Modifier.size(64.dp),

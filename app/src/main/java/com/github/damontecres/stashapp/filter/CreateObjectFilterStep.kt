@@ -86,7 +86,7 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
             "Create filter",
             text.joinToString("\n"),
             null,
-            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo_small),
+            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo),
         )
     }
 

@@ -45,7 +45,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
             "Create $typeStr filter",
             text,
             null,
-            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo_small),
+            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo),
         )
     }
 
