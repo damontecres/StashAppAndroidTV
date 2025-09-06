@@ -118,7 +118,7 @@ fun ImageOverlay(
     val showRatings = LocalGlobalContext.current.preferences.interfacePreferences.showRatingOnCards
 
     Box(modifier = modifier.fillMaxSize()) {
-        if (showRatings && rating100 != null && rating100 >= 0) {
+        if (showRatings && rating100 != null && rating100 > 0) {
             val ratingText = getRatingAsDecimalString(rating100, ratingsAsStars)
             val text = context.getString(R.string.stashapp_rating) + ": $ratingText"
             val ratingColors = context.resources.obtainTypedArray(R.array.rating_colors)
