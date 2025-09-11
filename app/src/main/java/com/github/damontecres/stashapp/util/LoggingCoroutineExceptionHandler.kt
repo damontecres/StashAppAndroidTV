@@ -6,6 +6,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
@@ -29,6 +30,10 @@ class LoggingCoroutineExceptionHandler(
     }
 
     fun handleException(exception: Throwable) {
+        if (exception is CancellationException) {
+            // Don't log/toast cancellations
+            return
+        }
         Log.e(TAG, "Exception in coroutine", exception)
 
         try {
