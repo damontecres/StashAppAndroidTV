@@ -495,6 +495,7 @@ fun StashCard(
     longClicker: LongClicker<Any>,
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
+    cardContext: CardContext = CardContext.None,
 ) {
     when (item) {
         is SlimSceneData? ->
@@ -505,6 +506,7 @@ fun StashCard(
                 longClicker,
                 getFilterAndPosition,
                 modifier,
+                cardContext = cardContext as? CardContext.SceneCardContext,
             )
 
         is FullSceneData? ->
@@ -515,6 +517,7 @@ fun StashCard(
                 longClicker,
                 getFilterAndPosition,
                 modifier,
+                cardContext = cardContext as? CardContext.SceneCardContext,
             )
 
         is PerformerData? ->
@@ -565,6 +568,7 @@ fun StashCard(
                 longClicker,
                 getFilterAndPosition,
                 modifier,
+                cardContext = cardContext as? CardContext.GroupCardContext,
             )
 
         is GroupRelationshipData? -> {
@@ -634,4 +638,21 @@ fun StashCard(
 
         else -> throw UnsupportedOperationException("Item with class ${item?.javaClass} not supported.")
     }
+}
+
+/**
+ * Context about where this card is being shown to alter its display
+ */
+interface CardContext {
+    data object None : CardContext
+
+    data class SceneCardContext(
+        // If listing scenes of a group, this is the group id
+        val sceneInGroupId: String,
+    ) : CardContext
+
+    data class GroupCardContext(
+        // If listing groups that a scene is in, this is the scene's index
+        val indexInGroup: Int?,
+    ) : CardContext
 }

@@ -66,6 +66,7 @@ import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.cards.CardContext
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
@@ -119,6 +120,7 @@ fun StashGridControls(
     onSubToggleCheck: ((Boolean) -> Unit)? = null,
     subToggleChecked: Boolean = false,
     subToggleEnabled: Boolean = true,
+    cardContext: ((index: Int, item: StashData) -> CardContext)? = null,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -301,6 +303,7 @@ fun StashGridControls(
                 positionCallback?.invoke(columns, position)
             },
             gridFocusRequester = gridFocusRequester,
+            cardContext = cardContext,
             modifier =
                 Modifier
                     .fillMaxSize()
@@ -339,6 +342,7 @@ fun StashGrid(
     modifier: Modifier = Modifier,
     initialPosition: Int = 0,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
+    cardContext: ((index: Int, item: StashData) -> CardContext)? = null,
 ) {
     val orientation = LocalConfiguration.current.orientation
     val navigationManager = LocalGlobalContext.current.navigationManager
@@ -640,6 +644,9 @@ fun StashGrid(
                                 index,
                             )
                         },
+                        cardContext =
+                            item?.let { cardContext?.invoke(index, item) }
+                                ?: CardContext.None,
                     )
                 }
             }
