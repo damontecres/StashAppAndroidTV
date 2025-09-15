@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.ui.cards
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,8 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -41,6 +44,7 @@ fun SceneCard(
     longClicker: LongClicker<Any>,
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
+    cardContext: CardContext.SceneCardContext? = null,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
     item?.let {
@@ -67,7 +71,22 @@ fun SceneCard(
         defaultImageDrawableRes = R.drawable.default_scene,
         videoUrl = item?.paths?.preview,
         title = AnnotatedString(item?.titleOrFilename ?: ""),
-        subtitle = { Text(item?.date ?: "") },
+        subtitle = {
+            Column {
+                Text(item?.date ?: "")
+                cardContext?.let {
+                    val index =
+                        item?.groups?.firstOrNull { cardContext.sceneInGroupId == it.group.id }?.scene_index
+                    if (index != null) {
+                        Text(
+                            text = stringResource(R.string.stashapp_scene) + " #$index",
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+        },
         description = {
             IconRowText(
                 dataTypeMap,

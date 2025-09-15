@@ -503,6 +503,7 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
             groups =
                 this.groups.map {
                     SlimSceneData.Group(
+                        it.scene_index,
                         SlimSceneData.Group1(
                             it.group.groupData.id,
                             it.group.groupData.name,
