@@ -91,6 +91,10 @@ Please check before submitting that your issue or pull request is not a duplicat
 
 If you plan to submit a pull request, please read the [contributing guide](CONTRIBUTING.md) before submitting!
 
+### Contributors
+
+- [@WirlyWirly](https://github.com/WirlyWirly) for the app icon design
+
 ## Additional screenshots
 
 ### Scene list
