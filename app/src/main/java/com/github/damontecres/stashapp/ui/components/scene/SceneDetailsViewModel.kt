@@ -306,6 +306,21 @@ class SceneDetailsViewModel(
         }
     }
 
+    fun deleteScene(
+        deleteFiles: Boolean,
+        deleteGenerated: Boolean,
+        onDeleted: (Boolean) -> Unit,
+    ) {
+        loadingState.value = SceneLoadingState.Loading
+        viewModelScope.launch(exceptionHandler) {
+            val success = mutationEngine.deleteScene(sceneId, deleteFiles, deleteGenerated)
+            onDeleted(success)
+            if (!success) {
+                scene?.let { loadingState.value = SceneLoadingState.Success(it) }
+            }
+        }
+    }
+
     companion object {
         val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
         val SCENE_ID_KEY = object : CreationExtras.Key<String> {}
