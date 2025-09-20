@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components
 
 import android.icu.text.MessageFormat
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -89,14 +90,18 @@ fun DeleteDialog(
             }
             item {
                 val result =
-                    MessageFormat(stringResource(R.string.stashapp_dialogs_delete_entity_desc))
-                        .format(
-                            mapOf(
-                                "count" to 1,
-                                "singularEntity" to stringResource(dataType.stringId),
-                                "pluralEntity" to stringResource(dataType.pluralStringId),
-                            ),
-                        )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        MessageFormat(stringResource(R.string.stashapp_dialogs_delete_entity_desc))
+                            .format(
+                                mapOf(
+                                    "count" to 1,
+                                    "singularEntity" to stringResource(dataType.stringId),
+                                    "pluralEntity" to stringResource(dataType.pluralStringId),
+                                ),
+                            )
+                    } else {
+                        "Are you sure you want to delete this?"
+                    }
                 Text(
                     text = result,
                     style = MaterialTheme.typography.bodyMedium,
@@ -117,14 +122,18 @@ fun DeleteDialog(
                                     .animateItem(),
                         ) {
                             val result =
-                                MessageFormat(stringResource(R.string.stashapp_dialogs_delete_alert))
-                                    .format(
-                                        mapOf(
-                                            "count" to files.size,
-                                            "singularEntity" to stringResource(R.string.stashapp_file),
-                                            "pluralEntity" to stringResource(R.string.stashapp_files),
-                                        ),
-                                    )
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                    MessageFormat(stringResource(R.string.stashapp_dialogs_delete_alert))
+                                        .format(
+                                            mapOf(
+                                                "count" to files.size,
+                                                "singularEntity" to stringResource(R.string.stashapp_file),
+                                                "pluralEntity" to stringResource(R.string.stashapp_files),
+                                            ),
+                                        )
+                                } else {
+                                    "The following files will be deleted:"
+                                }
                             Text(
                                 text = result,
                                 style = MaterialTheme.typography.bodyMedium,
