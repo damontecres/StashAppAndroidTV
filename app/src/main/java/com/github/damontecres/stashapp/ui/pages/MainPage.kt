@@ -78,6 +78,7 @@ import com.github.damontecres.stashapp.ui.components.main.MainPageHeader
 import com.github.damontecres.stashapp.ui.isPlayKeyUp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.CrossFadeFactory
+import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
 import com.github.damontecres.stashapp.ui.util.getPlayDestinationForItem
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.FilterParser
@@ -156,7 +157,7 @@ fun MainPage(
     viewModel: MainPageViewModel = viewModel(),
 ) {
     val context = LocalContext.current
-    LaunchedEffect(server, uiConfig) {
+    OneTimeLaunchedEffect {
         viewModel.init(context, server, uiConfig.preferences.searchPreferences.maxResults)
     }
 
