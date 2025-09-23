@@ -83,6 +83,8 @@ import com.github.damontecres.stashapp.ui.components.image.ImageLoadingPlacehold
 import com.github.damontecres.stashapp.ui.components.image.ImageOverlay
 import com.github.damontecres.stashapp.ui.components.image.SlideshowControls
 import com.github.damontecres.stashapp.ui.components.playback.isDirectionalDpad
+import com.github.damontecres.stashapp.ui.components.playback.isDpad
+import com.github.damontecres.stashapp.ui.components.playback.isEnterKey
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashServer
@@ -417,7 +419,7 @@ fun ImagePage(
                         showOverlay = false
                         viewModel.unpauseSlideshow()
                         result = true
-                    } else if (!isOverlayShowing && it.key != Key.Back) {
+                    } else if (!isOverlayShowing && (isDpad(it) || isEnterKey(it))) {
                         showOverlay = true
                         viewModel.pauseSlideshow()
                         result = true
