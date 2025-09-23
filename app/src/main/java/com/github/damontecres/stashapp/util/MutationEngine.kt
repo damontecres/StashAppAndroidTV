@@ -11,6 +11,7 @@ import com.github.damontecres.stashapp.api.CreatePerformerMutation
 import com.github.damontecres.stashapp.api.CreateStudioMutation
 import com.github.damontecres.stashapp.api.CreateTagMutation
 import com.github.damontecres.stashapp.api.DeleteMarkerMutation
+import com.github.damontecres.stashapp.api.DeleteSceneMutation
 import com.github.damontecres.stashapp.api.ImageDecrementOMutation
 import com.github.damontecres.stashapp.api.ImageIncrementOMutation
 import com.github.damontecres.stashapp.api.ImageResetOMutation
@@ -49,6 +50,7 @@ import com.github.damontecres.stashapp.api.type.PerformerCreateInput
 import com.github.damontecres.stashapp.api.type.PerformerUpdateInput
 import com.github.damontecres.stashapp.api.type.SaveFilterInput
 import com.github.damontecres.stashapp.api.type.ScanMetadataInput
+import com.github.damontecres.stashapp.api.type.SceneDestroyInput
 import com.github.damontecres.stashapp.api.type.SceneGroupInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerCreateInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
@@ -357,6 +359,27 @@ class MutationEngine(
                     ),
             )
         return executeMutation(mutation).data?.sceneUpdate
+    }
+
+    suspend fun deleteScene(
+        sceneId: String,
+        deleteFiles: Boolean,
+        deleteGenerated: Boolean,
+    ): Boolean {
+        Log.v(
+            TAG,
+            "deleteScene: sceneId=$sceneId, deleteFiles=$deleteFiles, deleteGenerated=$deleteGenerated",
+        )
+        val mutation =
+            DeleteSceneMutation(
+                input =
+                    SceneDestroyInput(
+                        id = sceneId,
+                        delete_file = Optional.present(deleteFiles),
+                        delete_generated = Optional.present(deleteGenerated),
+                    ),
+            )
+        return executeMutation(mutation).data?.sceneDestroy == true
     }
 
     suspend fun incrementImageOCounter(imageId: String): OCounter {
