@@ -51,13 +51,13 @@ jobs:
       - name: Verify signature
         run: |
           ${{env.ANDROID_SDK_ROOT}}/build-tools/${{ env.BUILD_TOOLS_VERSION }}/apksigner verify --verbose --print-certs "${{ steps.buildapp.outputs.apk }}"
+      - name: Copy APK to ${{ env.APK_SHORT_NAME }}
+        run: |
+          cp "${{ steps.buildapp.outputs.apk }}" "${{ env.APK_SHORT_NAME }}"
       - name: Checksums
         run: |
           echo "SHA256 checksums:"
           sha256sum "${{ steps.buildapp.outputs.apk }}" "${{ env.APK_SHORT_NAME }}"
-      - name: Copy APK to ${{ env.APK_SHORT_NAME }}
-        run: |
-          cp "${{ steps.buildapp.outputs.apk }}" "${{ env.APK_SHORT_NAME }}"
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
         with:
