@@ -27,6 +27,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.tv.material3.Icon
+import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
@@ -87,6 +89,7 @@ data class DialogItem(
     constructor(
         text: String,
         icon: ImageVector,
+        iconTintColor: Color? = null,
         onClick: () -> Unit,
     ) : this(
         headlineContent = {
@@ -99,7 +102,7 @@ data class DialogItem(
             Icon(
                 imageVector = icon,
                 contentDescription = text,
-//                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                tint = iconTintColor ?: LocalContentColor.current,
             )
         },
         onClick = onClick,

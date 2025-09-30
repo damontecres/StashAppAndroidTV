@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.pages
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -77,6 +78,7 @@ import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
+import com.github.damontecres.stashapp.ui.components.DeleteDialog
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.FocusPair
@@ -103,6 +105,7 @@ import com.github.damontecres.stashapp.views.durationToString
 @Composable
 fun SceneDetailsPage(
     server: StashServer,
+    navigationManager: NavigationManager,
     sceneId: String,
     itemOnClick: ItemOnClicker<Any>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
@@ -133,6 +136,7 @@ fun SceneDetailsPage(
     val oCount by viewModel.oCount.observeAsState(0)
     val studio by viewModel.studio.observeAsState(null)
     val suggestions by viewModel.suggestions.observeAsState(listOf())
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.init()
@@ -200,6 +204,18 @@ fun SceneDetailsPage(
                 onRatingChange = {
                     viewModel.updateRating(it)
                 },
+                onSceneDelete = { deleteFiles, deleteGenerated ->
+                    viewModel.deleteScene(deleteFiles, deleteGenerated) {
+                        if (it) {
+                            Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show()
+                            navigationManager.goBack()
+                        } else {
+                            Toast
+                                .makeText(context, "Error deleting scene", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    }
+                },
                 modifier = modifier.animateContentSize(),
             )
         }
@@ -237,6 +253,7 @@ fun SceneDetails(
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     addItem: (item: StashData) -> Unit,
     removeItem: (item: StashData) -> Unit,
+    onSceneDelete: (deleteFiles: Boolean, deleteGenerated: Boolean) -> Unit,
     oCountAction: (action: suspend MutationEngine.(String) -> OCounter) -> Unit,
     onRatingChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -248,6 +265,7 @@ fun SceneDetails(
     var showDialog by remember { mutableStateOf<DialogParams?>(null) }
     var showDetailsDialog by remember { mutableStateOf(false) }
     var searchForDataType by remember { mutableStateOf<SearchForParams?>(null) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     var focusPosition by rememberSaveable { mutableStateOf<RowColumn?>(null) }
@@ -488,7 +506,18 @@ fun SceneDetails(
                                     ) {
                                         searchForDataType = SearchForParams(DataType.GALLERY)
                                     },
-                                ),
+                                ) +
+                                    buildList {
+                                        if (uiConfig.preferences.advancedPreferences.experimentalFeaturesEnabled) {
+                                            add(
+                                                DialogItem(
+                                                    context.getString(R.string.stashapp_actions_delete),
+                                                    Icons.Default.Delete,
+                                                    Color.Red,
+                                                ) { showDeleteDialog = true },
+                                            )
+                                        }
+                                    },
                         )
                 },
                 moreOnClick = {
@@ -605,6 +634,18 @@ fun SceneDetails(
         scene = scene,
         onDismissRequest = { showDetailsDialog = false },
     )
+    if (showDeleteDialog) {
+        DeleteDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            dataType = DataType.SCENE,
+            name = scene.titleOrFilename ?: "",
+            files = scene.files.map { it.videoFile.path },
+            onDeleteConfirm = { deleteFiles, deleteGenerated ->
+                showDeleteDialog = false
+                onSceneDelete.invoke(deleteFiles, deleteGenerated)
+            },
+        )
+    }
 }
 
 fun moreOptionsItems(
@@ -623,7 +664,7 @@ fun moreOptionsItems(
             DialogItem(
                 context.getString(R.string.stashapp_details),
                 Icons.Default.Info,
-                detailsOnClick,
+                onClick = detailsOnClick,
             ),
         )
         add(

@@ -222,6 +222,7 @@ fun DestinationContent(
                     SceneDetailsPage(
                         modifier = modifier,
                         server = server,
+                        navigationManager = navManager,
                         sceneId = destination.id,
                         itemOnClick = itemOnClick,
                         uiConfig = composeUiConfig,
