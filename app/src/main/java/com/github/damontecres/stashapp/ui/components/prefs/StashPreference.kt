@@ -543,6 +543,7 @@ sealed interface StashPreference<T> {
             listOf(
                 TabType.DETAILS,
                 TabType.SCENES,
+                TabType.PERFORMERS,
                 TabType.MARKERS,
                 TabType.TAGS,
                 TabType.CONTAINING_GROUPS,
