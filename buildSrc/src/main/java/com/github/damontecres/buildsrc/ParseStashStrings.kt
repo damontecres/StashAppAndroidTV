@@ -109,6 +109,7 @@ abstract class ParseStashStrings : DefaultTask() {
         escaped = escaped.replace(">", "&gt;")
         escaped = escaped.replace("<", "&lt;")
         escaped = escaped.replace("'", "\\'")
+        escaped = escaped.replace("\uFEFF", "")
         // Now replace the parameters in the message values with the equivalent Android format
         val matches = PARAM_REGEX.findAll(escaped)
         matches.forEachIndexed { index, matchResult ->
