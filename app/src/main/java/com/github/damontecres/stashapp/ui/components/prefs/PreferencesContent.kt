@@ -391,7 +391,7 @@ fun PreferencesContent(
                                     title =
                                         if (updateVersion != null && updateAvailable) {
                                             stringResource(R.string.install_update)
-                                        } else if (!preferences.updatePreferences.checkForUpdates) {
+                                        } else if (!preferences.updatePreferences.checkForUpdates && updateVersion == null) {
                                             stringResource(R.string.stashapp_package_manager_check_for_updates)
                                         } else {
                                             stringResource(R.string.no_update_available)
@@ -404,21 +404,14 @@ fun PreferencesContent(
                                                     Destination.UpdateApp(it),
                                                 )
                                             }
-                                        } else if (!preferences.updatePreferences.checkForUpdates) {
-                                            scope.launch(StashCoroutineExceptionHandler()) {
+                                        } else {
+                                            scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                                                 updateVersion =
                                                     UpdateChecker.getLatestRelease(
                                                         context,
                                                         preferences.updatePreferences.updateUrl,
                                                     )
                                             }
-                                        } else {
-                                            Toast
-                                                .makeText(
-                                                    context,
-                                                    R.string.no_update_available,
-                                                    Toast.LENGTH_SHORT,
-                                                ).show()
                                         }
                                     },
                                     onLongClick = {

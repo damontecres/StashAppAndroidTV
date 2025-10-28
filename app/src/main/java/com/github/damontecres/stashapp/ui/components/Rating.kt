@@ -248,7 +248,9 @@ fun StarRating(
                                                 if (playSoundOnFocus) playOnClickSound(context)
                                                 val newRating100 =
                                                     when (precision) {
-                                                        StarRatingPrecision.FULL -> i * 20
+                                                        StarRatingPrecision.FULL ->
+                                                            if (i == 1 && rating100 > 0 && rating100 <= 20) 0 else i * 20
+
                                                         StarRatingPrecision.HALF -> {
                                                             if (rating100 > i * 20) {
                                                                 i * 20
@@ -256,7 +258,11 @@ fun StarRating(
                                                                 i * 20 - 10
                                                             } else if (rating100 == i * 20 - 10) {
                                                                 (i - 1) * 20
-                                                            } else if (i == 1 && rating100 < 20) {
+                                                            } else if (i == 1 && rating100 == 0) {
+                                                                20
+                                                            } else if (i == 1 && rating100 > 10) {
+                                                                10
+                                                            } else if (i == 1 && rating100 <= 10) {
                                                                 0
                                                             } else {
                                                                 (i) * 20

@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.util
 import android.util.Log
 import android.widget.Toast
 import com.github.damontecres.stashapp.StashApplication
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlin.coroutines.CoroutineContext
 
@@ -32,6 +33,10 @@ class StashCoroutineExceptionHandler(
         context: CoroutineContext,
         exception: Throwable,
     ) {
+        if (exception is CancellationException) {
+            // Don't log/toast cancellations
+            return
+        }
         Log.e(TAG, "Exception in coroutine", exception)
         toast?.show()
         makeToast?.let { it(exception).show() }

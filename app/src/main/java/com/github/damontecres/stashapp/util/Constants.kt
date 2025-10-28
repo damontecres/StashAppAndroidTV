@@ -503,6 +503,7 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
             groups =
                 this.groups.map {
                     SlimSceneData.Group(
+                        it.scene_index,
                         SlimSceneData.Group1(
                             it.group.groupData.id,
                             it.group.groupData.name,
@@ -681,13 +682,13 @@ fun ArrayObjectAdapter.isEmpty(): Boolean = size() == 0
 
 fun ArrayObjectAdapter.isNotEmpty(): Boolean = !isEmpty()
 
-val ImageData.maxFileSize: Int
+val ImageData.maxFileSize: Long
     get() =
         visual_files.maxOfOrNull {
             it.onBaseFile
                 ?.size
                 ?.toString()
-                ?.toInt() ?: -1
+                ?.toLongOrNull() ?: -1
         } ?: -1
 
 fun showSetRatingToast(

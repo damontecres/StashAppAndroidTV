@@ -10,6 +10,7 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.util.EventLogger
@@ -31,6 +32,7 @@ class StashExoPlayer private constructor() {
     companion object {
         private const val TAG = "StashExoPlayer"
 
+        private val analyticsListeners: MutableList<AnalyticsListener> = mutableListOf()
         private val listeners: MutableList<Player.Listener> = mutableListOf()
 
         @Volatile
@@ -215,17 +217,45 @@ class StashExoPlayer private constructor() {
             }
         }
 
+        fun addListener(listener: AnalyticsListener) {
+            if (instance == null) {
+                Log.w(TAG, "Cannot add listener to null instance: $listener")
+            } else if (analyticsListeners.contains(listener)) {
+                Log.w(TAG, "Listener already added: $listener")
+            } else {
+                Log.v(TAG, "Added listener: $listener")
+                analyticsListeners.add(listener)
+                instance?.addAnalyticsListener(listener)
+            }
+        }
+
         fun removeListeners() {
-            Log.v(TAG, "Removing ${listeners.size} listeners")
+            Log.v(
+                TAG,
+                "Removing ${listeners.size} listeners & ${analyticsListeners.size} analytics listeners",
+            )
             listeners.forEach {
                 instance?.removeListener(it)
             }
             listeners.clear()
+            analyticsListeners.forEach {
+                instance?.removeAnalyticsListener(it)
+            }
+            analyticsListeners.clear()
         }
 
         fun removeListener(listener: Player.Listener) {
             if (listeners.remove(listener)) {
                 instance?.removeListener(listener)
+                Log.v(TAG, "Removed listener: $listener")
+            } else {
+                Log.w(TAG, "Listener was not added previously: $listener")
+            }
+        }
+
+        fun removeListener(listener: AnalyticsListener) {
+            if (analyticsListeners.remove(listener)) {
+                instance?.removeAnalyticsListener(listener)
                 Log.v(TAG, "Removed listener: $listener")
             } else {
                 Log.w(TAG, "Listener was not added previously: $listener")

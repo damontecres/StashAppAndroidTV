@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.ui.components.scene
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.damontecres.stashapp.R
@@ -13,6 +14,8 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.cards.CardContext
+import com.github.damontecres.stashapp.ui.cards.GroupCard
 import com.github.damontecres.stashapp.ui.cards.PerformerCard
 import com.github.damontecres.stashapp.ui.components.FocusPair
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -70,6 +73,24 @@ fun LazyListScope.sceneDetailsBody(
                 modifier =
                     androidx.compose.ui.Modifier
                         .padding(start = startPadding, bottom = bottomPadding),
+                itemContent = { uiConfig, item, itemOnClick, longClicker, getFilterAndPosition, cardModifier ->
+                    val index =
+                        remember { scene.groups.firstOrNull { it.group.groupData.id == item.id }?.scene_index }
+                    GroupCard(
+                        uiConfig = uiConfig,
+                        item = item,
+                        onClick = {
+                            itemOnClick.onClick(
+                                item,
+                                getFilterAndPosition?.invoke(item),
+                            )
+                        },
+                        longClicker = longClicker,
+                        getFilterAndPosition = getFilterAndPosition,
+                        modifier = cardModifier,
+                        cardContext = CardContext.GroupCardContext(index),
+                    )
+                },
             )
         }
     }

@@ -72,6 +72,7 @@ fragment SlimSceneData on Scene {
     image_path
   }
   groups {
+    scene_index
     group {
       id
       name

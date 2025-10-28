@@ -36,6 +36,7 @@ import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.navigation.Destination
@@ -44,6 +45,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.cards.CardContext
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.filterArgsSaver
 import com.github.damontecres.stashapp.ui.tryRequestFocus
@@ -258,6 +260,7 @@ fun StashGridTab(
     onSubToggleCheck: ((Boolean) -> Unit)? = null,
     subToggleChecked: Boolean = false,
     subToggleEnabled: Boolean = true,
+    cardContext: ((index: Int, item: StashData) -> CardContext)? = null,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
     LaunchedEffect(server, initialFilter) {
@@ -290,6 +293,7 @@ fun StashGridTab(
             subToggleChecked = subToggleChecked,
             subToggleEnabled = subToggleEnabled,
             requestFocus = false,
+            cardContext = cardContext,
         )
     }
 }

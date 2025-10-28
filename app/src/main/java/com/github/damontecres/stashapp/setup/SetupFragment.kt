@@ -12,7 +12,7 @@ class SetupFragment : SetupGuidedStepSupportFragment() {
             getString(R.string.app_name_long),
             getString(R.string.first_time_setup),
             null,
-            ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
+            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo),
         )
 
     override fun onCreateActions(

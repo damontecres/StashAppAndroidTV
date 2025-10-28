@@ -1,5 +1,7 @@
 package com.github.damontecres.stashapp.ui.cards
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -7,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
@@ -30,6 +33,7 @@ fun GroupCard(
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    cardContext: CardContext.GroupCardContext? = null,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
     item?.let {
@@ -58,7 +62,16 @@ fun GroupCard(
         videoUrl = null,
         title = AnnotatedString(title),
         subtitle = {
-            Text(details)
+            Column {
+                Text(details)
+                cardContext?.indexInGroup?.let { index ->
+                    Text(
+                        text = "#$index in group",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
         },
         description = { focused ->
             item?.let {

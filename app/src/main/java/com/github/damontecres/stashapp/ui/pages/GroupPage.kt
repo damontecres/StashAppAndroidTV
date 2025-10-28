@@ -51,6 +51,7 @@ import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.cards.CardContext
 import com.github.damontecres.stashapp.ui.components.ItemDetailsFooter
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
@@ -171,6 +172,8 @@ fun GroupPage(
                 ),
             )
         }
+        val cardContext =
+            remember(group.id) { CardContext.SceneCardContext(sceneInGroupId = group.id) }
         val scenesTab =
             remember(scenesFilter, scenesSubTags) {
                 TabProvider(
@@ -190,6 +193,7 @@ fun GroupPage(
                         subToggleChecked = scenesSubTags,
                         composeUiConfig = uiConfig,
                         onFilterChange = { scenesFilter = it },
+                        cardContext = { _, _ -> cardContext },
                     )
                 }
             }

@@ -39,7 +39,7 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
             getString(filterOption.nameStringId),
             "",
             null,
-            ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
+            ContextCompat.getDrawable(requireContext(), R.drawable.stash_logo),
         )
 
     protected open fun createActionList(actions: MutableList<GuidedAction> = mutableListOf()): List<GuidedAction> {

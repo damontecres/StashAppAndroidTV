@@ -17,7 +17,6 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -63,6 +62,7 @@ import androidx.tv.material3.Text
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import coil3.size.Size
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -74,20 +74,23 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
-import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.image.DRAG_THROTTLE_DELAY
 import com.github.damontecres.stashapp.ui.components.image.ImageDetailsViewModel
 import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
+import com.github.damontecres.stashapp.ui.components.image.ImageLoadingPlaceholder
 import com.github.damontecres.stashapp.ui.components.image.ImageOverlay
 import com.github.damontecres.stashapp.ui.components.image.SlideshowControls
 import com.github.damontecres.stashapp.ui.components.playback.isDirectionalDpad
+import com.github.damontecres.stashapp.ui.components.playback.isDpad
+import com.github.damontecres.stashapp.ui.components.playback.isEnterKey
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.maxFileSize
 import kotlin.math.abs
 
 private const val TAG = "ImagePage"
@@ -416,7 +419,7 @@ fun ImagePage(
                         showOverlay = false
                         viewModel.unpauseSlideshow()
                         result = true
-                    } else if (!isOverlayShowing && it.key != Key.Back) {
+                    } else if (!isOverlayShowing && (isDpad(it) || isEnterKey(it))) {
                         showOverlay = true
                         viewModel.pauseSlideshow()
                         result = true
@@ -480,6 +483,17 @@ fun ImagePage(
                         )
                     }
                 } else {
+                    val colorFilter =
+                        remember(image.id, imageFilter) {
+                            if (imageFilter.hasImageFilter()) {
+                                ColorMatrixColorFilter(imageFilter.createComposeColorMatrix())
+                            } else {
+                                null
+                            }
+                        }
+                    // If the image loading is large, show the thumbnail while waiting
+                    val showLoadingThumbnail =
+                        image.paths.thumbnail.isNotNullOrBlank() && image.maxFileSize > 1024 * 1024
                     SubcomposeAsyncImage(
                         modifier =
                             contentModifier
@@ -507,18 +521,12 @@ fun ImagePage(
                             ImageRequest
                                 .Builder(LocalContext.current)
                                 .data(image.paths.image)
-                                .crossfade(true)
+                                .size(Size.ORIGINAL)
+                                .crossfade(!showLoadingThumbnail)
                                 .build(),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
-                        colorFilter =
-                            if (imageFilter.hasImageFilter()) {
-                                ColorMatrixColorFilter(
-                                    imageFilter.createComposeColorMatrix(),
-                                )
-                            } else {
-                                null
-                            },
+                        colorFilter = colorFilter,
                         error = {
                             Text(
                                 modifier =
@@ -529,11 +537,11 @@ fun ImagePage(
                             )
                         },
                         loading = {
-                            CircularProgress(
-                                Modifier
-                                    .size(120.dp)
-                                    .align(Alignment.Center),
-                                false,
+                            ImageLoadingPlaceholder(
+                                thumbnailUrl = image.paths.thumbnail,
+                                showThumbnail = showLoadingThumbnail,
+                                colorFilter = colorFilter,
+                                modifier = Modifier.fillMaxSize(),
                             )
                         },
                         // Ensure that if an image takes a long time to load, it won't be skipped

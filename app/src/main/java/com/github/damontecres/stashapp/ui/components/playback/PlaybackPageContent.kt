@@ -472,6 +472,9 @@ fun PlaybackPageContent(
 
     val isTvDevice = isTvDevice
 
+    var videoDecoder by remember { mutableStateOf<String?>(null) }
+    var audioDecoder by remember { mutableStateOf<String?>(null) }
+
     LaunchedEffect(Unit) {
         viewModel.init(
             server,
@@ -497,6 +500,12 @@ fun PlaybackPageContent(
                 controllerViewState.showControls()
             }
         }
+        StashExoPlayer.addListener(
+            StashAnalyticsListener { audio, video ->
+                audioDecoder = audio
+                videoDecoder = video
+            },
+        )
         StashExoPlayer.addListener(
             object : Player.Listener {
                 override fun onCues(cueGroup: CueGroup) {
@@ -872,6 +881,8 @@ fun PlaybackPageContent(
                                 player.mediaItemCount,
                             )
                         },
+                    videoDecoder = videoDecoder,
+                    audioDecoder = audioDecoder,
                 )
             }
         }
