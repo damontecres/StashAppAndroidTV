@@ -110,12 +110,18 @@ abstract class ParseStashStrings : DefaultTask() {
         escaped = escaped.replace("<", "&lt;")
         escaped = escaped.replace("'", "\\'")
         escaped = escaped.replace("\uFEFF", "")
-        // Now replace the parameters in the message values with the equivalent Android format
-        val matches = PARAM_REGEX.findAll(escaped)
-        matches.forEachIndexed { index, matchResult ->
-            escaped = escaped.replaceFirst(matchResult.value, "%${index + 1}\$s")
+        if (!escaped.contains("{count, plural,")) {
+            // If the message is not a ICU plural, then it may have parameters to replace
+            // Now replace the parameters in the message values with the equivalent Android format
+            val matches = PARAM_REGEX.findAll(escaped)
+            matches.forEachIndexed { index, matchResult ->
+                escaped = escaped.replaceFirst(matchResult.value, "%${index + 1}\$s")
+            }
+            return Entry(key, escaped, matches.iterator().hasNext())
+        } else {
+            // App will use android apis to parse ICU plurals at runtime
+            return Entry(key, escaped, true)
         }
-        return Entry(key, escaped, matches.iterator().hasNext())
     }
 
     data class Entry(
