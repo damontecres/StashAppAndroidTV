@@ -48,7 +48,7 @@ fun getAppVersion(): String {
 
 android {
     namespace = "com.github.damontecres.stashapp"
-    compileSdk = 35
+    compileSdk = 36
 
     sourceSets {
         getByName("main") {
@@ -66,7 +66,7 @@ android {
     defaultConfig {
         applicationId = "com.github.damontecres.stashapp"
         minSdk = 23
-        targetSdk = 35
+        targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = getVersionCode()
         versionName = getAppVersion()

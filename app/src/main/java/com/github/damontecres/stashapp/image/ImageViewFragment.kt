@@ -136,10 +136,10 @@ class ImageViewFragment :
                             }
 
                             override fun onResourceReady(
-                                resource: Drawable,
-                                model: Any,
+                                resource: Drawable?,
+                                model: Any?,
                                 target: Target<Drawable?>?,
-                                dataSource: DataSource,
+                                dataSource: DataSource?,
                                 isFirstResource: Boolean,
                             ): Boolean {
                                 viewModel.pulseSlideshow()
