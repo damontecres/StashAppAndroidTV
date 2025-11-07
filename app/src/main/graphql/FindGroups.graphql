@@ -84,6 +84,7 @@ fragment GroupData on Group {
       description
   }
   scene_count
+  performer_count
   front_image_path
   back_image_path
   created_at @catch(to: NULL)

@@ -10,6 +10,7 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.ui.components.prefs.StashPreference
 import com.github.damontecres.stashapp.ui.components.prefs.advancedPreferences
 import com.github.damontecres.stashapp.ui.components.prefs.basicPreferences
@@ -126,6 +127,7 @@ class AppUpgradeHandler(
                 putBoolean(key, true)
             }
         }
+
         if (previousVersion.isLessThan(Version.fromString("0.6.10"))) {
             try {
                 preferences.getString(context.getString(R.string.pref_key_card_size), "5")
@@ -178,6 +180,24 @@ class AppUpgradeHandler(
                                 ) ?: StashPreference.DirectPlayFormat.defaultValue.toSet(),
                             )
                         }
+                    }
+                }
+            }
+        }
+
+        if (previousVersion.isLessThan(Version.fromString("v0.7.0"))) {
+            preferences.ensureSetHas(
+                context,
+                R.string.pref_key_ui_group_tabs,
+                R.array.group_tabs,
+                listOf(context.getString(R.string.stashapp_performers)),
+            )
+        }
+        CoroutineScope(Dispatchers.IO + StashCoroutineExceptionHandler()).launch {
+            context.preferences.updateData {
+                it.updateTabPreferences {
+                    if (TabType.PERFORMERS !in groupList) {
+                        addGroup(TabType.PERFORMERS)
                     }
                 }
             }

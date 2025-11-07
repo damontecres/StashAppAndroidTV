@@ -37,6 +37,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
@@ -116,7 +117,7 @@ fun GroupPage(
             Optional.present(
                 HierarchicalMultiCriterionInput(
                     value = Optional.present(listOf(group.id)),
-                    modifier = CriterionModifier.INCLUDES_ALL,
+                    modifier = CriterionModifier.INCLUDES,
                     depth = Optional.present(if (includeSubGroups) -1 else 0),
                 ),
             )
@@ -196,6 +197,41 @@ fun GroupPage(
                     )
                 }
             }
+
+        // Performers
+        var performersSubTags by rememberSaveable { mutableStateOf(false) }
+        var performerFilter by rememberSaveable(performersSubTags, saver = filterArgsSaver) {
+            mutableStateOf(
+                FilterArgs(
+                    DataType.PERFORMER,
+                    findFilter = tabFindFilter(server, PageFilterKey.GROUP_PERFORMERS),
+                    objectFilter = PerformerFilterType(groups = groupsFunc(performersSubTags)),
+                ),
+            )
+        }
+        val performerTab =
+            remember(performerFilter, performersSubTags) {
+                TabProvider(
+                    context.getString(R.string.stashapp_performers),
+                    TabType.PERFORMERS,
+                ) { positionCallback ->
+                    StashGridTab(
+                        name = context.getString(R.string.stashapp_performers),
+                        server = server,
+                        initialFilter = performerFilter,
+                        itemOnClick = itemOnClick,
+                        longClicker = longClicker,
+                        modifier = Modifier,
+                        positionCallback = positionCallback,
+                        subToggleLabel = subToggleLabel,
+                        onSubToggleCheck = { performersSubTags = it },
+                        subToggleChecked = performersSubTags,
+                        composeUiConfig = uiConfig,
+                        onFilterChange = { performerFilter = it },
+                    )
+                }
+            }
+
         // markers
         var markersSubTags by rememberSaveable { mutableStateOf(false) }
         var markersFilter by rememberSaveable(markersSubTags, saver = filterArgsSaver) {
@@ -309,8 +345,14 @@ fun GroupPage(
         val uiTabs =
             getUiTabs(uiConfig.preferences.interfacePreferences.tabPreferences, DataType.GROUP)
         val tabs =
-            listOf(detailsTab, scenesTab, markersTab, containingGroupsTab, subGroupsTab)
-                .filter { it.type in uiTabs }
+            listOf(
+                detailsTab,
+                scenesTab,
+                performerTab,
+                markersTab,
+                containingGroupsTab,
+                subGroupsTab,
+            ).filter { it.type in uiTabs }
         val title = AnnotatedString(group.name)
         LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
         TabPage(

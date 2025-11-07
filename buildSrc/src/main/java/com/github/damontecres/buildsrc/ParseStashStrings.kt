@@ -109,6 +109,7 @@ abstract class ParseStashStrings : DefaultTask() {
         escaped = escaped.replace(">", "&gt;")
         escaped = escaped.replace("<", "&lt;")
         escaped = escaped.replace("'", "\\'")
+        escaped = escaped.replace("\uFEFF", "")
         if (!escaped.contains("{count, plural,")) {
             // If the message is not a ICU plural, then it may have parameters to replace
             // Now replace the parameters in the message values with the equivalent Android format
