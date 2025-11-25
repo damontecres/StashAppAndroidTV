@@ -68,6 +68,7 @@ fun StudioCard(
         },
         description = {
             IconRowText(
+                sfwMode = uiConfig.sfwMode,
                 dataTypeMap,
                 null,
                 Modifier

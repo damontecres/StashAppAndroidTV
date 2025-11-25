@@ -31,6 +31,7 @@
     <string name="fa_angles_down" translatable="false">&#xf103;</string>
     <string name="fa_house" translatable="false">&#xf015;</string>
     <string name="fa_closed_captioning" translatable="false">&#xf20a;</string>
+    <string name="fa_thumbs_up" translatable="false">&#xf164;</string>
 
 
     <string name="go_to">Go to</string>

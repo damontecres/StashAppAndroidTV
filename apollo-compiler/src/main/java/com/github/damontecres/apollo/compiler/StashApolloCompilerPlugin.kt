@@ -52,7 +52,13 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                                         "FindFilterType",
                                         "SavedFindFilterType",
                                     ) ||
-                                    file.name.endsWith("CriterionInput")
+                                    file.name.endsWith("CriterionInput") ||
+                                    file.name in
+                                    setOf(
+                                        "FingerprintFilterInput",
+                                        "VideoFileFilterInput",
+                                        "ImageFileFilterInput",
+                                    )
                                 ) {
                                     // Modify filter or filter input types
                                     handleFilterInput(file, stashFilterInterface)

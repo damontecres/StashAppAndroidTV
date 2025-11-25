@@ -139,6 +139,7 @@ fun ChooseThemePage(
                             },
                             description = {
                                 IconRowText(
+                                    sfwMode = uiConfig.sfwMode,
                                     dataTypeMap,
                                     2,
                                     Modifier

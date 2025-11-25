@@ -76,6 +76,7 @@ fun GroupCard(
         description = { focused ->
             item?.let {
                 IconRowText(
+                    sfwMode = uiConfig.sfwMode,
                     dataTypeMap,
                     null,
                     Modifier
