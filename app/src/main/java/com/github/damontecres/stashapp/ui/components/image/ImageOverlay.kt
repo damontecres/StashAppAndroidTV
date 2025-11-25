@@ -202,7 +202,7 @@ fun ImageOverlay(
                 oCounterOnLongClick = {
                     showDialog =
                         DialogParams(
-                            title = context.getString(R.string.stashapp_o_counter),
+                            title = context.getString(R.string.stashapp_o_count),
                             fromLongClick = true,
                             items =
                                 listOf(
