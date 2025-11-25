@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.Gravity
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -47,6 +48,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -63,6 +65,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.TrackSupport
 import com.github.damontecres.stashapp.ui.AppColors
+import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.compat.ListItem
@@ -108,6 +111,7 @@ sealed interface PlaybackAction {
 @OptIn(UnstableApi::class)
 @Composable
 fun PlaybackControls(
+    sfwMode: Boolean,
     scene: Scene,
     captions: List<TrackSupport>,
     oCounter: Int,
@@ -182,6 +186,7 @@ fun PlaybackControls(
                 showDebugInfo = showDebugInfo,
                 oCount = oCounter,
                 moreButtonOptions = moreButtonOptions,
+                sfwMode = sfwMode,
                 modifier = Modifier,
             )
             PlaybackButtons(
@@ -301,6 +306,7 @@ private val buttonSpacing = 4.dp
 
 @Composable
 fun LeftPlaybackButtons(
+    sfwMode: Boolean,
     onControllerInteraction: () -> Unit,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
     showDebugInfo: Boolean,
@@ -329,6 +335,7 @@ fun LeftPlaybackButtons(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             PlaybackOCountButton(
+                sfwMode = sfwMode,
                 onClick = {
                     onControllerInteraction.invoke()
                     onPlaybackActionClick.invoke(PlaybackAction.OCount)
@@ -583,6 +590,45 @@ fun PlaybackButton(
 }
 
 @Composable
+fun PlaybackFaButton(
+    @StringRes iconRes: Int,
+    onClick: () -> Unit,
+    onControllerInteraction: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    val selectedColor = MaterialTheme.colorScheme.border
+    Button(
+        enabled = enabled,
+        onClick = onClick,
+        shape = ButtonDefaults.shape(CircleShape),
+        colors =
+            ButtonDefaults.colors(
+                containerColor = AppColors.TransparentBlack25,
+                focusedContainerColor = selectedColor,
+            ),
+        contentPadding = PaddingValues(8.dp),
+        modifier =
+            modifier
+                .padding(8.dp)
+                .size(56.dp, 56.dp)
+                .onFocusChanged { onControllerInteraction.invoke() },
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            Text(
+                text = stringResource(iconRes),
+                fontFamily = FontAwesome,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 28.sp,
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
+    }
+}
+
+@Composable
 private fun BottomDialog(
     choices: List<String>,
     onDismissRequest: () -> Unit,
@@ -678,18 +724,29 @@ private fun PlaybackButtonsPreview() {
 @Composable
 private fun RightPlaybackButtonsPreview() {
     PreviewTheme {
-        RightPlaybackButtons(
-            captions = listOf(),
-            onControllerInteraction = {},
-            onControllerInteractionForDialog = {},
-            onPlaybackActionClick = {},
-            subtitleIndex = 1,
-            modifier = Modifier,
-            audioOptions = listOf(),
-            audioIndex = null,
-            playbackSpeed = 1.0f,
-            scale = ContentScale.Fit,
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            RightPlaybackButtons(
+                captions = listOf(),
+                onControllerInteraction = {},
+                onControllerInteractionForDialog = {},
+                onPlaybackActionClick = {},
+                subtitleIndex = 1,
+                modifier = Modifier,
+                audioOptions = listOf(),
+                audioIndex = null,
+                playbackSpeed = 1.0f,
+                scale = ContentScale.Fit,
+            )
+            PlaybackFaButton(
+                iconRes = R.string.fa_thumbs_up,
+                onClick = {},
+                onControllerInteraction = {},
+                modifier = Modifier,
+                enabled = true,
+            )
+        }
     }
 }
 

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.data.DataType
@@ -58,6 +59,8 @@ class ServerPreferences(
     val alwaysStartFromBeginning get() = preferences.getBoolean(PREF_ALWAYS_START_BEGINNING, false)
 
     val abbreviateCounters get() = preferences.getBoolean(PREF_INTERFACE_ABBREV_COUNTERS, false)
+
+    val sfwMode get() = preferences.getBoolean(PREF_INTERFACE_SFW_MODE, false)
 
     val customLocalesEnabled
         get() =
@@ -114,33 +117,53 @@ class ServerPreferences(
                     config.configuration.`interface`.customLocales
                         .isNotNullOrBlank(),
             )
+            putBoolean(PREF_INTERFACE_SFW_MODE, config.configuration.`interface`.sfwContentMode)
         }
-        if (config.configuration.`interface`.customLocalesEnabled == true &&
-            config.configuration.`interface`.customLocales
-                .isNotNullOrBlank()
-        ) {
+        val useRestring =
+            config.configuration.`interface`.sfwContentMode ||
+                config.configuration.`interface`.customLocalesEnabled == true &&
+                config.configuration.`interface`.customLocales
+                    .isNotNullOrBlank()
+        if (useRestring) {
+            Restring.clear()
             try {
-                val root = Json.parseToJsonElement(config.configuration.`interface`.customLocales)
-                if (root is JsonObject) {
-                    val map =
-                        parseDictionary(
-                            root.jsonObject,
-                            listOf("stashapp"),
-                            false,
-                        ).associate { it.key to it.value }
-                    Restring.putStrings(Restring.locale, map)
-
-                    if (root.containsKey("StashAppAndroidTV") && root.jsonObject["StashAppAndroidTV"] is JsonObject) {
-                        val appMap =
+                if (config.configuration.`interface`.sfwContentMode) {
+                    val context = StashApplication.getApplication()
+                    Restring.putStrings(
+                        Restring.locale,
+                        mapOf(
+                            "stashapp_o_count" to
+                                context.getString(R.string.stashapp_o_count_sfw),
+                            "stashapp_last_o_at" to
+                                context.getString(R.string.stashapp_last_o_at_sfw),
+                        ),
+                    )
+                }
+                if (config.configuration.`interface`.customLocalesEnabled == true &&
+                    config.configuration.`interface`.customLocales
+                        .isNotNullOrBlank()
+                ) {
+                    val root =
+                        Json.parseToJsonElement(config.configuration.`interface`.customLocales)
+                    if (root is JsonObject) {
+                        val map =
                             parseDictionary(
-                                root.jsonObject["StashAppAndroidTV"]!!.jsonObject,
-                                listOf(),
-                                true,
+                                root.jsonObject,
+                                listOf("stashapp"),
+                                false,
                             ).associate { it.key to it.value }
-                        Restring.putStrings(Restring.locale, appMap)
+                        Restring.putStrings(Restring.locale, map)
+
+                        if (root.containsKey("StashAppAndroidTV") && root.jsonObject["StashAppAndroidTV"] is JsonObject) {
+                            val appMap =
+                                parseDictionary(
+                                    root.jsonObject["StashAppAndroidTV"]!!.jsonObject,
+                                    listOf(),
+                                    true,
+                                ).associate { it.key to it.value }
+                            Restring.putStrings(Restring.locale, appMap)
+                        }
                     }
-                } else {
-                    Restring.clear()
                 }
             } catch (ex: Exception) {
                 Log.w(TAG, "Error parsing custom locales", ex)
@@ -441,6 +464,7 @@ class ServerPreferences(
         const val PREF_INTERFACE_STUDIOS_AS_TEXT = "interface.showStudioAsText"
         const val PREF_INTERFACE_ABBREV_COUNTERS = "interface.abbreviateCounters"
         const val PREF_INTERFACE_CUSTOM_LOCALES_ENABLED = "interface.customLocalesEnabled"
+        const val PREF_INTERFACE_SFW_MODE = "interface.sfwContentMode"
 
         const val PREF_JOB_SCAN = "app.job.scan"
         const val PREF_JOB_GENERATE = "app.job.generate"

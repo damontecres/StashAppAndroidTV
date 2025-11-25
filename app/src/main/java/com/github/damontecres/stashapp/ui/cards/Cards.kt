@@ -167,6 +167,7 @@ val iconOrder =
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun IconRowText(
+    sfwMode: Boolean,
     iconMap: EnumMap<DataType, Int>,
     oCounter: Int?,
     modifier: Modifier = Modifier,
@@ -186,7 +187,13 @@ fun IconRowText(
             }
             additionalIcons?.invoke(this)
             if (oCounter != null && oCounter > 0) {
-                appendInlineContent(id = "ocounter", "O")
+                if (sfwMode) {
+                    withStyle(SpanStyle(fontFamily = FontAwesome)) {
+                        append(stringResource(R.string.fa_thumbs_up))
+                    }
+                } else {
+                    appendInlineContent(id = "ocounter", "O")
+                }
                 append(" $oCounter")
             }
         }
