@@ -120,6 +120,9 @@ sealed interface SortOption {
     data object Path : SortOptionImpl("path", R.string.stashapp_path)
 
     @Serializable
+    data object PerformerAge : SortOptionImpl("performer_age", R.string.stashapp_performer_age)
+
+    @Serializable
     data object PenisLength : SortOptionImpl("penis_length", R.string.stashapp_penis_length)
 
     @Serializable
@@ -154,6 +157,10 @@ sealed interface SortOption {
     data object SceneCode : SortOptionImpl("code", R.string.stashapp_scene_code, Version.V0_28_0)
 
     @Serializable
+    data object ScenesDuration :
+        SortOptionImpl("scenes_duration", R.string.stashapp_scenes_duration)
+
+    @Serializable
     data object SceneId : SortOptionImpl("scene_id", R.string.stashapp_scene_id)
 
     @Serializable
@@ -169,6 +176,9 @@ sealed interface SortOption {
 
     @Serializable
     data object Seconds : SortOptionImpl("seconds", R.string.stashapp_seconds)
+
+    @Serializable
+    data object Studio : SortOptionImpl("studio", R.string.stashapp_studio)
 
     @Serializable
     data object TagCount : SortOptionImpl("tag_count", R.string.stashapp_tag_count)
@@ -253,12 +263,14 @@ sealed interface SortOption {
                 Organized,
                 Path,
                 PerceptualSimilarity,
+                PerformerAge,
                 PerformerCount,
                 PlayCount,
                 PlayDuration,
                 Rating,
                 ResumeTime,
                 SceneCode,
+                Studio,
                 TagCount,
                 Title,
             )
@@ -318,6 +330,7 @@ sealed interface SortOption {
                 PlayCount,
                 Rating,
                 ScenesCount,
+                ScenesDuration,
                 TagCount,
                 CareerLength,
                 Measurements,
@@ -343,6 +356,7 @@ sealed interface SortOption {
                 Name,
                 Rating,
                 ScenesCount,
+                ScenesDuration,
                 TagCount,
             )
 
@@ -355,6 +369,7 @@ sealed interface SortOption {
                 PerformersCount,
                 SceneMarkersCount,
                 ScenesCount,
+                ScenesDuration,
             )
 
         fun sortByName(dataType: DataType): SortOption =
