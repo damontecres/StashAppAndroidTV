@@ -70,7 +70,7 @@ fun StudioCard(
             IconRowText(
                 sfwMode = uiConfig.sfwMode,
                 dataTypeMap,
-                null,
+                item?.o_counter,
                 Modifier
                     .enableMarquee(it)
                     .align(Alignment.Center),
