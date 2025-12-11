@@ -81,21 +81,23 @@ fun FilterPage(
                     val dataType = initialFilter.dataType
                     val currentFilter = viewModel.currentFilter
                     when (it) {
-                        CreateFilter.FROM_CURRENT ->
+                        CreateFilter.FROM_CURRENT -> {
                             navigationManager.navigate(
                                 Destination.CreateFilter(
                                     dataType,
                                     currentFilter,
                                 ),
                             )
+                        }
 
-                        CreateFilter.NEW_FILTER ->
+                        CreateFilter.NEW_FILTER -> {
                             navigationManager.navigate(
                                 Destination.CreateFilter(
                                     dataType,
                                     null,
                                 ),
                             )
+                        }
                     }
                 },
                 itemOnClick = itemOnClick,

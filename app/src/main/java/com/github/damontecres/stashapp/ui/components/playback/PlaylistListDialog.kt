@@ -46,8 +46,14 @@ fun PlaylistListDialog(
                 items =
                     MappedList(pager) { index, item ->
                         when (item) {
-                            is MarkerData -> item.toPlayListItem(index)
-                            is SlimSceneData -> item.toPlayListItem(index)
+                            is MarkerData -> {
+                                item.toPlayListItem(index)
+                            }
+
+                            is SlimSceneData -> {
+                                item.toPlayListItem(index)
+                            }
+
                             else -> {
                                 PlaylistItem(
                                     index,

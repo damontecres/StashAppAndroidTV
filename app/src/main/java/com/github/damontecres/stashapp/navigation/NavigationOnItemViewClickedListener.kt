@@ -31,12 +31,13 @@ class NavigationOnItemViewClickedListener(
     ) {
         val destination =
             when (item) {
-                is MarkerData ->
+                is MarkerData -> {
                     Destination.Playback(
                         item.scene.minimalSceneData.id,
                         (item.seconds * 1000L).toLong(),
                         PlaybackMode.Choose,
                     )
+                }
 
                 is ImageData -> {
                     val filterAndPosition = imageFilterLookup!!.invoke(item)
@@ -51,11 +52,17 @@ class NavigationOnItemViewClickedListener(
                     }
                 }
 
-                is StashData -> Destination.fromStashData(item)
+                is StashData -> {
+                    Destination.fromStashData(item)
+                }
 
-                is FilterArgs -> Destination.Filter(item, true)
+                is FilterArgs -> {
+                    Destination.Filter(item, true)
+                }
 
-                else -> null
+                else -> {
+                    null
+                }
             }
         if (destination != null) {
             navigationManager.navigate(destination)

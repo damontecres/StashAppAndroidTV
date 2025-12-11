@@ -294,10 +294,13 @@ suspend fun testStashConnection(
                         val message =
                             when (val cause = ex.cause) {
                                 is UnknownHostException, is ConnectException -> cause.localizedMessage
+
                                 is SSLHandshakeException -> "server may be using a self-signed certificate"
+
                                 // TODO handle case where cert is for a different host
 //                                is SSLPeerUnverifiedException->
                                 is IOException -> cause.localizedMessage
+
                                 else -> ex.localizedMessage
                             }
                         if (showToast) {
@@ -963,6 +966,7 @@ fun getUiTabs(
             prefKey = R.string.pref_key_ui_performer_tabs
             defaultArrayKey = R.array.performer_tabs
         }
+
         DataType.GALLERY -> {
             prefKey = R.string.pref_key_ui_gallery_tabs
             defaultArrayKey = R.array.gallery_tabs
@@ -983,7 +987,9 @@ fun getUiTabs(
             defaultArrayKey = R.array.tag_tabs
         }
 
-        else -> throw UnsupportedOperationException("$dataType not supported")
+        else -> {
+            throw UnsupportedOperationException("$dataType not supported")
+        }
     }
     val defaultValues = context.resources.getStringArray(defaultArrayKey).toSet()
     return PreferenceManager

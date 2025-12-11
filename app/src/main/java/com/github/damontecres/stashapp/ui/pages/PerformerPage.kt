@@ -257,21 +257,23 @@ fun PerformerPage(
     val rating100 by viewModel.rating100.observeAsState(0)
 
     when (val state = loadingState) {
-        PerformerLoadingState.Error ->
+        PerformerLoadingState.Error -> {
             Text(
                 "Error",
                 style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
+        }
 
-        PerformerLoadingState.Loading ->
+        PerformerLoadingState.Loading -> {
             Text(
                 "Loading...",
                 style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
+        }
 
-        is PerformerLoadingState.Success ->
+        is PerformerLoadingState.Success -> {
             PerformerDetailsPage(
                 server = server,
                 perf = state.performer,
@@ -296,6 +298,7 @@ fun PerformerPage(
                 },
                 modifier = modifier.fillMaxSize(),
             )
+        }
 
         null -> {}
     }

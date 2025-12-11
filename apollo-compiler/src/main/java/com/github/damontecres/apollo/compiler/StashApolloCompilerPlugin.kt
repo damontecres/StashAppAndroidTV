@@ -46,11 +46,14 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
 
                         val newFileSpecs =
                             input.fileSpecs.map { file ->
-                                if (file.name.endsWith("FilterType") &&
-                                    file.name !in
-                                    setOf(
-                                        "FindFilterType",
-                                        "SavedFindFilterType",
+                                if (
+                                    (
+                                        file.name.endsWith("FilterType") &&
+                                            file.name !in
+                                            setOf(
+                                                "FindFilterType",
+                                                "SavedFindFilterType",
+                                            )
                                     ) ||
                                     file.name.endsWith("CriterionInput")
                                 ) {

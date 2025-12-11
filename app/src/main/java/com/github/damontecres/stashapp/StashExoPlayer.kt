@@ -116,27 +116,37 @@ class StashExoPlayer private constructor() {
                             }
                     }
 
-                    else -> throw IllegalArgumentException("Unknown HTTP client: $httpClientChoice")
+                    else -> {
+                        throw IllegalArgumentException("Unknown HTTP client: $httpClientChoice")
+                    }
                 }
             Log.d(TAG, "createInstance")
             val preferences = PreferenceManager.getDefaultSharedPreferences(context)
             val skipForward =
                 when (skipParams) {
-                    is SkipParams.Default ->
+                    is SkipParams.Default -> {
                         preferences.getInt(
                             context.getString(R.string.pref_key_skip_forward_time),
                             30,
                         ) * 1000L
-                    is SkipParams.Values -> skipParams.skipForward
+                    }
+
+                    is SkipParams.Values -> {
+                        skipParams.skipForward
+                    }
                 }
             val skipBack =
                 when (skipParams) {
-                    is SkipParams.Default ->
+                    is SkipParams.Default -> {
                         preferences.getInt(
                             context.getString(R.string.pref_key_skip_back_time),
                             10,
                         ) * 1000L
-                    is SkipParams.Values -> skipParams.skipBack
+                    }
+
+                    is SkipParams.Values -> {
+                        skipParams.skipBack
+                    }
                 }
             val trackSelector = DefaultTrackSelector(context)
             trackSelector.parameters =

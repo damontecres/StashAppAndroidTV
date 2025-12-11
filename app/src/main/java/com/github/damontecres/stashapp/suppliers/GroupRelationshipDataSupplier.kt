@@ -29,34 +29,39 @@ class GroupRelationshipDataSupplier(
 
     override fun parseCountQuery(data: CountGroupRelationshipsQuery.Data): Int =
         when (type) {
-            GroupRelationshipType.SUB ->
+            GroupRelationshipType.SUB -> {
                 data.findGroups.groups
                     .firstOrNull()
                     ?.sub_group_count
-            GroupRelationshipType.CONTAINING ->
+            }
+
+            GroupRelationshipType.CONTAINING -> {
                 data.findGroups.groups
                     .firstOrNull()
                     ?.containing_groups
                     ?.size
+            }
         } ?: 0
 
     override fun parseQuery(data: FindGroupRelationshipsQuery.Data): List<GroupRelationshipData> =
         data.findGroups.groups
             .map {
                 when (type) {
-                    GroupRelationshipType.SUB ->
+                    GroupRelationshipType.SUB -> {
                         it.sub_groups.map { subGroup ->
                             subGroup.groupDescriptionData.toRelationship(
                                 type,
                             )
                         }
+                    }
 
-                    GroupRelationshipType.CONTAINING ->
+                    GroupRelationshipType.CONTAINING -> {
                         it.containing_groups.map { containingGroup ->
                             containingGroup.groupDescriptionData.toRelationship(
                                 type,
                             )
                         }
+                    }
                 }
             }.flatten()
 }

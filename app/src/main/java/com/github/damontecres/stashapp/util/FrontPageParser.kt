@@ -49,8 +49,14 @@ class FrontPageParser(
                 val filterType =
                     frontPageFilter["__typename"]?.toString()?.lowercase()
             ) {
-                "customfilter" -> addCustomFilterRow(frontPageFilter)
-                "savedfilter" -> addSavedFilterRow(frontPageFilter)
+                "customfilter" -> {
+                    addCustomFilterRow(frontPageFilter)
+                }
+
+                "savedfilter" -> {
+                    addSavedFilterRow(frontPageFilter)
+                }
+
                 else -> {
                     Log.w(
                         TAG,
@@ -69,18 +75,23 @@ class FrontPageParser(
                     (msg["values"] as Map<String, String>)["objects"] as String
                 val description =
                     when (msg["id"].toString()) {
-                        "recently_added_objects" ->
+                        "recently_added_objects" -> {
                             context.getString(
                                 R.string.stashapp_recently_added_objects,
                                 objType,
                             )
+                        }
 
-                        "recently_released_objects" ->
+                        "recently_released_objects" -> {
                             context.getString(
                                 R.string.stashapp_recently_released_objects,
                                 objType,
                             )
-                        else -> objType
+                        }
+
+                        else -> {
+                            objType
+                        }
                     }
 
                 val sortBy =
@@ -88,7 +99,9 @@ class FrontPageParser(
                         ?: when (msg["id"].toString()) {
                             // Just in case, fall back to a reasonable default
                             "recently_added_objects" -> "created_at"
+
                             "recently_released_objects" -> "date"
+
                             else -> null
                         }
                 val mode = FilterMode.safeValueOf(frontPageFilter["mode"] as String)

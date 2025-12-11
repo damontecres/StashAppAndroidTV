@@ -47,7 +47,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 repeatMode = Player.REPEAT_MODE_ONE
             }
 
-            getString(R.string.playback_finished_return) ->
+            getString(R.string.playback_finished_return) -> {
                 StashExoPlayer.addListener(
                     object :
                         Player.Listener {
@@ -62,6 +62,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                         }
                     },
                 )
+            }
 
             getString(R.string.playback_finished_do_nothing) -> {
                 StashExoPlayer.addListener(
@@ -76,7 +77,9 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 )
             }
 
-            else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
+            else -> {
+                Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
+            }
         }
     }
 

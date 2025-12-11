@@ -50,8 +50,11 @@ fun DestinationContent(
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     when (destination) {
-        is Destination.Pin -> throw UnsupportedOperationException("Destination.Pin")
-//                    PinEntryPage(
+        is Destination.Pin -> {
+            throw UnsupportedOperationException("Destination.Pin")
+        }
+
+        //                    PinEntryPage(
 //                        pinPreference = R.string.pref_key_pin_code,
 //                        title = stringResource(R.string.enter_pin),
 //                        onCorrectPin = {
@@ -65,8 +68,11 @@ fun DestinationContent(
 //                        modifier = Modifier.fillMaxSize(),
 //                    )
 
-        is Destination.SettingsPin -> throw UnsupportedOperationException("Destination.SettingsPin")
-//                    PinEntryPage(
+        is Destination.SettingsPin -> {
+            throw UnsupportedOperationException("Destination.SettingsPin")
+        }
+
+        //                    PinEntryPage(
 //                        pinPreference = R.string.pref_key_read_only_mode_pin,
 //                        title = stringResource(R.string.enter_settings_pin),
 //                        onCorrectPin = {
@@ -137,7 +143,7 @@ fun DestinationContent(
             )
         }
 
-        Destination.ChooseTheme ->
+        Destination.ChooseTheme -> {
             ChooseThemePage(
                 server = server,
                 navigationManager = navManager,
@@ -145,8 +151,9 @@ fun DestinationContent(
                 onChooseTheme = onChangeTheme,
                 modifier = modifier,
             )
+        }
 
-        is Destination.CreateFilter ->
+        is Destination.CreateFilter -> {
             CreateFilterScreen(
                 uiConfig = composeUiConfig,
                 dataType = destination.dataType,
@@ -155,8 +162,9 @@ fun DestinationContent(
                 onUpdateTitle = onUpdateTitle,
                 modifier = modifier,
             )
+        }
 
-        is Destination.UpdateMarker ->
+        is Destination.UpdateMarker -> {
             MarkerTimestampPage(
                 server = server,
                 navigationManager = navManager,
@@ -164,13 +172,15 @@ fun DestinationContent(
                 markerId = destination.markerId,
                 modifier = Modifier.fillMaxSize(),
             )
+        }
 
-        is Destination.Debug ->
+        is Destination.Debug -> {
             DebugPage(
                 server = server,
                 uiConfig = composeUiConfig,
                 modifier = Modifier.fillMaxSize(),
             )
+        }
 
         Destination.Main -> {
             MainPage(
@@ -207,7 +217,7 @@ fun DestinationContent(
             )
         }
 
-        is Destination.MarkerDetails ->
+        is Destination.MarkerDetails -> {
             MarkerPage(
                 server = server,
                 uiConfig = composeUiConfig,
@@ -215,10 +225,11 @@ fun DestinationContent(
                 itemOnClick = itemOnClick,
                 onUpdateTitle = onUpdateTitle,
             )
+        }
 
         is Destination.Item -> {
             when (destination.dataType) {
-                DataType.SCENE ->
+                DataType.SCENE -> {
                     SceneDetailsPage(
                         modifier = modifier,
                         server = server,
@@ -237,8 +248,9 @@ fun DestinationContent(
                         },
                         onUpdateTitle = onUpdateTitle,
                     )
+                }
 
-                DataType.PERFORMER ->
+                DataType.PERFORMER -> {
                     PerformerPage(
                         modifier = modifier,
                         server = server,
@@ -248,8 +260,9 @@ fun DestinationContent(
                         uiConfig = composeUiConfig,
                         onUpdateTitle = onUpdateTitle,
                     )
+                }
 
-                DataType.TAG ->
+                DataType.TAG -> {
                     TagPage(
                         modifier = modifier,
                         server = server,
@@ -260,8 +273,9 @@ fun DestinationContent(
                         uiConfig = composeUiConfig,
                         onUpdateTitle = onUpdateTitle,
                     )
+                }
 
-                DataType.STUDIO ->
+                DataType.STUDIO -> {
                     StudioPage(
                         modifier = modifier,
                         server = server,
@@ -272,8 +286,9 @@ fun DestinationContent(
                         uiConfig = composeUiConfig,
                         onUpdateTitle = onUpdateTitle,
                     )
+                }
 
-                DataType.GALLERY ->
+                DataType.GALLERY -> {
                     GalleryPage(
                         modifier = modifier,
                         server = server,
@@ -283,8 +298,9 @@ fun DestinationContent(
                         uiConfig = composeUiConfig,
                         onUpdateTitle = onUpdateTitle,
                     )
+                }
 
-                DataType.GROUP ->
+                DataType.GROUP -> {
                     GroupPage(
                         modifier = modifier,
                         server = server,
@@ -295,8 +311,9 @@ fun DestinationContent(
                         uiConfig = composeUiConfig,
                         onUpdateTitle = onUpdateTitle,
                     )
+                }
 
-                DataType.MARKER ->
+                DataType.MARKER -> {
                     MarkerPage(
                         server = server,
                         uiConfig = composeUiConfig,
@@ -304,8 +321,11 @@ fun DestinationContent(
                         itemOnClick = itemOnClick,
                         onUpdateTitle = onUpdateTitle,
                     )
+                }
 
-                DataType.IMAGE -> throw IllegalArgumentException("Image not supported in Destination.Item")
+                DataType.IMAGE -> {
+                    throw IllegalArgumentException("Image not supported in Destination.Item")
+                }
             }
         }
 

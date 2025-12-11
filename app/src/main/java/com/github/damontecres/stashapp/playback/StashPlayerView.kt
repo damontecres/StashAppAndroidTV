@@ -40,13 +40,16 @@ class StashPlayerView(
                 val isPaused = !player!!.isPlaying
                 if (isPaused) {
                     when (keyCode) {
-                        KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE ->
+                        KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
                             Util.handlePlayPauseButtonAction(
                                 player,
                                 true,
                             )
+                        }
 
-                        KeyEvent.KEYCODE_MEDIA_PLAY -> Util.handlePlayButtonAction(player)
+                        KeyEvent.KEYCODE_MEDIA_PLAY -> {
+                            Util.handlePlayButtonAction(player)
+                        }
                     }
                     return true
                 } else if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {

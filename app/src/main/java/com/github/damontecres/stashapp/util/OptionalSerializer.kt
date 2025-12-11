@@ -83,10 +83,22 @@ class CustomFieldCriterionInputSerializer : KSerializer<CustomFieldCriterionInpu
                                 val type = decoder.decodeInt()
                                 val itemValue =
                                     when (type) {
-                                        STRING_TYPE -> decoder.decodeString()
-                                        INT_TYPE -> decoder.decodeInt()
-                                        DOUBLE_TYPE -> decoder.decodeDouble()
-                                        FLOAT_TYPE -> decoder.decodeFloat()
+                                        STRING_TYPE -> {
+                                            decoder.decodeString()
+                                        }
+
+                                        INT_TYPE -> {
+                                            decoder.decodeInt()
+                                        }
+
+                                        DOUBLE_TYPE -> {
+                                            decoder.decodeDouble()
+                                        }
+
+                                        FLOAT_TYPE -> {
+                                            decoder.decodeFloat()
+                                        }
+
                                         else -> {
                                             val msg = "Unknown decoding type: $type"
                                             Log.e(TAG, msg)

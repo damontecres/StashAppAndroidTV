@@ -15,29 +15,33 @@ class FilterArgsPresenter(
         cardView.titleText = cardView.context.getString(R.string.stashapp_view_all)
 
         when (item.dataType) {
-            DataType.SCENE ->
+            DataType.SCENE -> {
                 cardView.setMainImageDimensions(
                     ScenePresenter.CARD_WIDTH,
                     ScenePresenter.CARD_HEIGHT,
                 )
+            }
 
-            DataType.STUDIO ->
+            DataType.STUDIO -> {
                 cardView.setMainImageDimensions(
                     StudioPresenter.CARD_WIDTH,
                     StudioPresenter.CARD_HEIGHT,
                 )
+            }
 
-            DataType.PERFORMER ->
+            DataType.PERFORMER -> {
                 cardView.setMainImageDimensions(
                     PerformerPresenter.CARD_WIDTH,
                     PerformerPresenter.CARD_HEIGHT,
                 )
+            }
 
-            DataType.TAG ->
+            DataType.TAG -> {
                 cardView.setMainImageDimensions(
                     TagPresenter.CARD_WIDTH,
                     TagPresenter.CARD_HEIGHT,
                 )
+            }
 
             DataType.GROUP -> {
                 cardView.setMainImageDimensions(

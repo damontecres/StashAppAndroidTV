@@ -141,17 +141,45 @@ class NavigationManagerLeanback(
         }
         val fragment =
             when (destination) {
-                Destination.Main -> MainFragment()
-                Destination.Search -> StashSearchFragment()
-                is Destination.Settings -> SettingsFragment()
-                Destination.Pin -> PinFragment()
-                Destination.SettingsPin -> SettingsPinEntryFragment()
-                Destination.Setup -> SetupFragment()
+                Destination.Main -> {
+                    MainFragment()
+                }
 
-                is Destination.UpdateApp -> UpdateAppFragment()
-                is Destination.ReleaseChangelog -> UpdateChangelogFragment()
-                is Destination.ManageServers -> ManageServersFragment()
-                is Destination.CreateFilter -> CreateFilterFragment()
+                Destination.Search -> {
+                    StashSearchFragment()
+                }
+
+                is Destination.Settings -> {
+                    SettingsFragment()
+                }
+
+                Destination.Pin -> {
+                    PinFragment()
+                }
+
+                Destination.SettingsPin -> {
+                    SettingsPinEntryFragment()
+                }
+
+                Destination.Setup -> {
+                    SetupFragment()
+                }
+
+                is Destination.UpdateApp -> {
+                    UpdateAppFragment()
+                }
+
+                is Destination.ReleaseChangelog -> {
+                    UpdateChangelogFragment()
+                }
+
+                is Destination.ManageServers -> {
+                    ManageServersFragment()
+                }
+
+                is Destination.CreateFilter -> {
+                    CreateFilterFragment()
+                }
 
                 is Destination.Item -> {
                     when (destination.dataType) {
@@ -166,16 +194,30 @@ class NavigationManagerLeanback(
                     }
                 }
 
-                is Destination.MarkerDetails -> MarkerDetailsFragment()
+                is Destination.MarkerDetails -> {
+                    MarkerDetailsFragment()
+                }
 
-                is Destination.Slideshow -> ImageFragment()
+                is Destination.Slideshow -> {
+                    ImageFragment()
+                }
 
-                is Destination.Filter -> FilterFragment()
+                is Destination.Filter -> {
+                    FilterFragment()
+                }
 
-                is Destination.SearchFor -> SearchForFragment()
-                is Destination.UpdateMarker -> MarkerPickerFragment()
+                is Destination.SearchFor -> {
+                    SearchForFragment()
+                }
 
-                is Destination.Playback -> PlaybackSceneFragment()
+                is Destination.UpdateMarker -> {
+                    MarkerPickerFragment()
+                }
+
+                is Destination.Playback -> {
+                    PlaybackSceneFragment()
+                }
+
                 is Destination.Playlist -> {
                     when (destination.filterArgs.dataType) {
                         DataType.SCENE -> PlaylistScenesFragment()
@@ -184,11 +226,17 @@ class NavigationManagerLeanback(
                     }
                 }
 
-                is Destination.Debug -> DebugFragment()
+                is Destination.Debug -> {
+                    DebugFragment()
+                }
 
-                is Destination.LicenseInfo -> LicenseFragment()
+                is Destination.LicenseInfo -> {
+                    LicenseFragment()
+                }
 
-                Destination.ChooseTheme -> throw IllegalArgumentException("ChooseTheme not supported unless using Compose")
+                Destination.ChooseTheme -> {
+                    throw IllegalArgumentException("ChooseTheme not supported unless using Compose")
+                }
             }
 
         fragment.arguments = Bundle().putDestination(destination)

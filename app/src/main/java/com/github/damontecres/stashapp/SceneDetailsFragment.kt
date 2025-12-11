@@ -313,7 +313,9 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                             }
                         }
 
-                        DataType.SCENE, DataType.MARKER, DataType.IMAGE, DataType.GALLERY -> throw IllegalArgumentException()
+                        DataType.SCENE, DataType.MARKER, DataType.IMAGE, DataType.GALLERY -> {
+                            throw IllegalArgumentException()
+                        }
                     }
                 }
             }
@@ -641,7 +643,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         StashAction.ADD_GROUP -> DataType.GROUP
                         StashAction.SET_STUDIO -> DataType.STUDIO
                         StashAction.CREATE_MARKER -> DataType.TAG
-
                         else -> throw RuntimeException("Unsupported search for type $action")
                     }
                 val title =

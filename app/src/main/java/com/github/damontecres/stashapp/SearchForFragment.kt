@@ -151,7 +151,9 @@ class SearchForFragment :
                         mutationEngine.createStudio(name = name)
                     }
 
-                    else -> throw IllegalArgumentException("Unsupported datatype $dataType")
+                    else -> {
+                        throw IllegalArgumentException("Unsupported datatype $dataType")
+                    }
                 }
             if (item != null) {
                 Toast
@@ -215,7 +217,7 @@ class SearchForFragment :
                     )
                 val results =
                     when (dataType) {
-                        DataType.GALLERY ->
+                        DataType.GALLERY -> {
                             // Cannot add an image to a zip/folder gallery, so exclude them
                             queryEngine.findGalleries(
                                 filter,
@@ -229,8 +231,11 @@ class SearchForFragment :
                                         ),
                                 ),
                             )
+                        }
 
-                        else -> queryEngine.find(dataType, filter)
+                        else -> {
+                            queryEngine.find(dataType, filter)
+                        }
                     }
                 resultsAdapter.addAll(0, results)
                 adapter.set(
@@ -282,11 +287,26 @@ class SearchForFragment :
             if (mostRecentIds.isNotEmpty()) {
                 val items =
                     when (dataType) {
-                        DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
-                        DataType.TAG -> queryEngine.getTags(mostRecentIds)
-                        DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
-                        DataType.GALLERY -> queryEngine.findGalleries(galleryIds = mostRecentIds)
-                        DataType.GROUP -> queryEngine.findGroups(groupIds = mostRecentIds)
+                        DataType.PERFORMER -> {
+                            queryEngine.findPerformers(performerIds = mostRecentIds)
+                        }
+
+                        DataType.TAG -> {
+                            queryEngine.getTags(mostRecentIds)
+                        }
+
+                        DataType.STUDIO -> {
+                            queryEngine.findStudios(studioIds = mostRecentIds)
+                        }
+
+                        DataType.GALLERY -> {
+                            queryEngine.findGalleries(galleryIds = mostRecentIds)
+                        }
+
+                        DataType.GROUP -> {
+                            queryEngine.findGroups(groupIds = mostRecentIds)
+                        }
+
                         else -> {
                             listOf()
                         }
@@ -358,7 +378,7 @@ class SearchForFragment :
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 val results =
                     when (dataType) {
-                        DataType.GALLERY ->
+                        DataType.GALLERY -> {
                             // Cannot add an image to a zip gallery, so exclude them
                             queryEngine.findGalleries(
                                 filter,
@@ -372,8 +392,11 @@ class SearchForFragment :
                                         ),
                                 ),
                             )
+                        }
 
-                        else -> queryEngine.find(dataType, filter)
+                        else -> {
+                            queryEngine.find(dataType, filter)
+                        }
                     }
                 val createAllowed = allowCreate(dataType, query, results)
                 if (createAllowed && readOnlyModeDisabled()) {
@@ -476,10 +499,21 @@ class SearchForFragment :
                     items.none { it.name.lowercase() == q || it.aliases.any { it.lowercase() == q } }
                 }
 
-                DataType.SCENE -> false
-                DataType.MARKER -> false
-                DataType.IMAGE -> false
-                DataType.GALLERY -> false
+                DataType.SCENE -> {
+                    false
+                }
+
+                DataType.MARKER -> {
+                    false
+                }
+
+                DataType.IMAGE -> {
+                    false
+                }
+
+                DataType.GALLERY -> {
+                    false
+                }
             }
         }
     }

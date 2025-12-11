@@ -70,7 +70,9 @@ fun BasicFilterSettings(
                     when (objectFilterCount) {
                         // TODO i18n for plurals
                         1 -> "1 " + stringResource(R.string.stashapp_filter)
+
                         in 2..Int.MAX_VALUE -> objectFilterCount.toString() + " " + stringResource(R.string.stashapp_filters)
+
                         else -> null
                     },
                 showArrow = true,

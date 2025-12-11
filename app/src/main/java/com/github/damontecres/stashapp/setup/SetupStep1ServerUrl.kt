@@ -84,13 +84,19 @@ class SetupStep1ServerUrl : SetupGuidedStepSupportFragment() {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val result = testConnection(serverUrl.toString(), null, false)
                 when (result) {
-                    TestResult.SelfSignedCertRequired -> nextStep(SetupStep2Ssl(state))
+                    TestResult.SelfSignedCertRequired -> {
+                        nextStep(SetupStep2Ssl(state))
+                    }
 
-                    TestResult.AuthRequired -> nextStep(SetupStep3ApiKey(state))
+                    TestResult.AuthRequired -> {
+                        nextStep(SetupStep3ApiKey(state))
+                    }
 
                     is TestResult.Success,
                     is TestResult.UnsupportedVersion,
-                    -> nextStep(SetupStep4Pin(state))
+                    -> {
+                        nextStep(SetupStep4Pin(state))
+                    }
 
                     is TestResult.Error,
                     TestResult.SslRequired,

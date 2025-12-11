@@ -454,9 +454,17 @@ class ServerPreferences(
                     JSONObject(map).toMap().values.toList()
                 }
 
-                is JSONObject -> value.toMap()
-                JSONObject.NULL -> null
-                else -> value
+                is JSONObject -> {
+                    value.toMap()
+                }
+
+                JSONObject.NULL -> {
+                    null
+                }
+
+                else -> {
+                    value
+                }
             }
         }
 

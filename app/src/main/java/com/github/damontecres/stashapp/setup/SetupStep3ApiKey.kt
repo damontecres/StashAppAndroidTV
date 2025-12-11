@@ -136,8 +136,9 @@ class SetupStep3ApiKey(
                     is TestResult.Success,
 
                     is TestResult.UnsupportedVersion,
-                    ->
+                    -> {
                         nextStep(SetupStep4Pin(setupState.copy(apiKey = apiKey.toString())))
+                    }
                 }
             }
         }

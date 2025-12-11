@@ -616,7 +616,9 @@ fun PlaybackPageContent(
                                 }
                             }
 
-                            else -> true
+                            else -> {
+                                true
+                            }
                         }
                     if (showError) {
                         Toast
@@ -663,7 +665,7 @@ fun PlaybackPageContent(
     }
     var skipPosition by remember { mutableLongStateOf(0L) }
     val updateSkipIndicator = { delta: Long ->
-        if (skipIndicatorDuration > 0 && delta < 0 || skipIndicatorDuration < 0 && delta > 0) {
+        if ((skipIndicatorDuration > 0 && delta < 0) || (skipIndicatorDuration < 0 && delta > 0)) {
             skipIndicatorDuration = 0
         }
         skipIndicatorDuration += delta
@@ -810,7 +812,9 @@ fun PlaybackPageContent(
                                 showDebugInfo = !showDebugInfo
                             }
 
-                            PlaybackAction.ShowVideoFilterDialog -> showFilterDialog = true
+                            PlaybackAction.ShowVideoFilterDialog -> {
+                                showFilterDialog = true
+                            }
 
                             PlaybackAction.ShowPlaylist -> {
                                 if (playlistPager != null && playlistPager.size > 1) {
@@ -829,8 +833,14 @@ fun PlaybackPageContent(
                                 controllerViewState.hideControls()
                             }
 
-                            is PlaybackAction.PlaybackSpeed -> playbackSpeed = it.value
-                            is PlaybackAction.Scale -> contentScale = it.scale
+                            is PlaybackAction.PlaybackSpeed -> {
+                                playbackSpeed = it.value
+                            }
+
+                            is PlaybackAction.Scale -> {
+                                contentScale = it.scale
+                            }
+
                             is PlaybackAction.ToggleAudio -> {
                                 if (toggleAudio(player, audioIndex, it.index)) {
                                     audioIndex = it.index
@@ -979,7 +989,7 @@ fun Player.setupFinishedBehavior(
             repeatMode = Player.REPEAT_MODE_ONE
         }
 
-        PlaybackFinishBehavior.GO_BACK ->
+        PlaybackFinishBehavior.GO_BACK -> {
             StashExoPlayer.addListener(
                 object :
                     Player.Listener {
@@ -990,6 +1000,7 @@ fun Player.setupFinishedBehavior(
                     }
                 },
             )
+        }
 
         PlaybackFinishBehavior.DO_NOTHING -> {
             StashExoPlayer.addListener(
@@ -1004,11 +1015,12 @@ fun Player.setupFinishedBehavior(
             )
         }
 
-        else ->
+        else -> {
             Log.w(
                 PlaybackSceneFragment.TAG,
                 "Unknown playbackFinishedBehavior: $finishedBehavior",
             )
+        }
     }
 }
 
@@ -1073,9 +1085,17 @@ class PlaybackKeyHandler(
                     updateSkipIndicator(-player.seekBackIncrement)
                 }
 
-                Key.MediaNext -> if (player.isCommandAvailable(Player.COMMAND_SEEK_TO_NEXT)) player.seekToNext()
-                Key.MediaPrevious -> if (player.isCommandAvailable(Player.COMMAND_SEEK_TO_PREVIOUS)) player.seekToPrevious()
-                else -> result = false
+                Key.MediaNext -> {
+                    if (player.isCommandAvailable(Player.COMMAND_SEEK_TO_NEXT)) player.seekToNext()
+                }
+
+                Key.MediaPrevious -> {
+                    if (player.isCommandAvailable(Player.COMMAND_SEEK_TO_PREVIOUS)) player.seekToPrevious()
+                }
+
+                else -> {
+                    result = false
+                }
             }
         } else if (it.key == Key.Enter && !controllerViewState.controlsVisible) {
             controllerViewState.showControls()
@@ -1102,7 +1122,7 @@ fun toggleSubtitles(
 ): Boolean {
     val subtitleTracks =
         player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT && it.isSupported }
-    if (index !in subtitleTracks.indices || currentActiveSubtitleIndex != null && currentActiveSubtitleIndex == index) {
+    if (index !in subtitleTracks.indices || (currentActiveSubtitleIndex != null && currentActiveSubtitleIndex == index)) {
         Log.v(
             TAG,
             "Deactivating subtitles",
@@ -1140,7 +1160,7 @@ fun toggleAudio(
 ): Boolean {
     val audioTracks =
         player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO && it.isSupported }
-    if (index !in audioTracks.indices || audioIndex != null && audioIndex == index) {
+    if (index !in audioTracks.indices || (audioIndex != null && audioIndex == index)) {
         Log.v(
             TAG,
             "Deactivating audio",
