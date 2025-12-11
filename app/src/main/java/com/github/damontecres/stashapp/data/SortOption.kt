@@ -298,6 +298,7 @@ sealed interface SortOption {
                 Date,
                 Duration,
                 Name,
+                OCounter,
                 Rating,
                 ScenesCount,
             )

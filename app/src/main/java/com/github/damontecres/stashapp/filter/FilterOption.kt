@@ -1217,6 +1217,15 @@ private val GroupFilterOptions =
             { filter, value -> filter.copy(duration = value) },
             TwoValueCriterionModifiers,
         ),
+        FilterOption<GroupFilterType, IntCriterionInput>(
+            "o_counter",
+            R.string.stashapp_o_count,
+            null,
+            IntCriterionInput::class,
+            { it.o_counter },
+            { filter, value -> filter.copy(o_counter = value) },
+            TwoValueCriterionModifiers,
+        ),
         FilterOption<GroupFilterType, StringCriterionInput>(
             "name",
             R.string.stashapp_name,
