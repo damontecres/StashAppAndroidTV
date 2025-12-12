@@ -194,22 +194,25 @@ class ImageViewFragment :
                 }
                 when (rotation) {
                     0 -> {}
-                    90 ->
+
+                    90 -> {
                         (panX to panY).apply {
                             panX = second
                             panY = -first
                         }
+                    }
 
                     180 -> {
                         panX = -panX
                         panY = -panY
                     }
 
-                    270 ->
+                    270 -> {
                         (panX to panY).apply {
                             panX = -second
                             panY = first
                         }
+                    }
                 }
                 panX *= mainImage.scaleX
                 mainImage.panBy(panX, panY, true)

@@ -122,6 +122,7 @@ class RootActivity :
                     }
 
                     ServerViewModel.ServerConnection.Pending -> {}
+
                     ServerViewModel.ServerConnection.Success -> {}
                 }
             }

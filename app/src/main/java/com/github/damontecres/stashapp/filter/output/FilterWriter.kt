@@ -44,18 +44,53 @@ class FilterWriter(
                         } else {
                             val value =
                                 when (o) {
-                                    is IntCriterionInput -> o.toMap()
-                                    is FloatCriterionInput -> o.toMap()
-                                    is StringCriterionInput -> o.toMap()
-                                    is PhashDistanceCriterionInput -> o.toMap()
-                                    is PHashDuplicationCriterionInput -> o.toMap()
-                                    is ResolutionCriterionInput -> o.toMap()
-                                    is OrientationCriterionInput -> o.toMap()
-                                    is StashIDCriterionInput -> o.toMap()
-                                    is TimestampCriterionInput -> o.toMap()
-                                    is DateCriterionInput -> o.toMap()
-                                    is GenderCriterionInput -> o.toMap()
-                                    is CircumcisionCriterionInput -> o.toMap()
+                                    is IntCriterionInput -> {
+                                        o.toMap()
+                                    }
+
+                                    is FloatCriterionInput -> {
+                                        o.toMap()
+                                    }
+
+                                    is StringCriterionInput -> {
+                                        o.toMap()
+                                    }
+
+                                    is PhashDistanceCriterionInput -> {
+                                        o.toMap()
+                                    }
+
+                                    is PHashDuplicationCriterionInput -> {
+                                        o.toMap()
+                                    }
+
+                                    is ResolutionCriterionInput -> {
+                                        o.toMap()
+                                    }
+
+                                    is OrientationCriterionInput -> {
+                                        o.toMap()
+                                    }
+
+                                    is StashIDCriterionInput -> {
+                                        o.toMap()
+                                    }
+
+                                    is TimestampCriterionInput -> {
+                                        o.toMap()
+                                    }
+
+                                    is DateCriterionInput -> {
+                                        o.toMap()
+                                    }
+
+                                    is GenderCriterionInput -> {
+                                        o.toMap()
+                                    }
+
+                                    is CircumcisionCriterionInput -> {
+                                        o.toMap()
+                                    }
 
                                     is Boolean, is String -> {
                                         mapOf(
@@ -78,11 +113,15 @@ class FilterWriter(
                                         o.toMap(items)
                                     }
 
-                                    is StashDataFilter -> convertFilter(o)
+                                    is StashDataFilter -> {
+                                        convertFilter(o)
+                                    }
 
-                                    else -> throw UnsupportedOperationException(
-                                        "Unable to convert ${filter::class.simpleName}.${param.name} (${o::class.qualifiedName})",
-                                    )
+                                    else -> {
+                                        throw UnsupportedOperationException(
+                                            "Unable to convert ${filter::class.simpleName}.${param.name} (${o::class.qualifiedName})",
+                                        )
+                                    }
                                 }
                             put(param.name, value)
                         }

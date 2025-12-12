@@ -112,8 +112,11 @@ fun buildMediaItem(
             // As recommended by https://developer.android.com/media/media3/exoplayer/hls#using-mediaitem
             // Specify the mimetype for HLS & DASH streams
             "hls" -> MimeTypes.APPLICATION_M3U8
+
             "dash" -> MimeTypes.APPLICATION_MPD
+
             "mp4" -> MimeTypes.APPLICATION_MP4
+
             else -> null
         }
     val builder =
@@ -340,15 +343,42 @@ data class TrackSupport(
         } else {
             val type =
                 when (codecs) {
-                    MimeTypes.TEXT_VTT -> "vtt"
-                    MimeTypes.APPLICATION_VOBSUB -> "vobsub"
-                    MimeTypes.APPLICATION_SUBRIP -> "srt"
-                    MimeTypes.TEXT_SSA -> "ssa"
-                    MimeTypes.APPLICATION_PGS -> "pgs"
-                    MimeTypes.APPLICATION_DVBSUBS -> "dvd"
-                    MimeTypes.APPLICATION_TTML -> "ttml"
-                    MimeTypes.TEXT_UNKNOWN -> "unknown"
-                    null -> "unknown"
+                    MimeTypes.TEXT_VTT -> {
+                        "vtt"
+                    }
+
+                    MimeTypes.APPLICATION_VOBSUB -> {
+                        "vobsub"
+                    }
+
+                    MimeTypes.APPLICATION_SUBRIP -> {
+                        "srt"
+                    }
+
+                    MimeTypes.TEXT_SSA -> {
+                        "ssa"
+                    }
+
+                    MimeTypes.APPLICATION_PGS -> {
+                        "pgs"
+                    }
+
+                    MimeTypes.APPLICATION_DVBSUBS -> {
+                        "dvd"
+                    }
+
+                    MimeTypes.APPLICATION_TTML -> {
+                        "ttml"
+                    }
+
+                    MimeTypes.TEXT_UNKNOWN -> {
+                        "unknown"
+                    }
+
+                    null -> {
+                        "unknown"
+                    }
+
                     else -> {
                         val split = codecs.split("/")
                         if (split.size > 1) split[1] else codecs
@@ -433,7 +463,7 @@ fun maybeMuteAudio(
             TAG,
             "maybeMuteAudio: playAudioPreview=$playAudioPreview, startMuted=$startMuted, checkPreviewAudioPref=$checkPreviewAudioPref",
         )
-        if (!playAudioPreview && checkPreviewAudioPref || startMuted) {
+        if ((!playAudioPreview && checkPreviewAudioPref) || startMuted) {
             if (C.TRACK_TYPE_AUDIO !in it.trackSelectionParameters.disabledTrackTypes) {
                 Log.v(TAG, "Disabling audio")
                 it.trackSelectionParameters =

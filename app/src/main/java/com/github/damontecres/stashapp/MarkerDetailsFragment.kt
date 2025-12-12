@@ -215,7 +215,9 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                             }
                         }
 
-                        else -> throw IllegalArgumentException("Unknown action id $sourceId")
+                        else -> {
+                            throw IllegalArgumentException("Unknown action id $sourceId")
+                        }
                     }
                 }
             }

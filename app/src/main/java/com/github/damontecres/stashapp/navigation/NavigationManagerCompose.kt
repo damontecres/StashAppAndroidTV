@@ -71,16 +71,30 @@ class NavigationManagerCompose(
         val fragment =
             when (destination) {
 //                is Destination.Settings -> SettingsFragment()
-                Destination.Pin -> PinFragment()
-                Destination.SettingsPin -> SettingsPinEntryFragment()
-//                Destination.Setup -> SetupFragment()
+                Destination.Pin -> {
+                    PinFragment()
+                }
 
-                is Destination.UpdateApp -> UpdateAppFragment()
-                is Destination.ReleaseChangelog -> UpdateChangelogFragment()
-//                is Destination.ManageServers -> ManageServersFragment()
+                Destination.SettingsPin -> {
+                    SettingsPinEntryFragment()
+                }
+
+                //                Destination.Setup -> SetupFragment()
+
+                is Destination.UpdateApp -> {
+                    UpdateAppFragment()
+                }
+
+                is Destination.ReleaseChangelog -> {
+                    UpdateChangelogFragment()
+                }
+
+                //                is Destination.ManageServers -> ManageServersFragment()
 //                is Destination.CreateFilter -> CreateFilterFragment()
 //                is Destination.UpdateMarker -> MarkerPickerFragment()
-                is Destination.LicenseInfo -> LicenseFragment()
+                is Destination.LicenseInfo -> {
+                    LicenseFragment()
+                }
 
                 else -> {
                     if (getCurrentFragment() != navDrawerFragment) {
@@ -89,7 +103,8 @@ class NavigationManagerCompose(
                     }
                     when (destination) {
                         Destination.Main -> navigate(Destination.Main, true)
-//                        is Destination.Filter -> controller.navigate(destination)
+
+                        //                        is Destination.Filter -> controller.navigate(destination)
                         else -> navigate(destination, false)
                     }
                     return

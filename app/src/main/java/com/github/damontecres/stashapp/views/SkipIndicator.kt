@@ -42,7 +42,7 @@ class SkipIndicator(
     @SuppressLint("SetTextI18n")
     fun update(delta: Long) {
         // If switching from fast forward to back (or vice versa), reset the value
-        if (currentSkip > 0 && delta < 0 || currentSkip < 0 && delta > 0) {
+        if ((currentSkip > 0 && delta < 0) || (currentSkip < 0 && delta > 0)) {
             currentSkip = 0
         }
         currentSkip += (delta / 1000)

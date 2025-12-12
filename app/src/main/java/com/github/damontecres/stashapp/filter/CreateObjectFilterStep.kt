@@ -143,7 +143,7 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
                     nextStep(DurationPickerFragment(filterOption))
                 }
 
-                else ->
+                else -> {
                     // Get the picker for the sub-filter type
                     when (filterOption.type) {
                         IntCriterionInput::class -> {
@@ -211,8 +211,11 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
                             nextStep(CircumcisionPickerFragment(filterOption))
                         }
 
-                        else -> throw UnsupportedOperationException("$filterOption")
+                        else -> {
+                            throw UnsupportedOperationException("$filterOption")
+                        }
                     }
+                }
             }
         }
     }

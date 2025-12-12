@@ -165,30 +165,41 @@ fun ApplicationContent(
             // Highlight on the nav drawer as user navigates around the app
             selectedScreen =
                 when (destination) {
-                    Destination.Main -> DrawerPage.HomePage
+                    Destination.Main -> {
+                        DrawerPage.HomePage
+                    }
 
-                    Destination.Search -> DrawerPage.SearchPage
+                    Destination.Search -> {
+                        DrawerPage.SearchPage
+                    }
 
                     Destination.SettingsPin,
                     is Destination.Settings,
-                    -> DrawerPage.SettingPage
+                    -> {
+                        DrawerPage.SettingPage
+                    }
 
-                    is Destination.Item ->
+                    is Destination.Item -> {
                         pages.firstOrNull {
                             it is DrawerPage.DataTypePage && it.dataType == destination.dataType
                         }
+                    }
 
-                    is Destination.MarkerDetails ->
+                    is Destination.MarkerDetails -> {
                         pages.firstOrNull {
                             it is DrawerPage.DataTypePage && it.dataType == DataType.MARKER
                         }
+                    }
 
-                    is Destination.Filter ->
+                    is Destination.Filter -> {
                         pages.firstOrNull {
                             it is DrawerPage.DataTypePage && it.dataType == destination.filterArgs.dataType
                         }
+                    }
 
-                    else -> null
+                    else -> {
+                        null
+                    }
                 }
 
             val onSelectScreen = { page: DrawerPage ->
@@ -204,9 +215,15 @@ fun ApplicationContent(
                 } else {
                     val pageDest =
                         when (page) {
-                            DrawerPage.HomePage -> Destination.Main
-                            DrawerPage.SearchPage -> Destination.Search
-                            DrawerPage.SettingPage ->
+                            DrawerPage.HomePage -> {
+                                Destination.Main
+                            }
+
+                            DrawerPage.SearchPage -> {
+                                Destination.Search
+                            }
+
+                            DrawerPage.SettingPage -> {
                                 if (composeUiConfig.readOnlyModeDisabled) {
                                     Destination.Settings(
                                         PreferenceScreenOption.BASIC,
@@ -214,13 +231,15 @@ fun ApplicationContent(
                                 } else {
                                     Destination.SettingsPin
                                 }
+                            }
 
-                            is DrawerPage.DataTypePage ->
+                            is DrawerPage.DataTypePage -> {
                                 Destination.Filter(
                                     server.serverPreferences.getDefaultFilter(
                                         page.dataType,
                                     ),
                                 )
+                            }
                         }
                     navigationManager.navigateFromNavDrawer(pageDest)
                 }

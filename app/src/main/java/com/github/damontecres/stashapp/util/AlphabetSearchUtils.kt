@@ -42,7 +42,6 @@ class AlphabetSearchUtils {
                     is StudioFilterType -> filter.AND
                     is TagFilterType -> filter.AND
                     is SceneMarkerFilterType -> throw IllegalArgumentException()
-
                     else -> throw IllegalArgumentException()
                 }.getOrNull()
             return if (andFilter != null) {
@@ -107,13 +106,18 @@ class AlphabetSearchUtils {
             val transformed =
                 when (filterArgs.dataType) {
                     DataType.GROUP -> (andObjectFilter as GroupFilterType).copy(name = stringCriterion)
+
                     DataType.PERFORMER -> (andObjectFilter as PerformerFilterType).copy(name = stringCriterion)
+
                     DataType.STUDIO -> (andObjectFilter as StudioFilterType).copy(name = stringCriterion)
+
                     DataType.TAG -> (andObjectFilter as TagFilterType).copy(name = stringCriterion)
 
                     // TODO use filename
                     DataType.SCENE -> (andObjectFilter as SceneFilterType).copy(title = stringCriterion)
+
                     DataType.IMAGE -> (andObjectFilter as ImageFilterType).copy(title = stringCriterion)
+
                     DataType.GALLERY -> (andObjectFilter as GalleryFilterType).copy(title = stringCriterion)
 
                     DataType.MARKER -> TODO()

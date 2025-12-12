@@ -242,16 +242,21 @@ sealed interface StashPreference<T> {
                         )
                     value?.let {
                         when (it) {
-                            context.getString(R.string.playback_finished_repeat) ->
+                            context.getString(R.string.playback_finished_repeat) -> {
                                 PlaybackFinishBehavior.REPEAT
+                            }
 
-                            context.getString(R.string.playback_finished_return) ->
+                            context.getString(R.string.playback_finished_return) -> {
                                 PlaybackFinishBehavior.GO_BACK
+                            }
 
-                            context.getString(R.string.playback_finished_do_nothing) ->
+                            context.getString(R.string.playback_finished_do_nothing) -> {
                                 PlaybackFinishBehavior.DO_NOTHING
+                            }
 
-                            else -> PlaybackFinishBehavior.DO_NOTHING
+                            else -> {
+                                PlaybackFinishBehavior.DO_NOTHING
+                            }
                         }
                     } ?: PlaybackFinishBehavior.DO_NOTHING
                 },
@@ -1024,8 +1029,11 @@ sealed interface StashPreference<T> {
                             null,
                         )
                     when (value) {
-                        "Disabled", "", null -> Resolution.UNSPECIFIED
-                        else ->
+                        "Disabled", "", null -> {
+                            Resolution.UNSPECIFIED
+                        }
+
+                        else -> {
                             value.let {
                                 try {
                                     Resolution.valueOf("RES_" + it.uppercase())
@@ -1034,6 +1042,7 @@ sealed interface StashPreference<T> {
                                     Resolution.UNSPECIFIED
                                 }
                             }
+                        }
                     }
                 },
                 prefSetter = { context: Context, editor: SharedPreferences.Editor, value: Resolution ->
@@ -1305,7 +1314,10 @@ sealed interface StashPreference<T> {
                             null,
                         )
                     when (value?.lowercase()) {
-                        "default", "builtin", "", null -> PlaybackHttpClient.OKHTTP
+                        "default", "builtin", "", null -> {
+                            PlaybackHttpClient.OKHTTP
+                        }
+
                         else -> {
                             try {
                                 PlaybackHttpClient.valueOf(value.uppercase())
@@ -1320,6 +1332,7 @@ sealed interface StashPreference<T> {
                     val string =
                         when (value) {
                             PlaybackHttpClient.BUILTIN -> "default"
+
                             PlaybackHttpClient.OKHTTP,
                             PlaybackHttpClient.UNRECOGNIZED,
                             -> "okhttp"

@@ -54,8 +54,14 @@ fun chooseColorScheme(
     colorSchemeSet: ColorSchemeSet,
 ): AppColorScheme =
     when (themeStyle) {
-        ThemeStyle.LIGHT -> colorSchemeSet.light
-        ThemeStyle.DARK -> colorSchemeSet.dark
+        ThemeStyle.LIGHT -> {
+            colorSchemeSet.light
+        }
+
+        ThemeStyle.DARK -> {
+            colorSchemeSet.dark
+        }
+
         else -> {
             if (isSystemInDark) {
                 colorSchemeSet.dark
@@ -145,8 +151,14 @@ fun Material3AppTheme(
     val colorSchemeSet = currentColorSchemeSet ?: defaultColorSchemeSet
     val colorScheme =
         when (themeStyle) {
-            ThemeStyle.LIGHT -> colorSchemeSet.light
-            ThemeStyle.DARK -> colorSchemeSet.dark
+            ThemeStyle.LIGHT -> {
+                colorSchemeSet.light
+            }
+
+            ThemeStyle.DARK -> {
+                colorSchemeSet.dark
+            }
+
             else -> {
                 if (isSystemInDarkTheme()) {
                     colorSchemeSet.dark

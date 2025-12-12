@@ -58,19 +58,47 @@ import kotlin.time.toDuration
  */
 fun extractTitle(item: StashData): String? =
     when (item) {
-        is TagData -> item.name
-        is PerformerData -> item.name
-        is StudioData -> item.name
-        is GalleryData -> item.name
-        is ImageData -> item.titleOrFilename
-        is MarkerData ->
+        is TagData -> {
+            item.name
+        }
+
+        is PerformerData -> {
+            item.name
+        }
+
+        is StudioData -> {
+            item.name
+        }
+
+        is GalleryData -> {
+            item.name
+        }
+
+        is ImageData -> {
+            item.titleOrFilename
+        }
+
+        is MarkerData -> {
             item.title.ifBlank {
                 item.primary_tag.slimTagData.name
             }
-        is GroupData -> item.name
-        is SlimSceneData -> item.titleOrFilename
-        is FullSceneData -> item.titleOrFilename
-        else -> throw IllegalArgumentException("${item::class.qualifiedName} not supported")
+        }
+
+        is GroupData -> {
+            item.name
+        }
+
+        is SlimSceneData -> {
+            item.titleOrFilename
+        }
+
+        is FullSceneData -> {
+            item.titleOrFilename
+        }
+
+        else -> {
+            throw IllegalArgumentException("${item::class.qualifiedName} not supported")
+        }
     }
 
 /**
@@ -135,11 +163,14 @@ fun filterSummary(
     val toStr =
         when (f.modifier) {
             CriterionModifier.EQUALS -> resolvedTitles.firstOrNull() ?: ""
+
             CriterionModifier.INCLUDES_ALL -> resolvedTitles.toString()
+
             CriterionModifier.INCLUDES -> resolvedTitles.toString()
 
             // Short circuit and return
             CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> return modStr
+
             else -> throw IllegalArgumentException("${f.modifier}")
         }.ifBlank { null }
 
@@ -173,11 +204,14 @@ fun filterSummary(
     val toStr =
         when (f.modifier) {
             CriterionModifier.EQUALS -> resolvedTitles.firstOrNull() ?: ""
+
             CriterionModifier.INCLUDES_ALL -> resolvedTitles.toString()
+
             CriterionModifier.INCLUDES -> resolvedTitles.toString()
 
             // Short circuit and return
             CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> return modStr
+
             else -> throw IllegalArgumentException("${f.modifier}")
         }.ifBlank { null }
 
@@ -233,9 +267,13 @@ fun filterSummaryRating(f: IntCriterionInput): String {
             CriterionModifier.NOT_EQUALS,
             CriterionModifier.GREATER_THAN,
             CriterionModifier.LESS_THAN,
-            -> getRatingString(value, ratingsAsStars)
+            -> {
+                getRatingString(value, ratingsAsStars)
+            }
 
-            CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> null
+            CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> {
+                null
+            }
 
             CriterionModifier.BETWEEN, CriterionModifier.NOT_BETWEEN -> {
                 val valueStr = getRatingAsDecimalString(value, ratingsAsStars)
@@ -251,7 +289,9 @@ fun filterSummaryRating(f: IntCriterionInput): String {
                 }
             }
 
-            else -> throw IllegalArgumentException("${f.modifier}")
+            else -> {
+                throw IllegalArgumentException("${f.modifier}")
+            }
         }
 
     return if (toStr != null) {
@@ -497,20 +537,57 @@ fun filterSummary(
         filterSummaryDuration(value as IntCriterionInput)
     } else {
         when (value) {
-            is IntCriterionInput -> filterSummary(value)
-            is FloatCriterionInput -> filterSummary(value)
-            is StringCriterionInput -> filterSummary(value)
-            is PhashDistanceCriterionInput -> filterSummary(value)
-            is PHashDuplicationCriterionInput -> filterSummary(value)
-            is ResolutionCriterionInput -> filterSummary(value)
-            is OrientationCriterionInput -> filterSummary(value)
-            is StashIDCriterionInput -> filterSummary(value)
-            is TimestampCriterionInput -> filterSummary(value)
-            is DateCriterionInput -> filterSummary(value)
-            is GenderCriterionInput -> filterSummary(value)
-            is CircumcisionCriterionInput -> filterSummary(value)
+            is IntCriterionInput -> {
+                filterSummary(value)
+            }
 
-            is Boolean, String -> value.toString()
+            is FloatCriterionInput -> {
+                filterSummary(value)
+            }
+
+            is StringCriterionInput -> {
+                filterSummary(value)
+            }
+
+            is PhashDistanceCriterionInput -> {
+                filterSummary(value)
+            }
+
+            is PHashDuplicationCriterionInput -> {
+                filterSummary(value)
+            }
+
+            is ResolutionCriterionInput -> {
+                filterSummary(value)
+            }
+
+            is OrientationCriterionInput -> {
+                filterSummary(value)
+            }
+
+            is StashIDCriterionInput -> {
+                filterSummary(value)
+            }
+
+            is TimestampCriterionInput -> {
+                filterSummary(value)
+            }
+
+            is DateCriterionInput -> {
+                filterSummary(value)
+            }
+
+            is GenderCriterionInput -> {
+                filterSummary(value)
+            }
+
+            is CircumcisionCriterionInput -> {
+                filterSummary(value)
+            }
+
+            is Boolean, String -> {
+                value.toString()
+            }
 
             is MultiCriterionInput -> {
                 val dataType = FilterWriter.getType(filterDataType, name)!!
@@ -522,7 +599,9 @@ fun filterSummary(
                 filterSummary(value, idLookup(dataType, value.getAllIds()))
             }
 
-            else -> value.toString()
+            else -> {
+                value.toString()
+            }
         }
     }
 

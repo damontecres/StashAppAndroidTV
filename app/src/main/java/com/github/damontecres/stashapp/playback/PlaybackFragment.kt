@@ -226,20 +226,24 @@ abstract class PlaybackFragment(
     ) {
         debugSceneId.text = scene.id
         when (streamDecision.transcodeDecision) {
-            TranscodeDecision.Transcode ->
+            TranscodeDecision.Transcode -> {
                 debugPlaybackTextView.text =
                     getString(R.string.transcode)
+            }
 
-            is TranscodeDecision.ForcedTranscode ->
+            is TranscodeDecision.ForcedTranscode -> {
                 debugPlaybackTextView.text =
                     getString(R.string.force_transcode) + " " + streamDecision.transcodeDecision.streamLabel
+            }
 
-            TranscodeDecision.DirectPlay ->
+            TranscodeDecision.DirectPlay -> {
                 debugPlaybackTextView.text = getString(R.string.direct)
+            }
 
-            TranscodeDecision.ForcedDirectPlay ->
+            TranscodeDecision.ForcedDirectPlay -> {
                 debugPlaybackTextView.text =
                     getString(R.string.force_direct)
+            }
         }
         debugVideoTextView.text =
             if (streamDecision.videoSupported) scene.videoCodec else "${scene.videoCodec} (unsupported)"

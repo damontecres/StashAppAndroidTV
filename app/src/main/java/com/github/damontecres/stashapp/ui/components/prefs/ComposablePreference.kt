@@ -98,9 +98,13 @@ fun <T> ComposablePreference(
                     onCacheClear.invoke()
                 }
 
-                StashPreference.TriggerScan -> MutationEngine(server).triggerScan()
+                StashPreference.TriggerScan -> {
+                    MutationEngine(server).triggerScan()
+                }
 
-                StashPreference.TriggerGenerate -> MutationEngine(server).triggerGenerate()
+                StashPreference.TriggerGenerate -> {
+                    MutationEngine(server).triggerGenerate()
+                }
 
                 StashPreference.MigratePreferences -> {
                     scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
@@ -121,13 +125,15 @@ fun <T> ComposablePreference(
                     CompanionPlugin.sendLogCat(context, server, true)
                 }
 
-                else -> null
+                else -> {
+                    null
+                }
             }
         }
     }
 
     when (preference) {
-        StashPreference.CurrentServer ->
+        StashPreference.CurrentServer -> {
             ClickPreference(
                 title = title,
                 onClick = onClick,
@@ -135,8 +141,9 @@ fun <T> ComposablePreference(
                 interactionSource = interactionSource,
                 modifier = modifier,
             )
+        }
 
-        StashPreference.UseNewUI ->
+        StashPreference.UseNewUI -> {
             SwitchPreference(
                 title = title,
                 value = value as Boolean,
@@ -145,6 +152,7 @@ fun <T> ComposablePreference(
                 interactionSource = interactionSource,
                 modifier = modifier,
             )
+        }
 
         StashPreference.NetworkCache -> {
             preference as StashSliderPreference
@@ -204,7 +212,7 @@ fun <T> ComposablePreference(
             }
         }
 
-        is StashDestinationPreference ->
+        is StashDestinationPreference -> {
             ClickPreference(
                 title = title,
                 onClick = {
@@ -214,8 +222,9 @@ fun <T> ComposablePreference(
                 interactionSource = interactionSource,
                 modifier = modifier,
             )
+        }
 
-        is StashClickablePreference ->
+        is StashClickablePreference -> {
             ClickPreference(
                 title = title,
                 onClick = onClick,
@@ -224,8 +233,9 @@ fun <T> ComposablePreference(
                 interactionSource = interactionSource,
                 modifier = modifier,
             )
+        }
 
-        is StashSwitchPreference ->
+        is StashSwitchPreference -> {
             SwitchPreference(
                 title = title,
                 value = value as Boolean,
@@ -234,6 +244,7 @@ fun <T> ComposablePreference(
                 interactionSource = interactionSource,
                 modifier = modifier,
             )
+        }
 
         is StashPinPreference -> {
             val enabled = (value as String).isNotNullOrBlank()
@@ -258,7 +269,8 @@ fun <T> ComposablePreference(
                 modifier = Modifier,
             )
         }
-        is StashStringPreference ->
+
+        is StashStringPreference -> {
             ClickPreference(
                 title = title,
                 onClick = {
@@ -289,6 +301,7 @@ fun <T> ComposablePreference(
                 interactionSource = interactionSource,
                 modifier = modifier,
             )
+        }
 
         is StashChoicePreference -> {
             val values = stringArrayResource(preference.displayValues).toList()

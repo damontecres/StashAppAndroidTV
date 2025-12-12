@@ -43,7 +43,7 @@ fun ConfigurePin(
     var pin1 by remember { mutableStateOf("") }
     var pin2 by remember { mutableStateOf("") }
 
-    val valid = pin1.isBlank() || pin1.toIntOrNull() != null && pin1 == pin2
+    val valid = pin1.isBlank() || (pin1.toIntOrNull() != null && pin1 == pin2)
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(8.dp),

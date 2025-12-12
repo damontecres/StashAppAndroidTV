@@ -190,9 +190,11 @@ fun DialogPopup(
                 }
                 items(dialogItems) {
                     when (it) {
-                        is DialogItemDivider -> HorizontalDivider(Modifier.height(16.dp))
+                        is DialogItemDivider -> {
+                            HorizontalDivider(Modifier.height(16.dp))
+                        }
 
-                        is DialogItem ->
+                        is DialogItem -> {
                             ListItem(
                                 selected = false,
                                 enabled = !waiting && it.enabled,
@@ -209,6 +211,7 @@ fun DialogPopup(
                                 trailingContent = it.trailingContent,
                                 modifier = Modifier,
                             )
+                        }
                     }
                 }
             }

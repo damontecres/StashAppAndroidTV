@@ -34,16 +34,23 @@ fun PlaybackDebugInfo(
 ) {
     val transcodeText =
         when (streamDecision.transcodeDecision) {
-            TranscodeDecision.Transcode -> stringResource(R.string.transcode)
+            TranscodeDecision.Transcode -> {
+                stringResource(R.string.transcode)
+            }
 
-            is TranscodeDecision.ForcedTranscode ->
+            is TranscodeDecision.ForcedTranscode -> {
                 stringResource(
                     R.string.force_transcode,
                 ) + " " + streamDecision.transcodeDecision.streamLabel
+            }
 
-            TranscodeDecision.DirectPlay -> stringResource(R.string.direct)
+            TranscodeDecision.DirectPlay -> {
+                stringResource(R.string.direct)
+            }
 
-            TranscodeDecision.ForcedDirectPlay -> stringResource(R.string.force_direct)
+            TranscodeDecision.ForcedDirectPlay -> {
+                stringResource(R.string.force_direct)
+            }
         }
     val videoText = if (streamDecision.videoSupported) scene.videoCodec else "${scene.videoCodec} (unsupported)"
     val audioText = if (streamDecision.audioSupported) scene.audioCodec else "${scene.audioCodec} (unsupported)"

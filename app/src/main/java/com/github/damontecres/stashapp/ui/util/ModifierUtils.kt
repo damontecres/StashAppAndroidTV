@@ -234,7 +234,7 @@ fun getPlayDestinationForItem(
 ): Destination? {
     val destination =
         when (item) {
-            is SlimSceneData ->
+            is SlimSceneData -> {
                 Destination.Playback(
                     item.id,
                     if (server.serverPreferences.alwaysStartFromBeginning) {
@@ -244,13 +244,15 @@ fun getPlayDestinationForItem(
                     },
                     PlaybackMode.Choose,
                 )
+            }
 
-            is MarkerData ->
+            is MarkerData -> {
                 Destination.Playback(
                     item.scene.minimalSceneData.id,
                     item.seconds.toLongMilliseconds,
                     PlaybackMode.Choose,
                 )
+            }
 
             is ImageData -> {
                 filterAndPosition?.let {
@@ -262,7 +264,9 @@ fun getPlayDestinationForItem(
                 }
             }
 
-            else -> null
+            else -> {
+                null
+            }
         }
     if (destination != null) {
         return destination
