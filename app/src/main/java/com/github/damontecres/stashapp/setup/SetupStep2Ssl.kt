@@ -50,11 +50,15 @@ class SetupStep2Ssl(
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val result = testConnection(newState.serverUrl, null, true)
                 when (result) {
-                    TestResult.AuthRequired -> nextStep(SetupStep3ApiKey(newState))
+                    TestResult.AuthRequired -> {
+                        nextStep(SetupStep3ApiKey(newState))
+                    }
 
                     is TestResult.Error,
                     TestResult.SslRequired,
-                    -> requireActivity().supportFragmentManager.popBackStack()
+                    -> {
+                        requireActivity().supportFragmentManager.popBackStack()
+                    }
 
                     TestResult.SelfSignedCertRequired -> {
                         Log.w(TAG, "Trusting certs, but still error")
@@ -62,7 +66,9 @@ class SetupStep2Ssl(
 
                     is TestResult.Success,
                     is TestResult.UnsupportedVersion,
-                    -> nextStep(SetupStep4Pin(newState))
+                    -> {
+                        nextStep(SetupStep4Pin(newState))
+                    }
                 }
             }
         } else {

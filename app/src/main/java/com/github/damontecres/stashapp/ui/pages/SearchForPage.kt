@@ -257,11 +257,26 @@ fun SearchForPage(
                 if (mostRecentIds.isNotEmpty()) {
                     recent =
                         when (dataType) {
-                            DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
-                            DataType.TAG -> queryEngine.getTags(mostRecentIds)
-                            DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
-                            DataType.GALLERY -> queryEngine.findGalleries(galleryIds = mostRecentIds)
-                            DataType.GROUP -> queryEngine.findGroups(groupIds = mostRecentIds)
+                            DataType.PERFORMER -> {
+                                queryEngine.findPerformers(performerIds = mostRecentIds)
+                            }
+
+                            DataType.TAG -> {
+                                queryEngine.getTags(mostRecentIds)
+                            }
+
+                            DataType.STUDIO -> {
+                                queryEngine.findStudios(studioIds = mostRecentIds)
+                            }
+
+                            DataType.GALLERY -> {
+                                queryEngine.findGalleries(galleryIds = mostRecentIds)
+                            }
+
+                            DataType.GROUP -> {
+                                queryEngine.findGroups(groupIds = mostRecentIds)
+                            }
+
                             else -> {
                                 listOf()
                             }
@@ -287,7 +302,7 @@ fun SearchForPage(
             scope.launch(StashCoroutineExceptionHandler() + Dispatchers.IO) {
                 suggestions =
                     when (dataType) {
-                        DataType.GALLERY ->
+                        DataType.GALLERY -> {
                             // Cannot add an image to a zip/folder gallery, so exclude them
                             queryEngine.findGalleries(
                                 filter,
@@ -301,8 +316,11 @@ fun SearchForPage(
                                         ),
                                 ),
                             )
+                        }
 
-                        else -> queryEngine.find(dataType, filter)
+                        else -> {
+                            queryEngine.find(dataType, filter)
+                        }
                     }
             }
         }
@@ -341,21 +359,23 @@ fun SearchForPage(
 
         item {
             when (val result = results) {
-                is SearchState.NoQuery ->
+                is SearchState.NoQuery -> {
                     Text(
                         text = stringResource(R.string.waiting_for_query),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
+                }
 
-                SearchState.Pending ->
+                SearchState.Pending -> {
                     Text(
                         text = stringResource(R.string.searching),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
+                }
 
-                SearchState.NoResults ->
+                SearchState.NoResults -> {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Text(
                             text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
@@ -379,8 +399,9 @@ fun SearchForPage(
                             )
                         }
                     }
+                }
 
-                is SearchState.Success ->
+                is SearchState.Success -> {
                     SearchItemsRow(
                         title = stringResource(R.string.results),
                         items = result.items,
@@ -398,6 +419,7 @@ fun SearchForPage(
                             ),
                         modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                     )
+                }
             }
         }
         if (suggestions.isNotEmpty()) {
@@ -456,7 +478,9 @@ suspend fun handleCreate(
                     mutationEngine.createStudio(name = name)
                 }
 
-                else -> throw IllegalArgumentException("Unsupported datatype $dataType")
+                else -> {
+                    throw IllegalArgumentException("Unsupported datatype $dataType")
+                }
             }
         if (item != null) {
             Toast

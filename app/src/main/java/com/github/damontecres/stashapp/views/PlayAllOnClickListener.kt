@@ -75,7 +75,9 @@ class PlayAllOnClickListener(
                 )
             }
 
-            else -> throw UnsupportedOperationException("DataType $dataType")
+            else -> {
+                throw UnsupportedOperationException("DataType $dataType")
+            }
         }
     }
 }

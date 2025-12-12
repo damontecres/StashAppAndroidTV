@@ -74,6 +74,7 @@ class FilterDebugFragment : Fragment(R.layout.filter_debug) {
 //                    table.isStretchAllColumns = true
                 }
             }
+
             else -> {
                 val titleView = TextView(requireContext())
                 titleView.text = "No items"

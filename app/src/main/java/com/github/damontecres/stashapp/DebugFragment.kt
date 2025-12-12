@@ -279,8 +279,7 @@ class DebugFragment : Fragment(R.layout.debug) {
         values.forEach { value ->
             val valueView = TextView(requireContext())
             valueView.text =
-                if (isApiKey && value != null
-                ) {
+                if (isApiKey && value != null) {
                     value.take(4) + "..." + value.takeLast(8)
                 } else {
                     value

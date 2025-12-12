@@ -435,10 +435,8 @@ class StashImageCardView(
 
     fun updateImageLayoutParams(imageMatchParent: Boolean) {
         val current = imageView.layoutParams.height
-        if (imageMatchParent &&
-            current != ViewGroup.LayoutParams.MATCH_PARENT ||
-            !imageMatchParent &&
-            current != ViewGroup.LayoutParams.WRAP_CONTENT
+        if ((imageMatchParent && current != ViewGroup.LayoutParams.MATCH_PARENT) ||
+            (!imageMatchParent && current != ViewGroup.LayoutParams.WRAP_CONTENT)
         ) {
             imageView.setImageDrawable(null)
             imageView.updateLayoutParams {

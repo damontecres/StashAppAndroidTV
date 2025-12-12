@@ -143,14 +143,17 @@ fun SceneDetailsPage(
     }
 
     when (val state = loadingState) {
-        SceneLoadingState.Error ->
+        SceneLoadingState.Error -> {
             Text(
                 "Error",
                 style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
+        }
 
-        SceneLoadingState.Loading -> CircularProgress()
+        SceneLoadingState.Loading -> {
+            CircularProgress()
+        }
 
         is SceneLoadingState.Success -> {
             LaunchedEffect(Unit) {
@@ -181,7 +184,6 @@ fun SceneDetailsPage(
                         is GalleryData -> viewModel.addGallery(item.id)
                         is StudioData -> viewModel.setStudio(item.id)
                         is MarkerData -> viewModel.addMarker(item)
-
                         is FullMarkerData -> throw UnsupportedOperationException()
                         is ImageData, is ExtraImageData, is SlimImageData -> throw UnsupportedOperationException()
                         is SlimSceneData, is FullSceneData, is VideoSceneData, is MinimalSceneData -> throw UnsupportedOperationException()
@@ -195,7 +197,6 @@ fun SceneDetailsPage(
                         is GalleryData -> viewModel.removeGallery(item.id)
                         is StudioData -> viewModel.removeStudio()
                         is MarkerData, is FullMarkerData -> viewModel.removeMarker(item.id)
-
                         is ImageData, is ExtraImageData, is SlimImageData -> throw UnsupportedOperationException()
                         is SlimSceneData, is FullSceneData, is VideoSceneData, is MinimalSceneData -> throw UnsupportedOperationException()
                     }

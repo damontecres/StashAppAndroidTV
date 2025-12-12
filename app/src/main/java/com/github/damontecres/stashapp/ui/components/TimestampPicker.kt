@@ -202,7 +202,7 @@ fun WheelPicker(
                             result
                         },
                 ),
-        unfocusedCount = if (isNotTvDevice || activated && focused) 1 else 0,
+        unfocusedCount = if ((isNotTvDevice || activated) && focused) 1 else 0,
         count = count,
         state = state,
     ) { index ->

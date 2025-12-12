@@ -380,7 +380,9 @@ class ObjectFilterParsingTests {
                     Assert.assertEquals(prop.name, expected.depth, actual.depth)
                 }
 
-                else -> Assert.assertEquals(prop.name, expected, actual)
+                else -> {
+                    Assert.assertEquals(prop.name, expected, actual)
+                }
             }
         }
     }

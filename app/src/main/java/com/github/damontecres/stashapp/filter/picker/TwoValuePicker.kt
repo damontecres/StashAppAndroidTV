@@ -137,7 +137,7 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
                 collapseSubActions()
                 setActionsDiffCallback(null)
                 this.actions = createActionList()
-                if (value1 == null || modifier.hasTwoValues() && value2 == null) {
+                if (value1 == null || (modifier.hasTwoValues() && value2 == null)) {
                     enableFinish(false)
                 } else {
                     enableFinish(true)

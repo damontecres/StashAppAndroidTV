@@ -301,16 +301,25 @@ class FilterFragment :
         override fun getItem(position: Int): Any {
             if (createEnabled) {
                 return when (position) {
-                    0 -> "Create filter"
-                    1 -> "Create filter from current"
-                    2 ->
+                    0 -> {
+                        "Create filter"
+                    }
+
+                    1 -> {
+                        "Create filter from current"
+                    }
+
+                    2 -> {
                         if (filters.isEmpty()) {
                             "No saved filters"
                         } else {
                             "Saved filters"
                         }
+                    }
 
-                    else -> filters[position - 3]
+                    else -> {
+                        filters[position - 3]
+                    }
                 }
             }
             return filters[position]

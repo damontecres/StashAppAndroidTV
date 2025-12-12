@@ -216,7 +216,9 @@ sealed class Destination(
                     throw IllegalArgumentException("Image not supported")
                 }
 
-                else -> Item(dataType, item.id)
+                else -> {
+                    Item(dataType, item.id)
+                }
             }
 
         fun getDataType(item: StashData): DataType =

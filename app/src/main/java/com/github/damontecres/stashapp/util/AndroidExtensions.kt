@@ -14,12 +14,20 @@ val DataType.defaultCardWidth
     get() =
         when (this) {
             SCENE -> 345
+
             GROUP -> 250
+
             MARKER -> 345
-            PERFORMER -> 254 // 2/3 of height
+
+            PERFORMER -> 254
+
+            // 2/3 of height
             STUDIO -> 327
+
             TAG -> 250
+
             IMAGE -> 345
+
             GALLERY -> 345
         }
 

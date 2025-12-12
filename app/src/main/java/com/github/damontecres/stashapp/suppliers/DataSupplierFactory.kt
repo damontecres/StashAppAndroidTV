@@ -35,16 +35,32 @@ class DataSupplierFactory(
         }
         if (args.override != null) {
             return when (args.override) {
-                is DataSupplierOverride.PerformerTags -> PerformerTagDataSupplier(args.override.performerId)
-                is DataSupplierOverride.GalleryPerformer -> GalleryPerformerDataSupplier(args.override.galleryId)
-                is DataSupplierOverride.GalleryTag -> GalleryTagDataSupplier(args.override.galleryId)
-                is DataSupplierOverride.GroupTags -> GroupTagDataSupplier(args.override.groupId)
-                is DataSupplierOverride.StudioTags -> StudioTagDataSupplier(args.override.studioId)
-                is DataSupplierOverride.GroupRelationship ->
+                is DataSupplierOverride.PerformerTags -> {
+                    PerformerTagDataSupplier(args.override.performerId)
+                }
+
+                is DataSupplierOverride.GalleryPerformer -> {
+                    GalleryPerformerDataSupplier(args.override.galleryId)
+                }
+
+                is DataSupplierOverride.GalleryTag -> {
+                    GalleryTagDataSupplier(args.override.galleryId)
+                }
+
+                is DataSupplierOverride.GroupTags -> {
+                    GroupTagDataSupplier(args.override.groupId)
+                }
+
+                is DataSupplierOverride.StudioTags -> {
+                    StudioTagDataSupplier(args.override.studioId)
+                }
+
+                is DataSupplierOverride.GroupRelationship -> {
                     GroupRelationshipDataSupplier(
                         args.override.groupId,
                         args.override.type,
                     )
+                }
 
                 DataSupplierOverride.Playlist -> {
                     if (args.dataType == DataType.SCENE) {
@@ -62,53 +78,61 @@ class DataSupplierFactory(
             } as StashPagingSource.DataSupplier<T, D, C>
         } else {
             return when (args.dataType) {
-                DataType.SCENE ->
+                DataType.SCENE -> {
                     SceneDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertSceneFilterType(args.objectFilter),
                     )
+                }
 
-                DataType.TAG ->
+                DataType.TAG -> {
                     TagDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertTagFilterType(args.objectFilter),
                     )
+                }
 
-                DataType.STUDIO ->
+                DataType.STUDIO -> {
                     StudioDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertStudioFilterType(args.objectFilter),
                     )
+                }
 
-                DataType.MARKER ->
+                DataType.MARKER -> {
                     MarkerDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertSceneMarkerFilterType(args.objectFilter),
                     )
+                }
 
-                DataType.IMAGE ->
+                DataType.IMAGE -> {
                     ImageDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertImageFilterType(args.objectFilter),
                     )
+                }
 
-                DataType.GALLERY ->
+                DataType.GALLERY -> {
                     GalleryDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertGalleryFilterType(args.objectFilter),
                     )
+                }
 
-                DataType.PERFORMER ->
+                DataType.PERFORMER -> {
                     PerformerDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertPerformerFilterType(args.objectFilter),
                     )
+                }
 
-                DataType.GROUP ->
+                DataType.GROUP -> {
                     GroupDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertGroupFilterType(args.objectFilter),
                     )
+                }
             } as StashPagingSource.DataSupplier<T, D, C>
         }
     }

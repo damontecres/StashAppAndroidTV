@@ -231,7 +231,9 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                             }
                         }
 
-                        DataType.GROUP, DataType.SCENE, DataType.MARKER, DataType.IMAGE -> throw IllegalArgumentException()
+                        DataType.GROUP, DataType.SCENE, DataType.MARKER, DataType.IMAGE -> {
+                            throw IllegalArgumentException()
+                        }
                     }
                 }
             }
@@ -605,7 +607,6 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                         StashAction.ADD_PERFORMER -> DataType.PERFORMER
                         StashAction.SET_STUDIO -> DataType.STUDIO
                         StashAction.ADD_GALLERY -> DataType.GALLERY
-
                         else -> throw RuntimeException("Unsupported search for type $action")
                     }
                 serverViewModel.navigationManager.navigate(

@@ -137,7 +137,7 @@ class SearchPickerFragment(
                     )
                 val results =
                     when (dataType) {
-                        DataType.GALLERY ->
+                        DataType.GALLERY -> {
                             // Cannot add an image to a zip/folder gallery, so exclude them
                             queryEngine.findGalleries(
                                 filter,
@@ -151,8 +151,11 @@ class SearchPickerFragment(
                                         ),
                                 ),
                             )
+                        }
 
-                        else -> queryEngine.find(dataType, filter)
+                        else -> {
+                            queryEngine.find(dataType, filter)
+                        }
                     }
                 resultsAdapter.addAll(0, results)
                 adapter.set(
@@ -236,7 +239,7 @@ class SearchPickerFragment(
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 val results =
                     when (dataType) {
-                        DataType.GALLERY ->
+                        DataType.GALLERY -> {
                             // Cannot add an image to a zip gallery, so exclude them
                             queryEngine.findGalleries(
                                 filter,
@@ -250,8 +253,11 @@ class SearchPickerFragment(
                                         ),
                                 ),
                             )
+                        }
 
-                        else -> queryEngine.find(dataType, filter)
+                        else -> {
+                            queryEngine.find(dataType, filter)
+                        }
                     }
                 if (results.isNotEmpty()) {
                     searchResultsAdapter.addAll(0, results)

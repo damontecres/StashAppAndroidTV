@@ -600,16 +600,28 @@ fun ImagePage(
                     onRatingChange = { viewModel.updateRating(image.id, it) },
                     addItem = { item ->
                         when (item) {
-                            is TagData -> viewModel.addTag(image.id, item.id)
-                            is PerformerData -> viewModel.addPerformer(image.id, item.id)
+                            is TagData -> {
+                                viewModel.addTag(image.id, item.id)
+                            }
+
+                            is PerformerData -> {
+                                viewModel.addPerformer(image.id, item.id)
+                            }
+
                             else -> {}
                         }
                     },
                     removeItem = { item ->
                         focusManager.moveFocus(FocusDirection.Previous)
                         when (item) {
-                            is TagData -> viewModel.removeTag(image.id, item.id)
-                            is PerformerData -> viewModel.removePerformer(image.id, item.id)
+                            is TagData -> {
+                                viewModel.removeTag(image.id, item.id)
+                            }
+
+                            is PerformerData -> {
+                                viewModel.removePerformer(image.id, item.id)
+                            }
+
                             else -> {}
                         }
                     },

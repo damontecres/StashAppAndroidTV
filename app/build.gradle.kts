@@ -1,7 +1,6 @@
 import com.android.build.gradle.internal.cxx.io.writeTextIfDifferent
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.google.protobuf.gradle.id
-import java.io.ByteArrayOutputStream
 import java.util.Base64
 import java.util.Properties
 
@@ -20,31 +19,17 @@ plugins {
     alias(libs.plugins.protobuf)
 }
 
-fun getVersionCode(): Int {
-    val stdout = ByteArrayOutputStream()
-    exec {
-        commandLine = listOf("git", "tag", "--list", "v*")
-        standardOutput = stdout
-    }
-    return stdout
-        .toString()
-        .trim()
-        .lines()
-        .size
-}
+val gitTags =
+    providers
+        .exec { commandLine("git", "tag", "--list", "v*") }
+        .standardOutput.asText
+        .get()
 
-fun getAppVersion(): String {
-    val stdout = ByteArrayOutputStream()
-    exec {
-        commandLine = listOf("git", "describe", "--tags", "--long", "--match=v*")
-        standardOutput = stdout
-    }
-    return stdout
-        .toString()
-        .trim()
-        .removePrefix("v")
-        .ifBlank { "0.0.0" }
-}
+val gitDescribe =
+    providers
+        .exec { commandLine("git", "describe", "--tags", "--long", "--match=v*") }
+        .standardOutput.asText
+        .getOrElse("v0.0.0")
 
 android {
     namespace = "com.github.damontecres.stashapp"
@@ -68,8 +53,8 @@ android {
         minSdk = 23
         targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionCode = getVersionCode()
-        versionName = getAppVersion()
+        versionCode = gitTags.trim().lines().size
+        versionName = gitDescribe.trim().removePrefix("v").ifBlank { "0.0.0" }
         vectorDrawables.useSupportLibrary = true
     }
     signingConfigs {
@@ -138,6 +123,7 @@ android {
     }
     lint {
         disable.add("MissingTranslation")
+        disable.add("LocalContextGetResourceValueCall") // TODO
     }
     room {
         schemaDirectory("$projectDir/schemas")

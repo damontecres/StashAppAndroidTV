@@ -505,7 +505,7 @@ fun StashCard(
     cardContext: CardContext = CardContext.None,
 ) {
     when (item) {
-        is SlimSceneData? ->
+        is SlimSceneData? -> {
             SceneCard(
                 uiConfig,
                 item,
@@ -515,8 +515,9 @@ fun StashCard(
                 modifier,
                 cardContext = cardContext as? CardContext.SceneCardContext,
             )
+        }
 
-        is FullSceneData? ->
+        is FullSceneData? -> {
             SceneCard(
                 uiConfig,
                 item?.asSlimeSceneData,
@@ -526,8 +527,9 @@ fun StashCard(
                 modifier,
                 cardContext = cardContext as? CardContext.SceneCardContext,
             )
+        }
 
-        is PerformerData? ->
+        is PerformerData? -> {
             PerformerCard(
                 uiConfig,
                 item,
@@ -536,8 +538,9 @@ fun StashCard(
                 getFilterAndPosition,
                 modifier,
             )
+        }
 
-        is ImageData? ->
+        is ImageData? -> {
             ImageCard(
                 uiConfig,
                 item,
@@ -546,8 +549,9 @@ fun StashCard(
                 getFilterAndPosition,
                 modifier,
             )
+        }
 
-        is GalleryData? ->
+        is GalleryData? -> {
             GalleryCard(
                 uiConfig,
                 item,
@@ -556,8 +560,9 @@ fun StashCard(
                 getFilterAndPosition,
                 modifier,
             )
+        }
 
-        is MarkerData? ->
+        is MarkerData? -> {
             MarkerCard(
                 uiConfig,
                 item,
@@ -566,8 +571,9 @@ fun StashCard(
                 getFilterAndPosition,
                 modifier,
             )
+        }
 
-        is GroupData? ->
+        is GroupData? -> {
             GroupCard(
                 uiConfig,
                 item,
@@ -577,6 +583,7 @@ fun StashCard(
                 modifier,
                 cardContext = cardContext as? CardContext.GroupCardContext,
             )
+        }
 
         is GroupRelationshipData? -> {
             GroupCard(
@@ -590,7 +597,7 @@ fun StashCard(
             )
         }
 
-        is StudioData? ->
+        is StudioData? -> {
             StudioCard(
                 uiConfig,
                 item,
@@ -599,8 +606,9 @@ fun StashCard(
                 getFilterAndPosition,
                 modifier,
             )
+        }
 
-        is TagData? ->
+        is TagData? -> {
             TagCard(
                 uiConfig,
                 item,
@@ -609,6 +617,8 @@ fun StashCard(
                 getFilterAndPosition,
                 modifier,
             )
+        }
+
         is FilterArgs -> {
             ViewAllCard(
                 filter = item,
@@ -643,7 +653,9 @@ fun StashCard(
             )
         }
 
-        else -> throw UnsupportedOperationException("Item with class ${item?.javaClass} not supported.")
+        else -> {
+            throw UnsupportedOperationException("Item with class ${item?.javaClass} not supported.")
+        }
     }
 }
 

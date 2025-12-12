@@ -69,7 +69,9 @@ class PreferencesViewModel : ViewModel() {
             val index = mutable.indexOfFirstOrNull { it.id == jobData.id }
             // Timer for removing?
             when (type) {
-                JobStatusUpdateType.ADD -> mutable.add(jobData)
+                JobStatusUpdateType.ADD -> {
+                    mutable.add(jobData)
+                }
 
                 JobStatusUpdateType.REMOVE -> {
                     if (index != null && index >= 0) {

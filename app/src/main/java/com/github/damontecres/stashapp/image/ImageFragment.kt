@@ -213,44 +213,54 @@ class ImageFragment :
                 keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ||
                 keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
                 keyCode == KeyEvent.KEYCODE_DPAD_LEFT ||
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                 (
-                    keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT ||
-                        keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
-                        keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT ||
-                        keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                        (
+                            keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT ||
+                                keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
+                                keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT ||
+                                keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
+                        )
                 )
 
         fun isLeft(keyCode: Int): Boolean =
             keyCode == KeyEvent.KEYCODE_DPAD_LEFT ||
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                 (
-                    keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT ||
-                        keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                        (
+                            keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT ||
+                                keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
+                        )
                 )
 
         fun isRight(keyCode: Int): Boolean =
             keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ||
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                 (
-                    keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
-                        keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                        (
+                            keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
+                                keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT
+                        )
                 )
 
         fun isUp(keyCode: Int): Boolean =
             keyCode == KeyEvent.KEYCODE_DPAD_UP ||
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                 (
-                    keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT ||
-                        keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                        (
+                            keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT ||
+                                keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
+                        )
                 )
 
         fun isDown(keyCode: Int): Boolean =
             keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                 (
-                    keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
-                        keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                        (
+                            keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
+                                keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT
+                        )
                 )
     }
 }
