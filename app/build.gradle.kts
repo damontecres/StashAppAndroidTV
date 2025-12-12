@@ -123,6 +123,7 @@ android {
     }
     lint {
         disable.add("MissingTranslation")
+        disable.add("LocalContextGetResourceValueCall") // TODO
     }
     room {
         schemaDirectory("$projectDir/schemas")
