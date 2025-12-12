@@ -207,6 +207,7 @@ fun FilterParser.convertTagFilterType(f: Any?): TagFilterType? =
             parent_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["parent_count"])),
             child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["child_count"])),
             ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
+            stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter["stash_id_endpoint"])),
             scenes_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scenes_filter"])),
             images_filter = Optional.presentIfNotNull(convertImageFilterType(filter["images_filter"])),
             galleries_filter = Optional.presentIfNotNull(convertGalleryFilterType(filter["galleries_filter"])),
