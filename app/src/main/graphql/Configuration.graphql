@@ -30,6 +30,7 @@ query Configuration {
       showStudioAsText
       customLocalesEnabled
       customLocales
+      sfwContentMode
     }
     ui
   }

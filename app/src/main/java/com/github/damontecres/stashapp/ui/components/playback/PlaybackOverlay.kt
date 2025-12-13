@@ -330,6 +330,7 @@ fun PlaybackOverlay(
                     playbackSpeed = playbackSpeed,
                     scale = scale,
                     seekBarIntervals = uiConfig.preferences.playbackPreferences.seekBarSteps,
+                    sfwMode = uiConfig.sfwMode,
                 )
             }
             if (markers.isNotEmpty()) {
@@ -634,6 +635,7 @@ private fun PlaybackOverlayPreview() {
                     readOnlyModeEnabled = false,
                     showCardProgress = true,
                     playSoundOnFocus = true,
+                    sfwMode = false,
                     cardSettings =
                         CardUiSettings(
                             maxSearchResults = 25,

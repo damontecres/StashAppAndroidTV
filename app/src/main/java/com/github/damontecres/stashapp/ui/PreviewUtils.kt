@@ -107,6 +107,7 @@ val uiConfigPreview =
         readOnlyModeEnabled = false,
         showCardProgress = true,
         playSoundOnFocus = true,
+        sfwMode = false,
         cardSettings =
             CardUiSettings(
                 maxSearchResults = 25,
