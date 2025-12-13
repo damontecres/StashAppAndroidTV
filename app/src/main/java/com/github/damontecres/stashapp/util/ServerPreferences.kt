@@ -121,9 +121,11 @@ class ServerPreferences(
         }
         val useRestring =
             config.configuration.`interface`.sfwContentMode ||
-                config.configuration.`interface`.customLocalesEnabled == true &&
-                config.configuration.`interface`.customLocales
-                    .isNotNullOrBlank()
+                (
+                    config.configuration.`interface`.customLocalesEnabled == true &&
+                        config.configuration.`interface`.customLocales
+                            .isNotNullOrBlank()
+                )
         if (useRestring) {
             Restring.clear()
             try {
