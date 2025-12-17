@@ -22,7 +22,7 @@ fun oCounterAction(
             StashCoroutineExceptionHandler(
                 Toast.makeText(
                     cardView.context,
-                    cardView.context.getString(R.string.failed_o_counter),
+                    cardView.context.getString(R.string.failed_update),
                     Toast.LENGTH_SHORT,
                 ),
             ),

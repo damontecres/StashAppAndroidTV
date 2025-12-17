@@ -65,6 +65,7 @@ fun TagCard(
         },
         description = {
             IconRowText(
+                sfwMode = uiConfig.sfwMode,
                 dataTypeMap,
                 null,
                 Modifier
