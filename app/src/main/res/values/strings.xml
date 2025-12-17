@@ -36,7 +36,7 @@
 
     <string name="go_to">Go to</string>
     <string name="go_to_scene">Go to scene</string>
-    <string name="failed_o_counter">Failed to update o-counter</string>
+    <string name="failed_update">Failed to update</string>
     <string name="advanced_settings">Advanced Settings</string>
     <string name="home">Home</string>
 
