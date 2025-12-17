@@ -134,6 +134,8 @@ class ServerPreferences(
                     Restring.putStrings(
                         Restring.locale,
                         mapOf(
+                            "stashapp_stats_total_o_count" to
+                                context.getString(R.string.stashapp_stats_total_o_count_sfw),
                             "stashapp_o_count" to
                                 context.getString(R.string.stashapp_o_count_sfw),
                             "stashapp_last_o_at" to
