@@ -38,6 +38,7 @@ import com.github.damontecres.stashapp.ui.components.OCounterButton
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun PlayButtons(
+    sfwMode: Boolean,
     resumePosition: Long,
     oCount: Int,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
@@ -105,6 +106,7 @@ fun PlayButtons(
         // O-Counter
         item {
             OCounterButton(
+                sfwMode = sfwMode,
                 oCount = oCount,
                 onClick = oCounterOnClick,
                 onLongClick = oCounterOnLongClick,
@@ -190,6 +192,7 @@ private fun PlayButtonsPreview() {
             focusRequester = remember { FocusRequester() },
             alwaysStartFromBeginning = false,
             showEditButton = true,
+            sfwMode = false,
             modifier = Modifier,
         )
     }

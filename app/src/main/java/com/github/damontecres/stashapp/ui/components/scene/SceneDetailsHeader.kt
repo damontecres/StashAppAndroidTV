@@ -164,6 +164,7 @@ fun SceneDetailsHeader(
                 },
                 alwaysStartFromBeginning = alwaysStartFromBeginning,
                 showEditButton = showEditButton,
+                sfwMode = uiConfig.sfwMode,
                 modifier = Modifier.padding(vertical = 16.dp),
             )
         }

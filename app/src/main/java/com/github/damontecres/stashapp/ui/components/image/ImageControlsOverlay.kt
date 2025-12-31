@@ -43,6 +43,7 @@ import kotlinx.coroutines.launch
 @OptIn(UnstableApi::class)
 @Composable
 fun ImageControlsOverlay(
+    sfwMode: Boolean,
     isImageClip: Boolean,
     oCount: Int,
     onZoom: (Float) -> Unit,
@@ -150,6 +151,7 @@ fun ImageControlsOverlay(
         // O-Counter
         item {
             OCounterButton(
+                sfwMode = sfwMode,
                 oCount = oCount,
                 onClick = oCounterOnClick,
                 onLongClick = oCounterOnLongClick,
@@ -214,6 +216,7 @@ fun ImageControlButton(
 private fun ImageControlsOverlayPreview() {
     PreviewTheme {
         ImageControlsOverlay(
+            sfwMode = false,
             isImageClip = false,
             oCount = 10,
             onZoom = {},
