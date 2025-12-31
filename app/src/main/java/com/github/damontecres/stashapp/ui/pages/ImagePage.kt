@@ -18,6 +18,7 @@ import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -88,8 +89,10 @@ import com.github.damontecres.stashapp.ui.components.playback.isEnterKey
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.findActivity
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.keepScreenOn
 import com.github.damontecres.stashapp.util.maxFileSize
 import kotlin.math.abs
 
@@ -284,6 +287,12 @@ fun ImagePage(
     }
     LaunchedEffect(slideshowActive) {
         player.repeatMode = if (slideshowEnabled) Player.REPEAT_MODE_OFF else Player.REPEAT_MODE_ONE
+        context.findActivity()?.keepScreenOn(slideshowActive)
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            context.findActivity()?.keepScreenOn(false)
+        }
     }
 
     var longPressing by remember { mutableStateOf(false) }
