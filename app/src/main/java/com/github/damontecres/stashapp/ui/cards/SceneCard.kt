@@ -89,6 +89,7 @@ fun SceneCard(
         },
         description = {
             IconRowText(
+                sfwMode = uiConfig.sfwMode,
                 dataTypeMap,
                 item?.o_counter ?: -1,
                 Modifier

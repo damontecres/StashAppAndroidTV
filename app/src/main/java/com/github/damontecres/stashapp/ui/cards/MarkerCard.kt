@@ -85,6 +85,7 @@ fun MarkerCard(
         },
         description = {
             IconRowText(
+                sfwMode = uiConfig.sfwMode,
                 dataTypeMap,
                 null,
                 Modifier

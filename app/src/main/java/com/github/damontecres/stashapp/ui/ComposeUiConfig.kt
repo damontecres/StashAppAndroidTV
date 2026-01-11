@@ -18,6 +18,7 @@ data class ComposeUiConfig(
     val readOnlyModeEnabled: Boolean,
     val showCardProgress: Boolean,
     val playSoundOnFocus: Boolean,
+    val sfwMode: Boolean,
     val persistVideoFilters: Boolean = true,
     val cardSettings: CardUiSettings,
 ) {
@@ -46,6 +47,7 @@ data class ComposeUiConfig(
                 playSoundOnFocus = preferences.interfacePreferences.playMovementSounds,
                 readOnlyModeEnabled = preferences.pinPreferences.readOnlyPin.isNotNullOrBlank(),
                 persistVideoFilters = preferences.playbackPreferences.saveVideoFilters,
+                sfwMode = server.serverPreferences.sfwMode,
             )
     }
 }

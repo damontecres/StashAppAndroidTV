@@ -677,7 +677,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 StashCoroutineExceptionHandler(
                     Toast.makeText(
                         requireContext(),
-                        getString(R.string.failed_o_counter),
+                        getString(R.string.failed_update),
                         Toast.LENGTH_SHORT,
                     ),
                 ),

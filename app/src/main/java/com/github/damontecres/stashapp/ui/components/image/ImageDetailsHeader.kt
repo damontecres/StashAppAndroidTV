@@ -291,6 +291,7 @@ fun ImageDetailsHeader(
             oCounterOnLongClick = oCounterOnLongClick,
             playPauseOnClick = playPauseState::onClick,
             isPlaying = playPauseState.showPlay,
+            sfwMode = uiConfig.sfwMode,
             modifier =
                 Modifier
                     .fillMaxWidth(),

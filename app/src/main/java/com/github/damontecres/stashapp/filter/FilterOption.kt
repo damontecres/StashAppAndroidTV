@@ -174,7 +174,7 @@ private val SceneFilterOptions =
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
             "o_counter",
-            R.string.stashapp_o_counter,
+            R.string.stashapp_o_count,
             null,
             IntCriterionInput::class,
             { it.o_counter },
@@ -493,7 +493,7 @@ private val PerformerFilterOptions =
         ),
         FilterOption<PerformerFilterType, IntCriterionInput>(
             "o_counter",
-            R.string.stashapp_o_counter,
+            R.string.stashapp_o_count,
             null,
             IntCriterionInput::class,
             { it.o_counter },
@@ -663,7 +663,7 @@ private val ImageFilterOptions =
         ),
         FilterOption<ImageFilterType, IntCriterionInput>(
             "o_counter",
-            R.string.stashapp_o_counter,
+            R.string.stashapp_o_count,
             null,
             IntCriterionInput::class,
             { it.o_counter },
@@ -1215,6 +1215,15 @@ private val GroupFilterOptions =
             IntCriterionInput::class,
             { it.duration },
             { filter, value -> filter.copy(duration = value) },
+            TwoValueCriterionModifiers,
+        ),
+        FilterOption<GroupFilterType, IntCriterionInput>(
+            "o_counter",
+            R.string.stashapp_o_count,
+            null,
+            IntCriterionInput::class,
+            { it.o_counter },
+            { filter, value -> filter.copy(o_counter = value) },
             TwoValueCriterionModifiers,
         ),
         FilterOption<GroupFilterType, StringCriterionInput>(

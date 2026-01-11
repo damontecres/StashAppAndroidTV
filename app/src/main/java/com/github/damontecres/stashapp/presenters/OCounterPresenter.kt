@@ -12,7 +12,7 @@ class OCounterPresenter(
     ) {
         cardView.blackImageBackground = false
 
-        val text = cardView.context.getString(R.string.stashapp_o_counter)
+        val text = cardView.context.getString(R.string.stashapp_o_count)
         cardView.titleText = "$text (${item.count})"
         cardView.setMainImageDimensions(ActionPresenter.CARD_WIDTH, ActionPresenter.CARD_HEIGHT)
         cardView.imageView.setPadding(

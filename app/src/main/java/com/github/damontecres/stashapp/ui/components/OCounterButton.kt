@@ -18,15 +18,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackButton
+import com.github.damontecres.stashapp.ui.components.playback.PlaybackFaButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.cos
@@ -36,6 +40,7 @@ import kotlin.random.Random
 
 @Composable
 fun OCounterButton(
+    sfwMode: Boolean,
     oCount: Int,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -43,6 +48,7 @@ fun OCounterButton(
     enabled: Boolean = true,
 ) {
     OCounterButtonWrapper(
+        sfwMode = sfwMode,
         originalOnClick = onClick,
         modifier = modifier,
     ) { newOnClick ->
@@ -52,11 +58,20 @@ fun OCounterButton(
             enabled = enabled,
             modifier = Modifier,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.sweat_drops),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-            )
+            if (sfwMode) {
+                Text(
+                    text = stringResource(R.string.fa_thumbs_up),
+                    fontSize = 20.sp,
+                    fontFamily = FontAwesome,
+                    style = MaterialTheme.typography.titleSmall,
+                )
+            } else {
+                Icon(
+                    painter = painterResource(R.drawable.sweat_drops),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
             Spacer(Modifier.size(8.dp))
             Text(
                 text = oCount.toString(),
@@ -68,27 +83,39 @@ fun OCounterButton(
 
 @Composable
 fun PlaybackOCountButton(
+    sfwMode: Boolean,
     onClick: () -> Unit,
     onControllerInteraction: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
     OCounterButtonWrapper(
+        sfwMode = sfwMode,
         originalOnClick = onClick,
         modifier = modifier,
     ) { newOnClick ->
-        PlaybackButton(
-            iconRes = R.drawable.sweat_drops,
-            onClick = newOnClick,
-            enabled = enabled,
-            onControllerInteraction = onControllerInteraction,
-        )
+        if (sfwMode) {
+            PlaybackFaButton(
+                iconRes = R.string.fa_thumbs_up,
+                onClick = newOnClick,
+                enabled = enabled,
+                onControllerInteraction = onControllerInteraction,
+            )
+        } else {
+            PlaybackButton(
+                iconRes = R.drawable.sweat_drops,
+                onClick = newOnClick,
+                enabled = enabled,
+                onControllerInteraction = onControllerInteraction,
+            )
+        }
     }
 }
 
 // Based on https://gist.github.com/ardakazanci/1297a44276d6a0be06c1227cb446dead
 @Composable
 private fun OCounterButtonWrapper(
+    sfwMode: Boolean,
     originalOnClick: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable (
@@ -110,25 +137,29 @@ private fun OCounterButtonWrapper(
     val scale = remember { Animatable(1f) }
 
     Box(contentAlignment = Alignment.Center, modifier = modifier) {
-        floatingList.forEach { id ->
-            FloatingIcon(
-                key = id,
-                config = config,
-                onAnimationEnd = { floatingList.remove(id) },
-            )
-        }
-        content.invoke {
-            scope.launch {
-                scale.animateTo(0.85f, tween(100, easing = LinearEasing))
-                scale.animateTo(
-                    1f,
-                    spring(dampingRatio = Spring.DampingRatioHighBouncy),
+        if (!sfwMode) {
+            floatingList.forEach { id ->
+                FloatingIcon(
+                    key = id,
+                    config = config,
+                    onAnimationEnd = { floatingList.remove(id) },
                 )
             }
-            repeat(count) { index ->
+        }
+        content.invoke {
+            if (!sfwMode) {
                 scope.launch {
-                    delay(index * config.delay)
-                    floatingList.add(index + Random.nextInt(1000))
+                    scale.animateTo(0.85f, tween(100, easing = LinearEasing))
+                    scale.animateTo(
+                        1f,
+                        spring(dampingRatio = Spring.DampingRatioHighBouncy),
+                    )
+                }
+                repeat(count) { index ->
+                    scope.launch {
+                        delay(index * config.delay)
+                        floatingList.add(index + Random.nextInt(1000))
+                    }
                 }
             }
             originalOnClick.invoke()

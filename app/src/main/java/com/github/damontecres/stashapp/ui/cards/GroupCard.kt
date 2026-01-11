@@ -76,8 +76,9 @@ fun GroupCard(
         description = { focused ->
             item?.let {
                 IconRowText(
+                    sfwMode = uiConfig.sfwMode,
                     dataTypeMap,
-                    null,
+                    item.o_counter,
                     Modifier
                         .enableMarquee(focused)
                         .align(Alignment.Center),
@@ -101,6 +102,9 @@ fun GroupCard(
                             withStyle(SpanStyle(fontFamily = FontAwesome)) {
                                 append(stringResource(R.string.fa_arrow_down_long))
                             }
+                        }
+                        if (item.o_counter != null && item.o_counter > 0) {
+                            append(" ")
                         }
                     }
                 }

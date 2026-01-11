@@ -1,8 +1,11 @@
 package com.github.damontecres.stashapp.util
 
 import com.apollographql.apollo.api.Optional
+import com.github.damontecres.stashapp.api.type.FileFilterType
+import com.github.damontecres.stashapp.api.type.FolderFilterType
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.GroupFilterType
+import com.github.damontecres.stashapp.api.type.ImageFileFilterInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
@@ -10,6 +13,7 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
+import com.github.damontecres.stashapp.api.type.VideoFileFilterInput
 
 fun FilterParser.convertPerformerFilterType(f: Any?): PerformerFilterType? =
     if (f != null && f is PerformerFilterType) {
@@ -54,6 +58,7 @@ fun FilterParser.convertPerformerFilterType(f: Any?): PerformerFilterType? =
             weight = Optional.presentIfNotNull(convertIntCriterionInput(filter["weight"])),
             death_year = Optional.presentIfNotNull(convertIntCriterionInput(filter["death_year"])),
             studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["studios"])),
+            groups = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["groups"])),
             performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter["performers"])),
             ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
             birthdate = Optional.presentIfNotNull(convertDateCriterionInput(filter["birthdate"])),
@@ -133,6 +138,7 @@ fun FilterParser.convertSceneFilterType(f: Any?): SceneFilterType? =
             movies_filter = Optional.presentIfNotNull(convertMovieFilterType(filter["movies_filter"])),
             groups_filter = Optional.presentIfNotNull(convertGroupFilterType(filter["groups_filter"])),
             markers_filter = Optional.presentIfNotNull(convertSceneMarkerFilterType(filter["markers_filter"])),
+            files_filter = Optional.presentIfNotNull(convertFileFilterType(filter["files_filter"])),
         )
     } else {
         null
@@ -201,6 +207,7 @@ fun FilterParser.convertTagFilterType(f: Any?): TagFilterType? =
             parent_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["parent_count"])),
             child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["child_count"])),
             ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
+            stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter["stash_id_endpoint"])),
             scenes_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scenes_filter"])),
             images_filter = Optional.presentIfNotNull(convertImageFilterType(filter["images_filter"])),
             galleries_filter = Optional.presentIfNotNull(convertGalleryFilterType(filter["galleries_filter"])),
@@ -234,6 +241,7 @@ fun FilterParser.convertGroupFilterType(f: Any?): GroupFilterType? =
             date = Optional.presentIfNotNull(convertDateCriterionInput(filter["date"])),
             created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
             updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+            o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter["o_counter"])),
             containing_groups = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["containing_groups"])),
             sub_groups = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["sub_groups"])),
             containing_group_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["containing_group_count"])),
@@ -307,6 +315,7 @@ fun FilterParser.convertImageFilterType(f: Any?): ImageFilterType? =
             performers_filter = Optional.presentIfNotNull(convertPerformerFilterType(filter["performers_filter"])),
             studios_filter = Optional.presentIfNotNull(convertStudioFilterType(filter["studios_filter"])),
             tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
+            files_filter = Optional.presentIfNotNull(convertFileFilterType(filter["files_filter"])),
         )
     } else {
         null
@@ -354,6 +363,8 @@ fun FilterParser.convertGalleryFilterType(f: Any?): GalleryFilterType? =
             performers_filter = Optional.presentIfNotNull(convertPerformerFilterType(filter["performers_filter"])),
             studios_filter = Optional.presentIfNotNull(convertStudioFilterType(filter["studios_filter"])),
             tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
+            files_filter = Optional.presentIfNotNull(convertFileFilterType(filter["files_filter"])),
+            folders_filter = Optional.presentIfNotNull(convertFolderFilterType(filter["folders_filter"])),
         )
     } else {
         null
@@ -384,6 +395,96 @@ fun FilterParser.convertMovieFilterType(f: Any?): MovieFilterType? =
             updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
             scenes_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scenes_filter"])),
             studios_filter = Optional.presentIfNotNull(convertStudioFilterType(filter["studios_filter"])),
+        )
+    } else {
+        null
+    }
+
+fun FilterParser.convertFileFilterType(f: Any?): FileFilterType? =
+    if (f != null && f is FileFilterType) {
+        f
+    } else if (f != null) {
+        val filter = f as Map<String, Map<String, *>>
+        FileFilterType(
+            AND = Optional.presentIfNotNull(convertFileFilterType(filter["AND"])),
+            OR = Optional.presentIfNotNull(convertFileFilterType(filter["OR"])),
+            NOT = Optional.presentIfNotNull(convertFileFilterType(filter["NOT"])),
+            path = Optional.presentIfNotNull(convertStringCriterionInput(filter["path"])),
+            basename = Optional.presentIfNotNull(convertStringCriterionInput(filter["basename"])),
+            dir = Optional.presentIfNotNull(convertStringCriterionInput(filter["dir"])),
+            parent_folder = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["parent_folder"])),
+            zip_file = Optional.presentIfNotNull(convertMultiCriterionInput(filter["zip_file"])),
+            mod_time = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["mod_time"])),
+            duplicated = Optional.presentIfNotNull(convertPHashDuplicationCriterionInput(filter["duplicated"])),
+            video_file_filter = Optional.presentIfNotNull(convertVideoFileFilterInput(filter["video_file_filter"])),
+            image_file_filter = Optional.presentIfNotNull(convertImageFileFilterInput(filter["image_file_filter"])),
+            scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["scene_count"])),
+            image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["image_count"])),
+            gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
+            scenes_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scenes_filter"])),
+            images_filter = Optional.presentIfNotNull(convertImageFilterType(filter["images_filter"])),
+            galleries_filter = Optional.presentIfNotNull(convertGalleryFilterType(filter["galleries_filter"])),
+            created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
+            updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+        )
+    } else {
+        null
+    }
+
+fun FilterParser.convertFolderFilterType(f: Any?): FolderFilterType? =
+    if (f != null && f is FolderFilterType) {
+        f
+    } else if (f != null) {
+        val filter = f as Map<String, Map<String, *>>
+        FolderFilterType(
+            AND = Optional.presentIfNotNull(convertFolderFilterType(filter["AND"])),
+            OR = Optional.presentIfNotNull(convertFolderFilterType(filter["OR"])),
+            NOT = Optional.presentIfNotNull(convertFolderFilterType(filter["NOT"])),
+            path = Optional.presentIfNotNull(convertStringCriterionInput(filter["path"])),
+            parent_folder = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["parent_folder"])),
+            zip_file = Optional.presentIfNotNull(convertMultiCriterionInput(filter["zip_file"])),
+            mod_time = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["mod_time"])),
+            gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
+            files_filter = Optional.presentIfNotNull(convertFileFilterType(filter["files_filter"])),
+            galleries_filter = Optional.presentIfNotNull(convertGalleryFilterType(filter["galleries_filter"])),
+            created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
+            updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+        )
+    } else {
+        null
+    }
+
+fun FilterParser.convertVideoFileFilterInput(f: Any?): VideoFileFilterInput? =
+    if (f != null && f is VideoFileFilterInput) {
+        f
+    } else if (f != null) {
+        val filter = f as Map<String, Map<String, *>>
+        VideoFileFilterInput(
+            resolution = Optional.presentIfNotNull(convertResolutionCriterionInput(filter["resolution"])),
+            orientation = Optional.presentIfNotNull(convertOrientationCriterionInput(filter["orientation"])),
+            framerate = Optional.presentIfNotNull(convertIntCriterionInput(filter["framerate"])),
+            bitrate = Optional.presentIfNotNull(convertIntCriterionInput(filter["bitrate"])),
+            format = Optional.presentIfNotNull(convertStringCriterionInput(filter["format"])),
+            video_codec = Optional.presentIfNotNull(convertStringCriterionInput(filter["video_codec"])),
+            audio_codec = Optional.presentIfNotNull(convertStringCriterionInput(filter["audio_codec"])),
+            duration = Optional.presentIfNotNull(convertIntCriterionInput(filter["duration"])),
+            captions = Optional.presentIfNotNull(convertStringCriterionInput(filter["captions"])),
+            interactive = Optional.presentIfNotNull(convertBoolean(filter["interactive"])),
+            interactive_speed = Optional.presentIfNotNull(convertIntCriterionInput(filter["interactive_speed"])),
+        )
+    } else {
+        null
+    }
+
+fun FilterParser.convertImageFileFilterInput(f: Any?): ImageFileFilterInput? =
+    if (f != null && f is ImageFileFilterInput) {
+        f
+    } else if (f != null) {
+        val filter = f as Map<String, Map<String, *>>
+        ImageFileFilterInput(
+            format = Optional.presentIfNotNull(convertStringCriterionInput(filter["format"])),
+            resolution = Optional.presentIfNotNull(convertResolutionCriterionInput(filter["resolution"])),
+            orientation = Optional.presentIfNotNull(convertOrientationCriterionInput(filter["orientation"])),
         )
     } else {
         null
