@@ -11,6 +11,7 @@ import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.proto.PlaybackBackend
 import com.github.damontecres.stashapp.proto.PlaybackFinishBehavior
 import com.github.damontecres.stashapp.proto.PlaybackHttpClient
 import com.github.damontecres.stashapp.proto.Resolution
@@ -1340,6 +1341,37 @@ sealed interface StashPreference<T> {
                     editor.putString(
                         context.getString(R.string.pref_key_playback_http_client),
                         string,
+                    )
+                },
+            )
+
+        val PlaybackBackendPref =
+            StashChoicePreference<PlaybackBackend>(
+                title = R.string.playback_backend,
+                prefKey = R.string.pref_key_playback_backend,
+                defaultValue = PlaybackBackend.EXO_PLAYER,
+                displayValues = R.array.playback_http_client,
+                indexToValue = { PlaybackBackend.forNumber(it) },
+                valueToIndex = { it.number },
+                getter = { it.playbackPreferences.playbackBackend },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences { playbackBackend = value }
+                },
+                prefGetter = { context: Context, prefs: SharedPreferences ->
+                    val value =
+                        prefs.getString(
+                            context.getString(R.string.pref_key_playback_backend),
+                            null,
+                        )
+                    when (value?.lowercase()) {
+                        "mpv" -> PlaybackBackend.MPV
+                        else -> PlaybackBackend.EXO_PLAYER
+                    }
+                },
+                prefSetter = { context: Context, editor: SharedPreferences.Editor, value: PlaybackBackend ->
+                    editor.putString(
+                        context.getString(R.string.pref_key_playback_http_client),
+                        value.name.lowercase(),
                     )
                 },
             )

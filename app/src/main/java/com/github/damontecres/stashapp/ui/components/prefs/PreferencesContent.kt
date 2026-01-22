@@ -157,6 +157,7 @@ val advancedPreferences =
         PreferenceGroup(
             R.string.advanced_playback,
             listOf(
+                StashPreference.PlaybackBackendPref,
                 StashPreference.PlaybackDebugInfo,
                 StashPreference.PlaybackDebugLogging,
                 StashPreference.PlaybackStreamingClient,

@@ -99,6 +99,11 @@ enum PlaybackHttpClient{
   BUILTIN = 1;
 }
 
+enum PlaybackBackend{
+  EXO_PLAYER = 0;
+  MPV = 1;
+}
+
 message PlaybackPreferences {
   int64 skip_forward_ms = 1;
   int64 skip_backward_ms = 2;
@@ -119,6 +124,7 @@ message PlaybackPreferences {
   repeated string direct_play_video = 16;
   repeated string direct_play_audio = 17;
   repeated string direct_play_format = 18;
+  PlaybackBackend playback_backend = 19;
 }
 
 message CachePreferences {

@@ -38,6 +38,7 @@
     <string name="pref_key_show_dpad_skip" translatable="false">playback.showDpadSkip</string>
     <string name="pref_key_playback_debug_logging" translatable="false">playback.debug.logging</string>
     <string name="pref_key_playback_http_client" translatable="false">playback.http.client</string>
+    <string name="pref_key_playback_backend" translatable="false">playback.backend</string>
     <string name="pref_key_playback_skip_left_right" translatable="false">skipWithDpad</string>
     <string name="pref_key_playback_next_up_down" translatable="false">playback.nextWithUpDown</string>
     <string name="playback_http_client_default" translatable="false">default</string>
@@ -45,6 +46,10 @@
     <string-array name="playback_http_client" translatable="false">
         <item>@string/playback_http_client_okhttp</item>
         <item>@string/playback_http_client_default</item>
+    </string-array>
+    <string-array name="playback_backend" translatable="false">
+        <item>ExoPlayer</item>
+        <item>MPV</item>
     </string-array>
     <string name="pref_key_playback_start_muted" translatable="false">playback.startMuted</string>
     <string name="pref_key_playback_always_transcode" translatable="false">playback.alwaysTranscode</string>
