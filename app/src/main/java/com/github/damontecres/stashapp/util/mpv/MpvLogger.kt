@@ -24,30 +24,30 @@ object Timber {
     fun wtf(
         format: String,
         vararg args: Any?,
-    ) = Log.wtf("MPV", String.format(format, args))
+    ) = Log.wtf("MPV", String.format(format, *args))
 
     fun e(
         format: String,
         vararg args: Any?,
-    ) = Log.e("MPV", String.format(format, args))
+    ) = Log.e("MPV", String.format(format, *args))
 
     fun w(
         format: String,
         vararg args: Any?,
-    ) = Log.w("MPV", String.format(format, args))
+    ) = Log.w("MPV", String.format(format, *args))
 
     fun i(
         format: String,
         vararg args: Any?,
-    ) = Log.i("MPV", String.format(format, args))
+    ) = Log.i("MPV", String.format(format, *args))
 
     fun d(
         format: String,
         vararg args: Any?,
-    ) = Log.d("MPV", String.format(format, args))
+    ) = Log.d("MPV", String.format(format, *args))
 
     fun v(
         format: String,
         vararg args: Any?,
-    ) = Log.v("MPV", String.format(format, args))
+    ) = Log.v("MPV", String.format(format, *args))
 }

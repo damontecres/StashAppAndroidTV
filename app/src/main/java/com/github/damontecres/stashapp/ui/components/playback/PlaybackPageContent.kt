@@ -370,7 +370,7 @@ val playbackScaleOptions =
 @Composable
 fun PlaybackPageContent(
     server: StashServer,
-    player: ExoPlayer,
+    player: Player,
     playlist: List<MediaItem>,
     startIndex: Int,
     uiConfig: ComposeUiConfig,
@@ -635,7 +635,7 @@ fun PlaybackPageContent(
         player.prepare()
         if (useVideoFilters) {
             Log.d(TAG, "Enabling video effects")
-            player.setVideoEffects(listOf())
+            (player as? ExoPlayer)?.setVideoEffects(listOf())
         }
     }
 
@@ -927,7 +927,7 @@ fun PlaybackPageContent(
         videoFilter?.let {
             val effectList = it.createEffectList()
             Log.d(TAG, "Applying ${effectList.size} effects")
-            player.setVideoEffects(effectList)
+            (player as? ExoPlayer)?.setVideoEffects(effectList)
 
             AnimatedVisibility(showFilterDialog) {
                 ImageFilterDialog(
@@ -1069,8 +1069,9 @@ class PlaybackKeyHandler(
                 }
 
                 Key.MediaPlayPause -> {
+                    val wasPlaying = player.isPlaying
                     Util.handlePlayPauseButtonAction(player)
-                    if (!player.isPlaying) {
+                    if (wasPlaying) {
                         controllerViewState.showControls()
                     }
                 }

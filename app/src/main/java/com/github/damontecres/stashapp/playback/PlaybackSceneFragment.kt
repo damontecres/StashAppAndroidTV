@@ -10,6 +10,7 @@ import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
@@ -121,7 +122,9 @@ class PlaybackSceneFragment : PlaybackFragment() {
 
             player!!.also { exoPlayer ->
                 if (scene.streams.isNotEmpty()) {
-                    maybeSetupVideoEffects(exoPlayer)
+                    if (exoPlayer is ExoPlayer) {
+                        maybeSetupVideoEffects(exoPlayer)
+                    }
                     exoPlayer.setMediaItem(
                         buildMediaItem(requireContext(), streamDecision, scene),
                         if (position > 0) position else C.TIME_UNSET,

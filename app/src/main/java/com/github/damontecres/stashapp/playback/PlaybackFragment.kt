@@ -39,6 +39,7 @@ import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.ThrottledLiveData
+import com.github.damontecres.stashapp.isReleased
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.KeyEventDispatcher
@@ -104,7 +105,7 @@ abstract class PlaybackFragment(
      */
     protected abstract fun Player.postSetupPlayer()
 
-    var player: ExoPlayer? = null
+    var player: Player? = null
         private set
     protected lateinit var videoView: StashPlayerView
     protected lateinit var previewImageView: ImageView
@@ -151,7 +152,7 @@ abstract class PlaybackFragment(
         return false
     }
 
-    private fun preparePlayer(): ExoPlayer =
+    private fun preparePlayer(): Player =
         StashExoPlayer
             .getInstance(
                 requireContext(),
@@ -323,7 +324,7 @@ abstract class PlaybackFragment(
                 Log.v(TAG, "Got new VideoFilter: $vf")
                 val effectList = vf?.createEffectList().orEmpty()
                 Log.d(TAG, "Applying ${effectList.size} effects")
-                player?.setVideoEffects(effectList)
+                (player as? ExoPlayer)?.setVideoEffects(effectList)
             }
         }
     }

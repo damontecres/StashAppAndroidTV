@@ -1350,7 +1350,7 @@ sealed interface StashPreference<T> {
                 title = R.string.playback_backend,
                 prefKey = R.string.pref_key_playback_backend,
                 defaultValue = PlaybackBackend.EXO_PLAYER,
-                displayValues = R.array.playback_http_client,
+                displayValues = R.array.playback_backend,
                 indexToValue = { PlaybackBackend.forNumber(it) },
                 valueToIndex = { it.number },
                 getter = { it.playbackPreferences.playbackBackend },
@@ -1370,7 +1370,7 @@ sealed interface StashPreference<T> {
                 },
                 prefSetter = { context: Context, editor: SharedPreferences.Editor, value: PlaybackBackend ->
                     editor.putString(
-                        context.getString(R.string.pref_key_playback_http_client),
+                        context.getString(R.string.pref_key_playback_backend),
                         value.name.lowercase(),
                     )
                 },

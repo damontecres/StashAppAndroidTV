@@ -100,6 +100,7 @@ fun PlaybackPage(
                     }
                 val httpClient = uiConfig.preferences.playbackPreferences.playbackHttpClient
                 val debugLogging = uiConfig.preferences.playbackPreferences.debugLoggingEnabled
+                val backend = uiConfig.preferences.playbackPreferences.playbackBackend
                 StashExoPlayer
                     .getInstance(
                         context,
@@ -107,6 +108,7 @@ fun PlaybackPage(
                         skipParams,
                         httpClient.name,
                         debugLogging,
+                        backend,
                     ).apply {
                         repeatMode = Player.REPEAT_MODE_OFF
                         playWhenReady = true

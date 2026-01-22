@@ -2,7 +2,7 @@
 
 #include <jni.h>
 
-#define jni_func_name(name) Java_com_github_damontecres_wholphin_util_mpv_MPVLib_##name
+#define jni_func_name(name) Java_com_github_damontecres_stashapp_util_mpv_MPVLib_##name
 #define jni_func(return_type, name, ...) JNIEXPORT return_type JNICALL jni_func_name(name) (JNIEnv *env, jobject obj, ##__VA_ARGS__)
 
 bool acquire_jni_env(JavaVM *vm, JNIEnv **env);
