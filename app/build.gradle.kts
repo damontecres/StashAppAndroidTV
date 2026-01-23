@@ -86,6 +86,10 @@ android {
                 "proguard-rules.pro",
             )
             isDebuggable = false
+
+            if (shouldSign) {
+                signingConfig = signingConfigs.getByName("ci")
+            }
         }
         debug {
             isMinifyEnabled = false
