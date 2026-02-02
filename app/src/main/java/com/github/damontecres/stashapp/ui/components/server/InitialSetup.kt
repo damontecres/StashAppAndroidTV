@@ -1,11 +1,15 @@
 package com.github.damontecres.stashapp.ui.components.server
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -18,21 +22,24 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.util.ScreenSize
 import com.github.damontecres.stashapp.ui.util.screenSize
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.preferences
+import com.github.damontecres.stashapp.util.showToastOnMain
 import com.github.damontecres.stashapp.util.updateInterfacePreferences
 import com.github.damontecres.stashapp.util.updatePinPreferences
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun InitialSetup(
-    onServerConfigure: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ManageServersViewModel = viewModel(),
+    serverViewModel: ServerViewModel = viewModel(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -42,43 +49,60 @@ fun InitialSetup(
     var showPinDialog by remember { mutableStateOf(false) }
     val isNotTvDevice = isNotTvDevice
 
+    val serverConnection by serverViewModel.serverConnection.observeAsState()
+
     fun submit(pin: String) {
-        server?.let {
-            viewModel.addServer(it)
-            scope.launch(StashCoroutineExceptionHandler()) {
-                context.preferences.updateData {
-                    it
-                        .updatePinPreferences {
-                            this.pin = pin
-                            autoSubmit = true
-                        }.updateInterfacePreferences {
-                            if (isNotTvDevice) {
-                                // Adjust some settings for a better touch device experience
-                                // Remove the jump buttons
-                                showGridJumpButtons = false
-                                // If its a larger device, use larger cards
-                                if (screenSize == ScreenSize.EXPANDED) {
-                                    cardSize = 4
+        server?.let { newServer ->
+            viewModel.addServerAsCurrent(newServer)
+            scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                try {
+                    context.preferences.updateData {
+                        it
+                            .updatePinPreferences {
+                                this.pin = pin
+                                autoSubmit = true
+                            }.updateInterfacePreferences {
+                                if (isNotTvDevice) {
+                                    // Adjust some settings for a better touch device experience
+                                    // Remove the jump buttons
+                                    showGridJumpButtons = false
+                                    // If its a larger device, use larger cards
+                                    if (screenSize == ScreenSize.EXPANDED) {
+                                        cardSize = 4
+                                    }
                                 }
                             }
-                        }
+                    }
+                } catch (ex: Exception) {
+                    Log.e("InitialSetup", "Error saving pin", ex)
+                    showToastOnMain(context, "Error saving pin", Toast.LENGTH_LONG)
                 }
-                onServerConfigure.invoke(it)
+                serverViewModel.switchServer(newServer)
             }
         }
     }
 
     Box(
         contentAlignment = Alignment.TopCenter,
-        modifier = Modifier,
+        modifier = modifier,
     ) {
-        AddServer(
-            onSubmit = {
-                server = it
-                showPinDialog = true
-            },
-            modifier = Modifier,
-        )
+        Column {
+            AddServer(
+                onSubmit = {
+                    server = it
+                    showPinDialog = true
+                },
+                modifier = Modifier,
+            )
+            if (serverConnection is ServerViewModel.ServerConnection.Failure) {
+                Text(
+                    text =
+                        (serverConnection as? ServerViewModel.ServerConnection.Failure)?.exception?.localizedMessage
+                            ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
     }
     AnimatedVisibility(showPinDialog) {
         Dialog(
@@ -87,8 +111,8 @@ fun InitialSetup(
             },
             properties =
                 DialogProperties(
-                    dismissOnBackPress = false,
-                    dismissOnClickOutside = false,
+                    dismissOnBackPress = true,
+                    dismissOnClickOutside = true,
                 ),
         ) {
             ConfigurePin(

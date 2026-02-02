@@ -95,8 +95,8 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                             }
                             if (server == null && serverViewModel.destination.value is Destination.Setup) {
                                 InitialSetup(
-                                    onServerConfigure = { serverViewModel.switchServer(it) },
                                     modifier = Modifier.fillMaxSize(),
+                                    serverViewModel = serverViewModel,
                                 )
                             } else if (server == null &&
                                 (navCommand?.destination is Destination.ManageServers || navCommand?.destination is Destination.Main)

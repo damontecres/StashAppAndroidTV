@@ -64,6 +64,7 @@ open class ServerViewModel : ViewModel() {
                     _serverConnection.value = ServerConnection.Success
                     submit(Destination.Main, true)
                 } catch (ex: Exception) {
+                    Log.e(TAG, "Error switching servers", ex)
                     _currentServer.setValueNoCheck(null)
                     _serverConnection.value = ServerConnection.Failure(newServer, ex)
                 }

@@ -87,6 +87,13 @@ class ManageServersViewModel : ViewModel() {
         allServers.value = servers
     }
 
+    fun addServerAsCurrent(server: StashServer) {
+        StashServer.addServer(StashApplication.getApplication(), server)
+        StashServer.setCurrentStashServer(StashApplication.getApplication(), server)
+        val servers = StashServer.getAll(StashApplication.getApplication())
+        allServers.value = servers
+    }
+
     private var testServerJob: Job? = null
 
     fun testServer(
