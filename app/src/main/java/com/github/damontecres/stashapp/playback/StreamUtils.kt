@@ -175,7 +175,8 @@ fun getStreamDecision(
     val audioSupported = supportedCodecs.isAudioSupported(scene.audioCodec)
     val containerSupported = supportedCodecs.isContainerFormatSupported(scene.format)
 
-    val alwaysTranscode = checkIfAlwaysTranscode(scene, streamChoice, alwaysTranscodeAbove)
+    val alwaysTranscode =
+        checkIfAlwaysTranscode(scene.videoHeight, scene.streams, streamChoice, alwaysTranscodeAbove)
     Log.d(TAG, "alwaysTranscode=$alwaysTranscode")
     if (mode != PlaybackMode.ForcedDirectPlay &&
         mode !is PlaybackMode.ForcedTranscode &&
@@ -241,15 +242,40 @@ fun getStreamDecision(
 }
 
 fun checkIfAlwaysTranscode(
-    scene: Scene,
+    videoResolution: Int?,
+    streams: Map<String, String>,
     streamChoice: StreamChoice,
     alwaysTarget: Resolution,
 ): String? {
-    val format = streamChoice.label
-    return if (alwaysTarget != Resolution.UNSPECIFIED && alwaysTarget != Resolution.UNRECOGNIZED) {
-        scene.streams.keys.firstOrNull { it.startsWith(format) && it.contains(alwaysTarget.label) }
+    videoResolution ?: return null
+    val maxRes =
+        when (alwaysTarget) {
+            Resolution.UNSPECIFIED,
+            Resolution.UNRECOGNIZED,
+            -> return null
+
+            Resolution.RES_2160P -> 2160
+
+            Resolution.RES_1080P -> 1080
+
+            Resolution.RES_720P -> 720
+
+            Resolution.RES_480P -> 480
+
+            Resolution.RES_240P -> 240
+        }
+    if (videoResolution > maxRes) {
+        val regex = Regex("\\((\\d+)p?\\)")
+        val candidateStreams =
+            streams.keys
+                .filter { it.lowercase().startsWith(streamChoice.label.lowercase()) }
+                .mapNotNull { stream ->
+                    regex.find(stream)?.let { Pair(stream, it.groups[1]!!.value.toInt()) }
+                }.sortedByDescending { it.second }
+        val streamKey = candidateStreams.firstOrNull { it.second <= maxRes }?.first
+        return streams[streamKey]
     } else {
-        null
+        return null
     }
 }
 

@@ -87,11 +87,11 @@ enum StreamChoice{
 
 enum Resolution {
   UNSPECIFIED = 0;
-  RES_240P = 1;
-  RES_480P = 2;
+  RES_2160P = 1;
+  RES_1080P = 2;
   RES_720P = 3;
-  RES_1080P = 4;
-  RES_2160P = 6;
+  RES_480P = 4;
+  RES_240P = 5;
 }
 
 enum PlaybackHttpClient{
