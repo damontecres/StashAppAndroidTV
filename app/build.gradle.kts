@@ -100,6 +100,7 @@ android {
             if (shouldSign) {
                 signingConfig = signingConfigs.getByName("ci")
             }
+            applicationIdSuffix = ".debug"
         }
 
         applicationVariants.all {
