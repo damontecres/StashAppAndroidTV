@@ -1076,20 +1076,12 @@ class PlaybackKeyHandler(
                 } else if (skipWithLeftRight && it.key == Key.DirectionRight) {
                     player.seekForward()
                     updateSkipIndicator(player.seekForwardIncrement)
-                } else if (nextWithUpDown && it.key == Key.DirectionUp) {
+                } else if (nextWithUpDown && (it.key == Key.DirectionUp || it.key == Key.DirectionDown)) {
                     val wasHeld = keyDownKey == it.key && holdActionTriggered
                     keyDownKey = null
                     holdActionTriggered = false
                     if (!wasHeld) {
-                        // Only show controls if it was a short press (not a hold)
-                        controllerViewState.showControls()
-                    }
-                } else if (nextWithUpDown && it.key == Key.DirectionDown) {
-                    val wasHeld = keyDownKey == it.key && holdActionTriggered
-                    keyDownKey = null
-                    holdActionTriggered = false
-                    if (!wasHeld) {
-                        // Only show controls if it was a short press (not a hold)
+                        // Only show player controls if it was a short press (not a hold)
                         controllerViewState.showControls()
                     }
                 } else {
