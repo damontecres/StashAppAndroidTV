@@ -448,7 +448,6 @@ fun PlaybackPageContent(
     val nextWithUpDown =
         remember {
             playlistPager != null &&
-                playlistPager.filter.dataType == DataType.MARKER &&
                 playlistPager.size > 1 &&
                 uiConfig.preferences.interfacePreferences.useUpDownPreviousNext
         }
@@ -1033,10 +1032,40 @@ class PlaybackKeyHandler(
     private val controllerViewState: ControllerViewState,
     private val updateSkipIndicator: (Long) -> Unit,
 ) {
+    private var keyDownTime = 0L
+    private var keyDownKey: Key? = null
+    private var holdActionTriggered = false
+    private val holdThresholdMs = 500L // Time in milliseconds to detect a "hold"
+
     fun onKeyEvent(it: KeyEvent): Boolean {
         var result = true
         if (!controlsEnabled) {
             result = false
+        } else if (it.type == KeyEventType.KeyDown) {
+            // Track key down events for hold detection
+            if (nextWithUpDown && (it.key == Key.DirectionUp || it.key == Key.DirectionDown)) {
+                if (keyDownKey == null) {
+                    keyDownKey = it.key
+                    keyDownTime = System.currentTimeMillis()
+                    holdActionTriggered = false
+                } else if (keyDownKey == it.key && !holdActionTriggered) {
+                    // Check if hold threshold is met
+                    val holdDuration = System.currentTimeMillis() - keyDownTime
+                    if (holdDuration >= holdThresholdMs) {
+                        holdActionTriggered = true
+                        if (!controllerViewState.controlsVisible) {
+                            if (it.key == Key.DirectionUp) {
+                                player.seekToPreviousMediaItem()
+                            } else if (it.key == Key.DirectionDown) {
+                                player.seekToNextMediaItem()
+                            }
+                        }
+                    }
+                }
+                result = true
+            } else {
+                result = false
+            }
         } else if (it.type != KeyEventType.KeyUp) {
             result = false
         } else if (isDpad(it)) {
@@ -1048,9 +1077,21 @@ class PlaybackKeyHandler(
                     player.seekForward()
                     updateSkipIndicator(player.seekForwardIncrement)
                 } else if (nextWithUpDown && it.key == Key.DirectionUp) {
-                    player.seekToPreviousMediaItem()
+                    val wasHeld = keyDownKey == it.key && holdActionTriggered
+                    keyDownKey = null
+                    holdActionTriggered = false
+                    if (!wasHeld) {
+                        // Only show controls if it was a short press (not a hold)
+                        controllerViewState.showControls()
+                    }
                 } else if (nextWithUpDown && it.key == Key.DirectionDown) {
-                    player.seekToNextMediaItem()
+                    val wasHeld = keyDownKey == it.key && holdActionTriggered
+                    keyDownKey = null
+                    holdActionTriggered = false
+                    if (!wasHeld) {
+                        // Only show controls if it was a short press (not a hold)
+                        controllerViewState.showControls()
+                    }
                 } else {
                     controllerViewState.showControls()
                 }
