@@ -67,7 +67,7 @@ You can configure multiple servers in the app. To add, remove, or switch servers
 
 The app strives to be compatible with the latest released version of Stash.
 
-Currently, the minimum supported server version is Stash `0.28.0`.
+Currently, the minimum supported server version is Stash `0.30`.
 
 #### Devices
 

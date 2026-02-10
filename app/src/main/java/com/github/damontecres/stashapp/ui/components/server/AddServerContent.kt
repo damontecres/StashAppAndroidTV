@@ -339,7 +339,7 @@ fun AddServer(
                     onClick = {
                         viewModel.testServer(serverUrl, apiKey, trustCerts, username, usePassword)
                     },
-                    enabled = serverUrl.isNotNullOrBlank() && connectionState == ConnectionState.Inactive,
+                    enabled = serverUrl.isNotNullOrBlank(),
                     modifier = Modifier.focusRequester(testButtonFocusRequester),
                 ) {
                     if (connectionState is ConnectionState.Testing) {

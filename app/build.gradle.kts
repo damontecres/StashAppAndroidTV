@@ -95,6 +95,9 @@ android {
             isMinifyEnabled = false
             isDebuggable = true
             applicationIdSuffix = ".debug"
+            if (shouldSign) {
+                signingConfig = signingConfigs.getByName("ci")
+            }
         }
 
         applicationVariants.all {
