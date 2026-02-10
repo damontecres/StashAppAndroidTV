@@ -237,5 +237,6 @@
     <string name="migrate_preferences">Migrate settings</string>
     <string name="migrate_preferences_summary">Overwrite settings by migrating from legacy settings</string>
     <string name="advanced_playback">Advanced Playback</string>
+    <string name="playback_backend">Playback backend</string>
 
 </resources>

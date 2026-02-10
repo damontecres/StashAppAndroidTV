@@ -33,7 +33,7 @@ class TestDbMigrations {
         helper.createDatabase(testDbName, 4).apply {
             execSQL(
                 "INSERT INTO playback_effects VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                arrayOf(
+                arrayOf<Any>(
                     "https://server",
                     itemId,
                     90,
