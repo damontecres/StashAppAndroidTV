@@ -37,6 +37,7 @@ import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.PlaylistFragment
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
+import com.github.damontecres.stashapp.proto.PlaybackBackend
 import com.github.damontecres.stashapp.proto.PlaybackPreferences
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -70,6 +71,16 @@ fun PlaybackPage(
     var scene by remember { mutableStateOf<FullSceneData?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    val playbackMode =
+        remember(playbackMode, uiConfig) {
+            if (uiConfig.preferences.playbackPreferences.playbackBackend == PlaybackBackend.MPV) {
+                PlaybackMode.ForcedDirectPlay
+            } else {
+                playbackMode
+            }
+        }
+
     LaunchedEffect(server, sceneId) {
         scope.launch(
             LoggingCoroutineExceptionHandler(
@@ -100,6 +111,7 @@ fun PlaybackPage(
                     }
                 val httpClient = uiConfig.preferences.playbackPreferences.playbackHttpClient
                 val debugLogging = uiConfig.preferences.playbackPreferences.debugLoggingEnabled
+                val backend = uiConfig.preferences.playbackPreferences.playbackBackend
                 StashExoPlayer
                     .getInstance(
                         context,
@@ -107,6 +119,7 @@ fun PlaybackPage(
                         skipParams,
                         httpClient.name,
                         debugLogging,
+                        backend,
                     ).apply {
                         repeatMode = Player.REPEAT_MODE_OFF
                         playWhenReady = true

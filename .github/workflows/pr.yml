@@ -8,22 +8,22 @@ defaults:
     shell: bash
 
 env:
-  BUILD_TOOLS_VERSION: 36.0.0
   BUILD_DIRS_ARTIFACT: build-dirs
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs='-Xmx4g -XX:MaxMetaspaceSize=512m'"
 
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout the code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0 # Need the tags to build
         submodules: true # Need the submodules to build
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
-        python-version: '3.10'
+        python-version: '3.12'
     - name: Run pre-commit
       uses: pre-commit/action@v3.0.1
 
@@ -32,36 +32,33 @@ jobs:
     needs: pre-commit
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Need the tags to build
           submodules: true # Need the submodules to build
-      - name: Setup JDK
-        uses: actions/setup-java@v4
+      - name: Setup
+        uses: ./.github/actions/setup
+      - name: Native build
+        uses: ./.github/actions/native-build
         with:
-          distribution: zulu
-          java-version: '21'
-          cache: 'gradle'
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: "tools platform-tools build-tools;${{ env.BUILD_TOOLS_VERSION }}"
+          cache: true
       - name: Build app
         id: buildapp
         run: |
-          ./gradlew clean build
-          echo "apk=$(ls app/build/outputs/apk/debug/StashAppAndroidTV-debug*.apk)" >> "$GITHUB_OUTPUT"
+          ./gradlew clean assembleDebug testDebugUnitTest --no-daemon
+          apks=$(find app/build/outputs/apk -name '*.apk' -print0 | tr '\0' ',' | sed 's/,$//')
+          echo "apks=$apks" >> "$GITHUB_OUTPUT"
       - name: Tar build dirs
         run: |
-          tar -czf build.tgz */build/.
-      - uses: actions/upload-artifact@v4
+          tar -czf build.tgz ./app/.
+      - uses: actions/upload-artifact@v5
         id: upload-build-dirs
         with:
           name: "${{ env.BUILD_DIRS_ARTIFACT }}"
           path: build.tgz
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
-          name: StashAppAndroidTV-debug.apk
-          path: "${{ steps.buildapp.outputs.apk }}"
+          name: APKs
+          path: "${{ steps.buildapp.outputs.apks }}"
           compression-level: 0
