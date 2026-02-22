@@ -2,18 +2,16 @@ package com.github.damontecres.stashapp.ui.pages
 
 import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -24,7 +22,6 @@ import androidx.media3.common.Player
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
-import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -46,9 +43,9 @@ import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageContent
+import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
@@ -67,9 +64,10 @@ fun PlaybackPage(
     playbackMode: PlaybackMode,
     itemOnClick: ItemOnClicker<Any>,
     modifier: Modifier = Modifier,
+    viewModel: PlaybackPageViewModel = viewModel(),
 ) {
-    var scene by remember { mutableStateOf<FullSceneData?>(null) }
-    val scope = rememberCoroutineScope()
+    OneTimeLaunchedEffect { viewModel.init(server, sceneId) }
+    val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
     val playbackMode =
@@ -80,26 +78,7 @@ fun PlaybackPage(
                 playbackMode
             }
         }
-
-    LaunchedEffect(server, sceneId) {
-        scope.launch(
-            LoggingCoroutineExceptionHandler(
-                server,
-                scope,
-                toastMessage = "Error fetching scene",
-            ),
-        ) {
-            val fullScene = QueryEngine(server).getScene(sceneId)
-            if (fullScene != null) {
-                scene = fullScene
-            } else {
-                Log.w("PlaybackPage", "Scene $sceneId not found")
-                Toast.makeText(context, "Scene $sceneId not found", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-    Log.d("PlaybackPage", "scene=${scene?.id}")
-    scene?.let {
+    state?.let { state ->
         val player =
             remember {
                 val skipParams =
@@ -125,7 +104,7 @@ fun PlaybackPage(
                         playWhenReady = true
                     }
             }
-        val playbackScene = remember { Scene.fromFullSceneData(it) }
+        val playbackScene = state.scene
         val decision =
             remember {
                 getStreamDecision(
