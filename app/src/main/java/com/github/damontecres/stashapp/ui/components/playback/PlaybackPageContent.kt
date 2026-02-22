@@ -117,6 +117,7 @@ import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.findActivity
@@ -271,7 +272,6 @@ class PlaybackViewModel : ViewModel() {
         vttUrl: String,
     ): List<SpriteData> =
         withContext(Dispatchers.Default) {
-            Log.v("PlaybackViewModel", "vttUrl=$vttUrl")
             val res =
                 withContext(Dispatchers.IO) {
                     server.okHttpClient
@@ -283,6 +283,7 @@ class PlaybackViewModel : ViewModel() {
                 res.body.use {
                     it?.bytes()?.let {
                         try {
+                            val baseUrl = StashClient.getServerRoot(server.url)
                             val regex = Regex("(\\w+\\.\\w+)#xywh=(\\d+),(\\d+),(\\d+),(\\d+)")
                             val spriteData = mutableListOf<SpriteData>()
                             WebvttParser().parse(it, SubtitleParser.OutputOptions.allCues()) {
@@ -291,7 +292,7 @@ class PlaybackViewModel : ViewModel() {
                                 it.cues.firstOrNull()?.text?.let { cue ->
                                     val m = regex.matchEntire(cue)
                                     if (m != null) {
-                                        val path = m.groupValues[1]
+                                        val url = "$baseUrl/scene/${m.groupValues[1]}"
                                         val x = m.groupValues[2].toInt()
                                         val y = m.groupValues[3].toInt()
                                         val w = m.groupValues[4].toInt()
@@ -300,27 +301,27 @@ class PlaybackViewModel : ViewModel() {
                                             SpriteData(
                                                 start = start,
                                                 end = end,
-                                                path = path,
+                                                url = url,
                                                 x = x,
                                                 y = y,
                                                 w = w,
                                                 h = h,
                                             )
-                                        Log.v("PlaybackViewModel", "sprite=$sprite")
+//                                        Log.v(TAG, "sprite=$sprite")
                                         spriteData.add(sprite)
                                     }
                                 }
                             }
                             return@withContext spriteData
                         } catch (ex: Exception) {
-                            Log.w("PlaybackViewModel", "Error parsing sprites for $sceneId", ex)
+                            Log.w(TAG, "Error parsing sprites for $sceneId", ex)
                             return@withContext emptyList()
                         }
                     }
                     emptyList()
                 }
             } else {
-                Log.d("PlaybackViewModel", "No sprites for $sceneId")
+                Log.d(TAG, "No sprites for $sceneId")
                 return@withContext emptyList()
             }
         }
@@ -436,7 +437,7 @@ val playbackScaleOptions =
 data class SpriteData(
     val start: Duration,
     val end: Duration,
-    val path: String,
+    val url: String,
     val x: Int,
     val y: Int,
     val w: Int,

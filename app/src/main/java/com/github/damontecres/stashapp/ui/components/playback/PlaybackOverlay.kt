@@ -24,7 +24,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -407,7 +406,6 @@ fun PlaybackOverlay(
                             yOffset = heightPx,
 //                                yPercentage = 1 - controlHeight,
                         ),
-                previewImageUrl = previewImageUrl,
                 imageLoader = imageLoader,
                 duration = playerControls.duration,
                 seekProgress = seekProgress,
@@ -437,7 +435,6 @@ fun Modifier.offsetByPercent(
 
 @Composable
 fun SeekPreviewImage(
-    previewImageUrl: String?,
     imageLoader: ImageLoader,
     duration: Long,
     seekProgress: Float,
@@ -446,16 +443,13 @@ fun SeekPreviewImage(
     placeHolder: Painter? = null,
 ) {
     val context = LocalContext.current
-    SideEffect {
-        Log.v("DEBUGGING", "spriteData=${spriteData.size}")
-    }
 
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (spriteData.isNotEmpty() && previewImageUrl.isNotNullOrBlank()) {
+        if (spriteData.isNotEmpty()) {
             val position = (duration * seekProgress.toDouble()).milliseconds
             spriteData.firstOrNull { position >= it.start && position < it.end }?.let { s ->
                 val height = 160.dp
@@ -473,7 +467,7 @@ fun SeekPreviewImage(
                     model =
                         ImageRequest
                             .Builder(context)
-                            .data(previewImageUrl)
+                            .data(s.url)
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .transformations(
                                 CoilPreviewTransformation(
