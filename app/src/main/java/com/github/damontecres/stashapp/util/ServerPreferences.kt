@@ -25,7 +25,7 @@ import org.json.JSONObject
 class ServerPreferences(
     val server: StashServer,
 ) {
-    private val serverKey = server.url.replace(Regex("[^\\w.]"), "_")
+    val serverKey get() = server.url.replace(Regex("[^\\w.]"), "_")
 
     val preferences: SharedPreferences by lazy {
         StashApplication.getApplication().getSharedPreferences(serverKey, Context.MODE_PRIVATE)

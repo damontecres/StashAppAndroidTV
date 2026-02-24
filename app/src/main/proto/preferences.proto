@@ -153,6 +153,10 @@ message SearchPreferences {
   int64 search_delay_ms = 2;
 }
 
+message ScreensaverPreferences {
+  bool enabled = 1;
+}
+
 message StashPreferences {
   PinPreferences pin_preferences = 1;
   InterfacePreferences interface_preferences = 2;
@@ -161,6 +165,7 @@ message StashPreferences {
   UpdatePreferences update_preferences = 5;
   AdvancedPreferences advanced_preferences = 6;
   SearchPreferences search_preferences = 7;
+  ScreensaverPreferences screensaver_preferences = 9;
 
   bool preferences_migrated_v1 = 8;
 }

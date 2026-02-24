@@ -238,5 +238,8 @@
     <string name="migrate_preferences_summary">Overwrite settings by migrating from legacy settings</string>
     <string name="advanced_playback">Advanced Playback</string>
     <string name="playback_backend">Playback backend</string>
+    <string name="enable_screensaver">Enable screensaver</string>
+    <string name="screensaver_filter">Set filter for screensaver</string>
+    <string name="screensaver">Screensaver</string>
 
 </resources>

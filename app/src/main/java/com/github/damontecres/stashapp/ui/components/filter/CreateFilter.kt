@@ -81,9 +81,49 @@ fun CreateFilterScreen(
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: CreateFilterViewModel = viewModel(),
 ) {
-    val context = LocalContext.current
     val server = LocalGlobalContext.current.server
     val scope = rememberCoroutineScope()
+    CreateFilterContent(
+        uiConfig = uiConfig,
+        dataType = dataType,
+        initialFilter = initialFilter,
+        saveEnabled = true,
+        onSubmit = { save, filterArgs ->
+            if (save) {
+                scope.launch(
+                    LoggingCoroutineExceptionHandler(
+                        server,
+                        scope,
+                        toastMessage = "Error saving filter",
+                    ),
+                ) {
+                    viewModel.saveFilter()
+                    navigationManager.goBack()
+                    navigationManager.navigate(Destination.Filter(filterArgs))
+                }
+            } else {
+                navigationManager.goBack()
+                navigationManager.navigate(Destination.Filter(filterArgs))
+            }
+        },
+        modifier = modifier,
+        onUpdateTitle = onUpdateTitle,
+        viewModel = viewModel,
+    )
+}
+
+@Composable
+fun CreateFilterContent(
+    uiConfig: ComposeUiConfig,
+    dataType: DataType,
+    initialFilter: FilterArgs?,
+    saveEnabled: Boolean,
+    onSubmit: (save: Boolean, filter: FilterArgs) -> Unit,
+    modifier: Modifier = Modifier,
+    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
+    viewModel: CreateFilterViewModel = viewModel(),
+) {
+    val context = LocalContext.current
 
     val ready by viewModel.ready.observeAsState(false)
     val name by viewModel.filterName.observeAsState()
@@ -133,23 +173,9 @@ fun CreateFilterScreen(
                 },
                 idLookup = viewModel::lookupIds,
                 idStore = viewModel::store,
+                saveEnabled = saveEnabled,
                 onSubmit = { save ->
-                    if (save) {
-                        scope.launch(
-                            LoggingCoroutineExceptionHandler(
-                                server,
-                                scope,
-                                toastMessage = "Error saving filter",
-                            ),
-                        ) {
-                            viewModel.saveFilter()
-                            navigationManager.goBack()
-                            navigationManager.navigate(Destination.Filter(viewModel.createFilterArgs()))
-                        }
-                    } else {
-                        navigationManager.goBack()
-                        navigationManager.navigate(Destination.Filter(viewModel.createFilterArgs()))
-                    }
+                    onSubmit.invoke(save, viewModel.createFilterArgs())
                 },
                 modifier =
                     Modifier
@@ -175,6 +201,7 @@ fun CreateFilterColumns(
     idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
     idStore: (DataType, StashData) -> Unit,
     onSubmit: (Boolean) -> Unit,
+    saveEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val findFilterInteractionSource = remember { MutableInteractionSource() }
@@ -318,6 +345,7 @@ fun CreateFilterColumns(
                 findFilterInteractionSource = findFilterInteractionSource,
                 objectFilterInteractionSource = objectFilterInteractionSource,
                 onSubmit = onSubmit,
+                saveEnabled = saveEnabled,
                 modifier =
                     Modifier
                         .width(listWidth)
