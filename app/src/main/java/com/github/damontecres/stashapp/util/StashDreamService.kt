@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
@@ -75,15 +74,11 @@ class StashDreamService :
                                     .background(Color.Black),
                         ) {
                             val currentItem by itemFlow.collectAsState(null)
-                            currentItem?.let { currentItem ->
-                                key(currentItem) {
-                                    ScreensaverContent(
-                                        imageData = currentItem,
-                                        duration = 60.seconds,
-                                        modifier = Modifier.fillMaxSize(),
-                                    )
-                                }
-                            }
+                            ScreensaverContent(
+                                imageData = currentItem,
+                                duration = 60.seconds,
+                                modifier = Modifier.fillMaxSize(),
+                            )
                         }
                     }
                 }
@@ -147,7 +142,13 @@ class StashDreamService :
             Log.v(TAG, "Got ${pager.size} images")
             var index = 0
             while (true) {
-                val imageData = pager.getBlocking(index) as ImageData?
+                val imageData =
+                    try {
+                        pager.getBlocking(index) as ImageData?
+                    } catch (ex: Exception) {
+                        Log.w(TAG, "Error fetching image", ex)
+                        null
+                    }
                 if (imageData != null) {
                     this@StashDreamService
                         .imageLoader
