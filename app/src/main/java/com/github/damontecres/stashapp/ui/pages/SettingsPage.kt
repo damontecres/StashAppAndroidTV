@@ -40,7 +40,7 @@ fun SettingsPage(
         PreferencesContent(
             server,
             navigationManager,
-            uiConfig.preferences,
+            uiConfig,
             preferenceScreenOption,
             newModifier,
             onUpdateTitle,

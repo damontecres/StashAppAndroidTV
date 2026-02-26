@@ -34,6 +34,7 @@ fun BasicFilterSettings(
     findFilterInteractionSource: MutableInteractionSource,
     objectFilterInteractionSource: MutableInteractionSource,
     onSubmit: (Boolean) -> Unit,
+    saveEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -45,14 +46,16 @@ fun BasicFilterSettings(
                 .focusRestorer(focusRequester),
         verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
-        item {
-            SimpleListItem(
-                title = stringResource(R.string.stashapp_filter_name),
-                subtitle = name,
-                showArrow = false,
-                onClick = onFilterNameClick,
-                modifier = Modifier.focusRequester(focusRequester),
-            )
+        if (saveEnabled) {
+            item {
+                SimpleListItem(
+                    title = stringResource(R.string.stashapp_filter_name),
+                    subtitle = name,
+                    showArrow = false,
+                    onClick = onFilterNameClick,
+                    modifier = Modifier.focusRequester(focusRequester),
+                )
+            }
         }
         item {
             SimpleListItem(
@@ -82,7 +85,14 @@ fun BasicFilterSettings(
         }
         item {
             SimpleListItem(
-                title = stringResource(R.string.submit_without_saving),
+                title =
+                    if (saveEnabled) {
+                        stringResource(R.string.submit_without_saving)
+                    } else {
+                        stringResource(
+                            R.string.stashapp_actions_submit,
+                        )
+                    },
                 subtitle =
                     if (resultCount >= 0) {
                         resultCount.toString() + " " + stringResource(R.string.results)
@@ -93,19 +103,21 @@ fun BasicFilterSettings(
                 onClick = { onSubmit.invoke(false) },
             )
         }
-        item {
-            SimpleListItem(
-                enabled = name.isNotNullOrBlank(),
-                title = stringResource(R.string.save_and_submit),
-                subtitle =
-                    if (name.isNotNullOrBlank()) {
-                        null
-                    } else {
-                        stringResource(R.string.save_and_submit_no_name_desc)
-                    },
-                showArrow = false,
-                onClick = { onSubmit.invoke(true) },
-            )
+        if (saveEnabled) {
+            item {
+                SimpleListItem(
+                    enabled = name.isNotNullOrBlank(),
+                    title = stringResource(R.string.save_and_submit),
+                    subtitle =
+                        if (name.isNotNullOrBlank()) {
+                            null
+                        } else {
+                            stringResource(R.string.save_and_submit_no_name_desc)
+                        },
+                    showArrow = false,
+                    onClick = { onSubmit.invoke(true) },
+                )
+            }
         }
     }
 }

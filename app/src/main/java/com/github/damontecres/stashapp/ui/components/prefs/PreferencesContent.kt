@@ -47,7 +47,8 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
-import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.components.screensaver.ChooseScreensaverFilterDialog
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.ui.util.playOnClickSound
@@ -167,6 +168,13 @@ val advancedPreferences =
             ),
         ),
         PreferenceGroup(
+            R.string.screensaver,
+            listOf(
+                StashPreference.ScreensaverEnable,
+                StashPreference.ScreensaverFilter,
+            ),
+        ),
+        PreferenceGroup(
             R.string.effects_filters,
             listOf(
                 StashPreference.VideoFilter,
@@ -223,7 +231,7 @@ val advancedPreferences =
 fun PreferencesContent(
     server: StashServer,
     navigationManager: NavigationManager,
-    initialPreferences: StashPreferences,
+    uiConfig: ComposeUiConfig,
     preferenceScreenOption: PreferenceScreenOption,
     modifier: Modifier = Modifier,
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
@@ -234,7 +242,7 @@ fun PreferencesContent(
     val focusRequester = remember { FocusRequester() }
     var focusedIndex by rememberSaveable { mutableStateOf(Pair(0, 0)) }
     val state = rememberLazyListState()
-    var preferences by remember { mutableStateOf(initialPreferences) }
+    var preferences by remember { mutableStateOf(uiConfig.preferences) }
     val sharedPrefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
     LaunchedEffect(Unit) {
         context.preferences.data.collect {
@@ -281,6 +289,8 @@ fun PreferencesContent(
         // Forces the animated to trigger
         visible = true
     }
+
+    var showScreensaverFilterDialog by remember { mutableStateOf(false) }
 
     AnimatedVisibility(
         visible = visible,
@@ -439,6 +449,22 @@ fun PreferencesContent(
                                 )
                             }
 
+                            StashPreference.ScreensaverFilter -> {
+                                ClickPreference(
+                                    title = stringResource(pref.title),
+                                    onClick = {
+                                        showScreensaverFilterDialog = true
+                                    },
+                                    interactionSource = interactionSource,
+                                    modifier =
+                                        Modifier
+                                            .ifElse(
+                                                groupIndex == focusedIndex.first && prefIndex == focusedIndex.second,
+                                                Modifier.focusRequester(focusRequester),
+                                            ),
+                                )
+                            }
+
                             else -> {
                                 val value = pref.getter.invoke(preferences)
                                 ComposablePreference(
@@ -526,6 +552,12 @@ fun PreferencesContent(
                     }
                 }
             }
+        }
+        if (showScreensaverFilterDialog) {
+            ChooseScreensaverFilterDialog(
+                uiConfig = uiConfig,
+                onDismissRequest = { showScreensaverFilterDialog = false },
+            )
         }
     }
 }

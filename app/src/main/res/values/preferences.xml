@@ -102,5 +102,6 @@
     <string name="pref_key_movement_sounds" translatable="false">ui.movementSounds</string>
 
     <string name="pref_key_migration_complete" translatable="false">meta.preference.migration</string>
+    <string name="pref_key_screensaver_enabled" translatable="false">screensaver.enabled</string>
 
 </resources>
