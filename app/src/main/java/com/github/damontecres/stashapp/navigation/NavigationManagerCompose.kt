@@ -9,7 +9,6 @@ import com.github.damontecres.stashapp.LicenseFragment
 import com.github.damontecres.stashapp.PinFragment
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
-import com.github.damontecres.stashapp.UpdateAppFragment
 import com.github.damontecres.stashapp.UpdateChangelogFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
 import com.github.damontecres.stashapp.ui.NavDrawerFragment
@@ -80,10 +79,6 @@ class NavigationManagerCompose(
                 }
 
                 //                Destination.Setup -> SetupFragment()
-
-                is Destination.UpdateApp -> {
-                    UpdateAppFragment()
-                }
 
                 is Destination.ReleaseChangelog -> {
                     UpdateChangelogFragment()
