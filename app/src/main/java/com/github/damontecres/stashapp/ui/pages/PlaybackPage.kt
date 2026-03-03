@@ -69,6 +69,7 @@ fun PlaybackPage(
     OneTimeLaunchedEffect { viewModel.init(server, sceneId) }
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
+    val playbackViewModel: PlaybackPageViewModel = viewModel()
 
     val playbackMode =
         remember(playbackMode, uiConfig) {
@@ -134,7 +135,20 @@ fun PlaybackPage(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .background(Color.Transparent),
+                    .background(Color.Transparent)
+                    .onPreviewKeyEvent { event ->
+                        if (event.type == KeyEventType.KeyDown) {
+                            when (event.nativeKeyEvent.keyCode) {
+                                KeyEvent.KEYCODE_MENU -> {
+                                    playbackViewModel.onDetailsClick()
+                                    true
+                                }
+                                else -> false
+                            }
+                        } else {
+                            false
+                        }
+                    },
             controlsEnabled = true,
             startPosition = startPosition,
             onClickPlaylistItem = null,
