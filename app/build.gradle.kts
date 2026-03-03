@@ -52,7 +52,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.github.damontecres.stashapp"
+        applicationId = "com.github.erebous.stashapp"
         minSdk = 23
         targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
