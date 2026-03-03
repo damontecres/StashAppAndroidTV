@@ -1253,6 +1253,15 @@ private val GroupFilterOptions =
             { filter, value -> filter.copy(rating100 = value) },
             TwoValueCriterionModifiers,
         ),
+        FilterOption<GroupFilterType, IntCriterionInput>(
+            "scene_count",
+            R.string.stashapp_scene_count,
+            null,
+            IntCriterionInput::class,
+            { it.scene_count },
+            { filter, value -> filter.copy(scene_count = value) },
+            TwoValueCriterionModifiers,
+        ),
         FilterOption<GroupFilterType, HierarchicalMultiCriterionInput>(
             "studios",
             R.string.stashapp_studios,

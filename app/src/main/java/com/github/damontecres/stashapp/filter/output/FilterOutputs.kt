@@ -5,6 +5,7 @@ import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.CustomFieldCriterionInput
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
+import com.github.damontecres.stashapp.api.type.DuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderEnum
@@ -13,11 +14,11 @@ import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationEnum
-import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionEnum
 import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
+import com.github.damontecres.stashapp.api.type.StashIDsCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 
@@ -143,7 +144,7 @@ fun PhashDistanceCriterionInput.toMap(): Map<String, Any> =
         )
     }
 
-fun PHashDuplicationCriterionInput.toMap(): Map<String, Any> =
+fun DuplicationCriterionInput.toMap(): Map<String, Any> =
     buildMap {
         put("modifier", CriterionModifier.EQUALS.rawValue)
         if (duplicated.getOrNull() == false) {
@@ -151,6 +152,11 @@ fun PHashDuplicationCriterionInput.toMap(): Map<String, Any> =
         } else {
             put("value", true)
         }
+        distance.getOrNull()?.let { put("distance", it) }
+        phash.getOrNull()?.let { put("phash", it) }
+        stash_id.getOrNull()?.let { put("stash_id", it) }
+        title.getOrNull()?.let { put("title", it) }
+        url.getOrNull()?.let { put("url", it) }
     }
 
 fun ResolutionCriterionInput.toMap(): Map<String, Any> =
@@ -201,6 +207,18 @@ fun StashIDCriterionInput.toMap(): Map<String, Any> =
             "value",
             buildMap {
                 put("stashID", stash_id.getOrNull() ?: "")
+                put("endpoint", endpoint.getOrNull() ?: "")
+            },
+        )
+    }
+
+fun StashIDsCriterionInput.toMap(): Map<String, Any> =
+    buildMap {
+        put("modifier", modifier.rawValue)
+        put(
+            "value",
+            buildMap {
+                put("stashIDs", stash_ids.getOrNull() ?: "")
                 put("endpoint", endpoint.getOrNull() ?: "")
             },
         )

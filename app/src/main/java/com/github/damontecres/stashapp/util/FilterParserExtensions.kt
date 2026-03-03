@@ -39,6 +39,8 @@ fun FilterParser.convertPerformerFilterType(f: Any?): PerformerFilterType? =
             penis_length = Optional.presentIfNotNull(convertFloatCriterionInput(filter["penis_length"])),
             circumcised = Optional.presentIfNotNull(convertCircumcisionCriterionInput(filter["circumcised"])),
             career_length = Optional.presentIfNotNull(convertStringCriterionInput(filter["career_length"])),
+            career_start = Optional.presentIfNotNull(convertIntCriterionInput(filter["career_start"])),
+            career_end = Optional.presentIfNotNull(convertIntCriterionInput(filter["career_end"])),
             tattoos = Optional.presentIfNotNull(convertStringCriterionInput(filter["tattoos"])),
             piercings = Optional.presentIfNotNull(convertStringCriterionInput(filter["piercings"])),
             aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter["aliases"])),
@@ -47,11 +49,13 @@ fun FilterParser.convertPerformerFilterType(f: Any?): PerformerFilterType? =
             tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
             tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["tag_count"])),
             scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["scene_count"])),
+            marker_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["marker_count"])),
             image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["image_count"])),
             gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
             play_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["play_count"])),
             o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter["o_counter"])),
             stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter["stash_id_endpoint"])),
+            stash_ids_endpoint = Optional.presentIfNotNull(convertStashIDsCriterionInput(filter["stash_ids_endpoint"])),
             rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
             url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
             hair_color = Optional.presentIfNotNull(convertStringCriterionInput(filter["hair_color"])),
@@ -67,6 +71,7 @@ fun FilterParser.convertPerformerFilterType(f: Any?): PerformerFilterType? =
             images_filter = Optional.presentIfNotNull(convertImageFilterType(filter["images_filter"])),
             galleries_filter = Optional.presentIfNotNull(convertGalleryFilterType(filter["galleries_filter"])),
             tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
+            markers_filter = Optional.presentIfNotNull(convertSceneMarkerFilterType(filter["markers_filter"])),
             created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
             updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
             custom_fields = Optional.presentIfNotNull(convertCustomFieldCriterionInput(filter["custom_fields"] as List<*>?)),
@@ -98,7 +103,7 @@ fun FilterParser.convertSceneFilterType(f: Any?): SceneFilterType? =
             rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
             organized = Optional.presentIfNotNull(convertBoolean(filter["organized"])),
             o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter["o_counter"])),
-            duplicated = Optional.presentIfNotNull(convertPHashDuplicationCriterionInput(filter["duplicated"])),
+            duplicated = Optional.presentIfNotNull(convertDuplicationCriterionInput(filter["duplicated"])),
             resolution = Optional.presentIfNotNull(convertResolutionCriterionInput(filter["resolution"])),
             orientation = Optional.presentIfNotNull(convertOrientationCriterionInput(filter["orientation"])),
             framerate = Optional.presentIfNotNull(convertIntCriterionInput(filter["framerate"])),
@@ -120,6 +125,8 @@ fun FilterParser.convertSceneFilterType(f: Any?): SceneFilterType? =
             performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter["performers"])),
             performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["performer_count"])),
             stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter["stash_id_endpoint"])),
+            stash_ids_endpoint = Optional.presentIfNotNull(convertStashIDsCriterionInput(filter["stash_ids_endpoint"])),
+            stash_id_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["stash_id_count"])),
             url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
             interactive = Optional.presentIfNotNull(convertBoolean(filter["interactive"])),
             interactive_speed = Optional.presentIfNotNull(convertIntCriterionInput(filter["interactive_speed"])),
@@ -139,6 +146,7 @@ fun FilterParser.convertSceneFilterType(f: Any?): SceneFilterType? =
             groups_filter = Optional.presentIfNotNull(convertGroupFilterType(filter["groups_filter"])),
             markers_filter = Optional.presentIfNotNull(convertSceneMarkerFilterType(filter["markers_filter"])),
             files_filter = Optional.presentIfNotNull(convertFileFilterType(filter["files_filter"])),
+            custom_fields = Optional.presentIfNotNull(convertCustomFieldCriterionInput(filter["custom_fields"] as List<*>?)),
         )
     } else {
         null
@@ -157,6 +165,7 @@ fun FilterParser.convertStudioFilterType(f: Any?): StudioFilterType? =
             details = Optional.presentIfNotNull(convertStringCriterionInput(filter["details"])),
             parents = Optional.presentIfNotNull(convertMultiCriterionInput(filter["parents"])),
             stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter["stash_id_endpoint"])),
+            stash_ids_endpoint = Optional.presentIfNotNull(convertStashIDsCriterionInput(filter["stash_ids_endpoint"])),
             tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
             is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
             rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
@@ -164,16 +173,20 @@ fun FilterParser.convertStudioFilterType(f: Any?): StudioFilterType? =
             scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["scene_count"])),
             image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["image_count"])),
             gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
+            group_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["group_count"])),
             tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["tag_count"])),
             url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
             aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter["aliases"])),
             child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["child_count"])),
             ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
+            organized = Optional.presentIfNotNull(convertBoolean(filter["organized"])),
             scenes_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scenes_filter"])),
             images_filter = Optional.presentIfNotNull(convertImageFilterType(filter["images_filter"])),
             galleries_filter = Optional.presentIfNotNull(convertGalleryFilterType(filter["galleries_filter"])),
+            groups_filter = Optional.presentIfNotNull(convertGroupFilterType(filter["groups_filter"])),
             created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
             updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+            custom_fields = Optional.presentIfNotNull(convertCustomFieldCriterionInput(filter["custom_fields"] as List<*>?)),
         )
     } else {
         null
@@ -208,11 +221,17 @@ fun FilterParser.convertTagFilterType(f: Any?): TagFilterType? =
             child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["child_count"])),
             ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
             stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter["stash_id_endpoint"])),
+            stash_ids_endpoint = Optional.presentIfNotNull(convertStashIDsCriterionInput(filter["stash_ids_endpoint"])),
             scenes_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scenes_filter"])),
             images_filter = Optional.presentIfNotNull(convertImageFilterType(filter["images_filter"])),
             galleries_filter = Optional.presentIfNotNull(convertGalleryFilterType(filter["galleries_filter"])),
+            groups_filter = Optional.presentIfNotNull(convertGroupFilterType(filter["groups_filter"])),
+            performers_filter = Optional.presentIfNotNull(convertPerformerFilterType(filter["performers_filter"])),
+            studios_filter = Optional.presentIfNotNull(convertStudioFilterType(filter["studios_filter"])),
+            markers_filter = Optional.presentIfNotNull(convertSceneMarkerFilterType(filter["markers_filter"])),
             created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
             updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+            custom_fields = Optional.presentIfNotNull(convertCustomFieldCriterionInput(filter["custom_fields"] as List<*>?)),
         )
     } else {
         null
@@ -246,8 +265,10 @@ fun FilterParser.convertGroupFilterType(f: Any?): GroupFilterType? =
             sub_groups = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["sub_groups"])),
             containing_group_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["containing_group_count"])),
             sub_group_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["sub_group_count"])),
+            scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["scene_count"])),
             scenes_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scenes_filter"])),
             studios_filter = Optional.presentIfNotNull(convertStudioFilterType(filter["studios_filter"])),
+            custom_fields = Optional.presentIfNotNull(convertCustomFieldCriterionInput(filter["custom_fields"] as List<*>?)),
         )
     } else {
         null
@@ -288,6 +309,7 @@ fun FilterParser.convertImageFilterType(f: Any?): ImageFilterType? =
             details = Optional.presentIfNotNull(convertStringCriterionInput(filter["details"])),
             id = Optional.presentIfNotNull(convertIntCriterionInput(filter["id"])),
             checksum = Optional.presentIfNotNull(convertStringCriterionInput(filter["checksum"])),
+            phash_distance = Optional.presentIfNotNull(convertPhashDistanceCriterionInput(filter["phash_distance"])),
             path = Optional.presentIfNotNull(convertStringCriterionInput(filter["path"])),
             file_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["file_count"])),
             rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
@@ -316,6 +338,7 @@ fun FilterParser.convertImageFilterType(f: Any?): ImageFilterType? =
             studios_filter = Optional.presentIfNotNull(convertStudioFilterType(filter["studios_filter"])),
             tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
             files_filter = Optional.presentIfNotNull(convertFileFilterType(filter["files_filter"])),
+            custom_fields = Optional.presentIfNotNull(convertCustomFieldCriterionInput(filter["custom_fields"] as List<*>?)),
         )
     } else {
         null
@@ -365,6 +388,7 @@ fun FilterParser.convertGalleryFilterType(f: Any?): GalleryFilterType? =
             tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
             files_filter = Optional.presentIfNotNull(convertFileFilterType(filter["files_filter"])),
             folders_filter = Optional.presentIfNotNull(convertFolderFilterType(filter["folders_filter"])),
+            custom_fields = Optional.presentIfNotNull(convertCustomFieldCriterionInput(filter["custom_fields"] as List<*>?)),
         )
     } else {
         null
@@ -415,7 +439,7 @@ fun FilterParser.convertFileFilterType(f: Any?): FileFilterType? =
             parent_folder = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["parent_folder"])),
             zip_file = Optional.presentIfNotNull(convertMultiCriterionInput(filter["zip_file"])),
             mod_time = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["mod_time"])),
-            duplicated = Optional.presentIfNotNull(convertPHashDuplicationCriterionInput(filter["duplicated"])),
+            duplicated = Optional.presentIfNotNull(convertFileDuplicationCriterionInput(filter["duplicated"])),
             video_file_filter = Optional.presentIfNotNull(convertVideoFileFilterInput(filter["video_file_filter"])),
             image_file_filter = Optional.presentIfNotNull(convertImageFileFilterInput(filter["image_file_filter"])),
             scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["scene_count"])),
