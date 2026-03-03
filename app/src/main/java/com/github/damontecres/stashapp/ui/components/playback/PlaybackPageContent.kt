@@ -771,6 +771,7 @@ fun PlaybackPageContent(
                 updateSkipIndicator = updateSkipIndicator,
             )
         }
+    playbackKeyHandler.onMenuKey = { showSceneDetails = true }
     Box(
         modifier
             .background(Color.Black)
@@ -1111,6 +1112,8 @@ class PlaybackKeyHandler(
     private val controllerViewState: ControllerViewState,
     private val updateSkipIndicator: (Long) -> Unit,
 ) {
+    var onMenuKey: (() -> Unit)? = null
+
     fun onKeyEvent(it: KeyEvent): Boolean {
         var result = true
         if (!controlsEnabled) {
@@ -1185,6 +1188,9 @@ class PlaybackKeyHandler(
                 // Allow to propagate up
                 result = false
             }
+        } else if (it.key == Key.Menu) {
+            controllerViewState.hideControls()
+            onMenuKey?.invoke()
         } else {
             controllerViewState.pulseControls()
             result = false
