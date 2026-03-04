@@ -106,6 +106,8 @@ sealed interface PlaybackAction {
     data class Scale(
         val scale: ContentScale,
     ) : PlaybackAction
+
+    data object ToggleRepeatOne : PlaybackAction
 }
 
 @OptIn(UnstableApi::class)
@@ -132,6 +134,8 @@ fun PlaybackControls(
     scale: ContentScale,
     seekBarIntervals: Int,
     modifier: Modifier = Modifier,
+    isPlaylist: Boolean = false,
+    repeatOneEnabled: Boolean = false,
     initialFocusRequester: FocusRequester = remember { FocusRequester() },
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
@@ -197,6 +201,9 @@ fun PlaybackControls(
                 previousEnabled = previousEnabled,
                 nextEnabled = nextEnabled,
                 modifier = Modifier,
+                isPlaylist = isPlaylist,
+                repeatOneEnabled = repeatOneEnabled,
+                onToggleRepeatOne = { onPlaybackActionClick(PlaybackAction.ToggleRepeatOne) },
             )
             RightPlaybackButtons(
                 modifier = Modifier,
@@ -504,6 +511,9 @@ fun PlaybackButtons(
     previousEnabled: Boolean,
     nextEnabled: Boolean,
     modifier: Modifier = Modifier,
+    isPlaylist: Boolean = false,
+    repeatOneEnabled: Boolean = false,
+    onToggleRepeatOne: () -> Unit = {},
 ) {
     Row(
         modifier = modifier.focusGroup(),
@@ -552,6 +562,16 @@ fun PlaybackButtons(
             enabled = nextEnabled,
             onControllerInteraction = onControllerInteraction,
         )
+        if (isPlaylist) {
+            PlaybackButton(
+                iconRes = if (repeatOneEnabled) R.drawable.baseline_repeat_one_24 else R.drawable.baseline_repeat_24,
+                onClick = {
+                    onControllerInteraction.invoke()
+                    onToggleRepeatOne()
+                },
+                onControllerInteraction = onControllerInteraction,
+            )
+        }
     }
 }
 
