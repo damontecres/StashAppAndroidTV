@@ -517,6 +517,23 @@ abstract class PlaybackFragment(
                             val fragment = this@PlaybackFragment as PlaylistFragment<*, *, *>
                             fragment.showPlaylist()
                         }
+
+                        val repeatLabel =
+                            if (player?.repeatMode == Player.REPEAT_MODE_ONE) {
+                                "Stop Repeating Video"
+                            } else {
+                                "Repeat Current Video"
+                            }
+                        add(repeatLabel)
+                        callbacks[size - 1] = {
+                            player?.let { p ->
+                                if (p.repeatMode == Player.REPEAT_MODE_ONE) {
+                                    p.repeatMode = Player.REPEAT_MODE_OFF
+                                } else {
+                                    p.repeatMode = Player.REPEAT_MODE_ONE
+                                }
+                            }
+                        }
                     }
 
                     if (optionsButtonOptions.dataType == DataType.SCENE &&
