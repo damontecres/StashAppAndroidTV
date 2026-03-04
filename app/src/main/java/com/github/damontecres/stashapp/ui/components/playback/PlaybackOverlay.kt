@@ -164,6 +164,7 @@ fun PlaybackOverlay(
     audioDecoder: String?,
     spriteData: List<SpriteData>,
     modifier: Modifier = Modifier,
+    repeatOneEnabled: Boolean = false,
     seekPreviewPlaceholder: Painter? = null,
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
@@ -331,6 +332,8 @@ fun PlaybackOverlay(
                     scale = scale,
                     seekBarIntervals = uiConfig.preferences.playbackPreferences.seekBarSteps,
                     sfwMode = uiConfig.sfwMode,
+                    isPlaylist = playlistInfo != null,
+                    repeatOneEnabled = repeatOneEnabled,
                 )
             }
             if (markers.isNotEmpty()) {
