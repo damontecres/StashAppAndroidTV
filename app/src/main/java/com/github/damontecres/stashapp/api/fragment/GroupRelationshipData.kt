@@ -12,10 +12,3 @@ data class GroupRelationshipData(
 ) : StashData {
     override val id: String = group.id
 }
-
-fun GroupDescriptionData.toRelationship(type: GroupRelationshipType): GroupRelationshipData =
-    GroupRelationshipData(
-        group.groupData,
-        type,
-        description,
-    )
