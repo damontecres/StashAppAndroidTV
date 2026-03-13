@@ -44,7 +44,7 @@ query CountGroupRelationships($filter: FindFilterType, $group_filter: GroupFilte
 query FindGroupRelationships($filter: FindFilterType, $group_filter: GroupFilterType, $ids: [ID!]) {
   findGroups(filter: $filter, group_filter: $group_filter, ids: $ids) {
     groups {
-      id
+        ...GroupData
       sub_groups {
         ...GroupDescriptionData
       }
