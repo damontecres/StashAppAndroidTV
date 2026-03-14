@@ -18,6 +18,8 @@ import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.ui.pages.DownloadCallback
+import com.github.damontecres.stashapp.ui.pages.copyTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -168,6 +170,7 @@ class UpdateChecker {
         suspend fun installRelease(
             activity: Activity,
             release: Release,
+            callback: DownloadCallback,
         ) {
             withContext(Dispatchers.IO) {
                 cleanup(activity)
@@ -181,6 +184,9 @@ class UpdateChecker {
                 client.newCall(request).execute().use {
                     if (it.isSuccessful && it.body != null) {
                         Log.v(TAG, "Request successful for ${release.downloadUrl}")
+                        withContext(Dispatchers.Main) {
+                            callback.contentLength(it.body!!.contentLength())
+                        }
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             val contentValues =
                                 ContentValues().apply {
@@ -200,7 +206,7 @@ class UpdateChecker {
                             if (uri != null) {
                                 it.body!!.byteStream().use { input ->
                                     resolver.openOutputStream(uri).use { output ->
-                                        input.copyTo(output!!)
+                                        copyTo(input, output!!, callback = callback)
                                     }
                                 }
 
@@ -240,7 +246,7 @@ class UpdateChecker {
                                 downloadDir.mkdirs()
                                 val targetFile = File(downloadDir, ASSET_NAME)
                                 targetFile.outputStream().use { output ->
-                                    it.body!!.byteStream().copyTo(output)
+                                    copyTo(it.body!!.byteStream(), output, callback = callback)
                                 }
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                                     val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
@@ -314,6 +320,19 @@ class UpdateChecker {
                 Log.e(TAG, "Exception during cleanup", ex)
             }
         }
+
+        fun hasPermissions(context: Context): Boolean =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+                (
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    ) == PackageManager.PERMISSION_GRANTED &&
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                        ) == PackageManager.PERMISSION_GRANTED
+                )
     }
 }
 

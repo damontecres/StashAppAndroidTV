@@ -534,6 +534,7 @@ val FullSceneData.asVideoSceneData: VideoSceneData
                 paths.preview,
                 paths.stream,
                 paths.sprite,
+                paths.vtt,
             ),
             sceneStreams.map { VideoSceneData.SceneStream(it.url, it.mime_type, it.label) },
             captions?.map { VideoSceneData.Caption("", it.caption) },
@@ -884,6 +885,16 @@ fun CoroutineScope.launchIO(
         launch(Dispatchers.IO, block = block)
     } else {
         launch(Dispatchers.IO + exceptionHandler, block = block)
+    }
+
+fun CoroutineScope.launchDefault(
+    exceptionHandler: CoroutineExceptionHandler? = StashCoroutineExceptionHandler(),
+    block: suspend CoroutineScope.() -> Unit,
+): Job =
+    if (exceptionHandler == null) {
+        launch(Dispatchers.Default, block = block)
+    } else {
+        launch(Dispatchers.Default + exceptionHandler, block = block)
     }
 
 fun Bundle.putDataType(dataType: DataType): Bundle {
