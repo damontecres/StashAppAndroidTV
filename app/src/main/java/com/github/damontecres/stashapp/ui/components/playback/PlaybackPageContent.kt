@@ -1110,33 +1110,27 @@ class PlaybackKeyHandler(
     private val controllerViewState: ControllerViewState,
     private val updateSkipIndicator: (Long) -> Unit,
 ) {
-    private var keyDownTime = 0L
     private var keyDownKey: Key? = null
     private var holdActionTriggered = false
-    private val holdThresholdMs = 500L // Time in milliseconds to detect a "hold"
 
     fun onKeyEvent(it: KeyEvent): Boolean {
         var result = true
         if (!controlsEnabled) {
             result = false
         } else if (it.type == KeyEventType.KeyDown) {
-            // Track key down events for hold detection
             if (nextWithUpDown && (it.key == Key.DirectionUp || it.key == Key.DirectionDown)) {
+                val repeatCount = it.nativeKeyEvent.repeatCount
                 if (keyDownKey == null) {
                     keyDownKey = it.key
-                    keyDownTime = System.currentTimeMillis()
                     holdActionTriggered = false
-                } else if (keyDownKey == it.key && !holdActionTriggered) {
-                    // Check if hold threshold is met
-                    val holdDuration = System.currentTimeMillis() - keyDownTime
-                    if (holdDuration >= holdThresholdMs) {
-                        holdActionTriggered = true
-                        if (!controllerViewState.controlsVisible) {
-                            if (it.key == Key.DirectionUp) {
-                                player.seekToPreviousMediaItem()
-                            } else if (it.key == Key.DirectionDown) {
-                                player.seekToNextMediaItem()
-                            }
+                } else if (keyDownKey == it.key && !holdActionTriggered && repeatCount >= 2) {
+                    // Each repeat is roughly 250-300ms, so repeatCount==2 is ~500-600ms
+                    holdActionTriggered = true
+                    if (!controllerViewState.controlsVisible) {
+                        if (it.key == Key.DirectionUp) {
+                            player.seekToPreviousMediaItem()
+                        } else if (it.key == Key.DirectionDown) {
+                            player.seekToNextMediaItem()
                         }
                     }
                 }
