@@ -18,6 +18,7 @@ import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
+import com.github.damontecres.stashapp.api.type.DuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderEnum
@@ -26,7 +27,6 @@ import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationEnum
-import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionEnum
@@ -368,7 +368,8 @@ fun filterSummary(f: PhashDistanceCriterionInput): String {
     }
 }
 
-fun filterSummary(f: PHashDuplicationCriterionInput): String {
+fun filterSummary(f: DuplicationCriterionInput): String {
+    // TODO update to new fields
     val duplicated = f.duplicated.getOrNull()
     val distance = f.distance.getOrNull()
     return if (distance != null) {
@@ -553,7 +554,7 @@ fun filterSummary(
                 filterSummary(value)
             }
 
-            is PHashDuplicationCriterionInput -> {
+            is DuplicationCriterionInput -> {
                 filterSummary(value)
             }
 

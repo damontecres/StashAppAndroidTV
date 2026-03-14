@@ -5,17 +5,18 @@ import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.CustomFieldCriterionInput
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
+import com.github.damontecres.stashapp.api.type.DuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
-import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
+import com.github.damontecres.stashapp.api.type.StashIDsCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
@@ -60,7 +61,7 @@ class FilterWriter(
                                         o.toMap()
                                     }
 
-                                    is PHashDuplicationCriterionInput -> {
+                                    is DuplicationCriterionInput -> {
                                         o.toMap()
                                     }
 
@@ -73,6 +74,10 @@ class FilterWriter(
                                     }
 
                                     is StashIDCriterionInput -> {
+                                        o.toMap()
+                                    }
+
+                                    is StashIDsCriterionInput -> {
                                         o.toMap()
                                     }
 
