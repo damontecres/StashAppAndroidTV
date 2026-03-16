@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp.filter.output
 
+import com.github.damontecres.stashapp.api.type.CircumcisedEnum
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
-import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.CustomFieldCriterionInput
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
@@ -279,9 +279,9 @@ fun CircumcisionCriterionInput.toMap(): Map<String, Any> =
                 .getOrNull()
                 ?.map {
                     when (it) {
-                        CircumisedEnum.CUT -> "Cut"
-                        CircumisedEnum.UNCUT -> "Uncut"
-                        CircumisedEnum.UNKNOWN__ -> "Unknown"
+                        CircumcisedEnum.CUT -> "Cut"
+                        CircumcisedEnum.UNCUT -> "Uncut"
+                        CircumcisedEnum.UNKNOWN__ -> "Unknown"
                     }
                 }.orEmpty()
         put("value", values)

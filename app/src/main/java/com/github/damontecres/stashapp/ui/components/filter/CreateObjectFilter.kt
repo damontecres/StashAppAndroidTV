@@ -21,8 +21,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.tv.material3.Icon
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.type.CircumcisedEnum
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
-import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
@@ -478,8 +478,8 @@ fun ObjectFilterPicker(
                                 SelectFromListAction(
                                     filterName = context.getString(filterOption.nameStringId),
                                     options =
-                                        CircumisedEnum.entries
-                                            .filter { it != CircumisedEnum.UNKNOWN__ }
+                                        CircumcisedEnum.entries
+                                            .filter { it != CircumcisedEnum.UNKNOWN__ }
                                             .map { context.getString(circNameId(it)) },
                                     currentOptions =
                                         (input.value.getOrNull() ?: listOf()).map {
@@ -488,7 +488,7 @@ fun ObjectFilterPicker(
                                     multiSelect = true,
                                     onSubmit = {
                                         value =
-                                            input.copy(value = Optional.present(it.map { CircumisedEnum.entries[it] }))
+                                            input.copy(value = Optional.present(it.map { CircumcisedEnum.entries[it] }))
                                     },
                                 ),
                             )

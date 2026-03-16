@@ -6,7 +6,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.type.CircumisedEnum
+import com.github.damontecres.stashapp.api.type.CircumcisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.util.StashServer
 import java.time.LocalDate
@@ -176,11 +176,11 @@ fun formatNumber(
             .format(number)
     }
 
-fun circNameId(circ: CircumisedEnum): Int =
+fun circNameId(circ: CircumcisedEnum): Int =
     when (circ) {
-        CircumisedEnum.CUT -> R.string.stashapp_circumcised_types_CUT
-        CircumisedEnum.UNCUT -> R.string.stashapp_circumcised_types_UNCUT
-        CircumisedEnum.UNKNOWN__ -> R.string.stashapp_display_mode_unknown
+        CircumcisedEnum.CUT -> R.string.stashapp_circumcised_types_CUT
+        CircumcisedEnum.UNCUT -> R.string.stashapp_circumcised_types_UNCUT
+        CircumcisedEnum.UNKNOWN__ -> R.string.stashapp_display_mode_unknown
     }
 
 val FullMarkerData.formatSeconds: String

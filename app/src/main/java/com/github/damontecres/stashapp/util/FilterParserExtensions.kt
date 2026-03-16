@@ -388,6 +388,7 @@ fun FilterParser.convertGalleryFilterType(f: Any?): GalleryFilterType? =
             tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
             files_filter = Optional.presentIfNotNull(convertFileFilterType(filter["files_filter"])),
             folders_filter = Optional.presentIfNotNull(convertFolderFilterType(filter["folders_filter"])),
+            parent_folder = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["parent_folder"])),
             custom_fields = Optional.presentIfNotNull(convertCustomFieldCriterionInput(filter["custom_fields"] as List<*>?)),
         )
     } else {
@@ -465,6 +466,7 @@ fun FilterParser.convertFolderFilterType(f: Any?): FolderFilterType? =
             OR = Optional.presentIfNotNull(convertFolderFilterType(filter["OR"])),
             NOT = Optional.presentIfNotNull(convertFolderFilterType(filter["NOT"])),
             path = Optional.presentIfNotNull(convertStringCriterionInput(filter["path"])),
+            basename = Optional.presentIfNotNull(convertStringCriterionInput(filter["basename"])),
             parent_folder = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["parent_folder"])),
             zip_file = Optional.presentIfNotNull(convertMultiCriterionInput(filter["zip_file"])),
             mod_time = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["mod_time"])),
