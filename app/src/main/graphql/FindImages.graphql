@@ -1,112 +1,112 @@
 query FindImages($filter: FindFilterType, $image_filter: ImageFilterType, $ids: [ID!]) {
-  findImages(filter: $filter, image_filter: $image_filter, ids: $ids) {
-    images {
-      ...ImageData
+    findImages(filter: $filter, image_filter: $image_filter, ids: $ids) {
+        images {
+            ...ImageData
+        }
     }
-  }
 }
 
 query FindSlimImages($filter: FindFilterType, $image_filter: ImageFilterType, $ids: [ID!]) {
-  findImages(filter: $filter, image_filter: $image_filter, ids: $ids) {
-    images {
-      ...SlimImageData
+    findImages(filter: $filter, image_filter: $image_filter, ids: $ids) {
+        images {
+            ...SlimImageData
+        }
     }
-  }
 }
 
 query CountImages($filter: FindFilterType, $image_filter: ImageFilterType) {
-  findImages(filter: $filter, image_filter: $image_filter) {
-    count
-  }
+    findImages(filter: $filter, image_filter: $image_filter) {
+        count
+    }
 }
 
 query FindImage($id: ID) {
-  findImage(id: $id) {
-    ...ImageData
-  }
+    findImage(id: $id) {
+        ...ImageData
+    }
 }
 
 query GetExtraImage($id: ID) {
-  findImage(id: $id) {
-    ...ExtraImageData
-  }
+    findImage(id: $id) {
+        ...ExtraImageData
+    }
 }
 
 fragment ImageData on Image {
-  id
-  title
-  code
-  rating100
-  date
-  details
-  photographer
-  o_counter
-  created_at @catch(to: NULL)
-  updated_at @catch(to: NULL)
-  paths {
-    thumbnail
-    preview
-    image
-  }
-  performers{
     id
-    name
-  }
-  studio {
-    id
-    name
-  }
-  tags {
-    id
-    name
-  }
-  galleries {
-    id
-  }
-  visual_files {
-    ... on BaseFile{
-      id
-      path
-      size
-      __typename
+    title
+    code
+    rating100
+    date
+    details
+    photographer
+    o_counter
+    created_at @catch(to: NULL)
+    updated_at @catch(to: NULL)
+    paths {
+        thumbnail
+        preview
+        image
     }
-    ... on ImageFile {
-      width
-      height
+    performers{
+        id
+        name
+    }
+    studio {
+        id
+        name
+    }
+    tags {
+        id
+        name
+    }
+    galleries {
+        id
+    }
+    visual_files {
+        ... on BaseFile{
+            id
+            path
+            size
+            __typename
+        }
+        ... on ImageFile {
+            width
+            height
 
+        }
+        ... on VideoFile{
+            width
+            height
+            format
+            video_codec
+            audio_codec
+            duration
+        }
     }
-    ... on VideoFile{
-      width
-      height
-      format
-      video_codec
-      audio_codec
-      duration
-    }
-  }
 }
 
 fragment ExtraImageData on Image {
-  id
-  performers{
-    ...PerformerData
-  }
-  tags {
-    ...TagData
-  }
-  galleries {
-    ...GalleryData
-  }
-  studio {
-    ...StudioData
-  }
+    id
+    performers{
+        ...PerformerData
+    }
+    tags {
+        ...TagData
+    }
+    galleries {
+        ...GalleryData
+    }
+    studio {
+        ...StudioData
+    }
 }
 
 fragment SlimImageData on Image {
-  id
-  paths {
-    thumbnail
-    preview
-    image
-  }
+    id
+    paths {
+        thumbnail
+        preview
+        image
+    }
 }

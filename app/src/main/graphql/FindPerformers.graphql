@@ -1,104 +1,104 @@
 query FindPerformers($filter: FindFilterType, $performer_filter: PerformerFilterType, $ids: [ID!]) {
-  findPerformers(
-    filter: $filter
-    performer_filter: $performer_filter
-    ids: $ids
-  ) {
-    performers {
-      ...PerformerData
+    findPerformers(
+        filter: $filter
+        performer_filter: $performer_filter
+        ids: $ids
+    ) {
+        performers {
+            ...PerformerData
+        }
     }
-  }
 }
 
 query GetPerformer($id: ID!) {
-  findPerformer(id: $id) {
-    ...PerformerData
-  }
+    findPerformer(id: $id) {
+        ...PerformerData
+    }
 }
 
 query CountPerformers($filter: FindFilterType, $performer_filter: PerformerFilterType, $ids: [ID!]) {
-  findPerformers(
-    filter: $filter
-    performer_filter: $performer_filter
-    ids: $ids
-  ) {
-    count
-  }
+    findPerformers(
+        filter: $filter
+        performer_filter: $performer_filter
+        ids: $ids
+    ) {
+        count
+    }
 }
 
 query FindPerformerTags($filter: FindFilterType, $performer_filter: PerformerFilterType, $ids: [ID!]) {
-  findPerformers(
-    filter: $filter
-    performer_filter: $performer_filter
-    ids: $ids
-  ) {
-    performers {
-      id
-      tags {
-        ...TagData
-      }
+    findPerformers(
+        filter: $filter
+        performer_filter: $performer_filter
+        ids: $ids
+    ) {
+        performers {
+            id
+            tags {
+                ...TagData
+            }
+        }
     }
-  }
 }
 
 mutation UpdatePerformer($input: PerformerUpdateInput!) {
-  performerUpdate(input: $input) {
-    ...PerformerData
-  }
+    performerUpdate(input: $input) {
+        ...PerformerData
+    }
 }
 
 mutation CreatePerformer($input: PerformerCreateInput!){
-  performerCreate(input: $input){
-    ...PerformerData
-  }
+    performerCreate(input: $input){
+        ...PerformerData
+    }
 }
 
 fragment PerformerData on Performer {
-  id
-  name
-  disambiguation
-  gender
-  birthdate
-  ethnicity
-  country
-  eye_color
-  height_cm
-  measurements
-  fake_tits
-  penis_length
-  circumcised
-  career_length
-  tattoos
-  piercings
-  alias_list
-  favorite
-  image_path
-  scene_count
-  image_count
-  gallery_count
-  group_count
-  o_counter
-  created_at @catch(to: NULL)
-  updated_at @catch(to: NULL)
-  tags {
-    ...SlimTagData
+    id
+    name
+    disambiguation
+    gender
+    birthdate
+    ethnicity
+    country
+    eye_color
+    height_cm
+    measurements
+    fake_tits
+    penis_length
+    circumcised
+    career_length
+    tattoos
+    piercings
+    alias_list
+    favorite
+    image_path
+    scene_count
+    image_count
+    gallery_count
+    group_count
+    o_counter
+    created_at @catch(to: NULL)
+    updated_at @catch(to: NULL)
+    tags {
+        ...SlimTagData
+        __typename
+    }
+    rating100
+    details
+    death_date
+    hair_color
+    weight
+    custom_fields
     __typename
-  }
-  rating100
-  details
-  death_date
-  hair_color
-  weight
-  custom_fields
-  __typename
 }
 
 fragment SlimPerformerData on Performer {
-  id
-  name
-  disambiguation
-  gender
-  birthdate
-  death_date
-  __typename
+    id
+    name
+    disambiguation
+    gender
+    birthdate
+    death_date
+    __typename
 }

@@ -1,11 +1,11 @@
 query SystemStatus {
-  systemStatus {
-    status
-  }
+    systemStatus {
+        status
+    }
 }
 
 query JobQueue {
-  jobQueue {
-    ...StashJob
-  }
+    jobQueue {
+        ...StashJob
+    }
 }
