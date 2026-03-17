@@ -57,6 +57,50 @@ The first time you open the app, follow the prompts to configure the app to conn
     3. You can also use your username and password instead. After entering your username and password, the app will automatically retrieve (or generate) the API Key from the server.
 3. If you have trouble submitting the URL or API Key using the virtual remote control, [see some tips here](https://github.com/damontecres/StashAppAndroidTV/wiki/Tips-&-Tricks#i-cant-submit-the-server-url-when-using-a-remote-phone-app)
 
+#### HTTPS with a reverse proxy (nginx)
+
+If you want to encrypt traffic to your Stash server, you can put nginx in front of it as an SSL-terminating reverse proxy.
+
+Example nginx server block:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name stash.example.com;
+
+    # Path to your SSL certificate configuration (certificate, key, protocols, etc.)
+    include /etc/nginx/ssl.conf;
+
+    location / {
+        proxy_pass http://127.0.0.1:9999/;
+        proxy_http_version 1.1;
+
+        # Required for WebSocket support (used by Stash for live updates)
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Long timeout needed for video streaming
+        proxy_read_timeout 86400;
+
+        # Disable buffering for streaming and large uploads
+        proxy_buffering off;
+        proxy_request_buffering off;
+        client_max_body_size 0;
+    }
+}
+```
+
+Replace `stash.example.com` with your actual domain and update the `include` path to point to your SSL configuration file. The SSL config file should set `ssl_certificate`, `ssl_certificate_key`, and any other TLS options you need.
+
+Once nginx is running, enter `https://stash.example.com` (your actual domain) as the server URL in the app instead of the plain `http://` address.
+
+Without the correct proxy headers, the app may fail to authenticate or load thumbnails and images.
+
 #### Multiple servers
 
 You can configure multiple servers in the app. To add, remove, or switch servers, use the `Manage Servers` option in the settings or click the Stash icon on the main page.
