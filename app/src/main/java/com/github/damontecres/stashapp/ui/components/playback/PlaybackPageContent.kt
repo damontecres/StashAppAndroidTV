@@ -544,6 +544,83 @@ fun PlaybackPageContent(
             panY = 0f
         }
     }
+    val mobileTouchGestureModifier = scaledModifier
+        .onSizeChanged { surfaceWidth = it.width; surfaceHeight = it.height }
+        .graphicsLayer {
+            scaleX = zoomFactor
+            scaleY = zoomFactor
+            translationX = panX
+            translationY = panY
+        }
+        .pointerInput(Unit) {
+            detectTapGestures(
+                onPress = {
+                    tryAwaitRelease()
+                    if (gestureSpeedActive) {
+                        player.setPlaybackParameters(PlaybackParameters(1f))
+                        gestureSpeedActive = false
+                    }
+                },
+                onTap = {
+                    if (controllerViewState.controlsVisible) {
+                        controllerViewState.hideControls()
+                    } else {
+                        controllerViewState.showControls()
+                    }
+                },
+                onDoubleTap = { offset ->
+                    when {
+                        offset.x < size.width / 3f -> {
+                            player.seekBack()
+                            updateSkipIndicator(-player.seekBackIncrement)
+                        }
+                        offset.x > size.width * 2f / 3f -> {
+                            player.seekForward()
+                            updateSkipIndicator(player.seekForwardIncrement)
+                        }
+                        else -> {
+                            if (zoomFactor > 1f) {
+                                zoomFactor = 1f
+                                panX = 0f
+                                panY = 0f
+                            } else {
+                                zoomFactor = GESTURE_DOUBLE_TAP_ZOOM
+                            }
+                        }
+                    }
+                },
+                onLongPress = { offset ->
+                    val speed = when {
+                        offset.x < size.width / 3f -> GESTURE_SLOW_SPEED
+                        offset.x > size.width * 2f / 3f -> GESTURE_FAST_SPEED
+                        else -> return@detectTapGestures
+                    }
+                    player.setPlaybackParameters(PlaybackParameters(speed))
+                    gestureSpeedActive = true
+                },
+            )
+        }
+        .pointerInput(zoomFactor) {
+            if (zoomFactor <= 1f) {
+                var dragX = 0f
+                detectDragGestures(
+                    onDragStart = { dragX = 0f },
+                    onDragCancel = { dragX = 0f },
+                    onDragEnd = {
+                        if (dragX < -SWIPE_NEXT_PREV_THRESHOLD_PX && player.hasNextMediaItem()) {
+                            player.seekToNext()
+                        } else if (dragX > SWIPE_NEXT_PREV_THRESHOLD_PX && player.hasPreviousMediaItem()) {
+                            player.seekToPrevious()
+                        }
+                        dragX = 0f
+                    },
+                ) { change, dragAmount ->
+                    dragX += dragAmount.x
+                    change.consume()
+                }
+            }
+        }
+        .transformable(transformState, lockRotationOnZoomPan = true)
 
     var contentCurrentPosition by remember { mutableLongStateOf(0L) }
 
@@ -817,83 +894,7 @@ fun PlaybackPageContent(
             PlayerSurface(
                 player = player,
                 surfaceType = SURFACE_TYPE_TEXTURE_VIEW,
-                modifier = scaledModifier
-                    .onSizeChanged { surfaceWidth = it.width; surfaceHeight = it.height }
-                    .graphicsLayer {
-                        scaleX = zoomFactor
-                        scaleY = zoomFactor
-                        translationX = panX
-                        translationY = panY
-                    }
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onPress = {
-                                tryAwaitRelease()
-                                if (gestureSpeedActive) {
-                                    player.setPlaybackParameters(PlaybackParameters(1f))
-                                    gestureSpeedActive = false
-                                }
-                            },
-                            onTap = {
-                                if (controllerViewState.controlsVisible) {
-                                    controllerViewState.hideControls()
-                                } else {
-                                    controllerViewState.showControls()
-                                }
-                            },
-                            onDoubleTap = { offset ->
-                                when {
-                                    offset.x < size.width / 3f -> {
-                                        player.seekBack()
-                                        updateSkipIndicator(-player.seekBackIncrement)
-                                    }
-                                    offset.x > size.width * 2f / 3f -> {
-                                        player.seekForward()
-                                        updateSkipIndicator(player.seekForwardIncrement)
-                                    }
-                                    else -> {
-                                        if (zoomFactor > 1f) {
-                                            zoomFactor = 1f
-                                            panX = 0f
-                                            panY = 0f
-                                        } else {
-                                            zoomFactor = GESTURE_DOUBLE_TAP_ZOOM
-                                        }
-                                    }
-                                }
-                            },
-                            onLongPress = { offset ->
-                                val speed = when {
-                                    offset.x < size.width / 3f -> GESTURE_SLOW_SPEED
-                                    offset.x > size.width * 2f / 3f -> GESTURE_FAST_SPEED
-                                    else -> return@detectTapGestures
-                                }
-                                player.setPlaybackParameters(PlaybackParameters(speed))
-                                gestureSpeedActive = true
-                            },
-                        )
-                    }
-                    .pointerInput(zoomFactor) {
-                        if (zoomFactor <= 1f) {
-                            var dragX = 0f
-                            detectDragGestures(
-                                onDragStart = { dragX = 0f },
-                                onDragCancel = { dragX = 0f },
-                                onDragEnd = {
-                                    if (dragX < -SWIPE_NEXT_PREV_THRESHOLD_PX && player.hasNextMediaItem()) {
-                                        player.seekToNext()
-                                    } else if (dragX > SWIPE_NEXT_PREV_THRESHOLD_PX && player.hasPreviousMediaItem()) {
-                                        player.seekToPrevious()
-                                    }
-                                    dragX = 0f
-                                },
-                            ) { change, dragAmount ->
-                                dragX += dragAmount.x
-                                change.consume()
-                            }
-                        }
-                    }
-                    .transformable(transformState, lockRotationOnZoomPan = true),
+                modifier = mobileTouchGestureModifier,
             )
         } else {
             PlayerSurface(
