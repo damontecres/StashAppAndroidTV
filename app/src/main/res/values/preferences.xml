@@ -36,6 +36,7 @@
     <string name="pref_key_skip_with_dpad" translatable="false">skipWithDpad</string>
     <string name="pref_key_playback_finished_behavior" translatable="false">playbackFinishedBehavior</string>
     <string name="pref_key_show_dpad_skip" translatable="false">playback.showDpadSkip</string>
+    <string name="pref_key_mobile_touch_gestures" translatable="false">playback.mobileTouchGestures</string>
     <string name="pref_key_playback_debug_logging" translatable="false">playback.debug.logging</string>
     <string name="pref_key_playback_http_client" translatable="false">playback.http.client</string>
     <string name="pref_key_playback_backend" translatable="false">playback.backend</string>

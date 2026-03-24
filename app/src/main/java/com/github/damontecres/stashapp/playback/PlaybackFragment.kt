@@ -48,6 +48,7 @@ import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
+import com.github.damontecres.stashapp.ui.compat.detectTvDevice
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getDataType
@@ -636,6 +637,32 @@ abstract class PlaybackFragment(
         player = preparePlayer()
         player!!.postSetupPlayer()
         super.onStart()
+        updateGestureHandler()
+    }
+
+    private fun updateGestureHandler() {
+        val mobilePrefKey = getString(R.string.pref_key_mobile_touch_gestures)
+        val prefs = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val prefExists = prefs.contains(mobilePrefKey)
+        val gesturesEnabled = if (prefExists) {
+            prefs.getBoolean(mobilePrefKey, false)
+        } else {
+            !detectTvDevice
+        }
+        if (gesturesEnabled) {
+            if (videoView.gestureHandler == null) {
+                val speedOverlay = view?.findViewById<TextView>(R.id.speed_overlay_text)
+                videoView.gestureHandler = MobileGestureHandler(
+                    context = requireContext(),
+                    playerView = videoView,
+                    skipIndicator = skipIndicator,
+                    speedOverlay = speedOverlay,
+                )
+            }
+        } else {
+            videoView.gestureHandler?.release()
+            videoView.gestureHandler = null
+        }
     }
 
     @OptIn(UnstableApi::class)
@@ -678,12 +705,15 @@ abstract class PlaybackFragment(
     @OptIn(UnstableApi::class)
     override fun onStop() {
         Log.v(TAG, "onStop")
+        videoView.gestureHandler?.release()
         releasePlayer()
         keepScreenOn(false)
         super.onStop()
     }
 
     override fun onDestroyView() {
+        videoView.gestureHandler?.release()
+        videoView.gestureHandler = null
         super.onDestroyView()
         controllerVisibilityListener.removeAllListeners()
         videoView.setControllerVisibilityListener(null as PlayerView.ControllerVisibilityListener?)

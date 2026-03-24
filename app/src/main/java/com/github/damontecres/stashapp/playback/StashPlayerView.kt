@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.playback
 import android.content.Context
 import android.util.AttributeSet
 import android.view.KeyEvent
+import android.view.MotionEvent
 import androidx.annotation.OptIn
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.findFragment
@@ -28,6 +29,8 @@ class StashPlayerView(
         PreferenceManager.getDefaultSharedPreferences(context).getBoolean("skipWithDpad", true)
 
     var skipIndicator: SkipIndicator? = null
+
+    var gestureHandler: MobileGestureHandler? = null
 
     @OptIn(UnstableApi::class)
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
@@ -87,6 +90,14 @@ class StashPlayerView(
             return true
         }
         return super.dispatchKeyEvent(event)
+    }
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        val handler = gestureHandler
+        if (handler != null && useController) {
+            if (handler.onTouchEvent(event)) return true
+        }
+        return super.dispatchTouchEvent(event)
     }
 
     companion object {

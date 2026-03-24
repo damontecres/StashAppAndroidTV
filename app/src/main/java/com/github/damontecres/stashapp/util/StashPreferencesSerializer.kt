@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.proto.TabPreferences
 import com.github.damontecres.stashapp.proto.UpdatePreferences
+import com.github.damontecres.stashapp.ui.compat.detectTvDevice
 import com.github.damontecres.stashapp.ui.components.prefs.StashPreference
 import com.google.protobuf.InvalidProtocolBufferException
 import java.io.InputStream
@@ -83,6 +84,7 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                             addAllDirectPlayVideo(StashPreference.DirectPlayVideo.defaultValue)
                             addAllDirectPlayAudio(StashPreference.DirectPlayAudio.defaultValue)
                             addAllDirectPlayFormat(StashPreference.DirectPlayFormat.defaultValue)
+                            mobileTouchGestures = !detectTvDevice
                         }.build()
                 updatePreferences =
                     UpdatePreferences

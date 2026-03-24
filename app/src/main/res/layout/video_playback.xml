@@ -19,12 +19,25 @@
         app:played_color="@color/selected_background"
         app:use_controller="true"
         app:hide_during_ads="false"
-        app:show_subtitle_button="true" />
+        app:show_subtitle_button="true"
+        app:surface_type="texture_view" />
 
     <FrameLayout
         android:id="@+id/video_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <TextView
+        android:id="@+id/speed_overlay_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@color/transparent_black_50"
+        android:padding="12dp"
+        android:textColor="@android:color/white"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <com.github.damontecres.stashapp.views.SkipIndicator
         android:id="@+id/skip_indicator"

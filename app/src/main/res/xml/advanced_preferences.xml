@@ -62,6 +62,12 @@
             app:key="@string/pref_key_show_dpad_skip"
             app:title="Show D-Pad skipping indicator"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_mobile_touch_gestures"
+            app:title="Mobile touch gestures"
+            app:summaryOn="Pinch-to-zoom, swipe, and tap gestures enabled"
+            app:summaryOff="Touch gestures disabled"
+            app:defaultValue="false" />
         <ListPreference
             app:key="@string/pref_key_stream_choice"
             app:title="Stream Choice"

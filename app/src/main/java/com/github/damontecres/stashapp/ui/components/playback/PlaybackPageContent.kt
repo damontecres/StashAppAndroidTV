@@ -9,6 +9,10 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -36,13 +40,16 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -58,6 +65,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
@@ -72,6 +80,7 @@ import androidx.media3.extractor.text.webvtt.WebvttParser
 import androidx.media3.ui.SubtitleView
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
+import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberNextButtonState
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
@@ -139,6 +148,11 @@ import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 
 const val TAG = "PlaybackPageContent"
+private const val SWIPE_NEXT_PREV_THRESHOLD_PX = 200f
+private const val GESTURE_MAX_ZOOM = 5f
+private const val GESTURE_DOUBLE_TAP_ZOOM = 2f
+private const val GESTURE_SLOW_SPEED = 0.5f
+private const val GESTURE_FAST_SPEED = 2.0f
 
 class PlaybackViewModel : ViewModel() {
     private lateinit var server: StashServer
@@ -510,6 +524,27 @@ fun PlaybackPageContent(
     val scaledModifier =
         Modifier.resizeWithContentScale(contentScale, presentationState.videoSizeDp)
 
+    // Mobile touch gesture state
+    val mobileTouchGesturesEnabled = isNotTvDevice && uiConfig.preferences.playbackPreferences.mobileTouchGestures
+    var zoomFactor by remember { mutableFloatStateOf(1f) }
+    var panX by remember { mutableFloatStateOf(0f) }
+    var panY by remember { mutableFloatStateOf(0f) }
+    var surfaceWidth by remember { mutableIntStateOf(0) }
+    var surfaceHeight by remember { mutableIntStateOf(0) }
+    var gestureSpeedActive by remember { mutableStateOf(false) }
+    val transformState = rememberTransformableState { zoomChange, offsetChange, _ ->
+        zoomFactor = (zoomFactor * zoomChange).coerceIn(1f, GESTURE_MAX_ZOOM)
+        if (zoomFactor > 1f) {
+            val maxX = surfaceWidth * (zoomFactor - 1f) / 2f
+            val maxY = surfaceHeight * (zoomFactor - 1f) / 2f
+            panX = (panX + offsetChange.x).coerceIn(-maxX, maxX)
+            panY = (panY + offsetChange.y).coerceIn(-maxY, maxY)
+        } else {
+            panX = 0f
+            panY = 0f
+        }
+    }
+
     var contentCurrentPosition by remember { mutableLongStateOf(0L) }
 
     var createMarkerPosition by remember { mutableLongStateOf(-1L) }
@@ -778,22 +813,106 @@ fun PlaybackPageContent(
             .focusRequester(focusRequester)
             .focusable(),
     ) {
-        PlayerSurface(
-            player = player,
-            surfaceType = SURFACE_TYPE_SURFACE_VIEW,
-            modifier =
-                scaledModifier.clickable(
-                    enabled = !isTvDevice,
-                    indication = null,
-                    interactionSource = null,
-                ) {
-                    if (controllerViewState.controlsVisible) {
-                        controllerViewState.hideControls()
-                    } else {
-                        controllerViewState.showControls()
+        if (mobileTouchGesturesEnabled) {
+            PlayerSurface(
+                player = player,
+                surfaceType = SURFACE_TYPE_TEXTURE_VIEW,
+                modifier = scaledModifier
+                    .onSizeChanged { surfaceWidth = it.width; surfaceHeight = it.height }
+                    .graphicsLayer {
+                        scaleX = zoomFactor
+                        scaleY = zoomFactor
+                        translationX = panX
+                        translationY = panY
                     }
-                },
-        )
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = {
+                                tryAwaitRelease()
+                                if (gestureSpeedActive) {
+                                    player.setPlaybackParameters(PlaybackParameters(1f))
+                                    gestureSpeedActive = false
+                                }
+                            },
+                            onTap = {
+                                if (controllerViewState.controlsVisible) {
+                                    controllerViewState.hideControls()
+                                } else {
+                                    controllerViewState.showControls()
+                                }
+                            },
+                            onDoubleTap = { offset ->
+                                when {
+                                    offset.x < size.width / 3f -> {
+                                        player.seekBack()
+                                        updateSkipIndicator(-player.seekBackIncrement)
+                                    }
+                                    offset.x > size.width * 2f / 3f -> {
+                                        player.seekForward()
+                                        updateSkipIndicator(player.seekForwardIncrement)
+                                    }
+                                    else -> {
+                                        if (zoomFactor > 1f) {
+                                            zoomFactor = 1f
+                                            panX = 0f
+                                            panY = 0f
+                                        } else {
+                                            zoomFactor = GESTURE_DOUBLE_TAP_ZOOM
+                                        }
+                                    }
+                                }
+                            },
+                            onLongPress = { offset ->
+                                val speed = when {
+                                    offset.x < size.width / 3f -> GESTURE_SLOW_SPEED
+                                    offset.x > size.width * 2f / 3f -> GESTURE_FAST_SPEED
+                                    else -> return@detectTapGestures
+                                }
+                                player.setPlaybackParameters(PlaybackParameters(speed))
+                                gestureSpeedActive = true
+                            },
+                        )
+                    }
+                    .pointerInput(zoomFactor) {
+                        if (zoomFactor <= 1f) {
+                            var dragX = 0f
+                            detectDragGestures(
+                                onDragStart = { dragX = 0f },
+                                onDragCancel = { dragX = 0f },
+                                onDragEnd = {
+                                    if (dragX < -SWIPE_NEXT_PREV_THRESHOLD_PX && player.hasNextMediaItem()) {
+                                        player.seekToNext()
+                                    } else if (dragX > SWIPE_NEXT_PREV_THRESHOLD_PX && player.hasPreviousMediaItem()) {
+                                        player.seekToPrevious()
+                                    }
+                                    dragX = 0f
+                                },
+                            ) { change, dragAmount ->
+                                dragX += dragAmount.x
+                                change.consume()
+                            }
+                        }
+                    }
+                    .transformable(transformState, lockRotationOnZoomPan = true),
+            )
+        } else {
+            PlayerSurface(
+                player = player,
+                surfaceType = SURFACE_TYPE_SURFACE_VIEW,
+                modifier =
+                    scaledModifier.clickable(
+                        enabled = !isTvDevice,
+                        indication = null,
+                        interactionSource = null,
+                    ) {
+                        if (controllerViewState.controlsVisible) {
+                            controllerViewState.hideControls()
+                        } else {
+                            controllerViewState.showControls()
+                        }
+                    },
+            )
+        }
         if (presentationState.coverSurface) {
             Box(
                 Modifier
