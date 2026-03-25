@@ -785,11 +785,12 @@ fun PlaybackPageContent(
             PlayerSurface(
                 player = player,
                 surfaceType = SURFACE_TYPE_TEXTURE_VIEW,
-                modifier = rememberMobileGestureModifier(
-                    scaledModifier = scaledModifier,
-                    player = player,
-                    controllerViewState = controllerViewState,
-                    updateSkipIndicator = updateSkipIndicator,
+                modifier = scaledModifier.then(
+                    rememberMobileGestureModifier(
+                        player = player,
+                        controllerViewState = controllerViewState,
+                        updateSkipIndicator = updateSkipIndicator,
+                    ),
                 ),
             )
         } else {
@@ -802,11 +803,7 @@ fun PlaybackPageContent(
                         indication = null,
                         interactionSource = null,
                     ) {
-                        if (controllerViewState.controlsVisible) {
-                            controllerViewState.hideControls()
-                        } else {
-                            controllerViewState.showControls()
-                        }
+                        controllerViewState.toggleControls()
                     },
             )
         }

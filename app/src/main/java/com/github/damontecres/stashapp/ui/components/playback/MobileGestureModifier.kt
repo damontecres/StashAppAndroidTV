@@ -37,7 +37,6 @@ private const val GESTURE_FAST_SPEED = 2.0f
  */
 @Composable
 fun rememberMobileGestureModifier(
-    scaledModifier: Modifier,
     player: Player,
     controllerViewState: ControllerViewState,
     updateSkipIndicator: (Long) -> Unit,
@@ -69,7 +68,7 @@ fun rememberMobileGestureModifier(
         }
     }
 
-    return scaledModifier
+    return Modifier
         .onSizeChanged { surfaceWidth = it.width; surfaceHeight = it.height }
         .graphicsLayer {
             scaleX = zoomFactor
@@ -87,11 +86,7 @@ fun rememberMobileGestureModifier(
                     }
                 },
                 onTap = {
-                    if (controllerViewState.controlsVisible) {
-                        controllerViewState.hideControls()
-                    } else {
-                        controllerViewState.showControls()
-                    }
+                    controllerViewState.toggleControls()
                 },
                 onDoubleTap = { offset ->
                     when {
@@ -118,14 +113,16 @@ fun rememberMobileGestureModifier(
                     val speed = when {
                         offset.x < size.width / 3f -> GESTURE_SLOW_SPEED
                         offset.x > size.width * 2f / 3f -> GESTURE_FAST_SPEED
-                        else -> return@detectTapGestures
+                        else -> null
                     }
-                    player.setPlaybackParameters(PlaybackParameters(speed))
-                    gestureSpeedActive = true
+                    if (speed != null) {
+                        player.setPlaybackParameters(PlaybackParameters(speed))
+                        gestureSpeedActive = true
+                    }
                 },
             )
         }
-        .pointerInput(zoomFactor) {
+        .pointerInput(zoomFactor > 1f) {
             if (zoomFactor <= 1f) {
                 var dragX = 0f
                 detectDragGestures(
