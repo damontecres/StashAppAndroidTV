@@ -60,8 +60,8 @@ fun rememberMobileGestureModifier(
         if (zoomFactor > 1f) {
             val maxX = surfaceWidth * (zoomFactor - 1f) / 2f
             val maxY = surfaceHeight * (zoomFactor - 1f) / 2f
-            panX = (panX + offsetChange.x).coerceIn(-maxX, maxX)
-            panY = (panY + offsetChange.y).coerceIn(-maxY, maxY)
+            panX = (panX + offsetChange.x * zoomFactor).coerceIn(-maxX, maxX)
+            panY = (panY + offsetChange.y * zoomFactor).coerceIn(-maxY, maxY)
         } else {
             panX = 0f
             panY = 0f
