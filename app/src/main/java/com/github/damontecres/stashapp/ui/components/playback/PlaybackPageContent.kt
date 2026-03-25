@@ -773,12 +773,6 @@ fun PlaybackPageContent(
             )
         }
     val mobileTouchGesturesEnabled = isNotTvDevice && uiConfig.preferences.playbackPreferences.mobileTouchGestures
-    val mobileTouchGestureModifier = rememberMobileGestureModifier(
-        scaledModifier = scaledModifier,
-        player = player,
-        controllerViewState = controllerViewState,
-        updateSkipIndicator = updateSkipIndicator,
-    )
 
     Box(
         modifier
@@ -791,7 +785,12 @@ fun PlaybackPageContent(
             PlayerSurface(
                 player = player,
                 surfaceType = SURFACE_TYPE_TEXTURE_VIEW,
-                modifier = mobileTouchGestureModifier,
+                modifier = rememberMobileGestureModifier(
+                    scaledModifier = scaledModifier,
+                    player = player,
+                    controllerViewState = controllerViewState,
+                    updateSkipIndicator = updateSkipIndicator,
+                ),
             )
         } else {
             PlayerSurface(
