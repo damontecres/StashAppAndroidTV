@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -14,10 +15,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import kotlin.math.abs
 
 private const val SWIPE_NEXT_PREV_THRESHOLD_PX = 200f
 private const val GESTURE_MAX_ZOOM = 5f
@@ -122,23 +125,29 @@ fun rememberMobileGestureModifier(
                 },
             )
         }
+        // Swipe left/right to go to next/previous item. Uses PointerEventPass.Initial to
+        // observe move events before transformable() consumes them in the Main pass, and
+        // requireUnconsumed=false so detectTapGestures' down.consume() doesn't block us.
         .pointerInput(zoomFactor > 1f) {
             if (zoomFactor <= 1f) {
-                var dragX = 0f
-                detectDragGestures(
-                    onDragStart = { dragX = 0f },
-                    onDragCancel = { dragX = 0f },
-                    onDragEnd = {
-                        if (dragX < -SWIPE_NEXT_PREV_THRESHOLD_PX && player.hasNextMediaItem()) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    var dragX = 0f
+                    var dragY = 0f
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed) break
+                        dragX += change.position.x - change.previousPosition.x
+                        dragY += change.position.y - change.previousPosition.y
+                    }
+                    if (abs(dragX) > SWIPE_NEXT_PREV_THRESHOLD_PX && abs(dragX) > abs(dragY)) {
+                        if (dragX < 0 && player.hasNextMediaItem()) {
                             player.seekToNext()
-                        } else if (dragX > SWIPE_NEXT_PREV_THRESHOLD_PX && player.hasPreviousMediaItem()) {
+                        } else if (dragX > 0 && player.hasPreviousMediaItem()) {
                             player.seekToPrevious()
                         }
-                        dragX = 0f
-                    },
-                ) { change, dragAmount ->
-                    dragX += dragAmount.x
-                    change.consume()
+                    }
                 }
             }
         }
