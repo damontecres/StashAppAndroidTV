@@ -64,9 +64,9 @@
             app:defaultValue="true" />
         <SwitchPreference
             app:key="@string/pref_key_mobile_touch_gestures"
-            app:title="Mobile touch gestures"
-            app:summaryOn="Pinch-to-zoom, swipe, and tap gestures enabled"
-            app:summaryOff="Touch gestures disabled"
+            app:title="@string/mobile_touch_gestures"
+            app:summaryOn="@string/mobile_touch_gestures_summary_on"
+            app:summaryOff="@string/mobile_touch_gestures_summary_off"
             app:defaultValue="false" />
         <ListPreference
             app:key="@string/pref_key_stream_choice"

@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -47,6 +48,14 @@ fun rememberMobileGestureModifier(
     var surfaceWidth by remember { mutableIntStateOf(0) }
     var surfaceHeight by remember { mutableIntStateOf(0) }
     var gestureSpeedActive by remember { mutableStateOf(false) }
+    DisposableEffect(player) {
+        onDispose {
+            if (gestureSpeedActive) {
+                player.setPlaybackParameters(PlaybackParameters(1f))
+                gestureSpeedActive = false
+            }
+        }
+    }
     val transformState = rememberTransformableState { zoomChange, offsetChange, _ ->
         zoomFactor = (zoomFactor * zoomChange).coerceIn(1f, GESTURE_MAX_ZOOM)
         if (zoomFactor > 1f) {
