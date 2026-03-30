@@ -296,6 +296,8 @@ dependencies {
     implementation(libs.reword)
     implementation(libs.androidx.datastore)
     implementation(libs.protobuf.kotlin.lite)
+    implementation(libs.multiplatform.markdown.renderer)
+    implementation(libs.multiplatform.markdown.renderer.m3)
 
     if (ffmpegModuleExists || isCI) {
         implementation(files("libs/lib-decoder-ffmpeg-release.aar"))

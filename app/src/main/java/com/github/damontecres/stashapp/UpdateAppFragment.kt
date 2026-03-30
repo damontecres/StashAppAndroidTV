@@ -9,6 +9,7 @@ import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.ui.pages.DownloadCallback
 import com.github.damontecres.stashapp.util.Release
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -94,7 +95,17 @@ class UpdateAppFragment : GuidedStepSupportFragment() {
                     )
                 },
             ) {
-                UpdateChecker.installRelease(requireActivity(), release)
+                UpdateChecker.installRelease(
+                    requireActivity(),
+                    release,
+                    object : DownloadCallback {
+                        override fun contentLength(contentLength: Long) {
+                        }
+
+                        override fun bytesDownloaded(bytes: Long) {
+                        }
+                    },
+                )
             }
         } else if (action.id == 1000L) {
             serverViewModel.navigationManager.navigate(Destination.ReleaseChangelog(release))

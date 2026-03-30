@@ -273,7 +273,7 @@ fun checkIfAlwaysTranscode(
                     regex.find(stream)?.let { Pair(stream, it.groups[1]!!.value.toInt()) }
                 }.sortedByDescending { it.second }
         val streamKey = candidateStreams.firstOrNull { it.second <= maxRes }?.first
-        return streams[streamKey]
+        return streamKey
     } else {
         return null
     }

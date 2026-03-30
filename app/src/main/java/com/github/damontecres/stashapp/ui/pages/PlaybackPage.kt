@@ -268,10 +268,10 @@ fun PlaylistPlaybackPage(
                                 pager?.let { pager ->
                                     if (count - currentIndex < PLAYLIST_THRESHOLD && pager.size > count) {
                                         val maxIndex =
-                                            (currentIndex + PLAYLIST_PREFETCH)
+                                            (count + PLAYLIST_PREFETCH)
                                                 .coerceAtMost(pager.size)
                                         val newMediaItems =
-                                            (currentIndex..<maxIndex).mapNotNull { index ->
+                                            (count..<maxIndex).mapNotNull { index ->
                                                 pager.getBlocking(index)?.let { item ->
                                                     convertToMediaItem(
                                                         context,
