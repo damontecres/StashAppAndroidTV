@@ -637,7 +637,13 @@ fun PerformerDetails(
                     add(TableRow.from(context, R.string.stashapp_tattoos, perf.tattoos))
                     add(TableRow.from(context, R.string.stashapp_piercings, perf.piercings))
                 }
-                add(TableRow.from(context, R.string.stashapp_career_length, perf.career_length))
+                add(
+                    TableRow.from(
+                        context,
+                        R.string.stashapp_career_length,
+                        listOf(perf.career_start, perf.career_end).joinToString(" - "),
+                    ),
+                )
             }.filterNotNull()
         }
     ItemDetails(
