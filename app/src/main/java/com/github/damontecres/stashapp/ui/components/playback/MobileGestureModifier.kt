@@ -58,28 +58,30 @@ fun rememberMobileGestureModifier(
             }
         }
     }
-    val transformState = rememberTransformableState { zoomChange, offsetChange, _ ->
-        zoomFactor = (zoomFactor * zoomChange).coerceIn(1f, GESTURE_MAX_ZOOM)
-        if (zoomFactor > 1f) {
-            val maxX = surfaceWidth * (zoomFactor - 1f) / 2f
-            val maxY = surfaceHeight * (zoomFactor - 1f) / 2f
-            panX = (panX + offsetChange.x * zoomFactor).coerceIn(-maxX, maxX)
-            panY = (panY + offsetChange.y * zoomFactor).coerceIn(-maxY, maxY)
-        } else {
-            panX = 0f
-            panY = 0f
+    val transformState =
+        rememberTransformableState { zoomChange, offsetChange, _ ->
+            zoomFactor = (zoomFactor * zoomChange).coerceIn(1f, GESTURE_MAX_ZOOM)
+            if (zoomFactor > 1f) {
+                val maxX = surfaceWidth * (zoomFactor - 1f) / 2f
+                val maxY = surfaceHeight * (zoomFactor - 1f) / 2f
+                panX = (panX + offsetChange.x * zoomFactor).coerceIn(-maxX, maxX)
+                panY = (panY + offsetChange.y * zoomFactor).coerceIn(-maxY, maxY)
+            } else {
+                panX = 0f
+                panY = 0f
+            }
         }
-    }
 
     return Modifier
-        .onSizeChanged { surfaceWidth = it.width; surfaceHeight = it.height }
-        .graphicsLayer {
+        .onSizeChanged {
+            surfaceWidth = it.width
+            surfaceHeight = it.height
+        }.graphicsLayer {
             scaleX = zoomFactor
             scaleY = zoomFactor
             translationX = panX
             translationY = panY
-        }
-        .pointerInput(Unit) {
+        }.pointerInput(Unit) {
             detectTapGestures(
                 onPress = {
                     tryAwaitRelease()
@@ -97,10 +99,12 @@ fun rememberMobileGestureModifier(
                             player.seekBack()
                             updateSkipIndicator(-player.seekBackIncrement)
                         }
+
                         offset.x > size.width * 2f / 3f -> {
                             player.seekForward()
                             updateSkipIndicator(player.seekForwardIncrement)
                         }
+
                         else -> {
                             if (zoomFactor > 1f) {
                                 zoomFactor = 1f
@@ -113,11 +117,12 @@ fun rememberMobileGestureModifier(
                     }
                 },
                 onLongPress = { offset ->
-                    val speed = when {
-                        offset.x < size.width / 3f -> GESTURE_SLOW_SPEED
-                        offset.x > size.width * 2f / 3f -> GESTURE_FAST_SPEED
-                        else -> null
-                    }
+                    val speed =
+                        when {
+                            offset.x < size.width / 3f -> GESTURE_SLOW_SPEED
+                            offset.x > size.width * 2f / 3f -> GESTURE_FAST_SPEED
+                            else -> null
+                        }
                     if (speed != null) {
                         player.setPlaybackParameters(PlaybackParameters(speed))
                         gestureSpeedActive = true
@@ -150,6 +155,5 @@ fun rememberMobileGestureModifier(
                     }
                 }
             }
-        }
-        .transformable(transformState, lockRotationOnZoomPan = true)
+        }.transformable(transformState, lockRotationOnZoomPan = true)
 }
