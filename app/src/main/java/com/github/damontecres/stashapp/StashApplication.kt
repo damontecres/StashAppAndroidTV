@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.res.Resources
 import android.graphics.Typeface
 import android.os.Build
+import android.os.StrictMode
 import android.util.Log
 import androidx.annotation.FontRes
 import androidx.compose.runtime.Composer
@@ -33,6 +34,23 @@ class StashApplication : Application() {
     @OptIn(ExperimentalComposeRuntimeApi::class)
     override fun onCreate() {
         super.onCreate()
+        if (BuildConfig.DEBUG) {
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy
+                    .Builder()
+                    .detectNetwork()
+                    .penaltyLog()
+                    .penaltyDeathOnNetwork()
+                    .build(),
+            )
+//            StrictMode.setVmPolicy(
+//                StrictMode.VmPolicy
+//                    .Builder()
+//                    .detectAll()
+//                    .penaltyLog()
+//                    .build(),
+//            )
+        }
 
         application = this
 

@@ -25,7 +25,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -65,6 +64,8 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
+import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.proto.UpdatePreferences
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.cards.StashCard
@@ -90,6 +91,8 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.launchDefault
+import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.views.formatBytes
 import com.github.damontecres.stashapp.views.formatNumber
 import kotlinx.coroutines.launch
@@ -109,31 +112,54 @@ class MainPageViewModel : ViewModel() {
     fun init(
         context: Context,
         server: StashServer,
-        pageSize: Int,
+        prefs: StashPreferences,
     ) {
         this.server = server
-        val queryEngine = QueryEngine(server)
-        val filterParser = FilterParser(server.version)
-        val frontPageContent =
-            server.serverPreferences.uiConfiguration?.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
-        if (frontPageContent != null) {
-            Log.d(TAG, "${frontPageContent.size} front page rows")
-            val frontPageParser =
-                FrontPageParser(
-                    context,
-                    queryEngine,
-                    filterParser,
-                    pageSize,
-                )
-            viewModelScope.launch(LoggingCoroutineExceptionHandler(server, viewModelScope)) {
+        viewModelScope.launchDefault(LoggingCoroutineExceptionHandler(server, viewModelScope)) {
+            val queryEngine = QueryEngine(server)
+            val filterParser = FilterParser(server.version)
+            val frontPageContent =
+                server.serverPreferences.uiConfiguration?.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
+            if (frontPageContent != null) {
+                Log.d(TAG, "${frontPageContent.size} front page rows")
+                val frontPageParser =
+                    FrontPageParser(
+                        context,
+                        queryEngine,
+                        filterParser,
+                        prefs.searchPreferences.maxResults,
+                    )
                 val jobs = frontPageParser.parse(frontPageContent)
 
                 jobs.forEach { job ->
-                    job.await().let { row ->
-                        if (row is FrontPageParser.FrontPageRow.Success) {
-                            frontPageRows.add(row)
+                    try {
+                        job.await().let { row ->
+                            if (row is FrontPageParser.FrontPageRow.Success) {
+                                frontPageRows.add(row)
+                            }
                         }
+                    } catch (ex: Exception) {
+                        Log.e(TAG, "Error fetching row data", ex)
                     }
+                }
+            }
+        }
+    }
+
+    fun checkForUpdate(
+        context: Context,
+        prefs: UpdatePreferences,
+    ) {
+        if (prefs.checkForUpdates) {
+            viewModelScope.launchIO {
+                try {
+                    UpdateChecker.maybeShowUpdateToast(
+                        context,
+                        prefs.updateUrl,
+                        false,
+                    )
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Error checking for updates", ex)
                 }
             }
         }
@@ -158,26 +184,15 @@ fun MainPage(
 ) {
     val context = LocalContext.current
     OneTimeLaunchedEffect {
-        viewModel.init(context, server, uiConfig.preferences.searchPreferences.maxResults)
+        viewModel.init(context, server, uiConfig.preferences)
     }
 
     val frontPageRows = viewModel.frontPageRows // .observeAsState(listOf())
     val serverStats by viewModel.serverStats.observeAsState()
 
     val focusRequester = remember { FocusRequester() }
-    val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
-        uiConfig.preferences.updatePreferences.let {
-            if (it.checkForUpdates) {
-                scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                    UpdateChecker.maybeShowUpdateToast(
-                        context,
-                        it.updateUrl,
-                        false,
-                    )
-                }
-            }
-        }
+        viewModel.checkForUpdate(context, uiConfig.preferences.updatePreferences)
         viewModel.updateStatistics()
     }
     if (frontPageRows.isEmpty()) {
