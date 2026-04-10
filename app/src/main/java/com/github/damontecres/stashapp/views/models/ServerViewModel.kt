@@ -24,6 +24,7 @@ import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.getStringNotNull
+import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -139,7 +140,7 @@ open class ServerViewModel : ViewModel() {
                 "updateCheckUrl",
                 context.getString(R.string.app_update_url),
             )
-        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+        viewModelScope.launchIO {
             UpdateChecker.maybeShowUpdateToast(context, updateUrl, false)
         }
     }
