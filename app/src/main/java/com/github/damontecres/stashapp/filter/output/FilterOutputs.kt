@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp.filter.output
 
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
-import com.github.damontecres.stashapp.api.type.CircumisedEnum
+import com.github.damontecres.stashapp.api.type.CircumcisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.CustomFieldCriterionInput
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
@@ -13,7 +13,7 @@ import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationEnum
-import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
+import com.github.damontecres.stashapp.api.type.DuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionEnum
@@ -143,7 +143,7 @@ fun PhashDistanceCriterionInput.toMap(): Map<String, Any> =
         )
     }
 
-fun PHashDuplicationCriterionInput.toMap(): Map<String, Any> =
+fun DuplicationCriterionInput.toMap(): Map<String, Any> =
     buildMap {
         put("modifier", CriterionModifier.EQUALS.rawValue)
         if (duplicated.getOrNull() == false) {
@@ -261,9 +261,9 @@ fun CircumcisionCriterionInput.toMap(): Map<String, Any> =
                 .getOrNull()
                 ?.map {
                     when (it) {
-                        CircumisedEnum.CUT -> "Cut"
-                        CircumisedEnum.UNCUT -> "Uncut"
-                        CircumisedEnum.UNKNOWN__ -> "Unknown"
+                        CircumcisedEnum.CUT -> "Cut"
+                        CircumcisedEnum.UNCUT -> "Uncut"
+                        CircumcisedEnum.UNKNOWN__ -> "Unknown"
                     }
                 }.orEmpty()
         put("value", values)

@@ -15,7 +15,7 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
-import com.github.damontecres.stashapp.api.type.CircumisedEnum
+import com.github.damontecres.stashapp.api.type.CircumcisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
@@ -26,7 +26,7 @@ import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationEnum
-import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
+import com.github.damontecres.stashapp.api.type.DuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionEnum
@@ -368,7 +368,7 @@ fun filterSummary(f: PhashDistanceCriterionInput): String {
     }
 }
 
-fun filterSummary(f: PHashDuplicationCriterionInput): String {
+fun filterSummary(f: DuplicationCriterionInput): String {
     val duplicated = f.duplicated.getOrNull()
     val distance = f.distance.getOrNull()
     return if (distance != null) {
@@ -429,9 +429,9 @@ fun filterSummary(f: CircumcisionCriterionInput): String {
     val strings =
         f.value.getOrNull().orEmpty().map {
             when (it) {
-                CircumisedEnum.CUT -> context.getString(R.string.stashapp_circumcised_types_CUT)
-                CircumisedEnum.UNCUT -> context.getString(R.string.stashapp_circumcised_types_UNCUT)
-                CircumisedEnum.UNKNOWN__ -> "Unknown"
+                CircumcisedEnum.CUT -> context.getString(R.string.stashapp_circumcised_types_CUT)
+                CircumcisedEnum.UNCUT -> context.getString(R.string.stashapp_circumcised_types_UNCUT)
+                CircumcisedEnum.UNKNOWN__ -> "Unknown"
             }
         }
     return when (f.modifier) {
@@ -553,7 +553,7 @@ fun filterSummary(
                 filterSummary(value)
             }
 
-            is PHashDuplicationCriterionInput -> {
+            is DuplicationCriterionInput -> {
                 filterSummary(value)
             }
 

@@ -7,7 +7,7 @@ import androidx.leanback.widget.GuidedAction
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
-import com.github.damontecres.stashapp.api.type.CircumisedEnum
+import com.github.damontecres.stashapp.api.type.CircumcisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.filter.CreateFilterGuidedStepFragment
@@ -56,14 +56,14 @@ class CircumcisionPickerFragment(
                 .build(),
         )
 
-        CircumisedEnum.entries
+        CircumcisedEnum.entries
             .mapIndexedNotNull { index, circ ->
-                if (circ != CircumisedEnum.UNKNOWN__) {
+                if (circ != CircumcisedEnum.UNKNOWN__) {
                     val name =
                         when (circ) {
-                            CircumisedEnum.CUT -> getString(R.string.stashapp_circumcised_types_CUT)
-                            CircumisedEnum.UNCUT -> getString(R.string.stashapp_circumcised_types_UNCUT)
-                            CircumisedEnum.UNKNOWN__ -> "Unknown"
+                            CircumcisedEnum.CUT -> getString(R.string.stashapp_circumcised_types_CUT)
+                            CircumcisedEnum.UNCUT -> getString(R.string.stashapp_circumcised_types_UNCUT)
+                            CircumcisedEnum.UNKNOWN__ -> "Unknown"
                         }
                     val action =
                         GuidedAction
@@ -111,10 +111,10 @@ class CircumcisionPickerFragment(
         }
     }
 
-    private fun getValues(): List<CircumisedEnum>? =
+    private fun getValues(): List<CircumcisedEnum>? =
         actions
             .filter { it.id >= CIRC_OFFSET && it.isChecked }
-            .map { CircumisedEnum.entries[(it.id - CIRC_OFFSET).toInt()] }
+            .map { CircumcisedEnum.entries[(it.id - CIRC_OFFSET).toInt()] }
             .ifEmpty { null }
 
     private fun setFinish() {

@@ -45,7 +45,7 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
-import com.github.damontecres.stashapp.api.type.CircumisedEnum
+import com.github.damontecres.stashapp.api.type.CircumcisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.GroupFilterType
@@ -628,9 +628,9 @@ fun PerformerDetails(
                     }
                     val circString =
                         when (perf.circumcised) {
-                            CircumisedEnum.CUT -> context.getString(R.string.stashapp_circumcised_types_CUT)
-                            CircumisedEnum.UNCUT -> context.getString(R.string.stashapp_circumcised_types_UNCUT)
-                            CircumisedEnum.UNKNOWN__, null -> null
+                            CircumcisedEnum.CUT -> context.getString(R.string.stashapp_circumcised_types_CUT)
+                            CircumcisedEnum.UNCUT -> context.getString(R.string.stashapp_circumcised_types_UNCUT)
+                            CircumcisedEnum.UNKNOWN__, null -> null
                         }
                     add(TableRow.from(context, R.string.stashapp_circumcised, circString))
 

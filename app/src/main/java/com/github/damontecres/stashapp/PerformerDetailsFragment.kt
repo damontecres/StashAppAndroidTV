@@ -8,7 +8,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.type.CircumisedEnum
+import com.github.damontecres.stashapp.api.type.CircumcisedEnum
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
@@ -111,9 +111,9 @@ class PerformerDetailsFragment : DetailsFragment() {
         }
         val circString =
             when (perf.circumcised) {
-                CircumisedEnum.CUT -> getString(R.string.stashapp_circumcised_types_CUT)
-                CircumisedEnum.UNCUT -> getString(R.string.stashapp_circumcised_types_UNCUT)
-                CircumisedEnum.UNKNOWN__, null -> null
+                CircumcisedEnum.CUT -> getString(R.string.stashapp_circumcised_types_CUT)
+                CircumcisedEnum.UNCUT -> getString(R.string.stashapp_circumcised_types_UNCUT)
+                CircumcisedEnum.UNKNOWN__, null -> null
             }
         addRow(R.string.stashapp_circumcised, circString)
 
