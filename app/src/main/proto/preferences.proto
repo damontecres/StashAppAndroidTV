@@ -125,6 +125,7 @@ message PlaybackPreferences {
   repeated string direct_play_audio = 17;
   repeated string direct_play_format = 18;
   PlaybackBackend playback_backend = 19;
+  bool mobile_touch_gestures = 20;
 }
 
 message CachePreferences {
