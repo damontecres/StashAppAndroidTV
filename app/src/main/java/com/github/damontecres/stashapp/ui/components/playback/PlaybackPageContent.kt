@@ -72,6 +72,7 @@ import androidx.media3.extractor.text.webvtt.WebvttParser
 import androidx.media3.ui.SubtitleView
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
+import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberNextButtonState
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
@@ -771,6 +772,8 @@ fun PlaybackPageContent(
                 updateSkipIndicator = updateSkipIndicator,
             )
         }
+    val mobileTouchGesturesEnabled = isNotTvDevice && uiConfig.preferences.playbackPreferences.mobileTouchGestures
+
     Box(
         modifier
             .background(Color.Black)
@@ -778,22 +781,33 @@ fun PlaybackPageContent(
             .focusRequester(focusRequester)
             .focusable(),
     ) {
-        PlayerSurface(
-            player = player,
-            surfaceType = SURFACE_TYPE_SURFACE_VIEW,
-            modifier =
-                scaledModifier.clickable(
-                    enabled = !isTvDevice,
-                    indication = null,
-                    interactionSource = null,
-                ) {
-                    if (controllerViewState.controlsVisible) {
-                        controllerViewState.hideControls()
-                    } else {
-                        controllerViewState.showControls()
-                    }
-                },
-        )
+        if (mobileTouchGesturesEnabled) {
+            PlayerSurface(
+                player = player,
+                surfaceType = SURFACE_TYPE_TEXTURE_VIEW,
+                modifier =
+                    scaledModifier.then(
+                        rememberMobileGestureModifier(
+                            player = player,
+                            controllerViewState = controllerViewState,
+                            updateSkipIndicator = updateSkipIndicator,
+                        ),
+                    ),
+            )
+        } else {
+            PlayerSurface(
+                player = player,
+                surfaceType = SURFACE_TYPE_SURFACE_VIEW,
+                modifier =
+                    scaledModifier.clickable(
+                        enabled = !isTvDevice,
+                        indication = null,
+                        interactionSource = null,
+                    ) {
+                        controllerViewState.toggleControls()
+                    },
+            )
+        }
         if (presentationState.coverSurface) {
             Box(
                 Modifier

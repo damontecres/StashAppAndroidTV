@@ -183,6 +183,9 @@
     <string name="dpad_skipping_summary_on">Skip back/forward with D-Pad left/right</string>
     <string name="dpad_skipping_summary_off">D-Pad left/right will not skip</string>
     <string name="dpad_skip_indicator">Show D-Pad skipping indicator</string>
+    <string name="mobile_touch_gestures">Mobile touch gestures</string>
+    <string name="mobile_touch_gestures_summary_on">Pinch-to-zoom, swipe, and tap gestures enabled</string>
+    <string name="mobile_touch_gestures_summary_off">Touch gestures disabled</string>
     <string name="stream_choice">Stream choice</string>
     <string name="stream_choice_summary">Which stream type to use when direct is unavailable</string>
     <string name="playback_debug_info">Playback debug info</string>

@@ -5,6 +5,9 @@ import android.widget.Toast
 import com.github.damontecres.stashapp.StashApplication
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -38,15 +41,21 @@ class StashCoroutineExceptionHandler(
             return
         }
         Log.e(TAG, "Exception in coroutine", exception)
-        toast?.show()
-        makeToast?.let { it(exception).show() }
-        if (autoToast) {
-            Toast
-                .makeText(
-                    StashApplication.getApplication(),
-                    "Error: ${exception.message}",
-                    Toast.LENGTH_LONG,
-                ).show()
+        if (toast != null || makeToast != null || autoToast) {
+            runBlocking {
+                withContext(Dispatchers.Main) {
+                    toast?.show()
+                    makeToast?.let { it(exception).show() }
+                    if (autoToast) {
+                        Toast
+                            .makeText(
+                                StashApplication.getApplication(),
+                                "Error: ${exception.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                    }
+                }
+            }
         }
     }
 
