@@ -31,9 +31,7 @@ import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
-import java.time.LocalDate
-import java.time.Period
-import java.time.format.DateTimeFormatter
+import com.github.damontecres.stashapp.util.yearsBetween
 import kotlin.math.floor
 import kotlin.math.round
 import kotlin.math.roundToInt
@@ -104,19 +102,7 @@ fun MainPagePerformerDetails(
             }
             val ageString =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && perf.birthdate.isNotNullOrBlank()) {
-                    val date =
-                        perf.death_date?.let {
-                            LocalDate.parse(
-                                perf.death_date,
-                                DateTimeFormatter.ISO_LOCAL_DATE,
-                            )
-                        } ?: LocalDate.now()
-                    val age =
-                        Period
-                            .between(
-                                LocalDate.parse(perf.birthdate, DateTimeFormatter.ISO_LOCAL_DATE),
-                                date,
-                            ).years
+                    val age = yearsBetween(perf.birthdate, perf.death_date)
                     age.toString() + " " + stringResource(R.string.stashapp_years_old)
                 } else {
                     null
