@@ -27,9 +27,7 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import java.time.LocalDate
-import java.time.Period
-import java.time.format.DateTimeFormatter
+import com.github.damontecres.stashapp.util.yearsBetween
 import java.util.EnumMap
 
 private const val TAG = "PerformerCard"
@@ -76,17 +74,13 @@ fun PerformerCard(
             ) {
                 val ctx = LocalContext.current
                 try {
-                    val ageInScene =
-                        Period
-                            .between(
-                                LocalDate.parse(item.birthdate, DateTimeFormatter.ISO_LOCAL_DATE),
-                                LocalDate.parse(ageOnDate, DateTimeFormatter.ISO_LOCAL_DATE),
-                            ).years
-                    ctx.getString(
-                        R.string.stashapp_media_info_performer_card_age_context,
-                        ageInScene.toString(),
-                        ctx.getString(R.string.stashapp_years_old),
-                    )
+                    yearsBetween(item.birthdate, ageOnDate)?.let {
+                        ctx.getString(
+                            R.string.stashapp_media_info_performer_card_age_context,
+                            it.toString(),
+                            ctx.getString(R.string.stashapp_years_old),
+                        )
+                    }
                 } catch (ex: Exception) {
                     Log.w(TAG, "Exception calculating age", ex)
                     item.birthdate

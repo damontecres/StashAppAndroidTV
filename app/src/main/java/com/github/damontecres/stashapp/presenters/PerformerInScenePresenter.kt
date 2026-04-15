@@ -3,9 +3,7 @@ package com.github.damontecres.stashapp.presenters
 import android.os.Build
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.PerformerData
-import java.time.LocalDate
-import java.time.Period
-import java.time.format.DateTimeFormatter
+import com.github.damontecres.stashapp.util.yearsBetween
 
 /**
  * A [PerformerPresenter] which will use the age of a [PerformerData] at specified date for the content text
@@ -23,11 +21,7 @@ class PerformerInScenePresenter(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val ageInScene =
                 if (item.birthdate != null && date != null) {
-                    Period
-                        .between(
-                            LocalDate.parse(item.birthdate, DateTimeFormatter.ISO_LOCAL_DATE),
-                            LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE),
-                        ).years
+                    yearsBetween(item.birthdate, date)
                 } else {
                     null
                 }

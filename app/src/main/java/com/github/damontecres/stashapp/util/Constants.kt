@@ -78,7 +78,9 @@ import java.net.ConnectException
 import java.net.UnknownHostException
 import java.time.LocalDate
 import java.time.Period
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.Locale
 import javax.net.ssl.SSLHandshakeException
 import kotlin.contracts.ExperimentalContracts
@@ -555,25 +557,58 @@ val FullSceneData.asMinimalSceneData: MinimalSceneData
 val TagData.asSlimTagData: SlimTagData
     get() = SlimTagData(id, name)
 
+fun parseDate(
+    dateStr: String,
+    defaultToFirst: Boolean,
+): LocalDate? =
+    try {
+        LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE)
+    } catch (_: DateTimeParseException) {
+        val year = dateStr.toIntOrNull()
+        if (year != null) {
+            // Just a year
+            if (defaultToFirst) {
+                LocalDate.of(year, 1, 1)
+            } else {
+                LocalDate.of(year, 12, 31)
+            }
+        } else {
+            try {
+                // Maybe year-month
+                val split = dateStr.split("-")
+                val year = split.getOrNull(0)?.toIntOrNull()
+                val month = split.getOrNull(1)?.toIntOrNull()
+                if (year != null && month != null) {
+                    if (defaultToFirst) {
+                        LocalDate.of(year, month, 1)
+                    } else {
+                        YearMonth.of(year, month).atEndOfMonth()
+                    }
+                } else {
+                    null
+                }
+            } catch (_: DateTimeParseException) {
+                null
+            }
+        }
+    }
+
 val PerformerData.ageInYears: Int?
     @RequiresApi(Build.VERSION_CODES.O)
-    get() =
-        if (birthdate != null) {
-            Period
-                .between(
-                    LocalDate.parse(birthdate, DateTimeFormatter.ISO_LOCAL_DATE),
-                    if (death_date.isNotNullOrBlank()) {
-                        LocalDate.parse(
-                            death_date,
-                            DateTimeFormatter.ISO_LOCAL_DATE,
-                        )
-                    } else {
-                        LocalDate.now()
-                    },
-                ).years
-        } else {
-            null
-        }
+    get() = yearsBetween(birthdate, death_date)
+
+fun yearsBetween(
+    start: String?,
+    end: String?,
+): Int? {
+    val startDate = start?.let { parseDate(start, true) }
+    return if (startDate != null) {
+        val endDate = end?.let { parseDate(end, false) } ?: LocalDate.now()
+        Period.between(startDate, endDate).years
+    } else {
+        null
+    }
+}
 
 val GalleryData.name: String?
     get() =
