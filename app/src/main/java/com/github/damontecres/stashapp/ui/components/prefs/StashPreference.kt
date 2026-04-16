@@ -922,6 +922,19 @@ sealed interface StashPreference<T> {
                 summaryOff = R.string.stashapp_actions_hide,
             )
 
+        val MobileTouchGestures =
+            StashSwitchPreference(
+                title = R.string.mobile_touch_gestures,
+                prefKey = R.string.pref_key_mobile_touch_gestures,
+                defaultValue = false,
+                getter = { it.playbackPreferences.mobileTouchGestures },
+                setter = { prefs, value ->
+                    prefs.updatePlaybackPreferences { mobileTouchGestures = value }
+                },
+                summaryOn = R.string.mobile_touch_gestures_summary_on,
+                summaryOff = R.string.mobile_touch_gestures_summary_off,
+            )
+
         val ControllerTimeout =
             StashSliderPreference(
                 title = R.string.hide_controller_timeout,

@@ -52,7 +52,7 @@ class UpdateChecker {
             context: Context,
             updateUrl: String,
             showNegativeToast: Boolean = false,
-        ) {
+        ) = withContext(Dispatchers.IO) {
             val pref = PreferenceManager.getDefaultSharedPreferences(context)
             val now = Date()
             val lastUpdateCheckThreshold =
@@ -79,22 +79,20 @@ class UpdateChecker {
                         "Skipping update notification, threshold is $lastUpdateCheckThreshold",
                     )
                 } else {
-                    Toast
-                        .makeText(
-                            context,
-                            "Update available: $installedVersion => ${latestRelease.version}!",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                    showToastOnMain(
+                        context,
+                        "Update available: $installedVersion => ${latestRelease.version}!",
+                        Toast.LENGTH_LONG,
+                    )
                 }
             } else {
                 Log.v(TAG, "No update available for $installedVersion")
                 if (showNegativeToast) {
-                    Toast
-                        .makeText(
-                            context,
-                            "No updates available, $installedVersion is the latest!",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                    showToastOnMain(
+                        context,
+                        "No updates available, $installedVersion is the latest!",
+                        Toast.LENGTH_LONG,
+                    )
                 }
             }
         }

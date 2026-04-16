@@ -117,6 +117,10 @@ class ControllerViewState internal constructor(
         _controlsVisible = false
     }
 
+    fun toggleControls() {
+        if (_controlsVisible) hideControls() else showControls()
+    }
+
     fun pulseControls(milliseconds: Int = hideMilliseconds) {
 //        Log.i("PlaybackPageContent", "pulseControls=$milliseconds")
         channel.trySend(milliseconds)
