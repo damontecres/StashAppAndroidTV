@@ -507,7 +507,7 @@ sealed interface StashPreference<T> {
                 setter = { prefs, value ->
                     prefs.updateInterfacePreferences { useUpDownPreviousNext = value }
                 },
-                summaryOn = R.string.enabled_for_markers,
+                summaryOn = R.string.enabled_for_scenes_and_markers,
                 summaryOff = R.string.transcode_options_disabled,
             )
 
