@@ -1,32 +1,32 @@
 query FindTags($filter: FindFilterType, $tag_filter: TagFilterType, $ids: [ID!])  {
-  findTags(filter: $filter, tag_filter: $tag_filter, ids: $ids){
-    tags {
-      ...TagData
-      __typename
+    findTags(filter: $filter, tag_filter: $tag_filter, ids: $ids){
+        tags {
+            ...TagData
+            __typename
+        }
     }
-  }
 }
 
 query GetTag($id: ID!) {
-  findTag(id: $id) {
-    ...TagData
-  }
+    findTag(id: $id) {
+        ...TagData
+    }
 }
 
 query CountTags($filter: FindFilterType, $tag_filter: TagFilterType)  {
-  findTags(filter: $filter, tag_filter: $tag_filter){
-    count
-  }
+    findTags(filter: $filter, tag_filter: $tag_filter){
+        count
+    }
 }
 
 mutation CreateTag($input: TagCreateInput!) {
-  tagCreate(input: $input) {
-    ...TagData
-  }
+    tagCreate(input: $input) {
+        ...TagData
+    }
 }
 
 mutation UpdateTag($input: TagUpdateInput!){
-  tagUpdate(input: $input){
-    ...TagData
-  }
+    tagUpdate(input: $input){
+        ...TagData
+    }
 }

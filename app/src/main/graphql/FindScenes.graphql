@@ -1,214 +1,214 @@
 query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType, $ids: [ID!]) {
-  findScenes(filter: $filter, scene_filter: $scene_filter, ids: $ids) {
-    scenes {
-      ...SlimSceneData
+    findScenes(filter: $filter, scene_filter: $scene_filter, ids: $ids) {
+        scenes {
+            ...SlimSceneData
+        }
     }
-  }
 }
 
 query GetScene($id: ID!) {
-  findScene(id: $id) {
-  	...FullSceneData
-  }
+    findScene(id: $id) {
+        ...FullSceneData
+    }
 }
 
 query FindVideoScenes($filter: FindFilterType, $scene_filter: SceneFilterType, $ids: [ID!]) {
-  findScenes(filter: $filter, scene_filter: $scene_filter, ids: $ids) {
-    scenes {
-      ...VideoSceneData
+    findScenes(filter: $filter, scene_filter: $scene_filter, ids: $ids) {
+        scenes {
+            ...VideoSceneData
+        }
     }
-  }
 }
 
 query GetVideoScene($id: ID!) {
-  findScene(id: $id) {
-    ...VideoSceneData
-  }
+    findScene(id: $id) {
+        ...VideoSceneData
+    }
 }
 
 query CountScenes($filter: FindFilterType, $scene_filter: SceneFilterType, $ids: [ID!]) {
-  findScenes(filter: $filter, scene_filter: $scene_filter, ids: $ids) {
-    count
-  }
+    findScenes(filter: $filter, scene_filter: $scene_filter, ids: $ids) {
+        count
+    }
 }
 
 fragment SlimSceneData on Scene {
-  id
-  title
-  code
-  details
-  director
-  urls
-  date
-  rating100
-  play_count
-  play_duration
-  o_counter
-  organized
-  resume_time
-  created_at @catch(to: NULL)
-  updated_at @catch(to: NULL)
-  files {
-    ...VideoFile
-  }
-  paths {
-    screenshot
-    preview
-    stream
-    sprite
-    caption
-  }
-  scene_markers {
     id
     title
-  }
-  galleries {
-    id
-    title
-  }
-  studio {
-    id
-    name
-    image_path
-  }
-  groups {
-    scene_index
-    group {
-      id
-      name
+    code
+    details
+    director
+    urls
+    date
+    rating100
+    play_count
+    play_duration
+    o_counter
+    organized
+    resume_time
+    created_at @catch(to: NULL)
+    updated_at @catch(to: NULL)
+    files {
+        ...VideoFile
     }
-  }
-  tags {
-    ...SlimTagData
-  }
-  performers {
-    id
-    name
-  }
-  scene_markers {
-    id
-    title
-  }
+    paths {
+        screenshot
+        preview
+        stream
+        sprite
+        caption
+    }
+    scene_markers {
+        id
+        title
+    }
+    galleries {
+        id
+        title
+    }
+    studio {
+        id
+        name
+        image_path
+    }
+    groups {
+        scene_index
+        group {
+            id
+            name
+        }
+    }
+    tags {
+        ...SlimTagData
+    }
+    performers {
+        id
+        name
+    }
+    scene_markers {
+        id
+        title
+    }
 }
 
 fragment FullSceneData on Scene {
-  id
-  title
-  code
-  details
-  director
-  urls
-  date
-  rating100
-  o_counter
-  organized
-  resume_time
-  play_duration
-  play_count
-  created_at @catch(to: NULL)
-  updated_at @catch(to: NULL)
-  files {
-    ...VideoFile
-    __typename
-  }
-  paths {
-    screenshot
-    preview
-    stream
-    webp
-    vtt
-    sprite
-    funscript
-    interactive_heatmap
-    caption
-    __typename
-  }
-  sceneStreams {
-    url
-    mime_type
-    label
-  }
-  captions {
-    ...Caption
-  }
-  scene_markers {
     id
     title
-    seconds
-    end_seconds
+    code
+    details
+    director
+    urls
+    date
+    rating100
+    o_counter
+    organized
+    resume_time
+    play_duration
+    play_count
     created_at @catch(to: NULL)
     updated_at @catch(to: NULL)
-    stream
-    preview
-    primary_tag {
-      ...TagData
+    files {
+        ...VideoFile
+        __typename
+    }
+    paths {
+        screenshot
+        preview
+        stream
+        webp
+        vtt
+        sprite
+        funscript
+        interactive_heatmap
+        caption
+        __typename
+    }
+    sceneStreams {
+        url
+        mime_type
+        label
+    }
+    captions {
+        ...Caption
+    }
+    scene_markers {
+        id
+        title
+        seconds
+        end_seconds
+        created_at @catch(to: NULL)
+        updated_at @catch(to: NULL)
+        stream
+        preview
+        primary_tag {
+            ...TagData
+        }
+        tags {
+            ...TagData
+        }
+        __typename
+    }
+    galleries {
+        id
+        title
+    }
+    studio {
+        ...StudioData
+        __typename
+    }
+    groups {
+        group {
+            ...GroupData
+            __typename
+        }
+        scene_index
+        __typename
     }
     tags {
-      ...TagData
+        ...TagData
+        __typename
+    }
+    performers {
+        id
+        name
+        gender
+        favorite
+        image_path
+        __typename
+    }
+    scene_markers {
+        id
+        title
+        primary_tag {
+            ...TagData
+        }
+        tags {
+            ...TagData
+        }
+        screenshot
+        seconds
+        __typename
     }
     __typename
-  }
-  galleries {
-    id
-    title
-  }
-  studio {
-    ...StudioData
-    __typename
-  }
-  groups {
-    group {
-      ...GroupData
-      __typename
-    }
-    scene_index
-    __typename
-  }
-  tags {
-    ...TagData
-    __typename
-  }
-  performers {
-    id
-    name
-    gender
-    favorite
-    image_path
-    __typename
-  }
-  scene_markers {
-    id
-    title
-    primary_tag {
-      ...TagData
-    }
-    tags {
-      ...TagData
-    }
-    screenshot
-    seconds
-    __typename
-  }
-  __typename
 }
 
 fragment VideoFile on VideoFile {
-  id
-  path
-  size
-  mod_time
-  duration
-  video_codec
-  audio_codec
-  format
-  width
-  height
-  frame_rate
-  bit_rate
-  __typename
+    id
+    path
+    size
+    mod_time
+    duration
+    video_codec
+    audio_codec
+    format
+    width
+    height
+    frame_rate
+    bit_rate
+    __typename
 }
 
 fragment Caption on VideoCaption {
-  caption_type
-  language_code
+    caption_type
+    language_code
 }

@@ -8,7 +8,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.type.CircumisedEnum
+import com.github.damontecres.stashapp.api.type.CircumcisedEnum
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
@@ -111,15 +111,18 @@ class PerformerDetailsFragment : DetailsFragment() {
         }
         val circString =
             when (perf.circumcised) {
-                CircumisedEnum.CUT -> getString(R.string.stashapp_circumcised_types_CUT)
-                CircumisedEnum.UNCUT -> getString(R.string.stashapp_circumcised_types_UNCUT)
-                CircumisedEnum.UNKNOWN__, null -> null
+                CircumcisedEnum.CUT -> getString(R.string.stashapp_circumcised_types_CUT)
+                CircumcisedEnum.UNCUT -> getString(R.string.stashapp_circumcised_types_UNCUT)
+                CircumcisedEnum.UNKNOWN__, null -> null
             }
         addRow(R.string.stashapp_circumcised, circString)
 
         addRow(R.string.stashapp_tattoos, perf.tattoos)
         addRow(R.string.stashapp_piercings, perf.piercings)
-        addRow(R.string.stashapp_career_length, perf.career_length)
+        addRow(
+            R.string.stashapp_career_length,
+            listOf(perf.career_start, perf.career_end).joinToString(" - "),
+        )
         addRow(R.string.stashapp_created_at, parseTimeToString(perf.created_at))
         addRow(R.string.stashapp_updated_at, parseTimeToString(perf.updated_at))
 

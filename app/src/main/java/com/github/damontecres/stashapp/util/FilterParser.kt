@@ -1,11 +1,13 @@
 package com.github.damontecres.stashapp.util
 
 import com.apollographql.apollo.api.Optional
+import com.github.damontecres.stashapp.api.type.CircumcisedEnum
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
-import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.CustomFieldCriterionInput
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
+import com.github.damontecres.stashapp.api.type.DuplicationCriterionInput
+import com.github.damontecres.stashapp.api.type.FileDuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderEnum
@@ -14,13 +16,13 @@ import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationEnum
-import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionEnum
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
+import com.github.damontecres.stashapp.api.type.StashIDsCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
@@ -173,7 +175,7 @@ class FilterParser(
                 value =
                     Optional.presentIfNotNull(
                         valueList
-                            ?.map { CircumisedEnum.valueOf(it.uppercase()) }
+                            ?.map { CircumcisedEnum.valueOf(it.uppercase()) }
                             ?.toList(),
                     ),
                 modifier = CriterionModifier.valueOf(it["modifier"]!! as String),
@@ -233,6 +235,18 @@ class FilterParser(
             null
         }
 
+    fun convertStashIDsCriterionInput(it: Map<String, *>?): StashIDsCriterionInput? =
+        if (it != null) {
+            val values = it["value"] as Map<String, Any?>?
+            StashIDsCriterionInput(
+                endpoint = Optional.presentIfNotNull(values?.get("endpoint")?.toString()),
+                stash_ids = Optional.presentIfNotNull(values?.get("stashIDs") as? List<String>),
+                modifier = CriterionModifier.valueOf(it["modifier"]!! as String),
+            )
+        } else {
+            null
+        }
+
     fun convertPhashDistanceCriterionInput(it: Map<String, *>?): PhashDistanceCriterionInput? =
         if (it != null) {
             val values = it["value"] as Map<String, *>?
@@ -245,11 +259,28 @@ class FilterParser(
             null
         }
 
-    fun convertPHashDuplicationCriterionInput(it: Map<String, *>?): PHashDuplicationCriterionInput? =
+    fun convertDuplicationCriterionInput(it: Map<String, *>?): DuplicationCriterionInput? =
         if (it != null) {
-            PHashDuplicationCriterionInput(
+            // TODO test
+            DuplicationCriterionInput(
                 duplicated = Optional.presentIfNotNull(it["value"]?.toString()?.toBoolean()),
                 distance = Optional.presentIfNotNull(it["distance"]?.toString()?.toInt()),
+                phash = Optional.presentIfNotNull(it["phash"]?.toString()?.toBoolean()),
+                url = Optional.presentIfNotNull(it["url"]?.toString()?.toBoolean()),
+                stash_id = Optional.presentIfNotNull(it["stash_id"]?.toString()?.toBoolean()),
+                title = Optional.presentIfNotNull(it["title"]?.toString()?.toBoolean()),
+            )
+        } else {
+            null
+        }
+
+    fun convertFileDuplicationCriterionInput(it: Map<String, *>?): FileDuplicationCriterionInput? =
+        if (it != null) {
+            // TODO test
+            FileDuplicationCriterionInput(
+                duplicated = Optional.presentIfNotNull(it["value"]?.toString()?.toBoolean()),
+                distance = Optional.presentIfNotNull(it["distance"]?.toString()?.toInt()),
+                phash = Optional.presentIfNotNull(it["phash"]?.toString()?.toBoolean()),
             )
         } else {
             null

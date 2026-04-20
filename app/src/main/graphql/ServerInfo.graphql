@@ -1,20 +1,20 @@
 query ServerInfo {
-  version {
-    version
-  }
-  findScenes {
-    count
-  }
+    version {
+        version
+    }
+    findScenes {
+        count
+    }
 }
 
 query Statistics {
-  stats {
-    total_o_count
-    total_play_duration
-    total_play_count
-    scene_count
-    scenes_size
-    image_count
-    images_size
-  }
+    stats {
+        total_o_count
+        total_play_duration
+        total_play_count
+        scene_count
+        scenes_size
+        image_count
+        images_size
+    }
 }

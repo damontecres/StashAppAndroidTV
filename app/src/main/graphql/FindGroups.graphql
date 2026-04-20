@@ -1,105 +1,106 @@
 query FindGroups($filter: FindFilterType, $group_filter: GroupFilterType, $ids: [ID!]) {
-  findGroups(filter: $filter, group_filter: $group_filter, ids: $ids){
-    groups {
-      ...GroupData
+    findGroups(filter: $filter, group_filter: $group_filter, ids: $ids){
+        groups {
+            ...GroupData
+        }
     }
-  }
 }
 
 query CountGroups($filter: FindFilterType, $group_filter: GroupFilterType, $ids: [ID!]) {
-  findGroups(filter: $filter, group_filter: $group_filter, ids: $ids) {
-    count
-  }
+    findGroups(filter: $filter, group_filter: $group_filter, ids: $ids) {
+        count
+    }
 }
 
 query FindGroup($id: ID!) {
-  findGroup(id: $id) {
-    ...GroupData
-  }
+    findGroup(id: $id) {
+        ...GroupData
+    }
 }
 
 query FindGroupTags($id: ID!) {
     findGroup(id: $id) {
-    id
-    tags {
-      ...TagData
+        id
+        tags {
+            ...TagData
+        }
     }
-  }
 }
 
 query CountGroupRelationships($filter: FindFilterType, $group_filter: GroupFilterType, $ids: [ID!]) {
-  findGroups(filter: $filter, group_filter: $group_filter, ids: $ids) {
-    groups {
-      id
-      sub_group_count
-      containing_groups {
-        group {
-          id
+    findGroups(filter: $filter, group_filter: $group_filter, ids: $ids) {
+        groups {
+            id
+            sub_group_count
+            containing_groups {
+                group {
+                    id
+                }
+            }
         }
-      }
     }
-  }
 }
 
 query FindGroupRelationships($filter: FindFilterType, $group_filter: GroupFilterType, $ids: [ID!]) {
-  findGroups(filter: $filter, group_filter: $group_filter, ids: $ids) {
-    groups {
-        ...GroupData
-      sub_groups {
-        ...GroupDescriptionData
-      }
-      containing_groups {
-        ...GroupDescriptionData
-      }
+    findGroups(filter: $filter, group_filter: $group_filter, ids: $ids) {
+        groups {
+            ...GroupData
+            sub_groups {
+                ...GroupDescriptionData
+            }
+            containing_groups {
+                ...GroupDescriptionData
+            }
+        }
     }
-  }
 }
 
+
 fragment GroupDescriptionData on GroupDescription {
-  description
-  group {
-    ...GroupData
-  }
+    description
+    group {
+        ...GroupData
+    }
 }
 
 fragment GroupData on Group {
-  id
-  name
-  aliases
-  date
-  duration
-  rating100
-  synopsis
-  director
-  studio {
     id
     name
-  }
-  tags {
-    ...SlimTagData
-    __typename
-  }
-  sub_group_count
-  containing_groups {
-      description
-  }
-  scene_count
-  performer_count
-  o_counter
-  front_image_path
-  back_image_path
-  created_at @catch(to: NULL)
-  updated_at @catch(to: NULL)
+    aliases
+    date
+    duration
+    rating100
+    synopsis
+    director
+    studio {
+        id
+        name
+    }
+    tags {
+        ...SlimTagData
+        __typename
+    }
+    sub_group_count
+    containing_groups {
+        description
+    }
+    scene_count
+    performer_count
+    o_counter
+    front_image_path
+    back_image_path
+    created_at @catch(to: NULL)
+    updated_at @catch(to: NULL)
 }
 
 mutation CreateGroup($input: GroupCreateInput!) {
-  groupCreate(input: $input) {
-    ...GroupData
-  }
+    groupCreate(input: $input) {
+        ...GroupData
+    }
 }
 
 mutation UpdateGroup($input: GroupUpdateInput!) {
-  groupUpdate(input: $input) {
-    ...GroupData
-  }
+    groupUpdate(input: $input) {
+        ...GroupData
+    }
 }
