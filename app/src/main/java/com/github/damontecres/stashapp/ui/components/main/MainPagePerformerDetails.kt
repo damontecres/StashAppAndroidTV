@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -167,15 +166,10 @@ fun MainPagePerformerDetails(
                         modifier = Modifier.widthIn(max = 64.dp),
                     )
                 }
-                if (perf.career_start.isNotNullOrBlank()) {
+                if (perf.career_length.isNotNullOrBlank()) {
                     TitleValueText(
                         stringResource(R.string.stashapp_career_length),
-                        remember(perf) {
-                            listOf(
-                                perf.career_start,
-                                perf.career_end,
-                            ).joinToString(" - ")
-                        },
+                        perf.career_length,
                     )
                 }
                 if (perf.penis_length != null) {

@@ -91,7 +91,7 @@ class SceneViewModel : ViewModel() {
                     if (performerIds.isNotEmpty()) {
                         viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
                             _performers.value =
-                                queryEngine.findPerformers(performerIds = performerIds)
+                                queryEngine.findPerformersOrEmpty(performerIds = performerIds)
                         }
                     }
                     if (newScene.galleries.isNotEmpty()) {

@@ -67,8 +67,7 @@ fragment PerformerData on Performer {
     fake_tits
     penis_length
     circumcised
-    career_start
-    career_end
+    career_length
     tattoos
     piercings
     alias_list

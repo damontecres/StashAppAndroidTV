@@ -61,6 +61,7 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.JobResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -152,6 +153,26 @@ class QueryEngine(
             }
         return performers.orEmpty()
     }
+
+    suspend fun findPerformersOrEmpty(
+        findFilter: FindFilterType? = null,
+        performerFilter: PerformerFilterType? = null,
+        performerIds: List<String>? = null,
+        useRandom: Boolean = true,
+    ): List<PerformerData> =
+        try {
+            findPerformers(findFilter, performerFilter, performerIds, useRandom)
+        } catch (ex: Exception) {
+            if (ex is CancellationException) {
+                throw ex
+            }
+            Log.w(
+                TAG,
+                "Unable to load performer details; continuing without performer metadata",
+                ex,
+            )
+            emptyList()
+        }
 
     suspend fun getPerformer(performerId: String): PerformerData? {
         val query = client.query(GetPerformerQuery(id = performerId))

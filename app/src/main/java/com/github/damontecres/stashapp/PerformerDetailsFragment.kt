@@ -121,7 +121,7 @@ class PerformerDetailsFragment : DetailsFragment() {
         addRow(R.string.stashapp_piercings, perf.piercings)
         addRow(
             R.string.stashapp_career_length,
-            listOf(perf.career_start, perf.career_end).joinToString(" - "),
+            perf.career_length,
         )
         addRow(R.string.stashapp_created_at, parseTimeToString(perf.created_at))
         addRow(R.string.stashapp_updated_at, parseTimeToString(perf.updated_at))

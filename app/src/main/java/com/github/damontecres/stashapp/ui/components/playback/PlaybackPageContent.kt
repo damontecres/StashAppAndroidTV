@@ -348,7 +348,9 @@ class PlaybackViewModel : ViewModel() {
                 }
                 if (scene.performers.isNotEmpty()) {
                     performers.value =
-                        queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
+                        queryEngine.findPerformersOrEmpty(
+                            performerIds = scene.performers.map { it.id },
+                        )
                 }
             }
             this@PlaybackViewModel.scene.value = scene

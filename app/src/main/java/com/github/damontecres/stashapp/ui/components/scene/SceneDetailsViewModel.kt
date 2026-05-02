@@ -81,7 +81,9 @@ class SceneDetailsViewModel(
                     loadingState.value = SceneLoadingState.Success(scene)
                     if (scene.performers.isNotEmpty()) {
                         performers.value =
-                            queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
+                            queryEngine.findPerformersOrEmpty(
+                                performerIds = scene.performers.map { it.id },
+                            )
                     }
                     if (scene.galleries.isNotEmpty()) {
                         galleries.value = queryEngine.getGalleries(scene.galleries.map { it.id })

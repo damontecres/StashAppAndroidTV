@@ -641,7 +641,7 @@ fun PerformerDetails(
                     TableRow.from(
                         context,
                         R.string.stashapp_career_length,
-                        listOf(perf.career_start, perf.career_end).joinToString(" - "),
+                        perf.career_length,
                     ),
                 )
             }.filterNotNull()
