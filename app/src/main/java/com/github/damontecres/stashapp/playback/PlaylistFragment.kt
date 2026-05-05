@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A [PlaybackFragment] that manages and plays a playlist/queue of videos
@@ -48,7 +49,9 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
 
     // Pages are 1-indexed
     private var currentPage = 1
-    private var totalCount = -1
+    private var totalCount = 0
+    private var codecSupport: CodecSupport? = null
+    private val streamDecisionCache = ConcurrentHashMap<String, StreamDecision>()
     private lateinit var destination: Destination.Playlist
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -139,19 +142,100 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 QueryEngine(serverViewModel.requireServer()),
                 dataSupplier,
             )
+        
+        codecSupport = CodecSupport.getSupportedCodecs(requireContext())
         addNextPageToPlaylist()
         if (player is ExoPlayer) {
             maybeSetupVideoEffects(player!! as ExoPlayer)
         }
         maybeMuteAudio(requireContext(), false, player!!)
         player!!.prepare()
-        if (destination.position > 0 || destination.startPosition > 0L) {
-            seekToIndex(destination.position, destination.startPosition)
-        }
+        seekToIndex(destination.position, destination.startPosition)
         player!!.play()
         totalCount = pagingSource.getCount()
         withContext(Dispatchers.Main) {
             updatePlaylistDebug()
+        }
+    }
+
+    private fun createMediaItems(items: List<D>): List<MediaItem> {
+        return items.map { item ->
+            val scene = convertToScene(item)
+            buildUnresolvedMediaItem(requireContext(), scene) {
+                builderCallback(item)?.invoke(this)
+                setTag(MediaItemTag(scene, null))
+            }
+        }
+    }
+
+    private suspend fun resolveMediaItemAt(index: Int) {
+        if (player == null || index < 0 || index >= player!!.mediaItemCount) return
+        val mediaItem = player!!.getMediaItemAt(index)
+        val tag = mediaItem.localConfiguration?.tag as? MediaItemTag ?: return
+        if (tag.streamDecision != null) return // Already resolved
+
+        Log.v(TAG, "Resolving stream for item at index $index (sceneId=${tag.item.id})")
+        val scene = tag.item
+        
+        // Check cache first
+        var streamDecision = streamDecisionCache[scene.id]
+        if (streamDecision != null) {
+            Log.v(TAG, "Cache hit for sceneId=${scene.id}")
+        }
+        
+        if (streamDecision == null) {
+            Log.v(TAG, "Cache miss for sceneId=${scene.id}, calculating...")
+            val streamChoice = getStreamChoiceFromPreferences(requireContext())
+            val transcodeResolution = getTranscodeAboveFromPreferences(requireContext())
+
+            streamDecision =
+                getStreamDecision(
+                    requireContext(),
+                    scene,
+                    PlaybackMode.Choose,
+                    streamChoice,
+                    transcodeResolution,
+                    codecSupport ?: CodecSupport.getSupportedCodecs(requireContext()),
+                )
+            streamDecisionCache[scene.id] = streamDecision
+        }
+
+        val resolvedItem =
+            buildMediaItem(requireContext(), streamDecision, scene) {
+                // Keep the metadata and clipping config from the unresolved item
+                setMediaMetadata(mediaItem.mediaMetadata)
+                mediaItem.clippingConfiguration.let {
+                    setClipStartPositionMs(it.startPositionMs)
+                    setClipEndPositionMs(it.endPositionMs)
+                    setClipRelativeToDefaultPosition(it.relativeToDefaultPosition)
+                    setClipStartsAtKeyFrame(it.startsAtKeyFrame)
+                }
+                setTag(MediaItemTag(scene, streamDecision))
+            }
+
+        withContext(Dispatchers.Main) {
+            if (player != null && index < player!!.mediaItemCount) {
+                // Double check it's still the same item before replacing
+                val currentItemAtPos = player!!.getMediaItemAt(index)
+                if (currentItemAtPos.mediaId == resolvedItem.mediaId) {
+                    player!!.replaceMediaItem(index, resolvedItem)
+                }
+            }
+        }
+    }
+
+    private suspend fun ensurePageLoaded(page: Int) {
+        if (page < 1 || player == null) return
+        val startIndex = (page - 1) * PAGE_SIZE
+        if (startIndex < player!!.mediaItemCount && player!!.getMediaItemAt(startIndex).mediaId.startsWith("dummy_")) {
+            val items = pagingSource.fetchPage(page, PAGE_SIZE)
+            if (items.isNotEmpty()) {
+                val mediaItems = createMediaItems(items)
+                val safeReplaceCount = minOf(mediaItems.size, player!!.mediaItemCount - startIndex)
+                if (safeReplaceCount > 0) {
+                    player!!.replaceMediaItems(startIndex, startIndex + safeReplaceCount, mediaItems.take(safeReplaceCount))
+                }
+            }
         }
     }
 
@@ -164,25 +248,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         val page = currentPage++
         Log.v(TAG, "Fetching page #$page")
         val newItems = pagingSource.fetchPage(page, PAGE_SIZE)
-        val mediaItems =
-            newItems.map { item ->
-                val scene = convertToScene(item)
-                val streamChoice = getStreamChoiceFromPreferences(requireContext())
-                val transcodeResolution = getTranscodeAboveFromPreferences(requireContext())
-                val streamDecision =
-                    getStreamDecision(
-                        requireContext(),
-                        scene,
-                        PlaybackMode.Choose,
-                        streamChoice,
-                        transcodeResolution,
-                    )
-                Log.d(TAG, "streamDecision=$streamDecision")
-                buildMediaItem(requireContext(), streamDecision, scene) {
-                    builderCallback(item)?.invoke(this)
-                    setTag(MediaItemTag(scene, streamDecision))
-                }
-            }
+        val mediaItems = createMediaItems(newItems)
         Log.v(TAG, "Got ${mediaItems.size} media items")
         if (mediaItems.isNotEmpty()) {
             player!!.addMediaItems(mediaItems)
@@ -201,24 +267,51 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
             TAG,
             "index=$index, startPosition=$startPosition, player.mediaItemCount=${player.mediaItemCount}",
         )
-        // Check if the index is out of bounds and add pages until the item is available
-        while (index >= player.mediaItemCount) {
-            if (!addNextPageToPlaylist()) {
-                Log.w(
-                    TAG,
-                    "Requested $index with ${player.mediaItemCount} media items in player, " +
-                        "but addNextPageToPlaylist returned no additional items",
-                )
-                Toast
-                    .makeText(
-                        requireContext(),
-                        "Unable to find item to play. This might be a bug!",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                return
+        
+        if (index >= player.mediaItemCount) {
+            val targetPage = (index / PAGE_SIZE) + 1
+            val missingItemsCount = (targetPage - 1) * PAGE_SIZE - player.mediaItemCount
+            
+            if (missingItemsCount > 0) {
+                val dummyItems = (0 until missingItemsCount).map {
+                    MediaItem.Builder()
+                        .setMediaId("dummy_${player.mediaItemCount + it}")
+                        .setUri("http://dummy")
+                        .build()
+                }
+                player.addMediaItems(dummyItems)
+                currentPage = targetPage
             }
-            Log.v(TAG, "after fetch: player.mediaItemCount=${player.mediaItemCount}")
+
+            // Check if the index is out of bounds and add pages until the item is available
+            while (index >= player.mediaItemCount) {
+                if (!addNextPageToPlaylist()) {
+                    Log.w(
+                        TAG,
+                        "Requested $index with ${player.mediaItemCount} media items in player, " +
+                            "but addNextPageToPlaylist returned no additional items",
+                    )
+                    withContext(Dispatchers.Main) {
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Unable to find item to play. This might be a bug!",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                    }
+                    return
+                }
+                Log.v(TAG, "after fetch: player.mediaItemCount=${player.mediaItemCount}")
+            }
+        } else {
+            val targetPage = (index / PAGE_SIZE) + 1
+            ensurePageLoaded(targetPage)
         }
+        
+        val targetPage = (index / PAGE_SIZE) + 1
+        ensurePageLoaded(targetPage - 1)
+
+        resolveMediaItemAt(index)
         hidePlaylist()
         player.seekTo(index, if (startPosition > 0L) startPosition else androidx.media3.common.C.TIME_UNSET)
     }
@@ -272,22 +365,33 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         ) {
             if (mediaItem != null) {
                 // Update the UI
-                val tag = mediaItem.localConfiguration!!.tag!! as MediaItemTag
-                val scene = tag.item
-                Log.v(
-                    TAG,
-                    "Starting playback of index=${player?.currentMediaItemIndex}, id=${scene.id}",
-                )
-                currentScene = scene
-                updateDebugInfo(tag.streamDecision, scene)
+                val tag = mediaItem.localConfiguration?.tag as? MediaItemTag
+                if (tag != null) {
+                    val scene = tag.item
+                    Log.v(
+                        TAG,
+                        "Starting playback of index=${player?.currentMediaItemIndex}, id=${scene.id}",
+                    )
+                    currentScene = scene
+                    updateDebugInfo(tag.streamDecision, scene)
+                    if (activityTrackingEnabled) {
+                        maybeAddActivityTracking(scene)
+                    }
+                }
                 updatePlaylistDebug()
-                if (activityTrackingEnabled) {
-                    maybeAddActivityTracking(scene)
+
+                val currentIndex = player!!.currentMediaItemIndex
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    resolveMediaItemAt(currentIndex)
+                    resolveMediaItemAt(currentIndex + 1)
+                    if (currentIndex > 0) {
+                        resolveMediaItemAt(currentIndex - 1)
+                    }
                 }
             }
+            
             if (hasMorePages) {
                 val count = player!!.mediaItemCount
-                // TODO: https://medium.com/@nicholas.rose/exoplayer-playlist-diffing-f8fcd4b2ab7c
                 // If there are only a few items left in the playlist but there are more server-side, fetch the next page
                 if (count - player!!.currentMediaItemIndex <= PAGE_SIZE / 2) {
                     Log.v(TAG, "Too few items in playlist")
@@ -298,6 +402,44 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                             if (hasMorePages && !addNextPageToPlaylist()) {
                                 Log.v(TAG, "No more items")
                                 hasMorePages = false
+                            }
+                        }
+                    }
+                }
+            }
+
+            val currentIndex = player?.currentMediaItemIndex ?: 0
+            
+            // Check if we need to load previous items (when getting close to dummies backwards)
+            if (currentIndex > 0) {
+                val checkIndex = maxOf(0, currentIndex - PAGE_SIZE / 2)
+                if (checkIndex < player!!.mediaItemCount) {
+                    val checkItem = player!!.getMediaItemAt(checkIndex)
+                    if (checkItem.mediaId.startsWith("dummy_")) {
+                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                            lock.withLock {
+                                if (player!!.getMediaItemAt(checkIndex).mediaId.startsWith("dummy_")) {
+                                    val pageToFetch = (checkIndex / PAGE_SIZE) + 1
+                                    Log.v(TAG, "Approaching dummy items backwards, fetching page $pageToFetch")
+                                    ensurePageLoaded(pageToFetch)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Check if we need to load next items (when getting close to dummies forwards)
+            if (currentIndex < player!!.mediaItemCount - 1) {
+                val checkIndex = minOf(player!!.mediaItemCount - 1, currentIndex + PAGE_SIZE / 2)
+                val checkItem = player!!.getMediaItemAt(checkIndex)
+                if (checkItem.mediaId.startsWith("dummy_")) {
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        lock.withLock {
+                            if (player!!.getMediaItemAt(checkIndex).mediaId.startsWith("dummy_")) {
+                                val pageToFetch = (checkIndex / PAGE_SIZE) + 1
+                                Log.v(TAG, "Approaching dummy items forwards, fetching page $pageToFetch")
+                                ensurePageLoaded(pageToFetch)
                             }
                         }
                     }
@@ -342,7 +484,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
      */
     data class MediaItemTag(
         val item: Scene,
-        val streamDecision: StreamDecision,
+        val streamDecision: StreamDecision?,
     )
 
     companion object {

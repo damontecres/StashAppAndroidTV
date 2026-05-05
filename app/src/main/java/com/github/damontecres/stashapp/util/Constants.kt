@@ -526,12 +526,8 @@ val FullSceneData.asVideoSceneData: VideoSceneData
         VideoSceneData(
             id = id,
             title = title,
-            urls = urls,
-            date = date,
             resume_time = resume_time,
-            rating100 = rating100,
             interactive = interactive,
-            o_counter = o_counter,
             files = files.map { VideoSceneData.File(it.__typename, it.videoFile) },
             paths = VideoSceneData.Paths(
                 caption = paths.caption,
@@ -539,7 +535,6 @@ val FullSceneData.asVideoSceneData: VideoSceneData
                 preview = paths.preview,
                 stream = paths.stream,
                 sprite = paths.sprite,
-                vtt = paths.vtt,
                 funscript = paths.funscript,
             ),
             sceneStreams = sceneStreams.map { VideoSceneData.SceneStream(it.url, it.mime_type, it.label) },

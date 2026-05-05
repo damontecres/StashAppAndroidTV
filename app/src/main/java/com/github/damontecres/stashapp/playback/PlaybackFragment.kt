@@ -222,10 +222,17 @@ abstract class PlaybackFragment(
             }
 
     protected fun updateDebugInfo(
-        streamDecision: StreamDecision,
+        streamDecision: StreamDecision?,
         scene: Scene,
     ) {
         debugSceneId.text = scene.id
+        if (streamDecision == null) {
+            debugPlaybackTextView.text = getString(R.string.unresolved)
+            debugVideoTextView.text = scene.videoCodec
+            debugAudioTextView.text = scene.audioCodec
+            debugContainerTextView.text = scene.format
+            return
+        }
         when (streamDecision.transcodeDecision) {
             TranscodeDecision.Transcode -> {
                 debugPlaybackTextView.text =

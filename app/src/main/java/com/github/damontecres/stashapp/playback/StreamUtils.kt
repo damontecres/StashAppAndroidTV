@@ -153,6 +153,44 @@ fun buildMediaItem(
     return builder.build()
 }
 
+fun buildUnresolvedMediaItem(
+    context: Context,
+    scene: Scene,
+    builderCallback: (MediaItem.Builder.() -> Unit)? = null,
+): MediaItem {
+    val dummyUri = Uri.parse("stash://unresolved/${scene.id}")
+    val builder =
+        MediaItem
+            .Builder()
+            .setUri(dummyUri)
+            .setMediaId(scene.id)
+
+    if (scene.hasCaptions) {
+        val baseUrl = Uri.parse(scene.captionUrl)
+        val subtitles =
+            scene.captions.map {
+                val uri =
+                    baseUrl
+                        .buildUpon()
+                        .appendQueryParameter("lang", it.language_code)
+                        .appendQueryParameter("type", it.caption_type)
+                        .build()
+                MediaItem.SubtitleConfiguration
+                    .Builder(uri)
+                    .setMimeType(MimeTypes.TEXT_VTT)
+                    .setLabel(it.displayString(context))
+                    .setSelectionFlags(C.SELECTION_FLAG_AUTOSELECT)
+                    .setLanguage(it.language_code)
+                    .build()
+            }
+        builder.setSubtitleConfigurations(subtitles)
+    }
+
+    builderCallback?.invoke(builder)
+
+    return builder.build()
+}
+
 fun getStreamDecision(
     context: Context,
     scene: Scene,

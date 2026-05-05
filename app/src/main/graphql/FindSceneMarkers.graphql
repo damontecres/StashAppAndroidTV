@@ -53,12 +53,8 @@ fragment MinimalSceneData on Scene {
 fragment VideoSceneData on Scene {
     id
     title
-    urls
-    date
     resume_time
-    rating100
     interactive
-    o_counter
     files {
         ...VideoFile
     }
@@ -68,7 +64,6 @@ fragment VideoSceneData on Scene {
         preview
         stream
         sprite
-        vtt
         funscript
     }
     sceneStreams {

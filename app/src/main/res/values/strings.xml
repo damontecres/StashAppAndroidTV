@@ -63,6 +63,7 @@
     <string name="enter_settings_pin">Enter Settings PIN</string>
     <string name="force_direct">Force direct</string>
     <string name="unsupported">unsupported</string>
+    <string name="unresolved">resolving stream...</string>
     <string name="results">Results</string>
     <string name="waiting_for_query">Enter search query</string>
     <string name="suggestions">Suggestions</string>

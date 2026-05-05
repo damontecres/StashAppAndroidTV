@@ -4,6 +4,8 @@ All significant changes to the Stash App Android TV project are documented in th
 
 | Version | Type | Description | Impact |
 | :--- | :--- | :--- | :--- |
+| **Maintenance** | `Fix` | **Kritische Playlist-Startlatenz behoben:** Root cause war das sequentielle Laden aller Szenen von Index 0 bis `startIndex` (~34 Netzwerkanfragen bei Index 808). Neue Architektur: Playlist wird jetzt nur in einem Fenster von ±10 Elementen um den `startIndex` aufgebaut (`PLAYLIST_WINDOW=10`). Initiale Anfragen reduziert von O(startIndex) auf O(1). `CodecSupport`- und `StreamDecision`-Cache im `FilterViewModel` implementiert. "Building playlist..." Ladeanzeige ergänzt. | Critical |
+| **Maintenance** | `Fix` | Behebung von Git-Tag-Konflikten (`develop`) und Festlegung von `main` als primärem Target-Branch. | Low |
 | **v0.8.26** | `Feature` | Video-Wiederholung (Loop): Neuer Button im Querformat & Menü-Option im Hochformat für nahtlose Wiedergabe. | Medium |
 | **v0.8.25** | `Fix` | Player Overlay: Erhöhung der Basishöhe (256dp) & Korrektur Marker-Bar Layout zur Vermeidung von Titel-Clipping und Reduzierung von unerwünschtem Scrollen. | Medium |
 | **v0.8.24** | `Fix` | Mobile Player: Korrektur der Orientierungs-Logik. Im Querformat werden alle Steuerungen direkt angezeigt, im Hochformat werden sekundäre Buttons in das "Mehr"-Menü verschoben. | Medium |
@@ -22,6 +24,15 @@ All significant changes to the Stash App Android TV project are documented in th
 | **v0.8.4** | `Feature` | Added Interactive gamepad icons to Scene Cards and 15s loading Timeout-Toast for Funscripts on Video Start (Playback). | Low |
 | **v0.8.3** | `Fix` / `Feature` | Extended error information for The Handy API connection test in both UIs (Compose & XML). Added missing Handy settings to the old UI. | Low |
 | **v0.8.2** | `Feature` | Direct The Handy API (Funscripts) integration into ExoPlayer. Introduced HandyManager for REST communication. | Low |
+
+### Design & Structure Documentation (v0.8.27)
+- **Problem:** Eager stream resolution (calling `getStreamDecision` for every item in a fetched page) was causing ~10s startup latency when jumping to high playlist indices.
+- **Solution:** "Demand-Driven" Media Loading.
+- **Pattern:** `MediaItem` objects are initialized as "unresolved" placeholders. Real stream resolution is deferred until the item is within the immediate playback vicinity (Current ± 1). 
+- **Implementation:** 
+    - `resolveMediaItemAt(index)` uses `player.replaceMediaItem` to swap placeholders with resolved streams dynamically.
+    - Hooked into `onMediaItemTransition` for proactive pre-fetching and `seekToIndex` for instant startup.
+    - Added `buildUnresolvedMediaItem` in `StreamUtils.kt` to standardize placeholder creation.
 
 ### Design & Structure Documentation (v0.8.26)
 

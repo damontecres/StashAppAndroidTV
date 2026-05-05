@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.damontecres.stashapp.playback.CodecSupport
+import com.github.damontecres.stashapp.playback.StreamDecision
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
@@ -22,6 +24,9 @@ import kotlinx.coroutines.launch
 class FilterViewModel : ViewModel() {
     private var server: StashServer? = null
     val pager = MutableLiveData<ComposePager<StashData>>()
+    
+    var codecSupport: CodecSupport? = null
+    val streamDecisionCache = java.util.concurrent.ConcurrentHashMap<String, StreamDecision>()
 
     val currentFilter: FilterArgs? get() = pager.value?.filter
     val dataType: DataType? get() = currentFilter?.dataType
