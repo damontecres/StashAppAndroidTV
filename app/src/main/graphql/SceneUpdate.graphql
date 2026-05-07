@@ -1,38 +1,38 @@
 mutation SceneUpdate($input: SceneUpdateInput!) {
-  sceneUpdate(input: $input) {
-    id
-    tags {
-      ...TagData
+    sceneUpdate(input: $input) {
+        id
+        tags {
+            ...TagData
+        }
+        performers {
+            ...PerformerData
+        }
+        studio {
+            ...StudioData
+        }
+        groups {
+            scene_index
+            group{
+                ...GroupData
+            }
+        }
+        galleries {
+            ...GalleryData
+        }
+        rating100
     }
-    performers {
-      ...PerformerData
-    }
-    studio {
-      ...StudioData
-    }
-    groups {
-      scene_index
-      group{
-        ...GroupData
-      }
-    }
-    galleries {
-      ...GalleryData
-    }
-    rating100
-  }
 }
 
 mutation CreateMarker($input: SceneMarkerCreateInput!) {
-  sceneMarkerCreate(input: $input) {
-    ...FullMarkerData
-  }
+    sceneMarkerCreate(input: $input) {
+        ...FullMarkerData
+    }
 }
 
 mutation DeleteMarker($id: ID!) {
-  sceneMarkerDestroy(id: $id)
+    sceneMarkerDestroy(id: $id)
 }
 
 mutation DeleteScene($input: SceneDestroyInput!) {
-  sceneDestroy(input: $input)
+    sceneDestroy(input: $input)
 }

@@ -1,83 +1,83 @@
 query Configuration {
-  configuration {
-    defaults{
-      scan{
-        scanGenerateClipPreviews
-        scanGenerateCovers
-        scanGenerateImagePreviews
-        scanGeneratePhashes
-        scanGeneratePreviews
-        scanGenerateSprites
-        scanGenerateThumbnails
-      }
-      generate{
-        clipPreviews
-        covers
-        imagePreviews
-        interactiveHeatmapsSpeeds
-        markerImagePreviews
-        markers
-        markerScreenshots
-        phashes
-        previews
-        sprites
-        transcodes
-        imageThumbnails
-      }
+    configuration {
+        defaults{
+            scan{
+                scanGenerateClipPreviews
+                scanGenerateCovers
+                scanGenerateImagePreviews
+                scanGeneratePhashes
+                scanGeneratePreviews
+                scanGenerateSprites
+                scanGenerateThumbnails
+            }
+            generate{
+                clipPreviews
+                covers
+                imagePreviews
+                interactiveHeatmapsSpeeds
+                markerImagePreviews
+                markers
+                markerScreenshots
+                phashes
+                previews
+                sprites
+                transcodes
+                imageThumbnails
+            }
+        }
+        interface {
+            menuItems
+            showStudioAsText
+            customLocalesEnabled
+            customLocales
+            sfwContentMode
+        }
+        ui
     }
-    interface {
-      menuItems
-      showStudioAsText
-      customLocalesEnabled
-      customLocales
-      sfwContentMode
+    version {
+        version
+        hash
+        build_time
     }
-    ui
-  }
-  version {
-    version
-    hash
-    build_time
-  }
-  plugins {
-    id
-    name
-    version
-  }
+    plugins {
+        id
+        name
+        version
+    }
 }
 
 query ConfigurationUI {
-  configuration {
-    ui
-  }
+    configuration {
+        ui
+    }
 }
 
 query Credentials {
-  configuration {
-    general {
-      apiKey
+    configuration {
+        general {
+            apiKey
+        }
     }
-  }
 }
 
 mutation GenerateApiKey{
-  generateAPIKey(input: {clear: false})
+    generateAPIKey(input: {clear: false})
 }
 
 mutation MetadataScan($input: ScanMetadataInput!){
-  metadataScan(input: $input)
+    metadataScan(input: $input)
 }
 
 mutation MetadataGenerate($input: GenerateMetadataInput!){
-  metadataGenerate(input: $input)
+    metadataGenerate(input: $input)
 }
 
 mutation InstallPackages($type: PackageType!, $packages: [PackageSpecInput!]!) {
-  installPackages(type: $type, packages: $packages)
+    installPackages(type: $type, packages: $packages)
 }
 
 query FindJob($input: FindJobInput!) {
-  findJob(input: $input) {
-    ...StashJob
-  }
+    findJob(input: $input) {
+        ...StashJob
+    }
 }

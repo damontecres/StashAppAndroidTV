@@ -1,123 +1,123 @@
 query FindMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFilterType, $ids: [ID!]) {
-  findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter, ids: $ids) {
-    scene_markers {
-      ...MarkerData
+    findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter, ids: $ids) {
+        scene_markers {
+            ...MarkerData
+        }
+        __typename
     }
-    __typename
-  }
 }
 
 query CountMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFilterType) {
-  findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter) {
-    count
-  }
+    findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter) {
+        count
+    }
 }
 
 query GetMarker($ids: [ID!]) {
-  findSceneMarkers(ids: $ids) {
-    scene_markers {
-      ...FullMarkerData
+    findSceneMarkers(ids: $ids) {
+        scene_markers {
+            ...FullMarkerData
+        }
+        __typename
     }
-    __typename
-  }
 }
 
 query FindFullMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFilterType, $ids: [ID!]) {
-  findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter, ids: $ids) {
-    scene_markers {
-      ...FullMarkerData
+    findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter, ids: $ids) {
+        scene_markers {
+            ...FullMarkerData
+        }
+        __typename
     }
-    __typename
-  }
 }
 
 mutation UpdateMarker($input: SceneMarkerUpdateInput!){
-  sceneMarkerUpdate(input: $input){
-    ...FullMarkerData
-  }
+    sceneMarkerUpdate(input: $input){
+        ...FullMarkerData
+    }
 }
 
 fragment MinimalSceneData on Scene {
-  id
-  title
-  urls
-  date
-  rating100
-  o_counter
-  files {
-    ...VideoFile
-  }
+    id
+    title
+    urls
+    date
+    rating100
+    o_counter
+    files {
+        ...VideoFile
+    }
 }
 
 fragment VideoSceneData on Scene {
-  id
-  title
-  urls
-  date
-  resume_time
-  rating100
-  o_counter
-  files {
-    ...VideoFile
-  }
-  paths {
-    caption
-    screenshot
-    preview
-    stream
-    sprite
-    vtt
-  }
-  sceneStreams {
-    url
-    mime_type
-    label
-  }
-  captions {
-    ...Caption
-  }
+    id
+    title
+    urls
+    date
+    resume_time
+    rating100
+    o_counter
+    files {
+        ...VideoFile
+    }
+    paths {
+        caption
+        screenshot
+        preview
+        stream
+        sprite
+        vtt
+    }
+    sceneStreams {
+        url
+        mime_type
+        label
+    }
+    captions {
+        ...Caption
+    }
 }
 
 fragment MarkerData on SceneMarker {
-  id
-  title
-  created_at @catch(to: NULL)
-  updated_at @catch(to: NULL)
-  stream
-  screenshot
-  seconds
-  end_seconds
-  preview
-  primary_tag {
-    ...SlimTagData
+    id
+    title
+    created_at @catch(to: NULL)
+    updated_at @catch(to: NULL)
+    stream
+    screenshot
+    seconds
+    end_seconds
+    preview
+    primary_tag {
+        ...SlimTagData
+        __typename
+    }
+    tags {
+        ...SlimTagData
+    }
+    scene {
+        ...MinimalSceneData
+    }
     __typename
-  }
-  tags {
-    ...SlimTagData
-  }
-  scene {
-    ...MinimalSceneData
-  }
-  __typename
 }
 
 fragment FullMarkerData on SceneMarker {
-  id
-  title
-  created_at @catch(to: NULL)
-  updated_at @catch(to: NULL)
-  stream
-  screenshot
-  seconds
-  end_seconds
-  preview
-  primary_tag {
-    ...TagData
-  }
-  tags {
-    ...TagData
-  }
-  scene {
-    ...VideoSceneData
-  }
+    id
+    title
+    created_at @catch(to: NULL)
+    updated_at @catch(to: NULL)
+    stream
+    screenshot
+    seconds
+    end_seconds
+    preview
+    primary_tag {
+        ...TagData
+    }
+    tags {
+        ...TagData
+    }
+    scene {
+        ...VideoSceneData
+    }
 }

@@ -1,28 +1,28 @@
 mutation SceneSaveActivity($scene_id: ID!, $resume_time: Float!, $play_duration: Float) {
-  sceneSaveActivity(id: $scene_id, resume_time: $resume_time, playDuration: $play_duration)
+    sceneSaveActivity(id: $scene_id, resume_time: $resume_time, playDuration: $play_duration)
 }
 
 mutation SceneResetO($scene_id: ID!) {
-  sceneResetO(id: $scene_id)
+    sceneResetO(id: $scene_id)
 }
 
 mutation SceneAddO($scene_id: ID!, $times: [Timestamp!]) {
-  sceneAddO(id: $scene_id, times: $times) {
-    count
-    history
-  }
+    sceneAddO(id: $scene_id, times: $times) {
+        count
+        history
+    }
 }
 
 mutation SceneDeleteO($scene_id: ID!, $times: [Timestamp!]) {
-  sceneDeleteO(id: $scene_id, times: $times) {
-    count
-    history
-  }
+    sceneDeleteO(id: $scene_id, times: $times) {
+        count
+        history
+    }
 }
 
 mutation SceneAddPlayCount($scene_id: ID!, $times: [Timestamp!]) {
-  sceneAddPlay(id: $scene_id, times: $times) {
-    count
-    history
-  }
+    sceneAddPlay(id: $scene_id, times: $times) {
+        count
+        history
+    }
 }

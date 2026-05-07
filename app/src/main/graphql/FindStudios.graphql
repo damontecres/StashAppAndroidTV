@@ -1,85 +1,85 @@
 query FindStudios($filter: FindFilterType, $studio_filter: StudioFilterType, $ids: [ID!]) {
-  findStudios(filter: $filter, studio_filter: $studio_filter, ids: $ids) {
-    studios {
-      ...StudioData
-      __typename
+    findStudios(filter: $filter, studio_filter: $studio_filter, ids: $ids) {
+        studios {
+            ...StudioData
+            __typename
+        }
+        __typename
     }
-    __typename
-  }
 }
 
 query GetStudio($id: ID!) {
-  findStudio(id: $id) {
-    ...StudioData
-  }
+    findStudio(id: $id) {
+        ...StudioData
+    }
 }
 
 query CountStudios($filter: FindFilterType, $studio_filter: StudioFilterType) {
-  findStudios(filter: $filter, studio_filter: $studio_filter) {
-    count
-  }
+    findStudios(filter: $filter, studio_filter: $studio_filter) {
+        count
+    }
 }
 
 query FindStudioTags($id: ID!) {
-  findStudio(id: $id) {
-    id
-    tags {
-      ...TagData
+    findStudio(id: $id) {
+        id
+        tags {
+            ...TagData
+        }
     }
-  }
 }
 
 fragment StudioData on Studio {
-  id
-  name
-  url
-  parent_studio {
     id
     name
     url
+    parent_studio {
+        id
+        name
+        url
+        image_path
+        __typename
+    }
+    child_studios {
+        id
+        name
+        image_path
+        __typename
+    }
+    tags {
+        ...SlimTagData
+        __typename
+    }
+    ignore_auto_tag
     image_path
+    scene_count
+    #  scene_count_all: scene_count(depth: -1)
+    image_count
+    #  image_count_all: image_count(depth: -1)
+    gallery_count
+    #  gallery_count_all: gallery_count(depth: -1)
+    performer_count
+    #  performer_count_all: performer_count(depth: -1)
+    group_count
+    #  group_count_all: group_count(depth: -1)
+    o_counter
+    details
+    rating100
+    aliases
+    favorite
     __typename
-  }
-  child_studios {
-    id
-    name
-    image_path
-    __typename
-  }
-  tags {
-    ...SlimTagData
-    __typename
-  }
-  ignore_auto_tag
-  image_path
-  scene_count
-  #  scene_count_all: scene_count(depth: -1)
-  image_count
-  #  image_count_all: image_count(depth: -1)
-  gallery_count
-  #  gallery_count_all: gallery_count(depth: -1)
-  performer_count
-  #  performer_count_all: performer_count(depth: -1)
-  group_count
-  #  group_count_all: group_count(depth: -1)
-  o_counter
-  details
-  rating100
-  aliases
-  favorite
-  __typename
-  created_at @catch(to: NULL)
-  updated_at @catch(to: NULL)
+    created_at @catch(to: NULL)
+    updated_at @catch(to: NULL)
 }
 
 mutation UpdateStudio($input: StudioUpdateInput!){
-  studioUpdate(input: $input){
-    ...StudioData
-  }
+    studioUpdate(input: $input){
+        ...StudioData
+    }
 }
 
 mutation CreateStudio($input: StudioCreateInput!){
-  studioCreate(input: $input){
-    ...StudioData
-  }
+    studioCreate(input: $input){
+        ...StudioData
+    }
 }
