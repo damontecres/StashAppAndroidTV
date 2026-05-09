@@ -6,9 +6,21 @@ import com.google.protobuf.gradle.id
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Base64
 
-val isCI = if (System.getenv("CI") != null) System.getenv("CI").toBoolean() else false
-val shouldSign = isCI && System.getenv("KEY_ALIAS") != null
-val extensionsRepoActive = project.hasProperty("WholphinExtensionsUsername")
+val isCI = providers.systemProperty("CI").orElse("false").map { it.toBoolean() }
+val shouldSign =
+    isCI.zip(
+        providers.systemProperty("KEY_ALIAS").orElse("").map { it.isNotBlank() },
+    ) { isCI, hasKey ->
+        isCI && hasKey
+    }
+val ffmpegModuleExists =
+    providers.provider { project.file("libs/lib-decoder-ffmpeg-release.aar").exists() }
+val av1ModuleExists =
+    providers.provider { project.file("libs/lib-decoder-av1-release.aar").exists() }
+val mpvModuleExists =
+    providers.provider { project.file("libs/wholphin-mpv-release.aar").exists() }
+val extensionsRepoActive =
+    providers.provider { project.hasProperty("WholphinExtensionsUsername") }
 
 plugins {
     alias(libs.plugins.android.application)
@@ -68,7 +80,7 @@ configure<ApplicationExtension> {
         vectorDrawables.useSupportLibrary = true
     }
     signingConfigs {
-        if (shouldSign) {
+        if (shouldSign.get()) {
             create("ci") {
                 file("ci.keystore").writeBytes(
                     Base64.getDecoder().decode(System.getenv("SIGNING_KEY")),
@@ -94,7 +106,7 @@ configure<ApplicationExtension> {
             )
             isDebuggable = false
 
-            if (shouldSign) {
+            if (shouldSign.get()) {
                 signingConfig = signingConfigs.getByName("ci")
             }
         }
@@ -102,7 +114,7 @@ configure<ApplicationExtension> {
             isMinifyEnabled = false
             isDebuggable = true
             applicationIdSuffix = ".debug"
-            if (shouldSign) {
+            if (shouldSign.get()) {
                 signingConfig = signingConfigs.getByName("ci")
             }
         }
@@ -307,12 +319,32 @@ dependencies {
 
     implementation(libs.timber)
     implementation(libs.slf4j2.timber)
-    if (extensionsRepoActive) {
-        implementation(libs.wholphin.extensions.mpv)
+    if (ffmpegModuleExists.get()) {
+        logger.info("Using local ffmpeg decoder")
+        implementation(files("libs/lib-decoder-ffmpeg-release.aar"))
+    } else if (extensionsRepoActive.get()) {
+        logger.info("Using prebuilt ffmpeg decoder")
         implementation(libs.wholphin.extensions.ffmpeg)
+    } else {
+        logger.warn("Media3 ffmpeg decoder was NOT found")
+    }
+    if (av1ModuleExists.get()) {
+        logger.info("Using local av1 decoder")
+        implementation(files("libs/lib-decoder-av1-release.aar"))
+    } else if (extensionsRepoActive.get()) {
+        logger.info("Using prebuilt av1 decoder")
         implementation(libs.wholphin.extensions.av1)
     } else {
-        logger.warn("Native extensions will not be included")
+        logger.warn("Media3 av1 decoder was NOT found")
+    }
+    if (mpvModuleExists.get()) {
+        logger.info("Using local libMPV build")
+        implementation(files("libs/wholphin-mpv-release.aar"))
+    } else if (extensionsRepoActive.get()) {
+        logger.info("Using prebuilt libMPV")
+        implementation(libs.wholphin.extensions.mpv)
+    } else {
+        logger.warn("libMPV was NOT found")
     }
 
     testImplementation(libs.androidx.test.core.ktx)

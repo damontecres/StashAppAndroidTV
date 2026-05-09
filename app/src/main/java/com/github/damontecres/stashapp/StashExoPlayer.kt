@@ -27,7 +27,7 @@ import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.mpv.MpvPlayer
+import com.github.damontecres.wholphin.mpv.MpvPlayer
 import timber.log.Timber
 
 /**

@@ -53,7 +53,7 @@ viewpump = "4.0.15"
 zoomlayout = "1.9.0"
 slf4j2Timber = "1.2"
 timber = "5.0.1"
-wholphin-extensions = "0.1.2"
+wholphin-extensions = "0.2.0"
 
 [libraries]
 acra-dialog = { module = "ch.acra:acra-dialog", version.ref = "acra" }
