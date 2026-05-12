@@ -102,6 +102,7 @@ object Constants {
     private const val REQUEST_KEY = "requestKey"
 
     const val POSITION_REQUEST_KEY = "$REQUEST_KEY.position"
+    const val PLAYLIST_INDEX_REQUEST_KEY = "$REQUEST_KEY.playlistIndex"
 
     /**
      * The name of the header for authenticating to Stash
