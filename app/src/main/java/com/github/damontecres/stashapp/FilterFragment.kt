@@ -18,12 +18,14 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.leanback.widget.SearchEditText
 import androidx.lifecycle.lifecycleScope
+import androidx.fragment.app.setFragmentResultListener
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.FilterOptions
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
@@ -96,6 +98,13 @@ class FilterFragment :
             ),
             calculatePageSize(requireContext(), dataType),
         )
+
+        setFragmentResultListener(Constants.PLAYLIST_INDEX_REQUEST_KEY) { _, bundle ->
+            val index = bundle.getInt(Constants.PLAYLIST_INDEX_REQUEST_KEY, -1)
+            if (index >= 0) {
+                fragment.jumpTo(index)
+            }
+        }
     }
 
     override fun onViewCreated(

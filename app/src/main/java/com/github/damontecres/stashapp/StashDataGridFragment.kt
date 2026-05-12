@@ -146,7 +146,7 @@ class StashDataGridFragment :
         }
     }
 
-    private fun jumpTo(newPosition: Int) {
+    fun jumpTo(newPosition: Int) {
         Log.v(TAG, "jumpTo $newPosition")
         if (gridView.adapter != null) {
             if (abs(selectedPosition - newPosition) < numberOfColumns * 10) {
