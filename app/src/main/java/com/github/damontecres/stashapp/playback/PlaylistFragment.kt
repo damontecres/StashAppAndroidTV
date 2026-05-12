@@ -149,8 +149,8 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
             maybeSetupVideoEffects(player!! as ExoPlayer)
         }
         maybeMuteAudio(requireContext(), false, player!!)
-        player!!.prepare()
         seekToIndex(destination.position, destination.startPosition)
+        player!!.prepare()
         player!!.play()
         totalCount = pagingSource.getCount()
         withContext(Dispatchers.Main) {
@@ -213,13 +213,11 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 setTag(MediaItemTag(scene, streamDecision))
             }
 
-        withContext(Dispatchers.Main) {
-            if (player != null && index < player!!.mediaItemCount) {
-                // Double check it's still the same item before replacing
-                val currentItemAtPos = player!!.getMediaItemAt(index)
-                if (currentItemAtPos.mediaId == resolvedItem.mediaId) {
-                    player!!.replaceMediaItem(index, resolvedItem)
-                }
+        if (player != null && index < player!!.mediaItemCount) {
+            // Double check it's still the same item before replacing
+            val currentItemAtPos = player!!.getMediaItemAt(index)
+            if (currentItemAtPos.mediaId == resolvedItem.mediaId) {
+                player!!.replaceMediaItem(index, resolvedItem)
             }
         }
     }
