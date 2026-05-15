@@ -169,7 +169,7 @@ fun PlaybackControls(
             intervals = seekBarIntervals,
             modifier =
                 Modifier
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 4.dp)
                     .fillMaxWidth(.95f),
         )
         Row(
@@ -555,6 +555,9 @@ fun PlaybackButtons(
     }
 }
 
+private val buttonPadding = 4.dp
+private val buttonSize = 40.dp
+
 @Composable
 fun PlaybackButton(
     @DrawableRes iconRes: Int,
@@ -573,11 +576,11 @@ fun PlaybackButton(
                 containerColor = AppColors.TransparentBlack25,
                 focusedContainerColor = selectedColor,
             ),
-        contentPadding = PaddingValues(8.dp),
+        contentPadding = PaddingValues(buttonPadding),
         modifier =
             modifier
-                .padding(8.dp)
-                .size(56.dp, 56.dp)
+                .padding(buttonPadding)
+                .size(buttonSize)
                 .onFocusChanged { onControllerInteraction.invoke() },
     ) {
         Icon(
@@ -607,11 +610,11 @@ fun PlaybackFaButton(
                 containerColor = AppColors.TransparentBlack25,
                 focusedContainerColor = selectedColor,
             ),
-        contentPadding = PaddingValues(8.dp),
+        contentPadding = PaddingValues(buttonPadding),
         modifier =
             modifier
-                .padding(8.dp)
-                .size(56.dp, 56.dp)
+                .padding(buttonPadding)
+                .size(buttonSize)
                 .onFocusChanged { onControllerInteraction.invoke() },
     ) {
         Box(
@@ -621,7 +624,7 @@ fun PlaybackFaButton(
                 text = stringResource(iconRes),
                 fontFamily = FontAwesome,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 28.sp,
+                fontSize = 22.sp,
                 modifier = Modifier.align(Alignment.Center),
             )
         }
