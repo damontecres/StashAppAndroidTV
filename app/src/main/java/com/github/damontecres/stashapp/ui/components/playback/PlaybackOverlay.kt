@@ -1,10 +1,17 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
-import android.util.Log
 import androidx.annotation.IntRange
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -18,23 +25,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
@@ -91,6 +95,7 @@ import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
+import timber.log.Timber
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -171,13 +176,10 @@ fun PlaybackOverlay(
     seekPreviewPlaceholder: Painter? = null,
     seekBarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     var seekProgress by remember { mutableFloatStateOf(-1f) }
     val seekBarFocused by seekBarInteractionSource.collectIsFocusedAsState()
     var seekBarDragging by remember { mutableStateOf(false) }
 
-    val previewImageUrl = scene.spriteUrl
     val imageLoader = SingletonImageLoader.get(LocalPlatformContext.current)
 
     if (showDebugInfo) {
@@ -194,8 +196,8 @@ fun PlaybackOverlay(
                 val msg =
                     "Native heap: ${nativeAllocated / 1024}k/${nativeSize / 1024}k, nativeFree=${nativeFree / 1024}k " +
                         "JVM: ${usedSize / 1024}k/${totalSize / 1024}k"
-                Log.d("PlaybackOverlay", msg)
-                delay(500L)
+                Timber.d(msg)
+                delay(1500L)
             }
         }
     }
@@ -256,113 +258,131 @@ fun PlaybackOverlay(
                 }
             }
         }
-        val controlHeight = .4f
-        val listState = rememberLazyListState()
-        var height = 208.dp
-        if (!uiConfig.showTitleDuringPlayback || scene.title.isNullOrBlank()) height -= 24.dp
-        if (!uiConfig.showTitleDuringPlayback || scene.subtitle.isNullOrBlank()) height -= 24.dp
-        if (markers.isEmpty()) height -= 24.dp
-        LazyColumn(
-            state = listState,
+        var showControls by remember { mutableStateOf(true) }
+        AnimatedContent(
+            targetState = showControls,
+            transitionSpec = {
+                if (targetState) {
+                    // Moving up to show controls
+                    (slideInVertically { -it / 2 } + fadeIn()).togetherWith(slideOutVertically { it / 2 } + fadeOut())
+                } else {
+                    // Moving down to show markers
+                    (slideInVertically { it / 2 } + fadeIn()).togetherWith(slideOutVertically { -it / 2 } + fadeOut())
+                }
+            },
             modifier =
                 Modifier
                     .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(height),
-//                        .fillMaxHeight(controlHeight),
-//                contentPadding = PaddingValues(top = 420.dp),
-        ) {
-            if (uiConfig.showTitleDuringPlayback) {
-                item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier =
-                            Modifier
-                                .padding(start = 8.dp)
-                                .fillMaxWidth(.7f),
-                    ) {
-                        if (scene.title.isNotNullOrBlank()) {
-                            Text(
-                                text = scene.title,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                style =
-                                    MaterialTheme.typography.titleLarge.copy(
-                                        fontSize = 24.sp,
-                                    ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                        if (scene.subtitle.isNotNullOrBlank()) {
-                            Text(
-                                text = scene.subtitle,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                style =
-                                    MaterialTheme.typography.titleMedium.copy(
-                                        fontSize = 16.sp,
-                                    ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                    .fillMaxWidth(),
+        ) { targetState ->
+            if (targetState) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (uiConfig.showTitleDuringPlayback) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier =
+                                Modifier
+                                    .padding(start = 8.dp)
+                                    .fillMaxWidth(.7f),
+                        ) {
+                            if (scene.title.isNotNullOrBlank()) {
+                                Text(
+                                    text = scene.title,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    fontSize = 24.sp,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            if (scene.subtitle.isNotNullOrBlank()) {
+                                Text(
+                                    text = scene.subtitle,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    fontSize = 16.sp,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
+
+                    PlaybackControls(
+                        modifier = Modifier.fillMaxWidth(),
+                        scene = scene,
+                        captions = captions,
+                        oCounter = oCounter,
+                        playerControls = playerControls,
+                        onPlaybackActionClick = onPlaybackActionClick,
+                        controllerViewState = controllerViewState,
+                        showDebugInfo = showDebugInfo,
+                        onSeekProgress = {
+                            seekProgress = it
+                            onSeekBarChange(it)
+                        },
+                        showPlay = showPlay,
+                        previousEnabled = previousEnabled,
+                        nextEnabled = nextEnabled,
+                        seekEnabled = seekEnabled,
+                        seekBarInteractionSource = seekBarInteractionSource,
+                        moreButtonOptions = moreButtonOptions,
+                        subtitleIndex = subtitleIndex,
+                        audioIndex = audioIndex,
+                        audioOptions = audioOptions,
+                        playbackSpeed = playbackSpeed,
+                        scale = scale,
+                        seekBarIntervals = uiConfig.preferences.playbackPreferences.seekBarSteps,
+                        sfwMode = uiConfig.sfwMode,
+                    )
+                    if (markers.isNotEmpty()) {
+                        Text(
+                            modifier =
+                                Modifier
+                                    .padding(start = 8.dp)
+                                    .onFocusChanged {
+                                        if (it.isFocused) showControls = false
+                                    }.focusable()
+                                    .clickable { showControls = false },
+                            text = stringResource(DataType.MARKER.pluralStringId),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onBackground,
+                        )
+                    }
                 }
-            }
-            item {
-                PlaybackControls(
-                    modifier = Modifier.fillMaxWidth(),
-                    scene = scene,
-                    captions = captions,
-                    oCounter = oCounter,
-                    playerControls = playerControls,
-                    onPlaybackActionClick = onPlaybackActionClick,
-                    controllerViewState = controllerViewState,
-                    showDebugInfo = showDebugInfo,
-                    onSeekProgress = {
-                        seekProgress = it
-                        onSeekBarChange(it)
-                    },
-                    showPlay = showPlay,
-                    previousEnabled = previousEnabled,
-                    nextEnabled = nextEnabled,
-                    seekEnabled = seekEnabled,
-                    seekBarInteractionSource = seekBarInteractionSource,
-                    moreButtonOptions = moreButtonOptions,
-                    subtitleIndex = subtitleIndex,
-                    audioIndex = audioIndex,
-                    audioOptions = audioOptions,
-                    playbackSpeed = playbackSpeed,
-                    scale = scale,
-                    seekBarIntervals = uiConfig.preferences.playbackPreferences.seekBarSteps,
-                    sfwMode = uiConfig.sfwMode,
-                )
-            }
-            if (markers.isNotEmpty()) {
-                item {
-//                    Spacer(Modifier.height(12.dp))
+            } else {
+                val focusRequester = remember { FocusRequester() }
+                LaunchedEffect(Unit) { focusRequester.tryRequestFocus() }
+                Column(
+                    modifier =
+                        Modifier
+                            .padding(start = 8.dp)
+                            .fillMaxWidth(),
+                ) {
                     Text(
-                        modifier = Modifier.padding(start = 8.dp),
+                        modifier =
+                            Modifier
+                                .onFocusChanged {
+                                    if (it.isFocused) showControls = true
+                                }.focusable()
+                                .clickable { showControls = true },
                         text = stringResource(DataType.MARKER.pluralStringId),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onBackground,
                     )
-                }
-                item {
+
                     SceneMarkerBar(
                         modifier =
                             Modifier
-                                .padding(start = 8.dp, top = 64.dp, bottom = 64.dp)
-                                .fillMaxWidth()
-                                .height(height),
+                                .focusRequester(focusRequester)
+                                .fillMaxWidth(),
                         markers = markers,
                         player = playerControls,
                         controllerViewState = controllerViewState,
                         uiConfig = uiConfig,
-                        onCardFocus = {
-//                                scope.launch {
-//                                    listState.scrollToItem(2)
-//                                }
-                        },
+                        onCardFocus = {},
                     )
                 }
             }
@@ -396,11 +416,16 @@ fun PlaybackOverlay(
             LaunchedEffect(Unit) {
                 seekProgress = playerControls.currentPosition.toFloat() / playerControls.duration
             }
-            val yOffsetDp =
-                180.dp +
-                    (if (spriteData.isNotEmpty()) (160.dp) else 24.dp) +
-                    (if (markers.isEmpty()) (-24).dp else 0.dp)
-            val heightPx = with(LocalDensity.current) { yOffsetDp.toPx().toInt() }
+            val density = LocalDensity.current
+            val heightPx =
+                remember(density, spriteData, markers) {
+                    val yOffsetDp =
+                        160.dp +
+                            (if (spriteData.isNotEmpty()) (160.dp) else 24.dp) +
+                            (if (markers.isEmpty()) (-24).dp else 0.dp)
+                    with(density) { yOffsetDp.toPx().toInt() }
+                }
+
             SeekPreviewImage(
                 modifier =
                     Modifier
@@ -509,21 +534,22 @@ fun SceneMarkerBar(
             remember(markers.size) {
                 List(markers.size) { FocusRequester() }
             }
+        val firstFocus =
+            remember {
+                val pos = player.currentPosition.milliseconds
+                val nextMarkerIndex =
+                    markers.indexOfFirstOrNull { it.seconds >= pos }
+                        ?: markers.lastIndex
+                if (nextMarkerIndex in focusRequesters.indices) {
+                    focusRequesters[nextMarkerIndex]
+                } else {
+                    focusRequesters.first()
+                }
+            }
         LazyRow(
             modifier =
                 modifier
-                    .focusProperties {
-                        onEnter = {
-                            // Start on the next marker from the current position
-                            val pos = player.currentPosition.milliseconds
-                            val nextMarkerIndex =
-                                markers.indexOfFirstOrNull { it.seconds >= pos }
-                                    ?: markers.lastIndex
-                            if (nextMarkerIndex in focusRequesters.indices) {
-                                focusRequesters[nextMarkerIndex].tryRequestFocus()
-                            }
-                        }
-                    },
+                    .focusRestorer(firstFocus),
             contentPadding = PaddingValues(8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {

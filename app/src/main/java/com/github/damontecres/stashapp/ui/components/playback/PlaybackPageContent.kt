@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -19,8 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -51,7 +50,6 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewModelScope
@@ -89,11 +87,9 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.data.VideoFilter
 import com.github.damontecres.stashapp.data.room.PlaybackEffect
 import com.github.damontecres.stashapp.navigation.NavigationManager
-import com.github.damontecres.stashapp.playback.PlaybackSceneFragment
 import com.github.damontecres.stashapp.playback.PlaylistFragment
 import com.github.damontecres.stashapp.playback.TrackActivityPlaybackListener
 import com.github.damontecres.stashapp.playback.TrackSupport
@@ -106,6 +102,7 @@ import com.github.damontecres.stashapp.playback.switchToTranscode
 import com.github.damontecres.stashapp.proto.PlaybackFinishBehavior
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.compat.detectTvDevice
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -123,16 +120,26 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.findActivity
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.launchDefault
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
+import timber.log.Timber
 import java.util.Locale
 import kotlin.properties.Delegates
 import kotlin.time.Duration
@@ -141,9 +148,12 @@ import kotlin.time.Duration.Companion.milliseconds
 
 const val TAG = "PlaybackPageContent"
 
-class PlaybackViewModel : ViewModel() {
+class PlaybackViewModel :
+    ViewModel(),
+    Player.Listener {
     private lateinit var server: StashServer
     private lateinit var exceptionHandler: CoroutineExceptionHandler
+    private lateinit var uiConfig: ComposeUiConfig
     private var markersEnabled by Delegates.notNull<Boolean>()
     private var saveFilters = true
     private var videoFiltersEnabled = false
@@ -152,17 +162,20 @@ class PlaybackViewModel : ViewModel() {
     private var trackActivity by Delegates.notNull<Boolean>()
     private var trackActivityListener: TrackActivityPlaybackListener? = null
 
-    val scene = MutableLiveData<FullSceneData>()
-    val performers = MutableLiveData<List<PerformerData>>(listOf())
+    private val _state = MutableStateFlow(PlaybackState())
+    val state: StateFlow<PlaybackState> = _state
 
-    val mediaItemTag = MutableLiveData<PlaylistFragment.MediaItemTag>()
-    val markers = MutableLiveData<List<BasicMarker>>(listOf())
-    val oCount = MutableLiveData(0)
-    val rating100 = MutableLiveData(0)
-    val spriteImageLoaded = MutableLiveData<List<SpriteData>>(emptyList())
+    private val _info = MutableStateFlow(PlaybackInfo())
+    val info: StateFlow<PlaybackInfo> = _info
 
-    private val _videoFilter = MutableLiveData<VideoFilter?>(null)
-    val videoFilter = ThrottledLiveData(_videoFilter, 500L)
+    val subtitles = MutableStateFlow<List<Cue>>(emptyList())
+
+    @kotlin.OptIn(FlowPreview::class)
+    val videoFilter =
+        state
+            .map { it.videoFilter ?: VideoFilter() }
+            .debounce(if (detectTvDevice) 500L else DRAG_THROTTLE_DELAY)
+            .stateIn(viewModelScope, SharingStarted.Lazily, VideoFilter())
 
     fun init(
         server: StashServer,
@@ -171,6 +184,7 @@ class PlaybackViewModel : ViewModel() {
         markersEnabled: Boolean,
         saveFilters: Boolean,
         videoFiltersEnabled: Boolean,
+        uiConfig: ComposeUiConfig,
     ) {
         this.server = server
         this.player = player
@@ -179,6 +193,8 @@ class PlaybackViewModel : ViewModel() {
         this.saveFilters = saveFilters
         this.videoFiltersEnabled = videoFiltersEnabled
         this.exceptionHandler = LoggingCoroutineExceptionHandler(server, viewModelScope)
+        player.addListener(this)
+        addCloseable { player.removeListener(this@PlaybackViewModel) }
         if (trackActivity) {
             addCloseable("tracking") {
                 trackActivityListener?.let {
@@ -193,16 +209,17 @@ class PlaybackViewModel : ViewModel() {
 
     fun changeScene(tag: PlaylistFragment.MediaItemTag) {
         sceneJob.cancelChildren()
-        this.mediaItemTag.value = tag
-        this.oCount.value = 0
-        this.rating100.value = 0
-        this.markers.value = listOf()
-        this.spriteImageLoaded.value = emptyList()
+        _state.update {
+            PlaybackState(
+                mediaItemTag = tag,
+            )
+        }
 
         if (trackActivity) {
-            Log.v(
-                TAG,
-                "Setting up activity tracking scene ${tag.item.id}, removing=${trackActivityListener?.scene?.id}",
+            Timber.v(
+                "Setting up activity tracking scene %s, removing=%s",
+                tag.item.id,
+                trackActivityListener?.scene?.id,
             )
             trackActivityListener?.apply {
                 release()
@@ -233,14 +250,13 @@ class PlaybackViewModel : ViewModel() {
                             .playbackEffectsDao()
                             .getPlaybackEffect(server.url, tag.item.id, DataType.SCENE)
                     if (vf != null) {
-                        Log.d(
-                            TAG,
-                            "Loaded VideoFilter for scene ${tag.item.id}",
-                        )
-                        withContext(Dispatchers.Main) {
-                            videoFilter.stopThrottling(true)
-                            updateVideoFilter(vf.videoFilter)
-                            videoFilter.startThrottling()
+                        Timber.d("Loaded VideoFilter for scene %s", tag.item.id)
+                        _state.update {
+                            if (it.mediaItemTag?.item?.id == tag.item.id) {
+                                it.copy(videoFilter = vf.videoFilter)
+                            } else {
+                                it
+                            }
                         }
                     }
                 }
@@ -248,7 +264,7 @@ class PlaybackViewModel : ViewModel() {
         }
 
         // Fetch preview sprites
-        viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler()) {
+        viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler() + Dispatchers.IO) {
             val context = StashApplication.getApplication()
             val imageLoader = SingletonImageLoader.get(context)
             if (tag.item.spriteUrl.isNotNullOrBlank() && tag.item.vttUrl.isNotNullOrBlank()) {
@@ -261,7 +277,14 @@ class PlaybackViewModel : ViewModel() {
                         .build()
                 val result = imageLoader.enqueue(request).job.await()
                 if (result.image != null) {
-                    spriteImageLoaded.value = fetchSprites(tag.item.id, tag.item.vttUrl)
+                    val spriteImageLoaded = fetchSprites(tag.item.id, tag.item.vttUrl)
+                    _state.update {
+                        if (it.mediaItemTag?.item?.id == tag.item.id) {
+                            it.copy(spriteImageLoaded = spriteImageLoaded)
+                        } else {
+                            it
+                        }
+                    }
                 }
             }
         }
@@ -315,43 +338,52 @@ class PlaybackViewModel : ViewModel() {
                             }
                             return@withContext spriteData
                         } catch (ex: Exception) {
-                            Log.w(TAG, "Error parsing sprites for $sceneId", ex)
+                            Timber.w(ex, "Error parsing sprites for %s", sceneId)
                             return@withContext emptyList()
                         }
                     }
                     emptyList()
                 }
             } else {
-                Log.d(TAG, "No sprites for $sceneId")
+                Timber.d("No sprites for %s", sceneId)
                 return@withContext emptyList()
             }
         }
 
     private fun refreshScene(sceneId: String) {
-        // Fetch o count & markers
+        // Fetch o-count & markers
         viewModelScope.launch(sceneJob + exceptionHandler) {
-            oCount.value = 0
-            rating100.value = 0
-            markers.value = listOf()
-            performers.value = listOf()
-
             val queryEngine = QueryEngine(server)
             val scene = queryEngine.getScene(sceneId)
             if (scene != null) {
-                oCount.value = scene.o_counter ?: 0
-                rating100.value = scene.rating100 ?: 0
-                if (markersEnabled) {
-                    markers.value =
+                val markers =
+                    if (markersEnabled) {
                         scene.scene_markers
                             .sortedBy { it.seconds }
                             .map(::BasicMarker)
-                }
-                if (scene.performers.isNotEmpty()) {
-                    performers.value =
+                    } else {
+                        emptyList()
+                    }
+                val performers =
+                    if (scene.performers.isNotEmpty()) {
                         queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
+                    } else {
+                        emptyList()
+                    }
+                _state.update {
+                    if (it.mediaItemTag?.item?.id == sceneId) {
+                        it.copy(
+                            scene = scene,
+                            oCount = scene.o_counter ?: 0,
+                            rating100 = scene.rating100 ?: 0,
+                            markers = markers,
+                            performers = performers,
+                        )
+                    } else {
+                        it
+                    }
                 }
             }
-            this@PlaybackViewModel.scene.value = scene
         }
     }
 
@@ -359,7 +391,7 @@ class PlaybackViewModel : ViewModel() {
         position: Long,
         tagId: String,
     ) {
-        mediaItemTag.value?.let {
+        state.value.mediaItemTag?.let {
             viewModelScope.launch(exceptionHandler) {
                 val mutationEngine = MutationEngine(server)
                 val newMarker = mutationEngine.createMarker(it.item.id, position, tagId)
@@ -378,26 +410,27 @@ class PlaybackViewModel : ViewModel() {
     }
 
     fun incrementOCount(sceneId: String) {
-        viewModelScope.launch(exceptionHandler) {
+        viewModelScope.launchIO(exceptionHandler) {
             val mutationEngine = MutationEngine(server)
-            oCount.value = mutationEngine.incrementOCounter(sceneId).count
+            val result = mutationEngine.incrementOCounter(sceneId).count
+            _state.update { it.copy(oCount = result) }
         }
     }
 
     fun updateVideoFilter(newFilter: VideoFilter?) {
-        _videoFilter.value = newFilter
+        _state.update { it.copy(videoFilter = newFilter) }
     }
 
     fun saveVideoFilter() {
-        mediaItemTag.value?.item?.let {
+        state.value.mediaItemTag?.item?.let {
             viewModelScope.launchIO(StashCoroutineExceptionHandler(autoToast = true)) {
-                val vf = _videoFilter.value
+                val vf = state.value.videoFilter
                 if (vf != null) {
                     StashApplication
                         .getDatabase()
                         .playbackEffectsDao()
                         .insert(PlaybackEffect(server.url, it.id, DataType.SCENE, vf))
-                    Log.d(TAG, "Saved VideoFilter for scene ${it.id}")
+                    Timber.d("Saved VideoFilter for scene %s", it.id)
                     withContext(Dispatchers.Main) {
                         Toast
                             .makeText(
@@ -418,9 +451,90 @@ class PlaybackViewModel : ViewModel() {
         viewModelScope.launch(exceptionHandler) {
             val newRating =
                 MutationEngine(server).setRating(sceneId, rating100)?.rating100 ?: 0
-            this@PlaybackViewModel.rating100.value = newRating
+            _state.update { it.copy(rating100 = newRating) }
             showSetRatingToast(StashApplication.getApplication(), newRating)
         }
+    }
+
+    override fun onCues(cueGroup: CueGroup) {
+        subtitles.update { cueGroup.cues }
+    }
+
+    override fun onTracksChanged(tracks: Tracks) {
+        viewModelScope.launchDefault {
+            val trackInfo = checkForSupport(tracks)
+            val audioTracks =
+                trackInfo
+                    .filter { it.type == TrackType.AUDIO && it.supported == TrackSupportReason.HANDLED }
+            val audioIndex = audioTracks.indexOfFirstOrNull { it.selected }
+            val audioOptions =
+                audioTracks.map { it.labels.joinToString(", ").ifBlank { "Default" } }
+            val captions =
+                trackInfo.filter { it.type == TrackType.TEXT && it.supported == TrackSupportReason.HANDLED }
+            _info.update {
+                it.copy(
+                    currentTracks = trackInfo,
+                    captions = captions,
+                    audioIndex = audioIndex,
+                    audioOptions = audioOptions,
+                )
+            }
+
+            val captionsByDefault =
+                uiConfig.preferences.interfacePreferences.captionsByDefault
+            if (captionsByDefault && captions.isNotEmpty() && info.value.sceneSubtitlesActivated != state.value.scene?.id) {
+                // Captions will be empty when transitioning to new media item
+                // Only want to activate subtitles once in case the user turns them off
+                val sceneSubtitlesActivated = state.value.scene?.id
+                val languageCode = Locale.getDefault().language
+                val subtitleIndex =
+                    captions.indexOfFirstOrNull { it.format.language == languageCode }?.let {
+                        Timber.v("Found default subtitle track for $languageCode: $it")
+                        withContext(Dispatchers.Main) {
+                            if (toggleSubtitles(player, null, it)) {
+                                it
+                            } else {
+                                null
+                            }
+                        }
+                    }
+                _info.update {
+                    it.copy(
+                        sceneSubtitlesActivated = sceneSubtitlesActivated,
+                        subtitleIndex = subtitleIndex,
+                    )
+                }
+            }
+        }
+    }
+
+    override fun onMediaItemTransition(
+        mediaItem: MediaItem?,
+        reason: Int,
+    ) {
+        _info.update { PlaybackInfo(currentPlaylistIndex = player.currentMediaItemIndex) }
+        if (mediaItem != null) {
+            changeScene(mediaItem.localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
+        }
+    }
+
+    fun toggleCaptions(index: Int) {
+        if (toggleSubtitles(player, info.value.subtitleIndex, index)) {
+            _info.update { it.copy(subtitleIndex = index) }
+        } else {
+            _info.update { it.copy(subtitleIndex = null) }
+            subtitles.value = emptyList()
+        }
+    }
+
+    fun toggleAudion(index: Int) {
+        val audioIndex =
+            if (toggleAudio(player, info.value.audioIndex, index)) {
+                index
+            } else {
+                null
+            }
+        _info.update { it.copy(audioIndex = audioIndex) }
     }
 }
 
@@ -443,6 +557,27 @@ data class SpriteData(
     val y: Int,
     val w: Int,
     val h: Int,
+)
+
+data class PlaybackState(
+    val mediaItemTag: PlaylistFragment.MediaItemTag? = null,
+    val markers: List<BasicMarker> = emptyList(),
+    val performers: List<PerformerData> = emptyList(),
+    val oCount: Int = 0,
+    val rating100: Int = 0,
+    val scene: FullSceneData? = null,
+    val videoFilter: VideoFilter? = null,
+    val spriteImageLoaded: List<SpriteData> = emptyList(),
+)
+
+data class PlaybackInfo(
+    val currentPlaylistIndex: Int = 0,
+    val currentTracks: List<TrackSupport> = emptyList(),
+    val captions: List<TrackSupport> = emptyList(),
+    val subtitleIndex: Int? = null,
+    val sceneSubtitlesActivated: String? = null,
+    val audioIndex: Int? = null,
+    val audioOptions: List<String> = emptyList(),
 )
 
 @OptIn(UnstableApi::class)
@@ -470,26 +605,26 @@ fun PlaybackPageContent(
 
     val context = LocalContext.current
     val navigationManager = LocalGlobalContext.current.navigationManager
-    val currentScene by viewModel.mediaItemTag.observeAsState(
-        playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag,
-    )
-    val markers by viewModel.markers.observeAsState(listOf())
-    val oCount by viewModel.oCount.observeAsState(0)
-    val rating100 by viewModel.rating100.observeAsState(0)
-    val spriteImageLoaded by viewModel.spriteImageLoaded.observeAsState(emptyList())
-    var currentTracks by remember { mutableStateOf<List<TrackSupport>>(listOf()) }
-    var captions by remember { mutableStateOf<List<TrackSupport>>(listOf()) }
-    var subtitles by remember { mutableStateOf<List<Cue>?>(null) }
-    var subtitleIndex by remember { mutableStateOf<Int?>(null) }
-    var mediaIndexSubtitlesActivated by remember { mutableStateOf<Int>(-1) }
-    var audioIndex by remember { mutableStateOf<Int?>(null) }
-    var audioOptions by remember { mutableStateOf<List<String>>(listOf()) }
-    var showFilterDialog by rememberSaveable { mutableStateOf(false) }
-    val videoFilter by viewModel.videoFilter.observeAsState()
+    val state by viewModel.state.collectAsState()
+    val currentScene = state.mediaItemTag
+    val markers = state.markers
+    val oCount = state.oCount
+    val rating100 = state.rating100
+    val spriteImageLoaded = state.spriteImageLoaded
+    val scene = state.scene
+    val performers = state.performers
 
+    val info by viewModel.info.collectAsState()
+    val subtitles by viewModel.subtitles.collectAsState()
+    val videoFilter by viewModel.videoFilter.collectAsState()
+    val currentTracks = info.currentTracks
+    val captions = info.captions
+    val subtitleIndex = info.subtitleIndex
+    val audioIndex = info.audioIndex
+    val audioOptions = info.audioOptions
+
+    var showFilterDialog by rememberSaveable { mutableStateOf(false) }
     var showSceneDetails by rememberSaveable { mutableStateOf(false) }
-    val scene by viewModel.scene.observeAsState()
-    val performers by viewModel.performers.observeAsState(listOf())
 
     AmbientPlayerListener(player)
 
@@ -501,7 +636,6 @@ fun PlaybackPageContent(
         }
     }
 
-    var showControls by remember { mutableStateOf(true) }
     var showPlaylist by remember { mutableStateOf(false) }
     var contentScale by remember { mutableStateOf(ContentScale.Fit) }
     var playbackSpeed by remember { mutableFloatStateOf(1.0f) }
@@ -510,8 +644,6 @@ fun PlaybackPageContent(
     val presentationState = rememberPresentationState(player)
     val scaledModifier =
         Modifier.resizeWithContentScale(contentScale, presentationState.videoSizeDp)
-
-    var contentCurrentPosition by remember { mutableLongStateOf(0L) }
 
     var createMarkerPosition by remember { mutableLongStateOf(-1L) }
     var playingBeforeDialog by remember { mutableStateOf(false) }
@@ -563,11 +695,9 @@ fun PlaybackPageContent(
             markersEnabled,
             uiConfig.persistVideoFilters,
             useVideoFilters,
+            uiConfig,
         )
         viewModel.changeScene(playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
-        if (!isTvDevice) {
-            viewModel.videoFilter.startThrottling(DRAG_THROTTLE_DELAY)
-        }
         maybeMuteAudio(uiConfig.preferences, false, player)
         player.setMediaItems(playlist, startIndex, savedStartPosition)
         if (playlistPager == null) {
@@ -586,60 +716,12 @@ fun PlaybackPageContent(
         )
         StashExoPlayer.addListener(
             object : Player.Listener {
-                override fun onCues(cueGroup: CueGroup) {
-//                    val cues =
-//                        cueGroup.cues
-//                            .mapNotNull { it.text }
-//                            .joinToString("\n")
-//                    Log.v(TAG, "onCues: \n$cues")
-                    subtitles = cueGroup.cues.ifEmpty { null }
-                }
-
-                override fun onTracksChanged(tracks: Tracks) {
-                    val trackInfo = checkForSupport(tracks)
-                    currentTracks = trackInfo
-                    val audioTracks =
-                        trackInfo
-                            .filter { it.type == TrackType.AUDIO && it.supported == TrackSupportReason.HANDLED }
-                    audioIndex = audioTracks.indexOfFirstOrNull { it.selected }
-                    audioOptions =
-                        audioTracks.map { it.labels.joinToString(", ").ifBlank { "Default" } }
-                    captions =
-                        trackInfo.filter { it.type == TrackType.TEXT && it.supported == TrackSupportReason.HANDLED }
-
-                    val captionsByDefault =
-                        uiConfig.preferences.interfacePreferences.captionsByDefault
-                    if (captionsByDefault && captions.isNotEmpty() && mediaIndexSubtitlesActivated != currentPlaylistIndex) {
-                        // Captions will be empty when transitioning to new media item
-                        // Only want to activate subtitles once in case the user turns them off
-                        mediaIndexSubtitlesActivated = currentPlaylistIndex
-                        val languageCode = Locale.getDefault().language
-                        captions.indexOfFirstOrNull { it.format.language == languageCode }?.let {
-                            Log.v(TAG, "Found default subtitle track for $languageCode: $it")
-                            if (toggleSubtitles(player, null, it)) {
-                                subtitleIndex = it
-                            }
-                        }
-                    }
-                }
-
-                override fun onMediaItemTransition(
-                    mediaItem: MediaItem?,
-                    reason: Int,
-                ) {
-                    if (mediaItem != null) {
-                        viewModel.changeScene(mediaItem.localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
-                    }
-                    subtitles = null
-                    subtitleIndex = null
-                    currentPlaylistIndex = player.currentMediaItemIndex
-                }
-
                 override fun onPlayerError(error: PlaybackException) {
-                    Log.e(
-                        TAG,
-                        "PlaybackException on scene ${currentScene.item.id}, errorCode=${error.errorCode}",
+                    Timber.e(
                         error,
+                        "PlaybackException on scene %s, errorCode=%s",
+                        currentScene?.item?.id,
+                        error.errorCode,
                     )
                     val showError =
                         when (error.errorCode) {
@@ -670,8 +752,7 @@ fun PlaybackPageContent(
                                             )
                                         val newTag =
                                             newMediaItem.localConfiguration!!.tag as PlaylistFragment.MediaItemTag
-                                        Log.d(
-                                            TAG,
+                                        Timber.d(
                                             "Using new transcoding media item: ${newTag.streamDecision}",
                                         )
                                         viewModel.changeScene(newTag)
@@ -686,8 +767,7 @@ fun PlaybackPageContent(
                                         true
                                     }
                                 } else {
-                                    Log.w(
-                                        TAG,
+                                    Timber.w(
                                         "No current media item, cannot fallback to transcoding",
                                     )
                                     true
@@ -712,8 +792,8 @@ fun PlaybackPageContent(
 
         player.prepare()
         if (useVideoFilters) {
-            Log.d(TAG, "Enabling video effects")
-            (player as? ExoPlayer)?.setVideoEffects(listOf())
+            Timber.d("Enabling video effects")
+            (player as? ExoPlayer)?.setVideoEffects(emptyList())
         }
     }
 
@@ -826,7 +906,7 @@ fun PlaybackPageContent(
                         .padding(bottom = 70.dp),
             )
             if (showSkipProgress) {
-                currentScene.item.duration?.let {
+                currentScene?.item?.duration?.let {
                     val percent =
                         skipPosition.toFloat() / (it.toLongMilliseconds).toFloat()
                     Box(
@@ -915,12 +995,7 @@ fun PlaybackPageContent(
                             }
 
                             is PlaybackAction.ToggleCaptions -> {
-                                if (toggleSubtitles(player, subtitleIndex, it.index)) {
-                                    subtitleIndex = it.index
-                                } else {
-                                    subtitleIndex = null
-                                    subtitles = null
-                                }
+                                viewModel.toggleCaptions(it.index)
                                 controllerViewState.hideControls()
                             }
 
@@ -933,11 +1008,7 @@ fun PlaybackPageContent(
                             }
 
                             is PlaybackAction.ToggleAudio -> {
-                                if (toggleAudio(player, audioIndex, it.index)) {
-                                    audioIndex = it.index
-                                } else {
-                                    audioIndex = null
-                                }
+                                viewModel.toggleAudion(it.index)
                             }
 
                             PlaybackAction.ShowSceneDetails -> {
@@ -1015,14 +1086,15 @@ fun PlaybackPageContent(
                 modifier = Modifier,
             )
         }
-        videoFilter?.let {
-            val effectList = it.createEffectList()
-            Log.d(TAG, "Applying ${effectList.size} effects")
-            (player as? ExoPlayer)?.setVideoEffects(effectList)
-
+        if (useVideoFilters) {
+            LaunchedEffect(videoFilter) {
+                val effectList = videoFilter.createEffectList()
+                Timber.d("Applying %s effects", effectList.size)
+                (player as? ExoPlayer)?.setVideoEffects(effectList)
+            }
             AnimatedVisibility(showFilterDialog) {
                 ImageFilterDialog(
-                    filter = it,
+                    filter = videoFilter,
                     showVideoOptions = true,
                     showSaveGalleryButton = false,
                     uiConfig = uiConfig,
@@ -1107,10 +1179,7 @@ fun Player.setupFinishedBehavior(
         }
 
         else -> {
-            Log.w(
-                PlaybackSceneFragment.TAG,
-                "Unknown playbackFinishedBehavior: $finishedBehavior",
-            )
+            Timber.w("Unknown playbackFinishedBehavior: %s", finishedBehavior)
         }
     }
 }
@@ -1243,10 +1312,7 @@ fun toggleSubtitles(
     val subtitleTracks =
         player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT && it.isSupported }
     if (index !in subtitleTracks.indices || (currentActiveSubtitleIndex != null && currentActiveSubtitleIndex == index)) {
-        Log.v(
-            TAG,
-            "Deactivating subtitles",
-        )
+        Timber.v("Deactivating subtitles")
         player.trackSelectionParameters =
             player.trackSelectionParameters
                 .buildUpon()
@@ -1254,10 +1320,7 @@ fun toggleSubtitles(
                 .build()
         return false
     } else {
-        Log.v(
-            TAG,
-            "Activating subtitle ${subtitleTracks[index].mediaTrackGroup.id}",
-        )
+        Timber.v("Activating subtitle %s", subtitleTracks[index].mediaTrackGroup.id)
         player.trackSelectionParameters =
             player.trackSelectionParameters
                 .buildUpon()
@@ -1281,10 +1344,7 @@ fun toggleAudio(
     val audioTracks =
         player.currentTracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO && it.isSupported }
     if (index !in audioTracks.indices || (audioIndex != null && audioIndex == index)) {
-        Log.v(
-            TAG,
-            "Deactivating audio",
-        )
+        Timber.v("Deactivating audio")
         player.trackSelectionParameters =
             player.trackSelectionParameters
                 .buildUpon()
@@ -1292,10 +1352,7 @@ fun toggleAudio(
                 .build()
         return false
     } else {
-        Log.v(
-            TAG,
-            "Activating audio ${audioTracks[index].mediaTrackGroup.id}",
-        )
+        Timber.v("Activating audio %s", audioTracks[index].mediaTrackGroup.id)
         player.trackSelectionParameters =
             player.trackSelectionParameters
                 .buildUpon()
