@@ -19,8 +19,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -51,7 +51,6 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewModelScope
@@ -89,7 +88,6 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.data.VideoFilter
 import com.github.damontecres.stashapp.data.room.PlaybackEffect
 import com.github.damontecres.stashapp.navigation.NavigationManager
@@ -106,6 +104,7 @@ import com.github.damontecres.stashapp.playback.switchToTranscode
 import com.github.damontecres.stashapp.proto.PlaybackFinishBehavior
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.compat.detectTvDevice
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -128,11 +127,20 @@ import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
+import timber.log.Timber
 import java.util.Locale
 import kotlin.properties.Delegates
 import kotlin.time.Duration
@@ -152,17 +160,15 @@ class PlaybackViewModel : ViewModel() {
     private var trackActivity by Delegates.notNull<Boolean>()
     private var trackActivityListener: TrackActivityPlaybackListener? = null
 
-    val scene = MutableLiveData<FullSceneData>()
-    val performers = MutableLiveData<List<PerformerData>>(listOf())
+    private val _state = MutableStateFlow(PlaybackState())
+    val state: StateFlow<PlaybackState> = _state
 
-    val mediaItemTag = MutableLiveData<PlaylistFragment.MediaItemTag>()
-    val markers = MutableLiveData<List<BasicMarker>>(listOf())
-    val oCount = MutableLiveData(0)
-    val rating100 = MutableLiveData(0)
-    val spriteImageLoaded = MutableLiveData<List<SpriteData>>(emptyList())
-
-    private val _videoFilter = MutableLiveData<VideoFilter?>(null)
-    val videoFilter = ThrottledLiveData(_videoFilter, 500L)
+    @kotlin.OptIn(FlowPreview::class)
+    val videoFilter =
+        state
+            .map { it.videoFilter ?: VideoFilter() }
+            .debounce(if (detectTvDevice) 500L else DRAG_THROTTLE_DELAY)
+            .stateIn(viewModelScope, SharingStarted.Lazily, VideoFilter())
 
     fun init(
         server: StashServer,
@@ -193,16 +199,17 @@ class PlaybackViewModel : ViewModel() {
 
     fun changeScene(tag: PlaylistFragment.MediaItemTag) {
         sceneJob.cancelChildren()
-        this.mediaItemTag.value = tag
-        this.oCount.value = 0
-        this.rating100.value = 0
-        this.markers.value = listOf()
-        this.spriteImageLoaded.value = emptyList()
+        _state.update {
+            PlaybackState(
+                mediaItemTag = tag,
+            )
+        }
 
         if (trackActivity) {
-            Log.v(
-                TAG,
-                "Setting up activity tracking scene ${tag.item.id}, removing=${trackActivityListener?.scene?.id}",
+            Timber.v(
+                "Setting up activity tracking scene %s, removing=%s",
+                tag.item.id,
+                trackActivityListener?.scene?.id,
             )
             trackActivityListener?.apply {
                 release()
@@ -233,14 +240,13 @@ class PlaybackViewModel : ViewModel() {
                             .playbackEffectsDao()
                             .getPlaybackEffect(server.url, tag.item.id, DataType.SCENE)
                     if (vf != null) {
-                        Log.d(
-                            TAG,
-                            "Loaded VideoFilter for scene ${tag.item.id}",
-                        )
-                        withContext(Dispatchers.Main) {
-                            videoFilter.stopThrottling(true)
-                            updateVideoFilter(vf.videoFilter)
-                            videoFilter.startThrottling()
+                        Timber.d("Loaded VideoFilter for scene %s", tag.item.id)
+                        _state.update {
+                            if (it.mediaItemTag?.item?.id == tag.item.id) {
+                                it.copy(videoFilter = vf.videoFilter)
+                            } else {
+                                it
+                            }
                         }
                     }
                 }
@@ -248,7 +254,7 @@ class PlaybackViewModel : ViewModel() {
         }
 
         // Fetch preview sprites
-        viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler()) {
+        viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler() + Dispatchers.IO) {
             val context = StashApplication.getApplication()
             val imageLoader = SingletonImageLoader.get(context)
             if (tag.item.spriteUrl.isNotNullOrBlank() && tag.item.vttUrl.isNotNullOrBlank()) {
@@ -261,7 +267,14 @@ class PlaybackViewModel : ViewModel() {
                         .build()
                 val result = imageLoader.enqueue(request).job.await()
                 if (result.image != null) {
-                    spriteImageLoaded.value = fetchSprites(tag.item.id, tag.item.vttUrl)
+                    val spriteImageLoaded = fetchSprites(tag.item.id, tag.item.vttUrl)
+                    _state.update {
+                        if (it.mediaItemTag?.item?.id == tag.item.id) {
+                            it.copy(spriteImageLoaded = spriteImageLoaded)
+                        } else {
+                            it
+                        }
+                    }
                 }
             }
         }
@@ -330,28 +343,37 @@ class PlaybackViewModel : ViewModel() {
     private fun refreshScene(sceneId: String) {
         // Fetch o count & markers
         viewModelScope.launch(sceneJob + exceptionHandler) {
-            oCount.value = 0
-            rating100.value = 0
-            markers.value = listOf()
-            performers.value = listOf()
-
             val queryEngine = QueryEngine(server)
             val scene = queryEngine.getScene(sceneId)
             if (scene != null) {
-                oCount.value = scene.o_counter ?: 0
-                rating100.value = scene.rating100 ?: 0
-                if (markersEnabled) {
-                    markers.value =
+                val markers =
+                    if (markersEnabled) {
                         scene.scene_markers
                             .sortedBy { it.seconds }
                             .map(::BasicMarker)
-                }
-                if (scene.performers.isNotEmpty()) {
-                    performers.value =
+                    } else {
+                        emptyList()
+                    }
+                val performers =
+                    if (scene.performers.isNotEmpty()) {
                         queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
+                    } else {
+                        emptyList()
+                    }
+                _state.update {
+                    if (it.mediaItemTag?.item?.id == sceneId) {
+                        it.copy(
+                            scene = scene,
+                            oCount = scene.o_counter ?: 0,
+                            rating100 = scene.rating100 ?: 0,
+                            markers = markers,
+                            performers = performers,
+                        )
+                    } else {
+                        it
+                    }
                 }
             }
-            this@PlaybackViewModel.scene.value = scene
         }
     }
 
@@ -359,7 +381,7 @@ class PlaybackViewModel : ViewModel() {
         position: Long,
         tagId: String,
     ) {
-        mediaItemTag.value?.let {
+        state.value.mediaItemTag?.let {
             viewModelScope.launch(exceptionHandler) {
                 val mutationEngine = MutationEngine(server)
                 val newMarker = mutationEngine.createMarker(it.item.id, position, tagId)
@@ -378,26 +400,27 @@ class PlaybackViewModel : ViewModel() {
     }
 
     fun incrementOCount(sceneId: String) {
-        viewModelScope.launch(exceptionHandler) {
+        viewModelScope.launchIO(exceptionHandler) {
             val mutationEngine = MutationEngine(server)
-            oCount.value = mutationEngine.incrementOCounter(sceneId).count
+            val result = mutationEngine.incrementOCounter(sceneId).count
+            _state.update { it.copy(oCount = result) }
         }
     }
 
     fun updateVideoFilter(newFilter: VideoFilter?) {
-        _videoFilter.value = newFilter
+        _state.update { it.copy(videoFilter = newFilter) }
     }
 
     fun saveVideoFilter() {
-        mediaItemTag.value?.item?.let {
+        state.value.mediaItemTag?.item?.let {
             viewModelScope.launchIO(StashCoroutineExceptionHandler(autoToast = true)) {
-                val vf = _videoFilter.value
+                val vf = state.value.videoFilter
                 if (vf != null) {
                     StashApplication
                         .getDatabase()
                         .playbackEffectsDao()
                         .insert(PlaybackEffect(server.url, it.id, DataType.SCENE, vf))
-                    Log.d(TAG, "Saved VideoFilter for scene ${it.id}")
+                    Timber.d("Saved VideoFilter for scene %s", it.id)
                     withContext(Dispatchers.Main) {
                         Toast
                             .makeText(
@@ -418,7 +441,7 @@ class PlaybackViewModel : ViewModel() {
         viewModelScope.launch(exceptionHandler) {
             val newRating =
                 MutationEngine(server).setRating(sceneId, rating100)?.rating100 ?: 0
-            this@PlaybackViewModel.rating100.value = newRating
+            _state.update { it.copy(rating100 = newRating) }
             showSetRatingToast(StashApplication.getApplication(), newRating)
         }
     }
@@ -443,6 +466,17 @@ data class SpriteData(
     val y: Int,
     val w: Int,
     val h: Int,
+)
+
+data class PlaybackState(
+    val mediaItemTag: PlaylistFragment.MediaItemTag? = null,
+    val markers: List<BasicMarker> = emptyList(),
+    val performers: List<PerformerData> = emptyList(),
+    val oCount: Int = 0,
+    val rating100: Int = 0,
+    val scene: FullSceneData? = null,
+    val videoFilter: VideoFilter? = null,
+    val spriteImageLoaded: List<SpriteData> = emptyList(),
 )
 
 @OptIn(UnstableApi::class)
@@ -470,13 +504,12 @@ fun PlaybackPageContent(
 
     val context = LocalContext.current
     val navigationManager = LocalGlobalContext.current.navigationManager
-    val currentScene by viewModel.mediaItemTag.observeAsState(
-        playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag,
-    )
-    val markers by viewModel.markers.observeAsState(listOf())
-    val oCount by viewModel.oCount.observeAsState(0)
-    val rating100 by viewModel.rating100.observeAsState(0)
-    val spriteImageLoaded by viewModel.spriteImageLoaded.observeAsState(emptyList())
+    val state by viewModel.state.collectAsState()
+    val currentScene = state.mediaItemTag
+    val markers = state.markers
+    val oCount = state.oCount
+    val rating100 = state.rating100
+    val spriteImageLoaded = state.spriteImageLoaded
     var currentTracks by remember { mutableStateOf<List<TrackSupport>>(listOf()) }
     var captions by remember { mutableStateOf<List<TrackSupport>>(listOf()) }
     var subtitles by remember { mutableStateOf<List<Cue>?>(null) }
@@ -485,11 +518,11 @@ fun PlaybackPageContent(
     var audioIndex by remember { mutableStateOf<Int?>(null) }
     var audioOptions by remember { mutableStateOf<List<String>>(listOf()) }
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
-    val videoFilter by viewModel.videoFilter.observeAsState()
+    val videoFilter by viewModel.videoFilter.collectAsState()
 
     var showSceneDetails by rememberSaveable { mutableStateOf(false) }
-    val scene by viewModel.scene.observeAsState()
-    val performers by viewModel.performers.observeAsState(listOf())
+    val scene = state.scene
+    val performers = state.performers
 
     AmbientPlayerListener(player)
 
@@ -501,7 +534,6 @@ fun PlaybackPageContent(
         }
     }
 
-    var showControls by remember { mutableStateOf(true) }
     var showPlaylist by remember { mutableStateOf(false) }
     var contentScale by remember { mutableStateOf(ContentScale.Fit) }
     var playbackSpeed by remember { mutableFloatStateOf(1.0f) }
@@ -510,8 +542,6 @@ fun PlaybackPageContent(
     val presentationState = rememberPresentationState(player)
     val scaledModifier =
         Modifier.resizeWithContentScale(contentScale, presentationState.videoSizeDp)
-
-    var contentCurrentPosition by remember { mutableLongStateOf(0L) }
 
     var createMarkerPosition by remember { mutableLongStateOf(-1L) }
     var playingBeforeDialog by remember { mutableStateOf(false) }
@@ -565,9 +595,6 @@ fun PlaybackPageContent(
             useVideoFilters,
         )
         viewModel.changeScene(playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
-        if (!isTvDevice) {
-            viewModel.videoFilter.startThrottling(DRAG_THROTTLE_DELAY)
-        }
         maybeMuteAudio(uiConfig.preferences, false, player)
         player.setMediaItems(playlist, startIndex, savedStartPosition)
         if (playlistPager == null) {
@@ -615,7 +642,7 @@ fun PlaybackPageContent(
                         mediaIndexSubtitlesActivated = currentPlaylistIndex
                         val languageCode = Locale.getDefault().language
                         captions.indexOfFirstOrNull { it.format.language == languageCode }?.let {
-                            Log.v(TAG, "Found default subtitle track for $languageCode: $it")
+                            Timber.v("Found default subtitle track for $languageCode: $it")
                             if (toggleSubtitles(player, null, it)) {
                                 subtitleIndex = it
                             }
@@ -636,10 +663,11 @@ fun PlaybackPageContent(
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
-                    Log.e(
-                        TAG,
-                        "PlaybackException on scene ${currentScene.item.id}, errorCode=${error.errorCode}",
+                    Timber.e(
                         error,
+                        "PlaybackException on scene %s, errorCode=%s",
+                        currentScene?.item?.id,
+                        error.errorCode,
                     )
                     val showError =
                         when (error.errorCode) {
@@ -670,8 +698,7 @@ fun PlaybackPageContent(
                                             )
                                         val newTag =
                                             newMediaItem.localConfiguration!!.tag as PlaylistFragment.MediaItemTag
-                                        Log.d(
-                                            TAG,
+                                        Timber.d(
                                             "Using new transcoding media item: ${newTag.streamDecision}",
                                         )
                                         viewModel.changeScene(newTag)
@@ -686,8 +713,7 @@ fun PlaybackPageContent(
                                         true
                                     }
                                 } else {
-                                    Log.w(
-                                        TAG,
+                                    Timber.w(
                                         "No current media item, cannot fallback to transcoding",
                                     )
                                     true
@@ -712,8 +738,8 @@ fun PlaybackPageContent(
 
         player.prepare()
         if (useVideoFilters) {
-            Log.d(TAG, "Enabling video effects")
-            (player as? ExoPlayer)?.setVideoEffects(listOf())
+            Timber.d("Enabling video effects")
+            (player as? ExoPlayer)?.setVideoEffects(emptyList())
         }
     }
 
@@ -826,7 +852,7 @@ fun PlaybackPageContent(
                         .padding(bottom = 70.dp),
             )
             if (showSkipProgress) {
-                currentScene.item.duration?.let {
+                currentScene?.item?.duration?.let {
                     val percent =
                         skipPosition.toFloat() / (it.toLongMilliseconds).toFloat()
                     Box(
@@ -1015,14 +1041,15 @@ fun PlaybackPageContent(
                 modifier = Modifier,
             )
         }
-        videoFilter?.let {
-            val effectList = it.createEffectList()
-            Log.d(TAG, "Applying ${effectList.size} effects")
-            (player as? ExoPlayer)?.setVideoEffects(effectList)
-
+        if (useVideoFilters) {
+            LaunchedEffect(videoFilter) {
+                val effectList = videoFilter.createEffectList()
+                Timber.d("Applying %s effects", effectList.size)
+                (player as? ExoPlayer)?.setVideoEffects(effectList)
+            }
             AnimatedVisibility(showFilterDialog) {
                 ImageFilterDialog(
-                    filter = it,
+                    filter = videoFilter,
                     showVideoOptions = true,
                     showSaveGalleryButton = false,
                     uiConfig = uiConfig,
