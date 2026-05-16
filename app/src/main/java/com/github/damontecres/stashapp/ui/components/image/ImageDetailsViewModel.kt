@@ -8,6 +8,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.size.Size
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -40,6 +43,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import kotlin.properties.Delegates
 
 class ImageDetailsViewModel : ViewModel() {
@@ -239,6 +243,22 @@ class ImageDetailsViewModel : ViewModel() {
                         }
                     } else {
                         loadingState.value = ImageLoadingState.Error
+                    }
+                    if (position + 1 in pager.indices) {
+                        try {
+                            pager.getBlocking(position + 1)?.let { nextImage ->
+                                Timber.v("Prefetching %s", nextImage.id)
+                                val request =
+                                    ImageRequest
+                                        .Builder(StashApplication.getApplication())
+                                        .data(nextImage.paths.image)
+                                        .size(Size.ORIGINAL)
+                                        .build()
+                                StashApplication.getApplication().imageLoader.enqueue(request)
+                            }
+                        } catch (ex: Exception) {
+                            Timber.e(ex, "Error prefetching image")
+                        }
                     }
                 } catch (ex: Exception) {
                     loadingState.value = ImageLoadingState.Error
