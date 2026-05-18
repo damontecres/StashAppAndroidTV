@@ -10,7 +10,7 @@ import com.apollographql.apollo.network.http.DefaultHttpEngine
 import com.apollographql.apollo.network.websocket.GraphQLWsProtocol
 import com.apollographql.apollo.network.websocket.WebSocketEngine
 import com.apollographql.apollo.network.websocket.WebSocketNetworkTransport
-import com.github.damontecres.stashapp.di.AuthHttpClient
+import com.github.damontecres.stashapp.di.StandardHttpClient
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.util.Constants.OK_HTTP_CACHE_DIR
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
@@ -34,7 +34,7 @@ import kotlin.time.DurationUnit
 @Single
 class StashApi(
     private val context: Context,
-    @param:AuthHttpClient private val httpClient: OkHttpClient,
+    @param:StandardHttpClient private val httpClient: OkHttpClient,
     private val preferences: DataStore<StashPreferences>,
 ) {
     @OptIn(ApolloExperimental::class)
@@ -44,10 +44,20 @@ class StashApi(
     lateinit var apolloClient: ApolloClient
         private set
 
-    @OptIn(ApolloExperimental::class)
     suspend fun changeServer(server: StashServer) {
         Timber.i("Switching server to %s", server.url)
-        val client = createOkHttpClient()
+        this.apolloClient = createApolloClient(server)
+        this.server = server
+    }
+
+    suspend fun createFor(server: StashServer) =
+        StashApi(context, httpClient, preferences).apply {
+            changeServer(server)
+        }
+
+    @OptIn(ApolloExperimental::class)
+    suspend fun createApolloClient(server: StashServer): ApolloClient {
+        val client = createOkHttpClient(server)
         val apolloClient =
             ApolloClient
                 .Builder()
@@ -61,11 +71,10 @@ class StashApi(
                         .webSocketEngine(WebSocketEngine(client))
                         .build(),
                 ).build()
-        this.apolloClient = apolloClient
-        this.server = server
+        return apolloClient
     }
 
-    private suspend fun createOkHttpClient(): OkHttpClient {
+    private suspend fun createOkHttpClient(server: StashServer): OkHttpClient {
         val preferences = preferences.data.first()
         val trustAll = preferences.advancedPreferences.trustSelfSignedCertificates
         val cacheDuration =
@@ -138,15 +147,17 @@ class StashApi(
                 CacheControl.Builder().noCache().build()
             }
         builder =
-            builder.addNetworkInterceptor {
-                val request =
-                    it
-                        .request()
-                        .newBuilder()
-                        .cacheControl(cacheControl)
-                        .build()
-                it.proceed(request)
-            }
+            builder
+                .addInterceptor(ServerInterceptor(server))
+                .addNetworkInterceptor {
+                    val request =
+                        it
+                            .request()
+                            .newBuilder()
+                            .cacheControl(cacheControl)
+                            .build()
+                    it.proceed(request)
+                }
 
         val cacheSize = preferences.cachePreferences.networkCacheSize * 1024 * 1024
         builder.cache(Cache(File(context.cacheDir, OK_HTTP_CACHE_DIR), cacheSize))

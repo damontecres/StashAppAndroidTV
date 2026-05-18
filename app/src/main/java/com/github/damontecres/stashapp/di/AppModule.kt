@@ -5,9 +5,9 @@ import android.os.Build
 import androidx.datastore.core.DataStore
 import co.touchlab.kermit.Logger
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.di.server.ServerInterceptor
 import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.proto.StashPreferences
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinValueNotNull
 import com.github.damontecres.stashapp.util.preferences
@@ -55,28 +55,7 @@ fun provideAuthHttpClient(
         .newBuilder()
         .addInterceptor {
             val server = serverRepository.currentServer.value.server
-            val request =
-                if (server.apiKey != null) {
-                    val isStashUrl =
-                        it
-                            .request()
-                            .url
-                            .toString()
-                            .startsWith(server.serverRoot)
-                    if (isStashUrl) {
-                        // Only set the API Key if the target URL is the stash server
-                        it
-                            .request()
-                            .newBuilder()
-                            .addHeader(Constants.STASH_API_HEADER, server.cleanedApiKey!!)
-                            .build()
-                    } else {
-                        it.request()
-                    }
-                } else {
-                    it.request()
-                }
-            it.proceed(request)
+            ServerInterceptor(server).intercept(it)
         }.build()
 
 fun createUserAgent(context: Context): String {

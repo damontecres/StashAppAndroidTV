@@ -149,6 +149,7 @@ fun ApplicationContent(
                 if (fullScreen) {
                     DestinationContent(
                         currentServer = currentServer,
+                        navManger = navigationManager,
                         destination = destination,
                         composeUiConfig = composeUiConfig,
                         itemOnClick = itemOnClick,

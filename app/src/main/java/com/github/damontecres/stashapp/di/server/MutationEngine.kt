@@ -15,6 +15,8 @@ import com.github.damontecres.stashapp.api.ImageDecrementOMutation
 import com.github.damontecres.stashapp.api.ImageIncrementOMutation
 import com.github.damontecres.stashapp.api.ImageResetOMutation
 import com.github.damontecres.stashapp.api.InstallPackagesMutation
+import com.github.damontecres.stashapp.api.MetadataGenerateMutation
+import com.github.damontecres.stashapp.api.MetadataScanMutation
 import com.github.damontecres.stashapp.api.SaveFilterMutation
 import com.github.damontecres.stashapp.api.SceneAddOMutation
 import com.github.damontecres.stashapp.api.SceneAddPlayCountMutation
@@ -37,6 +39,7 @@ import com.github.damontecres.stashapp.api.fragment.SavedFilter
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.GalleryUpdateInput
+import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
 import com.github.damontecres.stashapp.api.type.GroupCreateInput
 import com.github.damontecres.stashapp.api.type.GroupUpdateInput
 import com.github.damontecres.stashapp.api.type.ImageUpdateInput
@@ -45,6 +48,7 @@ import com.github.damontecres.stashapp.api.type.PackageType
 import com.github.damontecres.stashapp.api.type.PerformerCreateInput
 import com.github.damontecres.stashapp.api.type.PerformerUpdateInput
 import com.github.damontecres.stashapp.api.type.SaveFilterInput
+import com.github.damontecres.stashapp.api.type.ScanMetadataInput
 import com.github.damontecres.stashapp.api.type.SceneDestroyInput
 import com.github.damontecres.stashapp.api.type.SceneGroupInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerCreateInput
@@ -66,6 +70,7 @@ import org.koin.core.annotation.Single
 @Single
 class MutationEngine(
     api: StashApi,
+    private val serverRepository: ServerRepository,
 ) : StashEngine(api) {
     var readOnlyMode = false
 
@@ -128,6 +133,47 @@ class MutationEngine(
         val mutation = SceneAddPlayCountMutation(sceneId, emptyList())
         val result = executeMutation(mutation, true)
         return result.data!!.sceneAddPlay.count
+    }
+
+    suspend fun triggerScan(): String {
+        val config = serverRepository.currentServer.value.serverPreferences.scanConfig
+        val mutation =
+            MetadataScanMutation(
+                ScanMetadataInput(
+                    scanGenerateCovers = Optional.present(config.scanGenerateCovers),
+                    scanGeneratePreviews = Optional.present(config.scanGeneratePreviews),
+                    scanGenerateImagePreviews = Optional.present(config.scanGenerateImagePreviews),
+                    scanGenerateSprites = Optional.present(config.scanGenerateSprites),
+                    scanGeneratePhashes = Optional.present(config.scanGeneratePhashes),
+                    scanGenerateImagePhashes = Optional.present(config.scanGeneratePhashes),
+                    scanGenerateThumbnails = Optional.present(config.scanGenerateThumbnails),
+                    scanGenerateClipPreviews = Optional.present(config.scanGenerateClipPreviews),
+                ),
+            )
+        return executeMutation(mutation).data!!.metadataScan
+    }
+
+    suspend fun triggerGenerate(): String {
+        val config = serverRepository.currentServer.value.serverPreferences.generateConfig
+        val mutation =
+            MetadataGenerateMutation(
+                GenerateMetadataInput(
+                    covers = Optional.present(config.covers),
+                    sprites = Optional.present(config.sprites),
+                    previews = Optional.present(config.previews),
+                    imagePreviews = Optional.present(config.imagePreviews),
+                    markers = Optional.present(config.markers),
+                    markerImagePreviews = Optional.present(config.markerImagePreviews),
+                    markerScreenshots = Optional.present(config.markerScreenshots),
+                    transcodes = Optional.present(config.transcodes),
+                    phashes = Optional.present(config.phashes),
+                    interactiveHeatmapsSpeeds = Optional.present(config.interactiveHeatmapsSpeeds),
+                    imagePhashes = Optional.present(config.phashes),
+                    imageThumbnails = Optional.present(config.imageThumbnails),
+                    clipPreviews = Optional.present(config.clipPreviews),
+                ),
+            )
+        return executeMutation(mutation).data!!.metadataGenerate
     }
 
     suspend fun setTagsOnScene(

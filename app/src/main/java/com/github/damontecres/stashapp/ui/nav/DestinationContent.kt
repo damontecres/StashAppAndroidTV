@@ -7,6 +7,7 @@ import androidx.compose.ui.text.AnnotatedString
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.server.StashServer
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -40,6 +41,7 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun DestinationContent(
     currentServer: CurrentServer,
+    navManager: NavigationManager,
     destination: Destination,
     composeUiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
@@ -95,8 +97,6 @@ fun DestinationContent(
 
         is Destination.Settings -> {
             SettingsPage(
-                server = server,
-                navigationManager = navManager,
                 preferenceScreenOption = destination.screenOption,
                 uiConfig = composeUiConfig,
                 onUpdateTitle = onUpdateTitle,
@@ -106,8 +106,6 @@ fun DestinationContent(
 
         is Destination.ManageServers -> {
             ManageServers(
-                currentServer = server,
-                onSwitchServer = onSwitchServer,
                 onUpdateTitle = onUpdateTitle,
                 modifier = modifier,
             )

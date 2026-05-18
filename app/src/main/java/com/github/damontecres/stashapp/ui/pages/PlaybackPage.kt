@@ -43,7 +43,6 @@ import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageContent
-import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.SkipParams
@@ -51,21 +50,24 @@ import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun PlaybackPage(
-    server: StashServer,
     uiConfig: ComposeUiConfig,
     sceneId: String,
     startPosition: Long,
     playbackMode: PlaybackMode,
     itemOnClick: ItemOnClicker<Any>,
     modifier: Modifier = Modifier,
-    viewModel: PlaybackPageViewModel = viewModel(),
+    viewModel: PlaybackPageViewModel =
+        koinViewModel {
+            parametersOf(sceneId)
+        },
 ) {
-    OneTimeLaunchedEffect { viewModel.init(server, sceneId) }
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
@@ -80,6 +82,7 @@ fun PlaybackPage(
     state?.let { state ->
         val player =
             remember {
+                TODO()
                 val skipParams =
                     uiConfig.preferences.playbackPreferences.let {
                         SkipParams.Values(
@@ -128,7 +131,7 @@ fun PlaybackPage(
             markersEnabled = true,
             playlistPager = null,
             modifier =
-                Modifier
+                modifier
                     .fillMaxSize()
                     .background(Color.Transparent),
             controlsEnabled = true,

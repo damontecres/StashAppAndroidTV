@@ -1,21 +1,23 @@
 package com.github.damontecres.stashapp.ui.components.server
 
+import android.app.Application
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.apollographql.apollo.ApolloClient
-import com.apollographql.apollo.network.http.DefaultHttpEngine
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.CredentialsQuery
 import com.github.damontecres.stashapp.api.GenerateApiKeyMutation
-import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.server.StashApi
+import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.models.EqualityMutableLiveData
 import kotlinx.coroutines.CancellationException
@@ -26,18 +28,27 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.FormBody
 import okhttp3.Request
+import org.koin.core.annotation.KoinViewModel
 
-class ManageServersViewModel : ViewModel() {
+@KoinViewModel
+class ManageServersViewModel(
+    private val context: Application,
+    private val api: StashApi,
+    private val serverRepository: ServerRepository,
+) : ViewModel() {
+    val currentServer get() = serverRepository.currentServer
     val allServers = MutableLiveData<List<StashServer>>(listOf())
     val serverStatus = MutableLiveData<Map<StashServer, ServerTestResult>>(mapOf())
 
     val connectionState = EqualityMutableLiveData<ConnectionState>(ConnectionState.Inactive)
 
     init {
-        val servers = StashServer.getAll(StashApplication.getApplication())
-        allServers.value = servers
-        serverStatus.value = servers.associateWith { ServerTestResult.Pending }
-        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+        viewModelScope.launchIO {
+            val servers = serverRepository.getAll()
+            withContext(Dispatchers.Main) {
+                allServers.value = servers
+                serverStatus.value = servers.associateWith { ServerTestResult.Pending }
+            }
             servers.forEach { server ->
                 testServer(server)
             }
@@ -52,11 +63,12 @@ class ManageServersViewModel : ViewModel() {
         viewModelScope.launch {
             serverStatus.value =
                 serverStatus.value!!.toMutableMap().apply { put(server, ServerTestResult.Pending) }
+            val apolloClient = api.createApolloClient(server)
             val result =
                 testStashConnection(
-                    StashApplication.getApplication(),
+                    context,
                     false,
-                    server.apolloClient,
+                    apolloClient,
                 )
             val testResult =
                 when (result) {
@@ -75,23 +87,35 @@ class ManageServersViewModel : ViewModel() {
     }
 
     fun removeServer(server: StashServer) {
-        StashServer.removeStashServer(StashApplication.getApplication(), server)
-        val servers = StashServer.getAll(StashApplication.getApplication())
-        allServers.value = servers
-        serverStatus.value = serverStatus.value!!.toMutableMap().apply { remove(server) }
+        viewModelScope.launchIO {
+            serverRepository.removeStashServer(server)
+            val servers = serverRepository.getAll()
+            withContext(Dispatchers.Main) {
+                allServers.value = servers
+                serverStatus.value = serverStatus.value!!.toMutableMap().apply { remove(server) }
+            }
+        }
     }
 
     fun addServer(server: StashServer) {
-        StashServer.addServer(StashApplication.getApplication(), server)
-        val servers = StashServer.getAll(StashApplication.getApplication())
-        allServers.value = servers
+        viewModelScope.launchIO {
+            serverRepository.addServer(server)
+            val servers = serverRepository.getAll()
+            withContext(Dispatchers.Main) {
+                allServers.value = servers
+            }
+        }
     }
 
     fun addServerAsCurrent(server: StashServer) {
-        StashServer.addServer(StashApplication.getApplication(), server)
-        StashServer.setCurrentStashServer(StashApplication.getApplication(), server)
-        val servers = StashServer.getAll(StashApplication.getApplication())
-        allServers.value = servers
+        viewModelScope.launchIO {
+            serverRepository.addServer(server)
+            serverRepository.setCurrentStashServer(server)
+            val servers = serverRepository.getAll()
+            withContext(Dispatchers.Main) {
+                allServers.value = servers
+            }
+        }
     }
 
     private var testServerJob: Job? = null
@@ -119,10 +143,8 @@ class ManageServersViewModel : ViewModel() {
                                 testWithUsername(serverUrl, username, apiKey, trustCerts)
                             } else {
                                 val apolloClient =
-                                    StashClient.createTestApolloClient(
-                                        context,
+                                    api.createApolloClient(
                                         StashServer(serverUrl, apiKey?.ifBlank { null }),
-                                        trustCerts,
                                     )
                                 val result = testStashConnection(context, false, apolloClient)
                                 if (result is TestResult.Error && result.exception is CancellationException) {
@@ -155,6 +177,7 @@ class ManageServersViewModel : ViewModel() {
         trustCerts: Boolean,
     ) {
         try {
+            TODO()
             val httpClient = StashClient.createCookieHttpClient(trustCerts)
             val loginUrl = StashClient.createLoginUrl(serverUrl)
             val request =
@@ -175,14 +198,9 @@ class ManageServersViewModel : ViewModel() {
             if (!response.isSuccessful) {
                 connectionState.value = ConnectionState.Result(TestResult.AuthRequired)
             } else {
-                val apolloClient =
-                    ApolloClient
-                        .Builder()
-                        .serverUrl(StashClient.cleanServerUrl(serverUrl))
-                        .httpEngine(DefaultHttpEngine(httpClient))
-                        .build()
-                val queryEngine = QueryEngine(apolloClient, null)
-                val mutationEngine = MutationEngine(apolloClient, null)
+                val testApi = api.createFor(StashServer(serverUrl, null))
+                val queryEngine = QueryEngine(testApi)
+                val mutationEngine = MutationEngine(testApi, serverRepository)
 
                 val res = queryEngine.executeQuery(CredentialsQuery())
                 var currentApiKey =

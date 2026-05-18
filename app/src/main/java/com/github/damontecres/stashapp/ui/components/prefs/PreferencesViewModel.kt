@@ -1,6 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
-import android.content.Context
+import android.app.Application
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -9,18 +9,30 @@ import coil3.imageLoader
 import com.github.damontecres.stashapp.api.JobQueueQuery
 import com.github.damontecres.stashapp.api.fragment.StashJob
 import com.github.damontecres.stashapp.api.type.JobStatusUpdateType
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.server.SubscriptionEngine
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
 import com.github.damontecres.stashapp.util.Constants
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.SubscriptionEngine
+import com.github.damontecres.stashapp.util.launchDefault
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.koin.core.annotation.KoinViewModel
 
-class PreferencesViewModel : ViewModel() {
+@KoinViewModel
+class PreferencesViewModel(
+    private val context: Application,
+    private val queryEngine: QueryEngine,
+    private val mutationEngine: MutationEngine,
+    private val subscriptionEngine: SubscriptionEngine,
+    val navigationManager: NavigationManager,
+    val serverRepository: ServerRepository,
+) : ViewModel() {
     private val lock = Mutex()
     val runningJobs = MutableLiveData<List<StashJob>>(listOf())
     val cacheUsage =
@@ -33,13 +45,9 @@ class PreferencesViewModel : ViewModel() {
             ),
         )
 
-    fun init(
-        context: Context,
-        server: StashServer,
-    ) {
+    fun init() {
         runningJobs.value = listOf()
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
-            val queryEngine = QueryEngine(server)
             runningJobs.value =
                 queryEngine
                     .executeQuery(JobQueueQuery())
@@ -48,7 +56,6 @@ class PreferencesViewModel : ViewModel() {
                     ?.map { it.stashJob }
                     .orEmpty()
 
-            val subscriptionEngine = SubscriptionEngine(server)
             subscriptionEngine.subscribeToJobs { update ->
                 val type = update.jobsSubscribe.type
                 val jobData = update.jobsSubscribe.job.stashJob
@@ -57,7 +64,7 @@ class PreferencesViewModel : ViewModel() {
                 }
             }
         }
-        updateCacheUsage(context)
+        updateCacheUsage()
     }
 
     private suspend fun handleUpdate(
@@ -102,7 +109,7 @@ class PreferencesViewModel : ViewModel() {
         }
     }
 
-    fun updateCacheUsage(context: Context) {
+    fun updateCacheUsage() {
         val networkDisk = Constants.getNetworkCache(context).size()
         val imageUsedMemory = context.imageLoader.memoryCache?.size ?: 0L
         val imageMaxMemory = context.imageLoader.memoryCache?.maxSize ?: 0L
@@ -114,6 +121,20 @@ class PreferencesViewModel : ViewModel() {
                 imageMemoryMax = imageMaxMemory,
                 imageDiskUsed = imageDisk,
             )
+    }
+
+    fun onTriggerScan() {
+        viewModelScope.launchDefault {
+            // TODO track status
+            mutationEngine.triggerScan()
+        }
+    }
+
+    fun onTriggerGenerate() {
+        viewModelScope.launchDefault {
+            // TODO track status
+            mutationEngine.triggerGenerate()
+        }
     }
 
     companion object {

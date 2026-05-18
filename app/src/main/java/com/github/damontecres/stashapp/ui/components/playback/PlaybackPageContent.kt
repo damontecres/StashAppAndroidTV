@@ -89,6 +89,11 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.VideoFilter
 import com.github.damontecres.stashapp.data.room.PlaybackEffect
+import com.github.damontecres.stashapp.di.AuthHttpClient
+import com.github.damontecres.stashapp.di.server.CurrentServer
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaylistFragment
 import com.github.damontecres.stashapp.playback.TrackActivityPlaybackListener
@@ -112,12 +117,7 @@ import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.ComposePager
-import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.findActivity
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchDefault
@@ -138,7 +138,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.koin.core.annotation.KoinViewModel
 import timber.log.Timber
 import java.util.Locale
 import kotlin.properties.Delegates
@@ -148,10 +150,14 @@ import kotlin.time.Duration.Companion.milliseconds
 
 const val TAG = "PlaybackPageContent"
 
-class PlaybackViewModel :
-    ViewModel(),
+@KoinViewModel
+class PlaybackViewModel(
+    @param:AuthHttpClient private val httpClient: OkHttpClient,
+    private val serverRepository: ServerRepository,
+    private val queryEngine: QueryEngine,
+    private val mutationEngine: MutationEngine,
+) : ViewModel(),
     Player.Listener {
-    private lateinit var server: StashServer
     private lateinit var exceptionHandler: CoroutineExceptionHandler
     private lateinit var uiConfig: ComposeUiConfig
     private var markersEnabled by Delegates.notNull<Boolean>()
@@ -178,7 +184,6 @@ class PlaybackViewModel :
             .stateIn(viewModelScope, SharingStarted.Lazily, VideoFilter())
 
     fun init(
-        server: StashServer,
         player: Player,
         trackActivity: Boolean,
         markersEnabled: Boolean,
@@ -186,13 +191,12 @@ class PlaybackViewModel :
         videoFiltersEnabled: Boolean,
         uiConfig: ComposeUiConfig,
     ) {
-        this.server = server
         this.player = player
         this.trackActivity = trackActivity
         this.markersEnabled = markersEnabled
         this.saveFilters = saveFilters
         this.videoFiltersEnabled = videoFiltersEnabled
-        this.exceptionHandler = LoggingCoroutineExceptionHandler(server, viewModelScope)
+        this.exceptionHandler = CoroutineExceptionHandler { context, throwable -> }
         player.addListener(this)
         addCloseable { player.removeListener(this@PlaybackViewModel) }
         if (trackActivity) {
@@ -228,7 +232,8 @@ class PlaybackViewModel :
             tag.item.let {
                 trackActivityListener =
                     TrackActivityPlaybackListener(
-                        server = server,
+                        mutationEngine = mutationEngine,
+                        minimumPlayPercent = TODO(),
                         scene = it,
                         getCurrentPosition = {
                             player.currentPosition
@@ -244,6 +249,7 @@ class PlaybackViewModel :
             updateVideoFilter(VideoFilter())
             if (saveFilters && videoFiltersEnabled) {
                 viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler() + Dispatchers.IO) {
+                    val server = serverRepository.currentServer.value.server
                     val vf =
                         StashApplication
                             .getDatabase()
@@ -298,7 +304,7 @@ class PlaybackViewModel :
         withContext(Dispatchers.Default) {
             val res =
                 withContext(Dispatchers.IO) {
-                    server.okHttpClient
+                    httpClient
                         .newCall(
                             Request.Builder().url(vttUrl).build(),
                         ).execute()
@@ -307,7 +313,8 @@ class PlaybackViewModel :
                 res.body.use {
                     it?.bytes()?.let {
                         try {
-                            val baseUrl = StashClient.getServerRoot(server.url)
+                            val server = serverRepository.currentServer.value.server
+                            val baseUrl = server.serverRoot
                             val regex = Regex("(\\w+\\.\\w+)#xywh=(\\d+),(\\d+),(\\d+),(\\d+)")
                             val spriteData = mutableListOf<SpriteData>()
                             WebvttParser().parse(it, SubtitleParser.OutputOptions.allCues()) {
@@ -353,7 +360,6 @@ class PlaybackViewModel :
     private fun refreshScene(sceneId: String) {
         // Fetch o-count & markers
         viewModelScope.launch(sceneJob + exceptionHandler) {
-            val queryEngine = QueryEngine(server)
             val scene = queryEngine.getScene(sceneId)
             if (scene != null) {
                 val markers =
@@ -393,7 +399,6 @@ class PlaybackViewModel :
     ) {
         state.value.mediaItemTag?.let {
             viewModelScope.launch(exceptionHandler) {
-                val mutationEngine = MutationEngine(server)
                 val newMarker = mutationEngine.createMarker(it.item.id, position, tagId)
                 if (newMarker != null) {
                     // Refresh markers
@@ -411,7 +416,6 @@ class PlaybackViewModel :
 
     fun incrementOCount(sceneId: String) {
         viewModelScope.launchIO(exceptionHandler) {
-            val mutationEngine = MutationEngine(server)
             val result = mutationEngine.incrementOCounter(sceneId).count
             _state.update { it.copy(oCount = result) }
         }
@@ -426,6 +430,7 @@ class PlaybackViewModel :
             viewModelScope.launchIO(StashCoroutineExceptionHandler(autoToast = true)) {
                 val vf = state.value.videoFilter
                 if (vf != null) {
+                    val server = serverRepository.currentServer.value.server
                     StashApplication
                         .getDatabase()
                         .playbackEffectsDao()
@@ -449,8 +454,7 @@ class PlaybackViewModel :
         rating100: Int,
     ) {
         viewModelScope.launch(exceptionHandler) {
-            val newRating =
-                MutationEngine(server).setRating(sceneId, rating100)?.rating100 ?: 0
+            val newRating = mutationEngine.setRating(sceneId, rating100)?.rating100 ?: 0
             _state.update { it.copy(rating100 = newRating) }
             showSetRatingToast(StashApplication.getApplication(), newRating)
         }
@@ -583,7 +587,7 @@ data class PlaybackInfo(
 @OptIn(UnstableApi::class)
 @Composable
 fun PlaybackPageContent(
-    server: StashServer,
+    currentServer: CurrentServer,
     player: Player,
     playlist: List<MediaItem>,
     startIndex: Int,
@@ -687,10 +691,9 @@ fun PlaybackPageContent(
 
     LaunchedEffect(Unit) {
         viewModel.init(
-            server,
             player,
             uiConfig.preferences.playbackPreferences.savePlayHistory &&
-                server.serverPreferences.trackActivity &&
+                currentServer.serverPreferences.trackActivity &&
                 !isMarkerPlaylist,
             markersEnabled,
             uiConfig.persistVideoFilters,
@@ -1128,7 +1131,6 @@ fun PlaybackPageContent(
                             Modifier
                                 .fillMaxSize()
                                 .background(MaterialTheme.colorScheme.background.copy(alpha = .75f)),
-                        server = server,
                         scene = scene,
                         performers = performers,
                         uiConfig = uiConfig,

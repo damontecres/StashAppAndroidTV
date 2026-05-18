@@ -22,11 +22,9 @@ import com.github.damontecres.stashapp.ui.components.scene.SceneDescriptionDialo
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeaderInfo
 import com.github.damontecres.stashapp.ui.components.scene.sceneDetailsBody
-import com.github.damontecres.stashapp.util.StashServer
 
 @Composable
 fun SceneDetailsOverlay(
-    server: StashServer,
     scene: FullSceneData,
     performers: List<PerformerData>,
     rating100: Int,

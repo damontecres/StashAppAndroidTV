@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -40,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.MaterialTheme
@@ -54,18 +54,19 @@ import com.github.damontecres.stashapp.ui.components.filter.SimpleListItem
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.StashServer
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun ManageServers(
-    currentServer: StashServer?,
-    onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
-    viewModel: ManageServersViewModel = viewModel(),
+    viewModel: ManageServersViewModel = koinViewModel(),
 ) {
+    val currentServer by viewModel.currentServer.collectAsState()
     val allServers by viewModel.allServers.observeAsState(listOf())
     val serverStatus by viewModel.serverStatus.observeAsState(mapOf())
-    val serversWithOutCurrent = allServers.toMutableList().apply { remove(currentServer) }
+    val serversWithOutCurrent =
+        remember { allServers.toMutableList().apply { remove(currentServer.server) } }
 
     var showAddServer by remember { mutableStateOf(false) }
     var showServerDialog by remember { mutableStateOf<StashServer?>(null) }

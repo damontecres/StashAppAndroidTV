@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
@@ -38,7 +39,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -46,7 +46,6 @@ import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.screensaver.ChooseScreensaverFilterDialog
 import com.github.damontecres.stashapp.ui.tryRequestFocus
@@ -55,11 +54,11 @@ import com.github.damontecres.stashapp.ui.util.playOnClickSound
 import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
 import com.github.damontecres.stashapp.util.Release
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.preferences
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 val basicPreferences =
     listOf(
@@ -237,13 +236,11 @@ val advancedPreferences =
 
 @Composable
 fun PreferencesContent(
-    server: StashServer,
-    navigationManager: NavigationManager,
     uiConfig: ComposeUiConfig,
     preferenceScreenOption: PreferenceScreenOption,
     modifier: Modifier = Modifier,
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
-    viewModel: PreferencesViewModel = viewModel(),
+    viewModel: PreferencesViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -257,6 +254,7 @@ fun PreferencesContent(
             preferences = it
         }
     }
+    val currentServer by viewModel.serverRepository.currentServer.collectAsState()
 
     val movementSounds = preferences.interfacePreferences.playMovementSounds
     val installedVersion = remember { UpdateChecker.getInstalledVersion(context) }
@@ -286,7 +284,7 @@ fun PreferencesContent(
     LaunchedEffect(Unit) {
         onUpdateTitle?.invoke(AnnotatedString(screenTitle))
         if (preferenceScreenOption == PreferenceScreenOption.ADVANCED) {
-            viewModel.init(context, server)
+            viewModel.init()
         }
     }
     val jobQueue by viewModel.runningJobs.observeAsState(listOf())
@@ -360,7 +358,7 @@ fun PreferencesContent(
                             onClick = {
                                 if (movementSounds) playOnClickSound(context)
                                 updateVersion?.let {
-                                    navigationManager.navigate(Destination.UpdateApp(it))
+                                    viewModel.navigationManager.navigate(Destination.UpdateApp(it))
                                 }
                             },
                             summary = updateVersion?.version?.toString(),
@@ -391,7 +389,7 @@ fun PreferencesContent(
                                         if (movementSounds) playOnClickSound(context)
                                         if (clickCount++ >= 2) {
                                             clickCount = 0
-                                            navigationManager.navigate(Destination.Debug)
+                                            viewModel.navigationManager.navigate(Destination.Debug)
                                         }
                                     },
                                     summary = installedVersion.toString(),
@@ -419,7 +417,7 @@ fun PreferencesContent(
                                         if (movementSounds) playOnClickSound(context)
                                         if (updateVersion != null && updateAvailable) {
                                             updateVersion?.let {
-                                                navigationManager.navigate(
+                                                viewModel.navigationManager.navigate(
                                                     Destination.UpdateApp(it),
                                                 )
                                             }
@@ -436,7 +434,7 @@ fun PreferencesContent(
                                     onLongClick = {
                                         if (movementSounds) playOnClickSound(context)
                                         updateVersion?.let {
-                                            navigationManager.navigate(
+                                            viewModel.navigationManager.navigate(
                                                 Destination.UpdateApp(it),
                                             )
                                         }
@@ -476,8 +474,8 @@ fun PreferencesContent(
                             else -> {
                                 val value = pref.getter.invoke(preferences)
                                 ComposablePreference(
-                                    server = server,
-                                    navigationManager = navigationManager,
+                                    currentServer = currentServer,
+                                    navigationManager = viewModel.navigationManager,
                                     preference = pref,
                                     value = value,
                                     onValueChange = { newValue ->
@@ -524,9 +522,11 @@ fun PreferencesContent(
                                             }
                                         }
                                     },
-                                    onCacheClear = { viewModel.updateCacheUsage(context) },
+                                    onCacheClear = { viewModel.updateCacheUsage() },
                                     cacheUsage = cacheUsage,
                                     interactionSource = interactionSource,
+                                    onTriggerScan = viewModel::onTriggerScan,
+                                    onTriggerGenerate = viewModel::onTriggerGenerate,
                                     modifier =
                                         Modifier
                                             .ifElse(

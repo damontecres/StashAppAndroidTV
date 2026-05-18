@@ -49,7 +49,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
-import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.Material3AppTheme
 import com.github.damontecres.stashapp.ui.compat.Button
