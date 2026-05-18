@@ -108,7 +108,7 @@ object Constants {
      */
     const val STASH_API_HEADER = "ApiKey"
     const val TAG = "Constants"
-    private const val OK_HTTP_CACHE_DIR = "okhttpcache"
+    const val OK_HTTP_CACHE_DIR = "okhttpcache"
 
     fun getNetworkCache(context: Context): Cache {
         val cacheSize =

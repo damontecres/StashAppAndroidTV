@@ -16,6 +16,7 @@ compose-wheel-picker = "1.0.0-rc02"
 constraintlayout = "2.2.1"
 datastore = "1.2.1"
 desugar_jdk_libs = "2.1.5"
+kermit = "2.1.0"
 markwon-core = "4.6.2"
 core-ktx = "1.18.0"
 glide = "5.0.7"
@@ -53,6 +54,8 @@ viewpump = "4.0.15"
 zoomlayout = "1.9.0"
 slf4j2Timber = "1.2"
 timber = "5.0.1"
+koin-bom = "4.2.1"
+koin-plugin = "1.0.0-RC2"
 wholphin-extensions = "0.2.0"
 
 [libraries]
@@ -103,6 +106,7 @@ coil-network-cachecontrol = { module = "io.coil-kt.coil3:coil-network-cache-cont
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil-compose" }
 compose-wheel-picker = { module = "com.github.zj565061763:compose-wheel-picker", version.ref = "compose-wheel-picker" }
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
+kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 markwon-core = { module = "io.noties.markwon:core", version.ref = "markwon-core" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 glide-okhttp3-integration = { module = "com.github.bumptech.glide:okhttp3-integration", version.ref = "glide" }
@@ -143,6 +147,14 @@ androidx-ui-viewbinding = { module = "androidx.compose.ui:ui-viewbinding" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 slf4j2-timber = { module = "uk.kulikov:slf4j2-timber", version.ref = "slf4j2Timber" }
 
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
+koin-core = { module = "io.insert-koin:koin-core" }
+koin-annotations = { module = "io.insert-koin:koin-annotations" }
+koin-android = { module = "io.insert-koin:koin-android" }
+koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose" }
+koin-compose = { module = "io.insert-koin:koin-compose" }
+koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
+
 wholphin-extensions-mpv = { module = "com.github.damontecres.wholphin.mpv:wholphin-mpv", version.ref = "wholphin-extensions" }
 wholphin-extensions-ffmpeg = { module = "com.github.damontecres.wholphin.media3:decoder-ffmpeg", version.ref = "wholphin-extensions" }
 wholphin-extensions-av1 = { module = "com.github.damontecres.wholphin.media3:decoder-av1", version.ref = "wholphin-extensions" }
@@ -156,3 +168,4 @@ kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization"
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobuf" }
+koin-compiler = { id = "io.insert-koin.compiler.plugin", version.ref = "koin-plugin" }

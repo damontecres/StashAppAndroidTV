@@ -29,8 +29,13 @@ import org.acra.ReportField
 import org.acra.config.dialog
 import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.core.annotation.KoinApplication
+import org.koin.core.context.startKoin
 import timber.log.Timber
 
+@KoinApplication
 class StashApplication : Application() {
     @OptIn(ExperimentalComposeRuntimeApi::class)
     override fun onCreate() {
@@ -108,6 +113,11 @@ class StashApplication : Application() {
         ACRA.errorReporter.putCustomData("SDK_INT", Build.VERSION.SDK_INT.toString())
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(LifecycleObserverImpl())
+
+        startKoin {
+            androidLogger()
+            androidContext(this@StashApplication)
+        }
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val currentVersion = prefs.getString(VERSION_NAME_CURRENT_KEY, null)

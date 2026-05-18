@@ -31,6 +31,7 @@ plugins {
     alias(libs.plugins.room)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.protobuf)
+    alias(libs.plugins.koin.compiler)
 }
 
 val gitTags =
@@ -319,6 +320,16 @@ dependencies {
 
     implementation(libs.timber)
     implementation(libs.slf4j2.timber)
+    implementation(libs.kermit)
+
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.core)
+    implementation(libs.koin.annotations)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.compose)
+    implementation(libs.koin.compose.viewmodel)
+
     if (ffmpegModuleExists.get()) {
         logger.info("Using local ffmpeg decoder")
         implementation(files("libs/lib-decoder-ffmpeg-release.aar"))
