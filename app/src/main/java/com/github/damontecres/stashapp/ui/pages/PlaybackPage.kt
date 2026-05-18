@@ -15,11 +15,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import com.apollographql.apollo.api.Optional
-import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
@@ -36,6 +36,7 @@ import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.proto.PlaybackBackend
 import com.github.damontecres.stashapp.proto.PlaybackPreferences
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -45,7 +46,6 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageContent
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.SkipParams
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -56,6 +56,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun PlaybackPage(
+    preferences: StashPreferences,
     uiConfig: ComposeUiConfig,
     sceneId: String,
     startPosition: Long,
@@ -82,27 +83,18 @@ fun PlaybackPage(
     state?.let { state ->
         val player =
             remember {
-                TODO()
-                val skipParams =
-                    uiConfig.preferences.playbackPreferences.let {
-                        SkipParams.Values(
-                            it.skipForwardMs,
-                            it.skipBackwardMs,
-                        )
-                    }
-                val httpClient = uiConfig.preferences.playbackPreferences.playbackHttpClient
-                val debugLogging = uiConfig.preferences.playbackPreferences.debugLoggingEnabled
-                val backend = uiConfig.preferences.playbackPreferences.playbackBackend
-                StashExoPlayer
-                    .getInstance(
-                        context,
-                        server,
-                        uiConfig.preferences.playbackPreferences,
-                    ).apply {
+                viewModel.playerFactory
+                    .createPlayer(preferences.playbackPreferences)
+                    .apply {
                         repeatMode = Player.REPEAT_MODE_OFF
                         playWhenReady = true
                     }
             }
+        LifecycleResumeEffect(Unit) {
+            onPauseOrDispose {
+                player.release()
+            }
+        }
         val playbackScene = state.scene
         val decision =
             remember {
@@ -179,6 +171,7 @@ const val PLAYLIST_PREFETCH = 15
 
 @Composable
 fun PlaylistPlaybackPage(
+    preferences: StashPreferences,
     currentServer: CurrentServer,
     uiConfig: ComposeUiConfig,
     filterArgs: FilterArgs,
@@ -226,16 +219,21 @@ fun PlaylistPlaybackPage(
     if (playlist.isNotEmpty()) {
         val player =
             remember {
-                StashExoPlayer
-                    .getInstance(context, currentServer, uiConfig.preferences.playbackPreferences)
+                viewModel.playerFactory
+                    .createPlayer(preferences.playbackPreferences)
                     .apply {
                         repeatMode = Player.REPEAT_MODE_OFF
                         playWhenReady = true
                     }
             }
+        LifecycleResumeEffect(Unit) {
+            onPauseOrDispose {
+                player.release()
+            }
+        }
         val mutex = remember { Mutex() }
         LaunchedEffect(Unit) {
-            StashExoPlayer.addListener(
+            player.addListener(
                 object : Player.Listener {
                     override fun onMediaItemTransition(
                         mediaItem: MediaItem?,

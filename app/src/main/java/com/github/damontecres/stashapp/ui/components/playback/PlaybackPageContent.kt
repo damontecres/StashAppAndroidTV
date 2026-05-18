@@ -82,7 +82,6 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.size.Scale
 import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
@@ -203,7 +202,7 @@ class PlaybackViewModel(
             addCloseable("tracking") {
                 trackActivityListener?.let {
                     it.release(player.currentPosition)
-                    StashExoPlayer.removeListener(it)
+                    player.removeListener(it)
                 }
             }
         }
@@ -227,20 +226,20 @@ class PlaybackViewModel(
             )
             trackActivityListener?.apply {
                 release()
-                StashExoPlayer.removeListener(this)
+                player.removeListener(this)
             }
             tag.item.let {
                 trackActivityListener =
                     TrackActivityPlaybackListener(
                         mutationEngine = mutationEngine,
-                        minimumPlayPercent = TODO(),
+                        minimumPlayPercent = 0f, // TODO
                         scene = it,
                         getCurrentPosition = {
                             player.currentPosition
                         },
                     )
             }
-            trackActivityListener?.let { StashExoPlayer.addListener(it) }
+            trackActivityListener?.let { player.addListener(it) }
         }
 
         refreshScene(tag.item.id)
@@ -636,7 +635,7 @@ fun PlaybackPageContent(
         onStopOrDispose {
             savedStartPosition = player.currentPosition
             currentPlaylistIndex = player.currentMediaItemIndex
-            StashExoPlayer.releasePlayer()
+            player.release()
         }
     }
 
@@ -711,13 +710,13 @@ fun PlaybackPageContent(
                 controllerViewState.showControls()
             }
         }
-        StashExoPlayer.addListener(
+        (player as? ExoPlayer)?.addAnalyticsListener(
             StashAnalyticsListener { audio, video ->
                 audioDecoder = audio
                 videoDecoder = video
             },
         )
-        StashExoPlayer.addListener(
+        player.addListener(
             object : Player.Listener {
                 override fun onPlayerError(error: PlaybackException) {
                     Timber.e(
@@ -1155,12 +1154,13 @@ fun Player.setupFinishedBehavior(
         }
 
         PlaybackFinishBehavior.GO_BACK -> {
-            StashExoPlayer.addListener(
+            addListener(
                 object :
                     Player.Listener {
                     override fun onPlaybackStateChanged(playbackState: Int) {
                         if (playbackState == Player.STATE_ENDED) {
                             navigationManager.goBack()
+                            removeListener(this)
                         }
                     }
                 },
@@ -1168,7 +1168,7 @@ fun Player.setupFinishedBehavior(
         }
 
         PlaybackFinishBehavior.DO_NOTHING -> {
-            StashExoPlayer.addListener(
+            addListener(
                 object :
                     Player.Listener {
                     override fun onPlaybackStateChanged(playbackState: Int) {

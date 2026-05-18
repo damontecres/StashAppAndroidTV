@@ -11,7 +11,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.UpdateChangelogFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
-import com.github.damontecres.stashapp.ui.NavDrawerFragment
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavController

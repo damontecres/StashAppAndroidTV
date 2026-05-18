@@ -9,6 +9,7 @@ import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -40,6 +41,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 @Composable
 fun DestinationContent(
+    preferences: StashPreferences,
     currentServer: CurrentServer,
     navManager: NavigationManager,
     destination: Destination,
@@ -113,6 +115,7 @@ fun DestinationContent(
 
         is Destination.Playback -> {
             PlaybackPage(
+                preferences = preferences,
                 sceneId = destination.sceneId,
                 startPosition = destination.position,
                 playbackMode = destination.mode,
@@ -124,6 +127,7 @@ fun DestinationContent(
 
         is Destination.Playlist -> {
             PlaylistPlaybackPage(
+                preferences = preferences,
                 currentServer = currentServer,
                 uiConfig = composeUiConfig,
                 filterArgs = destination.filterArgs,
@@ -297,8 +301,20 @@ fun DestinationContent(
             }
         }
 
-        else -> {
-            FragmentView(navManager, destination, modifier)
+        Destination.LicenseInfo -> {
+            TODO()
+        }
+
+        is Destination.ReleaseChangelog -> {
+            TODO()
+        }
+
+        is Destination.SearchFor -> {
+            TODO()
+        }
+
+        Destination.Setup -> {
+            TODO()
         }
     }
 }

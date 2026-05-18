@@ -22,7 +22,6 @@ import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.ui.AppTheme
-import com.github.damontecres.stashapp.ui.NavDrawerFragment.Companion.TAG
 import com.github.damontecres.stashapp.ui.chooseColorScheme
 import com.github.damontecres.stashapp.ui.defaultColorSchemeSet
 import com.github.damontecres.stashapp.ui.nav.ApplicationContent

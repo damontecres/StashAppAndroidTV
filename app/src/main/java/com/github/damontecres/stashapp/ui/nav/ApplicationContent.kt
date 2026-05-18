@@ -27,7 +27,6 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.NavDrawerFragment.Companion.TAG
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -149,7 +148,8 @@ fun ApplicationContent(
                 if (fullScreen) {
                     DestinationContent(
                         currentServer = currentServer,
-                        navManger = navigationManager,
+                        preferences = preferences,
+                        navManager = navigationManager,
                         destination = destination,
                         composeUiConfig = composeUiConfig,
                         itemOnClick = itemOnClick,
@@ -243,6 +243,7 @@ fun ApplicationContent(
 
                     if (isTvDevice) {
                         NavDrawer(
+                            preferences = preferences,
                             currentServer = currentServer,
                             navigationManager = navigationManager,
                             composeUiConfig = composeUiConfig,
@@ -258,6 +259,7 @@ fun ApplicationContent(
                         )
                     } else {
                         NavScaffold(
+                            preferences = preferences,
                             currentServer = currentServer,
                             navigationManager = navigationManager,
                             composeUiConfig = composeUiConfig,

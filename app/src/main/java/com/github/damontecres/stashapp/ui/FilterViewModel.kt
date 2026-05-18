@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui
 
 import android.util.Log
+import androidx.datastore.core.DataStore
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,6 +12,8 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.PlayerFactory
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
@@ -27,6 +30,10 @@ class FilterViewModel(
     private val serverRepository: ServerRepository,
     private val queryEngine: QueryEngine,
     val navigationManager: NavigationManager,
+    // TODO remove this
+    val preferences: DataStore<StashPreferences>,
+    // TODO remove this
+    val playerFactory: PlayerFactory,
 ) : ViewModel() {
     val pager = MutableLiveData<ComposePager<StashData>>()
 

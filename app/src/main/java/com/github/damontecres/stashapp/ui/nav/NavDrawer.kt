@@ -39,6 +39,7 @@ import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalPlayerContext
 import com.github.damontecres.stashapp.ui.PlayerContext
@@ -55,6 +56,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun NavDrawer(
+    preferences: StashPreferences,
     currentServer: CurrentServer,
     navigationManager: NavigationManager,
     composeUiConfig: ComposeUiConfig,
@@ -204,8 +206,9 @@ fun NavDrawer(
             LocalPlayerContext provides PlayerContext,
         ) {
             DestinationContent(
+                preferences = preferences,
                 currentServer = currentServer,
-                navManger = navigationManager,
+                navManager = navigationManager,
                 destination = destination,
                 composeUiConfig = composeUiConfig,
                 itemOnClick = itemOnClick,

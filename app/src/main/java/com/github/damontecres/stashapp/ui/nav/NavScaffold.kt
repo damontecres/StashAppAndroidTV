@@ -38,6 +38,7 @@ import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -48,6 +49,7 @@ import com.github.damontecres.stashapp.ui.util.screenSize
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun NavScaffold(
+    preferences: StashPreferences,
     currentServer: CurrentServer,
     navigationManager: NavigationManager,
     composeUiConfig: ComposeUiConfig,
@@ -182,8 +184,9 @@ fun NavScaffold(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             DestinationContent(
+                preferences = preferences,
                 currentServer = currentServer,
-                navManger = navigationManager,
+                navManager = navigationManager,
                 destination = destination,
                 composeUiConfig = composeUiConfig,
                 itemOnClick = itemOnClick,

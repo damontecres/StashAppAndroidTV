@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.ui.pages
 
 import android.util.Log
 import android.widget.Toast
+import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
@@ -10,7 +11,9 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.PlayerFactory
 import com.github.damontecres.stashapp.di.services.ServerLogger
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.util.launchIO
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +28,8 @@ class PlaybackPageViewModel(
     private val serverLogger: ServerLogger,
     private val queryEngine: QueryEngine,
     @InjectedParam private val sceneId: String,
+    val preferences: DataStore<StashPreferences>,
+    val playerFactory: PlayerFactory,
 ) : ViewModel() {
     private val exceptionHandler =
         object : CoroutineExceptionHandler {
