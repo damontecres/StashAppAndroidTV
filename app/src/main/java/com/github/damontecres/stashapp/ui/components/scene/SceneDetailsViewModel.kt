@@ -20,6 +20,8 @@ import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.ItemClicker
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
@@ -51,6 +53,8 @@ class SceneDetailsViewModel(
     private val mutationEngine: MutationEngine,
     private val serverRepository: ServerRepository,
     private val preferences: DataStore<StashPreferences>,
+    val navigationManager: NavigationManager,
+    val itemClicker: ItemClicker,
     @InjectedParam val sceneId: String,
 ) : ViewModel() {
     private val exceptionHandler =

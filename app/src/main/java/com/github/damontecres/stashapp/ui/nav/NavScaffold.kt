@@ -34,21 +34,22 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.CurrentServer
+import com.github.damontecres.stashapp.di.server.StashServer
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.util.ScreenSize
 import com.github.damontecres.stashapp.ui.util.screenSize
-import com.github.damontecres.stashapp.util.StashServer
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun NavScaffold(
-    server: StashServer,
-    navigationManager: NavigationManagerCompose,
+    currentServer: CurrentServer,
+    navigationManager: NavigationManager,
     composeUiConfig: ComposeUiConfig,
     destination: Destination,
     selectedScreen: DrawerPage?,
@@ -181,8 +182,7 @@ fun NavScaffold(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             DestinationContent(
-                navManager = navigationManager,
-                server = server,
+                currentServer = currentServer,
                 destination = destination,
                 composeUiConfig = composeUiConfig,
                 itemOnClick = itemOnClick,

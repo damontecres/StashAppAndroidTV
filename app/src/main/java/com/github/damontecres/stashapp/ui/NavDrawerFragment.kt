@@ -29,7 +29,6 @@ import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.ui.components.server.InitialSetup
 import com.github.damontecres.stashapp.ui.components.server.ManageServers
 import com.github.damontecres.stashapp.ui.nav.ApplicationContent
-import com.github.damontecres.stashapp.ui.nav.CoilConfig
 import com.github.damontecres.stashapp.util.preferences
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
@@ -62,7 +61,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                 val preferences by context.preferences.data.collectAsState(null)
                 val isSystemInDarkTheme = isSystemInDarkTheme()
                 preferences?.let { preferences ->
-                    CoilConfig(serverViewModel, preferences)
+//                    CoilConfig(serverViewModel, preferences)
                     var colorScheme by
                         remember {
                             mutableStateOf(

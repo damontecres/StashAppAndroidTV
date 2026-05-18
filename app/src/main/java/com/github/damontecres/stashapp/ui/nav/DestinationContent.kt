@@ -5,8 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.CurrentServer
+import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -30,7 +31,6 @@ import com.github.damontecres.stashapp.ui.pages.SettingsPage
 import com.github.damontecres.stashapp.ui.pages.StudioPage
 import com.github.damontecres.stashapp.ui.pages.TagPage
 import com.github.damontecres.stashapp.ui.pages.UpdateAppPage
-import com.github.damontecres.stashapp.util.StashServer
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -39,8 +39,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 @Composable
 fun DestinationContent(
-    navManager: NavigationManagerCompose,
-    server: StashServer,
+    currentServer: CurrentServer,
     destination: Destination,
     composeUiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
@@ -194,7 +193,6 @@ fun DestinationContent(
         Destination.Main -> {
             MainPage(
                 uiConfig = composeUiConfig,
-                itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 modifier = modifier,
             )
@@ -240,19 +238,8 @@ fun DestinationContent(
                 DataType.SCENE -> {
                     SceneDetailsPage(
                         modifier = modifier,
-                        navigationManager = navManager,
                         sceneId = destination.id,
-                        itemOnClick = itemOnClick,
                         uiConfig = composeUiConfig,
-                        playOnClick = { position, mode ->
-                            navManager.navigate(
-                                Destination.Playback(
-                                    destination.id,
-                                    position,
-                                    mode,
-                                ),
-                            )
-                        },
                         onUpdateTitle = onUpdateTitle,
                     )
                 }

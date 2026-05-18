@@ -69,6 +69,7 @@ import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerPreferences
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.ItemClicker
 import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.proto.StashPreferences
@@ -112,6 +113,7 @@ class MainPageViewModel(
     private val queryEngine: QueryEngine,
     private val serverRepository: ServerRepository,
     private val preferences: DataStore<StashPreferences>,
+    val itemClicker: ItemClicker,
 ) : ViewModel() {
     val frontPageRows = mutableStateListOf<FrontPageParser.FrontPageRow.Success>()
 
@@ -189,7 +191,6 @@ class MainPageViewModel(
 @Composable
 fun MainPage(
     uiConfig: ComposeUiConfig,
-    itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
     viewModel: MainPageViewModel = koinViewModel(),
@@ -224,7 +225,7 @@ fun MainPage(
             serverStats = serverStats,
             uiConfig = uiConfig,
             rows = frontPageRows,
-            itemOnClick = itemOnClick,
+            itemOnClick = viewModel.itemClicker::onClick,
             longClicker = longClicker,
         )
     }

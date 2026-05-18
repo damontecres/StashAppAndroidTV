@@ -67,15 +67,14 @@ import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.ServerPreferences
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
-import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
 import com.github.damontecres.stashapp.ui.components.DeleteDialog
@@ -104,10 +103,7 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 fun SceneDetailsPage(
-    navigationManager: NavigationManager,
     sceneId: String,
-    itemOnClick: ItemOnClicker<Any>,
-    playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
@@ -154,6 +150,7 @@ fun SceneDetailsPage(
             val server by viewModel.currentServer.collectAsState()
             SceneDetails(
                 serverPreferences = server.serverPreferences,
+                navigationManager = viewModel.navigationManager,
                 scene = state.scene,
                 rating100 = rating100,
                 oCount = oCount,
@@ -165,8 +162,16 @@ fun SceneDetailsPage(
                 studio = studio,
                 suggestions = suggestions,
                 uiConfig = uiConfig,
-                itemOnClick = itemOnClick,
-                playOnClick = playOnClick,
+                itemOnClick = viewModel.itemClicker::onClick,
+                playOnClick = { position, mode ->
+                    viewModel.navigationManager.navigate(
+                        Destination.Playback(
+                            sceneId,
+                            position,
+                            mode,
+                        ),
+                    )
+                },
                 addItem = { item ->
                     when (item) {
                         is PerformerData, is SlimPerformerData -> viewModel.addPerformer(item.id)
@@ -200,7 +205,7 @@ fun SceneDetailsPage(
                     viewModel.deleteScene(deleteFiles, deleteGenerated) {
                         if (it) {
                             Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show()
-                            navigationManager.goBack()
+                            viewModel.navigationManager.goBack()
                         } else {
                             Toast
                                 .makeText(context, "Error deleting scene", Toast.LENGTH_SHORT)
@@ -230,6 +235,7 @@ data class DialogParams(
 @Composable
 fun SceneDetails(
     serverPreferences: ServerPreferences,
+    navigationManager: com.github.damontecres.stashapp.di.services.NavigationManager,
     scene: FullSceneData,
     rating100: Int,
     oCount: Int,
@@ -252,7 +258,6 @@ fun SceneDetails(
     showRatingBar: Boolean = true,
 ) {
     val context = LocalContext.current
-    val navigationManager = LocalGlobalContext.current.navigationManager
 
     var showDialog by remember { mutableStateOf<DialogParams?>(null) }
     var showDetailsDialog by remember { mutableStateOf(false) }

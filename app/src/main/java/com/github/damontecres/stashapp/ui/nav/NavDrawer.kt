@@ -35,8 +35,10 @@ import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.di.server.CurrentServer
+import com.github.damontecres.stashapp.di.server.StashServer
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalPlayerContext
 import com.github.damontecres.stashapp.ui.PlayerContext
@@ -49,13 +51,12 @@ import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.ui.util.playOnClickSound
 import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
 
 @Composable
 fun NavDrawer(
-    server: StashServer,
-    navigationManager: NavigationManagerCompose,
+    currentServer: CurrentServer,
+    navigationManager: NavigationManager,
     composeUiConfig: ComposeUiConfig,
     destination: Destination,
     selectedScreen: DrawerPage?,
@@ -168,7 +169,7 @@ fun NavDrawer(
                                         isNotTvDevice,
                                         Modifier.clickable(onClick = onClick),
                                     ),
-                            text = server.url,
+                            text = currentServer.server.url,
                             maxLines = 1,
                         )
                     }
@@ -203,8 +204,7 @@ fun NavDrawer(
             LocalPlayerContext provides PlayerContext,
         ) {
             DestinationContent(
-                navManager = navigationManager,
-                server = server,
+                currentServer = currentServer,
                 destination = destination,
                 composeUiConfig = composeUiConfig,
                 itemOnClick = itemOnClick,
