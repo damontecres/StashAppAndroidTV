@@ -8,19 +8,29 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.ui.showAddTag
 import com.github.damontecres.stashapp.ui.showShort
-import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-class MarkerDetailsViewModel : ViewModel() {
-    private lateinit var server: StashServer
-
+@KoinViewModel
+class MarkerDetailsViewModel(
+    private val serverRepository: ServerRepository,
+    private val serverLogger: ServerLogger,
+    private val queryEngine: QueryEngine,
+    val mutationEngine: MutationEngine,
+    val navigationManager: NavigationManager,
+    @InjectedParam private val id: String,
+) : ViewModel() {
     val seconds = MutableLiveData<Double>()
     val endSeconds = MutableLiveData<Double?>(null)
 
@@ -36,13 +46,8 @@ class MarkerDetailsViewModel : ViewModel() {
     private val _primaryTag = EqualityMutableLiveData<TagData>()
     val primaryTag: LiveData<TagData> = _primaryTag
 
-    fun init(
-        server: StashServer,
-        id: String,
-    ) {
-        this.server = server
+    fun init() {
         viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
-            val queryEngine = QueryEngine(server)
             val marker = queryEngine.getMarker(id)
             _item.value = marker
             if (marker != null) {
@@ -62,7 +67,6 @@ class MarkerDetailsViewModel : ViewModel() {
 
     fun setPrimaryTag(tagId: String) {
         viewModelScope.launch {
-            val mutationEngine = MutationEngine(server)
             val result =
                 mutationEngine.updateMarker(
                     SceneMarkerUpdateInput(
@@ -81,7 +85,6 @@ class MarkerDetailsViewModel : ViewModel() {
 
     fun addTag(tagId: String) {
         viewModelScope.launch {
-            val mutationEngine = MutationEngine(server)
             val tagIds = tags.value!!.map { it.id }.toMutableList()
             tagIds.add(tagId)
             val result =
@@ -102,7 +105,6 @@ class MarkerDetailsViewModel : ViewModel() {
 
     fun removeTag(tagId: String) {
         viewModelScope.launch {
-            val mutationEngine = MutationEngine(server)
             val tagIds = tags.value!!.map { it.id }.toMutableList()
             if (tagIds.remove(tagId)) {
                 val result =

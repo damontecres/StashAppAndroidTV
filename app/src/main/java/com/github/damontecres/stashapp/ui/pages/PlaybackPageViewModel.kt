@@ -9,6 +9,7 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.util.launchIO
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -20,6 +21,7 @@ import kotlin.coroutines.CoroutineContext
 
 @KoinViewModel
 class PlaybackPageViewModel(
+    private val serverRepository: ServerRepository,
     private val serverLogger: ServerLogger,
     private val queryEngine: QueryEngine,
     @InjectedParam private val sceneId: String,
@@ -41,6 +43,7 @@ class PlaybackPageViewModel(
         }
 
     val state = MutableStateFlow<PlaybackState?>(null)
+    val currentServer get() = serverRepository.currentServer
 
     init {
         Log.d("PlaybackViewModel", "scene=$sceneId")

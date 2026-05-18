@@ -113,7 +113,6 @@ fun DestinationContent(
 
         is Destination.Playback -> {
             PlaybackPage(
-                server = server,
                 sceneId = destination.sceneId,
                 startPosition = destination.position,
                 playbackMode = destination.mode,
@@ -125,7 +124,7 @@ fun DestinationContent(
 
         is Destination.Playlist -> {
             PlaylistPlaybackPage(
-                server = server,
+                currentServer = currentServer,
                 uiConfig = composeUiConfig,
                 filterArgs = destination.filterArgs,
                 startIndex = destination.position,
@@ -137,8 +136,7 @@ fun DestinationContent(
 
         is Destination.Slideshow -> {
             ImagePage(
-                server = server,
-                navigationManager = navManager,
+                currentServer = currentServer,
                 filter = destination.filterArgs,
                 startPosition = destination.position,
                 startSlideshow = destination.automatic,
@@ -151,7 +149,6 @@ fun DestinationContent(
 
         Destination.ChooseTheme -> {
             ChooseThemePage(
-                server = server,
                 navigationManager = navManager,
                 uiConfig = composeUiConfig,
                 onChooseTheme = onChangeTheme,
@@ -164,7 +161,6 @@ fun DestinationContent(
                 uiConfig = composeUiConfig,
                 dataType = destination.dataType,
                 initialFilter = destination.startingFilter,
-                navigationManager = navManager,
                 onUpdateTitle = onUpdateTitle,
                 modifier = modifier,
             )
@@ -172,8 +168,6 @@ fun DestinationContent(
 
         is Destination.UpdateMarker -> {
             MarkerTimestampPage(
-                server = server,
-                navigationManager = navManager,
                 uiConfig = composeUiConfig,
                 markerId = destination.markerId,
                 modifier = Modifier.fillMaxSize(),
@@ -182,7 +176,7 @@ fun DestinationContent(
 
         is Destination.Debug -> {
             DebugPage(
-                server = server,
+                currentServer = currentServer,
                 uiConfig = composeUiConfig,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -198,8 +192,6 @@ fun DestinationContent(
 
         is Destination.Filter -> {
             FilterPage(
-                server = server,
-                navigationManager = navManager,
                 initialFilter = destination.filterArgs,
                 scrollToNextPage = destination.scrollToNextPage,
                 itemOnClick = itemOnClick,

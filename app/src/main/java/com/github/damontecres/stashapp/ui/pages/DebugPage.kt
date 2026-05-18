@@ -38,6 +38,7 @@ import com.github.damontecres.stashapp.BuildConfig
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.room.PlaybackEffect
+import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.TableRow
@@ -45,7 +46,6 @@ import com.github.damontecres.stashapp.ui.components.TableRowComposable
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import com.github.damontecres.stashapp.util.toReadableString
 import kotlinx.coroutines.Dispatchers
@@ -75,10 +75,11 @@ fun TableRowSmall(
 
 @Composable
 fun DebugPage(
-    server: StashServer,
+    currentServer: CurrentServer,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
+    val server = currentServer.server
     val context = LocalContext.current
     val columnState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -199,21 +200,18 @@ fun DebugPage(
                 TableRowSmall(it)
             }
 
-            val rows =
-                server.serverPreferences.preferences.all.let { prefs ->
-                    prefs.keys.sorted().mapNotNull {
-                        tableRow(it, prefs[it])
-                    }
-                }
+            val rows = currentServer.serverPreferences.toReadableString(true)
             Column {
                 Text(
                     text = "Server Preferences",
                     style = MaterialTheme.typography.displaySmall,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
-                rows.forEach { row ->
-                    TableRowSmall(row)
-                }
+                Text(
+                    text = rows,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
                 Text(
                     text = "Server default filters",
                     style = MaterialTheme.typography.displaySmall,
@@ -221,7 +219,7 @@ fun DebugPage(
                 )
                 DataType.entries
                     .mapNotNull {
-                        val filter = server.serverPreferences.getDefaultFilter(it)
+                        val filter = currentServer.serverPreferences.defaultFilters[it]!!
                         val value = "findFilter=${filter.findFilter}\nobjectFilter=${filter.objectFilter?.toReadableString(true)}"
                         TableRow.from(it.name, value)
                     }.forEach {

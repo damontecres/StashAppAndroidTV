@@ -8,19 +8,26 @@ import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
-import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.launchIO
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.koin.core.annotation.KoinViewModel
 
-class FilterViewModel : ViewModel() {
-    private var server: StashServer? = null
+@KoinViewModel
+class FilterViewModel(
+    private val serverRepository: ServerRepository,
+    private val queryEngine: QueryEngine,
+    val navigationManager: NavigationManager,
+) : ViewModel() {
     val pager = MutableLiveData<ComposePager<StashData>>()
 
     val currentFilter: FilterArgs? get() = pager.value?.filter
@@ -29,39 +36,41 @@ class FilterViewModel : ViewModel() {
     private var job: Job? = null
 
     fun setFilter(
-        server: StashServer,
         filterArgs: FilterArgs,
         columns: Int,
     ) {
-        if (pager.value?.filter != filterArgs || server != this.server) {
+        if (pager.value?.filter != filterArgs) {
             job?.cancel()
             Log.d("FilterPageViewModel", "filterArgs=$filterArgs, columns=$columns")
-            this.server = server
-            val dataSupplierFactory = DataSupplierFactory(server.version)
+            val dataSupplierFactory = DataSupplierFactory(serverRepository.currentServerVersion)
             val dataSupplier =
                 dataSupplierFactory.create<Query.Data, StashData, Query.Data>(filterArgs)
             val pagingSource =
-                StashPagingSource(QueryEngine(server), dataSupplier) { _, _, item -> item }
+                StashPagingSource(
+                    queryEngine.asUtilQueryEngine(),
+                    dataSupplier,
+                ) { _, _, item -> item }
             val pager =
                 ComposePager(filterArgs, pagingSource, viewModelScope, pageSize = columns * 10)
             job =
-                viewModelScope.launch(LoggingCoroutineExceptionHandler(server, viewModelScope)) {
+                viewModelScope.launchIO {
                     pager.init()
-                    this@FilterViewModel.pager.value = pager
+                    withContext(Dispatchers.IO) {
+                        this@FilterViewModel.pager.value = pager
+                    }
                 }
         }
     }
 
     suspend fun findLetterPosition(letter: Char): Int {
-        val server = this.server!!
         val filter = this.pager.value!!.filter
 
-        val dataSupplierFactory = DataSupplierFactory(server.version)
+        val dataSupplierFactory = DataSupplierFactory(serverRepository.currentServerVersion)
         val letterPosition =
             AlphabetSearchUtils.findPosition(
                 letter,
                 filter,
-                QueryEngine(server),
+                queryEngine.asUtilQueryEngine(),
                 dataSupplierFactory,
             )
         val jumpPosition =

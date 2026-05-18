@@ -79,7 +79,6 @@ import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.defaultCardWidth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -102,7 +101,6 @@ enum class CreateFilter {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun StashGridControls(
-    server: StashServer,
     pager: ComposePager<StashData>,
     updateFilter: (FilterArgs) -> Unit,
     itemOnClick: ItemOnClicker<Any>,

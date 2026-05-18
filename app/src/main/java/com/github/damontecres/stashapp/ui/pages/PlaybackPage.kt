@@ -15,7 +15,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -29,6 +28,7 @@ import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.PlaylistFragment
@@ -46,7 +46,6 @@ import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageConten
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.SkipParams
-import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -70,6 +69,7 @@ fun PlaybackPage(
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
+    val currentServer by viewModel.currentServer.collectAsState()
 
     val playbackMode =
         remember(playbackMode, uiConfig) {
@@ -123,7 +123,7 @@ fun PlaybackPage(
             }
 
         PlaybackPageContent(
-            server = server,
+            currentServer = currentServer,
             player = player,
             playlist = listOf(media),
             startIndex = 0,
@@ -179,24 +179,24 @@ const val PLAYLIST_PREFETCH = 15
 
 @Composable
 fun PlaylistPlaybackPage(
-    server: StashServer,
+    currentServer: CurrentServer,
     uiConfig: ComposeUiConfig,
     filterArgs: FilterArgs,
     startIndex: Int,
     itemOnClick: ItemOnClicker<Any>,
     modifier: Modifier = Modifier,
     clipDuration: Duration = 30.seconds,
-    viewModel: FilterViewModel = viewModel(key = "main"),
-    playlistViewModel: FilterViewModel = viewModel(key = "playlist"),
+    viewModel: FilterViewModel = koinViewModel(key = "main"),
+    playlistViewModel: FilterViewModel = koinViewModel(key = "playlist"),
 ) {
     val scope = rememberCoroutineScope()
     Log.v("PlaybackPageContent", "startIndex=$startIndex")
     val context = LocalContext.current
 
-    LaunchedEffect(server, filterArgs) {
+    LaunchedEffect(currentServer, filterArgs) {
         // TODO switch to single query
-        viewModel.setFilter(server, adjustFilter(filterArgs), uiConfig.cardSettings.columns)
-        playlistViewModel.setFilter(server, filterArgs, uiConfig.cardSettings.columns)
+        viewModel.setFilter(adjustFilter(filterArgs), uiConfig.cardSettings.columns)
+        playlistViewModel.setFilter(filterArgs, uiConfig.cardSettings.columns)
     }
     val pager by viewModel.pager.observeAsState()
 //    var playlist by remember(pager) { mutableStateOf<List<MediaItem>>(listOf()) }
@@ -227,7 +227,7 @@ fun PlaylistPlaybackPage(
         val player =
             remember {
                 StashExoPlayer
-                    .getInstance(context, server, uiConfig.preferences.playbackPreferences)
+                    .getInstance(context, currentServer, uiConfig.preferences.playbackPreferences)
                     .apply {
                         repeatMode = Player.REPEAT_MODE_OFF
                         playWhenReady = true
@@ -241,7 +241,7 @@ fun PlaylistPlaybackPage(
                         mediaItem: MediaItem?,
                         reason: Int,
                     ) {
-                        scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
+                        scope.launch(LoggingCoroutineExceptionHandler(currentServer, scope)) {
                             mutex.withLock {
                                 val currentIndex = player.currentMediaItemIndex
                                 val count = player.mediaItemCount
@@ -274,7 +274,7 @@ fun PlaylistPlaybackPage(
         }
 
         PlaybackPageContent(
-            server = server,
+            currentServer = currentServer,
             player = player,
             playlist = playlist,
             startIndex = startIndex,
@@ -286,7 +286,7 @@ fun PlaylistPlaybackPage(
                 if (index < player.mediaItemCount) {
                     player.seekTo(index, C.TIME_UNSET)
                 } else {
-                    scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
+                    scope.launch(LoggingCoroutineExceptionHandler(currentServer, scope)) {
                         mutex.withLock {
                             val count = player.mediaItemCount
                             pager?.let { pager ->
