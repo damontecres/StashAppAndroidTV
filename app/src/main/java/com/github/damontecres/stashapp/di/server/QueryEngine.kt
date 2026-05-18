@@ -63,7 +63,7 @@ import com.github.damontecres.stashapp.util.getRandomSort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import org.koin.core.annotation.Singleton
+import org.koin.core.annotation.Single
 import timber.log.Timber
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -72,10 +72,15 @@ import kotlin.time.toDuration
 /**
  * Handles making graphql queries to the server
  */
-@Singleton
+@Single
 class QueryEngine(
     api: StashApi,
 ) : StashEngine(api) {
+    // TODO remove this
+    fun asUtilQueryEngine() =
+        com.github.damontecres.stashapp.util
+            .QueryEngine(api.apolloClient, null)
+
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
             val queryName = query.operation.name()

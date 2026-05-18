@@ -193,7 +193,6 @@ fun DestinationContent(
 
         Destination.Main -> {
             MainPage(
-                server = server,
                 uiConfig = composeUiConfig,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
@@ -241,7 +240,6 @@ fun DestinationContent(
                 DataType.SCENE -> {
                     SceneDetailsPage(
                         modifier = modifier,
-                        server = server,
                         navigationManager = navManager,
                         sceneId = destination.id,
                         itemOnClick = itemOnClick,

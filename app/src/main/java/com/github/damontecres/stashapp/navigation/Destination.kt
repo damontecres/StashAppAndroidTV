@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
 import android.os.Parcelable.Creator
+import androidx.navigation3.runtime.NavKey
 import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
@@ -40,7 +41,8 @@ import java.util.concurrent.atomic.AtomicLong
 sealed class Destination(
     val fullScreen: Boolean = false,
     val fullScreenTouch: Boolean = fullScreen,
-) : Parcelable {
+) : Parcelable,
+    NavKey {
     protected val destId = counter.getAndIncrement()
 
     val fragmentTag = "${this::class.simpleName}_$destId"

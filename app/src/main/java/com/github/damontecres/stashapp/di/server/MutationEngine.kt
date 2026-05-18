@@ -1,4 +1,4 @@
-package com.github.damontecres.stashappapp.di.server
+package com.github.damontecres.stashapp.di.server
 
 import co.touchlab.kermit.Logger
 import com.apollographql.apollo.api.ApolloResponse
@@ -55,17 +55,15 @@ import com.github.damontecres.stashapp.api.type.StudioUpdateInput
 import com.github.damontecres.stashapp.api.type.TagCreateInput
 import com.github.damontecres.stashapp.api.type.TagUpdateInput
 import com.github.damontecres.stashapp.data.OCounter
-import com.github.damontecres.stashapp.di.server.StashApi
-import com.github.damontecres.stashapp.di.server.StashEngine
 import com.github.damontecres.stashapp.util.toSeconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.koin.core.annotation.Singleton
+import org.koin.core.annotation.Single
 
 /**
  * Class for sending graphql mutations
  */
-@Singleton
+@Single
 class MutationEngine(
     api: StashApi,
 ) : StashEngine(api) {

@@ -6,6 +6,7 @@ import com.github.damontecres.stashapp.api.JobProgressSubscription
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.koin.core.annotation.Single
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * @param ioDispatcher the dispatcher to use for general I/O operations
  * @param callbackDispatcher the dispatcher to use for running callbacks from subscription results
  */
+@Single
 class SubscriptionEngine(
     api: StashApi,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,

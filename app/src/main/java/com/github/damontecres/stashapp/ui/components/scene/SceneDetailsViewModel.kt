@@ -1,12 +1,11 @@
 package com.github.damontecres.stashapp.ui.components.scene
 
+import android.app.Application
+import androidx.datastore.core.DataStore
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import co.touchlab.kermit.Logger
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -18,6 +17,11 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.OCounter
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.ServerLogger
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.ui.showAddGallery
@@ -26,30 +30,46 @@ import com.github.damontecres.stashapp.ui.showAddMarker
 import com.github.damontecres.stashapp.ui.showAddPerf
 import com.github.damontecres.stashapp.ui.showAddTag
 import com.github.damontecres.stashapp.ui.showSetStudio
-import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.createSceneSuggestionFilter
+import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.toLongMilliseconds
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
+import kotlin.coroutines.CoroutineContext
 
+@KoinViewModel
 class SceneDetailsViewModel(
-    val server: StashServer,
-    val sceneId: String,
-    val pageSize: Int,
+    private val context: Application,
+    private val serverLogger: ServerLogger,
+    private val queryEngine: QueryEngine,
+    private val mutationEngine: MutationEngine,
+    private val serverRepository: ServerRepository,
+    private val preferences: DataStore<StashPreferences>,
+    @InjectedParam val sceneId: String,
 ) : ViewModel() {
-    private val queryEngine = QueryEngine(server)
-    private val mutationEngine = MutationEngine(server)
     private val exceptionHandler =
-        LoggingCoroutineExceptionHandler(
-            server,
-            viewModelScope,
-            toastMessage = "Error updating scene",
-        )
+        object : CoroutineExceptionHandler {
+            override val key: CoroutineContext.Key<*>
+                get() = CoroutineExceptionHandler
+
+            override fun handleException(
+                context: CoroutineContext,
+                exception: Throwable,
+            ) {
+                Logger.e(exception) { "Exception" }
+                viewModelScope.launchIO {
+                    serverLogger.logException(exception, null)
+                }
+            }
+        }
+
+    val currentServer get() = serverRepository.currentServer
 
     private var scene: FullSceneData? = null
 
@@ -94,11 +114,7 @@ class SceneDetailsViewModel(
                 }
             } catch (ex: Exception) {
                 loadingState.value = SceneLoadingState.Error
-                LoggingCoroutineExceptionHandler(
-                    server,
-                    viewModelScope,
-                    toastMessage = "Error loading scene",
-                ).handleException(ex)
+                serverLogger.logException(ex)
             }
         }
         return this
@@ -111,13 +127,18 @@ class SceneDetailsViewModel(
                 val filterArgs = createSceneSuggestionFilter(it)
                 if (filterArgs != null) {
                     val supplier =
-                        DataSupplierFactory(server.version)
+                        DataSupplierFactory(serverRepository.currentServerVersion)
                             .create<Query.Data, SlimSceneData, Query.Data>(filterArgs)
                     suggestions.value =
                         StashPagingSource<Query.Data, SlimSceneData, SlimSceneData, Query.Data>(
-                            queryEngine,
+                            queryEngine.asUtilQueryEngine(),
                             supplier,
-                        ).fetchPage(1, pageSize)
+                        ).fetchPage(
+                            1,
+                            preferences.data
+                                .first()
+                                .searchPreferences.maxResults,
+                        )
                 }
             }
         }
@@ -319,21 +340,6 @@ class SceneDetailsViewModel(
                 scene?.let { loadingState.value = SceneLoadingState.Success(it) }
             }
         }
-    }
-
-    companion object {
-        val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
-        val SCENE_ID_KEY = object : CreationExtras.Key<String> {}
-        val PAGE_SIZE_KEY = object : CreationExtras.Key<Int> {}
-        val Factory: ViewModelProvider.Factory =
-            viewModelFactory {
-                initializer {
-                    val server = this[SERVER_KEY]!!
-                    val sceneId = this[SCENE_ID_KEY]!!
-                    val pageSize = this[PAGE_SIZE_KEY]!!
-                    SceneDetailsViewModel(server, sceneId, pageSize)
-                }
-            }
     }
 }
 

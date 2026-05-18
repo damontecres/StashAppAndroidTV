@@ -12,7 +12,8 @@ import timber.log.Timber
  * Super class for "engines" that interact with the server
  */
 abstract class StashEngine(
-    protected val api: StashApi,
+    // TODO protected
+    val api: StashApi,
 ) {
     protected val client get() = api.apolloClient
     private var requestId: Int = 0

@@ -2,12 +2,15 @@ package com.github.damontecres.stashapp.di
 
 import android.content.Context
 import android.os.Build
+import androidx.datastore.core.DataStore
 import co.touchlab.kermit.Logger
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinValueNotNull
+import com.github.damontecres.stashapp.util.preferences
 import okhttp3.OkHttpClient
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
@@ -51,7 +54,7 @@ fun provideAuthHttpClient(
     httpClient
         .newBuilder()
         .addInterceptor {
-            val server = serverRepository.currentServer
+            val server = serverRepository.currentServer.value.server
             val request =
                 if (server.apiKey != null) {
                     val isStashUrl =
@@ -94,3 +97,6 @@ fun createUserAgent(context: Context): String {
         ).joinNotNullOrBlank("; ")
     return "$appName/$versionStr ($comments) ($device)"
 }
+
+@Single
+fun provideDataStore(context: Context): DataStore<StashPreferences> = context.preferences
