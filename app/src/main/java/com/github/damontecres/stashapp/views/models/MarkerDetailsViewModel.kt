@@ -11,6 +11,7 @@ import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.ItemClicker
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.ui.showAddTag
@@ -27,6 +28,7 @@ class MarkerDetailsViewModel(
     private val serverRepository: ServerRepository,
     private val serverLogger: ServerLogger,
     private val queryEngine: QueryEngine,
+    val itemClicker: ItemClicker,
     val mutationEngine: MutationEngine,
     val navigationManager: NavigationManager,
     @InjectedParam private val id: String,

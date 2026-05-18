@@ -204,8 +204,6 @@ fun DestinationContent(
 
         is Destination.Search -> {
             SearchPage(
-                server = server,
-                navigationManager = navManager,
                 uiConfig = composeUiConfig,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
@@ -215,10 +213,8 @@ fun DestinationContent(
 
         is Destination.MarkerDetails -> {
             MarkerPage(
-                server = server,
                 uiConfig = composeUiConfig,
                 markerId = destination.markerId,
-                itemOnClick = itemOnClick,
                 onUpdateTitle = onUpdateTitle,
             )
         }
@@ -237,9 +233,7 @@ fun DestinationContent(
                 DataType.PERFORMER -> {
                     PerformerPage(
                         modifier = modifier,
-                        server = server,
                         id = destination.id,
-                        itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
                         onUpdateTitle = onUpdateTitle,
@@ -249,10 +243,8 @@ fun DestinationContent(
                 DataType.TAG -> {
                     TagPage(
                         modifier = modifier,
-                        server = server,
                         id = destination.id,
                         includeSubTags = false,
-                        itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
                         onUpdateTitle = onUpdateTitle,
@@ -262,10 +254,8 @@ fun DestinationContent(
                 DataType.STUDIO -> {
                     StudioPage(
                         modifier = modifier,
-                        server = server,
                         id = destination.id,
                         includeSubStudios = false,
-                        itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
                         onUpdateTitle = onUpdateTitle,
@@ -275,9 +265,7 @@ fun DestinationContent(
                 DataType.GALLERY -> {
                     GalleryPage(
                         modifier = modifier,
-                        server = server,
                         id = destination.id,
-                        itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
                         onUpdateTitle = onUpdateTitle,
@@ -287,10 +275,8 @@ fun DestinationContent(
                 DataType.GROUP -> {
                     GroupPage(
                         modifier = modifier,
-                        server = server,
                         id = destination.id,
                         includeSubGroups = false,
-                        itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
                         onUpdateTitle = onUpdateTitle,
@@ -299,10 +285,8 @@ fun DestinationContent(
 
                 DataType.MARKER -> {
                     MarkerPage(
-                        server = server,
                         uiConfig = composeUiConfig,
                         markerId = destination.id,
-                        itemOnClick = itemOnClick,
                         onUpdateTitle = onUpdateTitle,
                     )
                 }

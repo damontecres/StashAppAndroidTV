@@ -1,10 +1,12 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import android.app.Application
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -25,6 +29,9 @@ import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.ItemClicker
+import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
@@ -33,8 +40,10 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.EditItem
+import com.github.damontecres.stashapp.ui.components.ErrorMessage
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.LoadingPage
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
@@ -45,186 +54,256 @@ import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.ui.showAddPerf
 import com.github.damontecres.stashapp.ui.showAddTag
 import com.github.damontecres.stashapp.ui.showSetStudio
+import com.github.damontecres.stashapp.ui.util.DataLoadingState
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getUiTabs
+import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
+import org.koin.core.parameter.parametersOf
 
 private const val TAG = "GalleryPage"
 
+@KoinViewModel
+class GalleryDetailsViewModel(
+    private val context: Application,
+    private val serverRepository: ServerRepository,
+    private val serverLogger: ServerLogger,
+    val queryEngine: com.github.damontecres.stashapp.di.server.QueryEngine,
+    val mutationEngine: com.github.damontecres.stashapp.di.server.MutationEngine,
+    val itemClicker: ItemClicker,
+    val navigationManager: com.github.damontecres.stashapp.di.services.NavigationManager,
+    @InjectedParam private val id: String,
+) : ViewModel() {
+    val currentServer get() = serverRepository.currentServer
+
+    private val _state = MutableStateFlow(GalleryState())
+    val state: StateFlow<GalleryState> = _state
+
+    init {
+        viewModelScope.launchIO {
+            _state.update { it.copy(gallery = DataLoadingState.Loading) }
+            try {
+                val gallery = queryEngine.getGallery(id)
+                if (gallery != null) {
+                    val tags = queryEngine.getTags(gallery.tags.map { it.slimTagData.id })
+                    _state.update {
+                        it.copy(
+                            gallery = DataLoadingState.Success(gallery),
+                            tags = tags,
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            gallery = DataLoadingState.Error("Not found: $id"),
+                        )
+                    }
+                }
+            } catch (ex: QueryEngine.QueryException) {
+                Log.e(TAG, "No gallery found with ID $id", ex)
+                Toast.makeText(context, "No tag found with ID $id", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+}
+
+data class GalleryState(
+    val gallery: DataLoadingState<GalleryData> = DataLoadingState.Pending,
+    val tags: List<TagData> = emptyList(),
+)
+
 @Composable
 fun GalleryPage(
-    server: StashServer,
     id: String,
-    itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
+    viewModel: GalleryDetailsViewModel =
+        koinViewModel {
+            parametersOf(id)
+        },
 ) {
     val context = LocalContext.current
-    var gallery by remember { mutableStateOf<GalleryData?>(null) }
-    var studio by remember { mutableStateOf<GalleryData.Studio?>(null) }
-    var tags by remember { mutableStateOf<List<TagData>>(listOf()) }
-    // Remember separately so we don't have refresh the whole page
-    var rating100 by remember { mutableIntStateOf(0) }
-    LaunchedEffect(id) {
-        try {
-            val queryEngine = QueryEngine(server)
-            gallery = queryEngine.getGallery(id)
-            gallery?.let {
-                rating100 = it.rating100 ?: 0
-                studio = it.studio
-                tags = queryEngine.getTags(it.tags.map { it.slimTagData.id })
-            }
-        } catch (ex: QueryEngine.QueryException) {
-            Log.e(TAG, "No gallery found with ID $id", ex)
-            Toast.makeText(context, "No gallery found with ID $id", Toast.LENGTH_LONG).show()
-        }
-    }
+    val state by viewModel.state.collectAsState()
+    val currentServer by viewModel.currentServer.collectAsState()
+    val serverPreferences = currentServer.serverPreferences
 
     val scope = rememberCoroutineScope()
 
     val createTab =
         createTabFunc(
-            server,
-            itemOnClick,
+            viewModel.itemClicker,
             longClicker,
             uiConfig,
         )
 
-    gallery?.let { gallery ->
-        val galleries =
-            Optional.present(
-                MultiCriterionInput(
-                    value = Optional.present(listOf(gallery.id)),
-                    modifier = CriterionModifier.INCLUDES_ALL,
-                ),
-            )
-        val uiTabs =
-            getUiTabs(uiConfig.preferences.interfacePreferences.tabPreferences, DataType.GALLERY)
-        val tabs =
-            listOf(
-                TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
-                    GalleryDetails(
-                        modifier = Modifier.fillMaxSize(),
-                        uiConfig = uiConfig,
-                        gallery = gallery,
-                        studio = studio,
-                        tags = tags,
-                        rating100 = rating100,
-                        rating100Click = { newRating100 ->
-                            val mutationEngine = MutationEngine(server)
-                            scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
-                                val newGallery =
-                                    mutationEngine.updateGallery(
-                                        galleryId = gallery.id,
-                                        rating100 = newRating100,
-                                    )
-                                if (newGallery != null) {
-                                    rating100 = newGallery.rating100 ?: 0
-                                    showSetRatingToast(
-                                        context,
-                                        newGallery.rating100 ?: 0,
-                                        server.serverPreferences.ratingsAsStars,
-                                    )
-                                }
-                            }
-                        },
-                        itemOnClick = itemOnClick,
-                        longClicker = longClicker,
-                        onEdit = { edit ->
-                            val mutationEngine = MutationEngine(server)
-                            val queryEngine = QueryEngine(server)
-                            scope.launch(StashCoroutineExceptionHandler()) {
-                                if (edit.dataType == DataType.TAG) {
-                                    val ids = tags.map { it.id }.toMutableList()
-                                    edit.action.exec(edit.id, ids)
-                                    val newGallery =
-                                        mutationEngine.updateGallery(
-                                            galleryId = gallery.id,
-                                            tagIds = ids,
-                                        )
-                                    val newTagIds =
-                                        newGallery?.let { it.tags.map { it.slimTagData.id } }
-                                    if (newTagIds != null) {
-                                        tags = queryEngine.getTags(newTagIds)
-                                        if (edit.action == AddRemove.ADD) {
-                                            tags
-                                                .firstOrNull { it.id == edit.id }
-                                                ?.let { showAddTag(it) }
-                                        }
-                                    }
-                                } else if (edit.dataType == DataType.PERFORMER) {
-                                    val ids =
-                                        gallery.performers
-                                            .map { it.slimPerformerData.id }
-                                            .toMutableList()
-                                    edit.action.exec(edit.id, ids)
-                                    val newGallery =
-                                        mutationEngine.updateGallery(
-                                            galleryId = gallery.id,
-                                            performerIds = ids,
-                                        )
-                                    if (newGallery != null) {
-                                        val perf = queryEngine.getPerformer(edit.id)
-                                        if (edit.action == AddRemove.ADD && perf != null) {
-                                            showAddPerf(perf)
-                                        }
-                                    }
-                                } else if (edit.dataType == DataType.STUDIO) {
-                                    val newGallery =
-                                        mutationEngine.updateGallery(
-                                            galleryId = gallery.id,
-                                            studioId = edit.id,
-                                        )
-                                    if (newGallery != null) {
-                                        studio = newGallery.studio
-                                        if (edit.action == AddRemove.ADD && newGallery.studio != null) {
-                                            showSetStudio(newGallery.studio.name)
-                                        }
-                                    }
-                                }
-                            }
-                        },
+    when (val st = state.gallery) {
+        is DataLoadingState.Error -> {
+            ErrorMessage(null, st.exception)
+        }
+
+        DataLoadingState.Loading,
+        DataLoadingState.Pending,
+        -> {
+            LoadingPage(modifier)
+        }
+
+        is DataLoadingState.Success<GalleryData> -> {
+            val gallery = st.data
+            var studio by remember { mutableStateOf<GalleryData.Studio?>(gallery.studio) }
+            var tags by remember { mutableStateOf<List<TagData>>(state.tags) }
+            // Remember separately so we don't have refresh the whole page
+            var rating100 by remember { mutableIntStateOf(gallery.rating100 ?: 0) }
+
+            val galleries =
+                remember(gallery) {
+                    Optional.present(
+                        MultiCriterionInput(
+                            value = Optional.present(listOf(gallery.id)),
+                            modifier = CriterionModifier.INCLUDES_ALL,
+                        ),
                     )
-                },
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.IMAGE,
-                        findFilter = tabFindFilter(server, PageFilterKey.GALLERY_IMAGES),
-                        objectFilter = ImageFilterType(galleries = galleries),
+                }
+            val uiTabs =
+                getUiTabs(
+                    uiConfig.preferences.interfacePreferences.tabPreferences,
+                    DataType.GALLERY,
+                )
+            val tabs =
+                listOf(
+                    TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
+                        GalleryDetails(
+                            modifier = Modifier.fillMaxSize(),
+                            uiConfig = uiConfig,
+                            gallery = gallery,
+                            studio = studio,
+                            tags = tags,
+                            rating100 = rating100,
+                            rating100Click = { newRating100 ->
+                                scope.launch(
+                                    LoggingCoroutineExceptionHandler(
+                                        currentServer,
+                                        scope,
+                                    ),
+                                ) {
+                                    val newGallery =
+                                        viewModel.mutationEngine.updateGallery(
+                                            galleryId = gallery.id,
+                                            rating100 = newRating100,
+                                        )
+                                    if (newGallery != null) {
+                                        rating100 = newGallery.rating100 ?: 0
+                                        showSetRatingToast(
+                                            context,
+                                            newGallery.rating100 ?: 0,
+                                            serverPreferences.ratingsAsStars,
+                                        )
+                                    }
+                                }
+                            },
+                            itemOnClick = viewModel.itemClicker,
+                            longClicker = longClicker,
+                            onEdit = { edit ->
+                                scope.launch(StashCoroutineExceptionHandler()) {
+                                    if (edit.dataType == DataType.TAG) {
+                                        val ids = tags.map { it.id }.toMutableList()
+                                        edit.action.exec(edit.id, ids)
+                                        val newGallery =
+                                            viewModel.mutationEngine.updateGallery(
+                                                galleryId = gallery.id,
+                                                tagIds = ids,
+                                            )
+                                        val newTagIds =
+                                            newGallery?.let { it.tags.map { it.slimTagData.id } }
+                                        if (newTagIds != null) {
+                                            tags = viewModel.queryEngine.getTags(newTagIds)
+                                            if (edit.action == AddRemove.ADD) {
+                                                tags
+                                                    .firstOrNull { it.id == edit.id }
+                                                    ?.let { showAddTag(it) }
+                                            }
+                                        }
+                                    } else if (edit.dataType == DataType.PERFORMER) {
+                                        val ids =
+                                            gallery.performers
+                                                .map { it.slimPerformerData.id }
+                                                .toMutableList()
+                                        edit.action.exec(edit.id, ids)
+                                        val newGallery =
+                                            viewModel.mutationEngine.updateGallery(
+                                                galleryId = gallery.id,
+                                                performerIds = ids,
+                                            )
+                                        if (newGallery != null) {
+                                            val perf = viewModel.queryEngine.getPerformer(edit.id)
+                                            if (edit.action == AddRemove.ADD && perf != null) {
+                                                showAddPerf(perf)
+                                            }
+                                        }
+                                    } else if (edit.dataType == DataType.STUDIO) {
+                                        val newGallery =
+                                            viewModel.mutationEngine.updateGallery(
+                                                galleryId = gallery.id,
+                                                studioId = edit.id,
+                                            )
+                                        if (newGallery != null) {
+                                            studio = newGallery.studio
+                                            if (edit.action == AddRemove.ADD && newGallery.studio != null) {
+                                                showSetStudio(newGallery.studio.name)
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                        )
+                    },
+                    createTab(
+                        FilterArgs(
+                            dataType = DataType.IMAGE,
+                            findFilter =
+                                tabFindFilter(
+                                    serverPreferences,
+                                    PageFilterKey.GALLERY_IMAGES,
+                                ),
+                            objectFilter = ImageFilterType(galleries = galleries),
+                        ),
                     ),
-                ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.SCENE,
-                        objectFilter = SceneFilterType(galleries = galleries),
+                    createTab(
+                        FilterArgs(
+                            dataType = DataType.SCENE,
+                            objectFilter = SceneFilterType(galleries = galleries),
+                        ),
                     ),
-                ),
-                createTab(
-                    FilterArgs(
-                        dataType = DataType.PERFORMER,
-                        override = DataSupplierOverride.GalleryPerformer(gallery.id),
+                    createTab(
+                        FilterArgs(
+                            dataType = DataType.PERFORMER,
+                            override = DataSupplierOverride.GalleryPerformer(gallery.id),
+                        ),
                     ),
-                ),
-            ).filter { it.type in uiTabs }
-        val title = AnnotatedString(gallery.name ?: "")
-        LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
-        TabPage(
-            title,
-            uiConfig.preferences.interfacePreferences.rememberSelectedTab,
-            tabs,
-            DataType.GALLERY,
-            modifier,
-            onUpdateTitle == null,
-        )
+                ).filter { it.type in uiTabs }
+            val title = AnnotatedString(gallery.name ?: "")
+            LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
+            TabPage(
+                title,
+                uiConfig.preferences.interfacePreferences.rememberSelectedTab,
+                tabs,
+                DataType.GALLERY,
+                modifier,
+                onUpdateTitle == null,
+            )
+        }
     }
 }
 

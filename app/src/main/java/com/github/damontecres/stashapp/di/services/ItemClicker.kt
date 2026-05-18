@@ -8,14 +8,15 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import org.koin.core.annotation.Single
 
 @Single
 class ItemClicker(
     private val context: Application,
     private val navigationManager: NavigationManager,
-) {
-    fun onClick(
+) : ItemOnClicker<Any> {
+    override fun onClick(
         item: Any,
         filterAndPosition: FilterAndPosition?,
     ) {

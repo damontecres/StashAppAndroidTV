@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import android.app.Application
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +28,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
@@ -45,6 +49,9 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.ItemClicker
+import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
@@ -52,9 +59,11 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.cards.CardContext
+import com.github.damontecres.stashapp.ui.components.ErrorMessage
 import com.github.damontecres.stashapp.ui.components.ItemDetailsFooter
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
+import com.github.damontecres.stashapp.ui.components.LoadingPage
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
 import com.github.damontecres.stashapp.ui.components.StashGridTab
@@ -66,303 +75,365 @@ import com.github.damontecres.stashapp.ui.components.ratingBarHeight
 import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.ui.filterArgsSaver
 import com.github.damontecres.stashapp.ui.titleCount
+import com.github.damontecres.stashapp.ui.util.DataLoadingState
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "GroupPage"
 
+@KoinViewModel
+class GroupDetailsViewModel(
+    private val context: Application,
+    private val serverRepository: ServerRepository,
+    private val serverLogger: ServerLogger,
+    val queryEngine: com.github.damontecres.stashapp.di.server.QueryEngine,
+    val mutationEngine: com.github.damontecres.stashapp.di.server.MutationEngine,
+    val itemClicker: ItemClicker,
+    val navigationManager: com.github.damontecres.stashapp.di.services.NavigationManager,
+    @InjectedParam private val id: String,
+) : ViewModel() {
+    val currentServer get() = serverRepository.currentServer
+
+    private val _state = MutableStateFlow(GroupState())
+    val state: StateFlow<GroupState> = _state
+
+    init {
+        viewModelScope.launchIO {
+            _state.update { it.copy(group = DataLoadingState.Loading) }
+            try {
+                val group = queryEngine.getGroup(id)
+                if (group != null) {
+                    val tags = queryEngine.getTags(group.tags.map { it.slimTagData.id })
+                    _state.update {
+                        it.copy(
+                            group = DataLoadingState.Success(group),
+                            tags = tags,
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            group = DataLoadingState.Error("Not found: $id"),
+                        )
+                    }
+                }
+            } catch (ex: QueryEngine.QueryException) {
+                Log.e(TAG, "No group found with ID $id", ex)
+                Toast.makeText(context, "No group found with ID $id", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+}
+
+data class GroupState(
+    val group: DataLoadingState<GroupData> = DataLoadingState.Pending,
+    val tags: List<TagData> = emptyList(),
+)
+
 @Composable
 fun GroupPage(
-    server: StashServer,
     id: String,
     includeSubGroups: Boolean,
-    itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
+    viewModel: GroupDetailsViewModel =
+        koinViewModel {
+            parametersOf(id)
+        },
 ) {
-    var group by remember { mutableStateOf<GroupData?>(null) }
-    // Remember separately so we don't have refresh the whole page
-    var rating100 by remember { mutableIntStateOf(0) }
-    var tags by remember { mutableStateOf<List<TagData>>(listOf()) }
+    val state by viewModel.state.collectAsState()
+    val currentServer by viewModel.currentServer.collectAsState()
+    val serverPreferences = currentServer.serverPreferences
+
     val context = LocalContext.current
-    LaunchedEffect(id) {
-        try {
-            val queryEngine = QueryEngine(server)
-            group = queryEngine.getGroup(id)
-            group?.let {
-                rating100 = it.rating100 ?: 0
-                tags = queryEngine.getTags(it.tags.map { it.slimTagData.id })
-            }
-        } catch (ex: QueryEngine.QueryException) {
-            Log.e(TAG, "No group found with ID $id", ex)
-            Toast.makeText(context, "No group found with ID $id", Toast.LENGTH_LONG).show()
-        }
-    }
     val scope = rememberCoroutineScope()
-
-    group?.let { group ->
-        val subToggleLabel =
-            if (group.sub_group_count > 0) stringResource(R.string.stashapp_include_sub_group_content) else null
-        val groupsFunc = { includeSubGroups: Boolean ->
-            Optional.present(
-                HierarchicalMultiCriterionInput(
-                    value = Optional.present(listOf(group.id)),
-                    modifier = CriterionModifier.INCLUDES,
-                    depth = Optional.present(if (includeSubGroups) -1 else 0),
-                ),
-            )
+    when (val st = state.group) {
+        is DataLoadingState.Error -> {
+            ErrorMessage(null, st.exception)
         }
 
-        val detailsTab =
-            TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
-                GroupDetails(
-                    modifier = Modifier.fillMaxSize(),
-                    uiConfig = uiConfig,
-                    group = group,
-                    tags = tags,
-                    rating100 = rating100,
-                    rating100Click = { newRating100 ->
-                        val mutationEngine = MutationEngine(server)
-                        scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
-                            val newGroup =
-                                mutationEngine.updateGroup(
-                                    groupId = group.id,
-                                    rating100 = newRating100,
-                                )
-                            if (newGroup != null) {
-                                rating100 = newGroup.rating100 ?: 0
-                                showSetRatingToast(
-                                    context,
-                                    newGroup.rating100 ?: 0,
-                                    server.serverPreferences.ratingsAsStars,
-                                )
+        DataLoadingState.Loading,
+        DataLoadingState.Pending,
+        -> {
+            LoadingPage(modifier)
+        }
+
+        is DataLoadingState.Success<GroupData> -> {
+            val group = st.data
+            // Remember separately so we don't have refresh the whole page
+            var rating100 by remember { mutableIntStateOf(group.rating100 ?: 0) }
+            var tags by remember { mutableStateOf<List<TagData>>(state.tags) }
+            val subToggleLabel =
+                if (group.sub_group_count > 0) stringResource(R.string.stashapp_include_sub_group_content) else null
+            val groupsFunc = { includeSubGroups: Boolean ->
+                Optional.present(
+                    HierarchicalMultiCriterionInput(
+                        value = Optional.present(listOf(group.id)),
+                        modifier = CriterionModifier.INCLUDES,
+                        depth = Optional.present(if (includeSubGroups) -1 else 0),
+                    ),
+                )
+            }
+
+            val detailsTab =
+                TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
+                    GroupDetails(
+                        modifier = Modifier.fillMaxSize(),
+                        uiConfig = uiConfig,
+                        group = group,
+                        tags = tags,
+                        rating100 = rating100,
+                        rating100Click = { newRating100 ->
+                            scope.launch(LoggingCoroutineExceptionHandler(currentServer, scope)) {
+                                val newGroup =
+                                    viewModel.mutationEngine.updateGroup(
+                                        groupId = group.id,
+                                        rating100 = newRating100,
+                                    )
+                                if (newGroup != null) {
+                                    rating100 = newGroup.rating100 ?: 0
+                                    showSetRatingToast(
+                                        context,
+                                        newGroup.rating100 ?: 0,
+                                        serverPreferences.ratingsAsStars,
+                                    )
+                                }
                             }
-                        }
-                    },
-                    itemOnClick = itemOnClick,
-                    longClicker = longClicker,
-                )
-            }
-
-        // Scenes
-        var scenesSubTags by rememberSaveable { mutableStateOf(false) }
-        var scenesFilter by rememberSaveable(scenesSubTags, saver = filterArgsSaver) {
-            mutableStateOf(
-                FilterArgs(
-                    DataType.SCENE,
-                    findFilter =
-                        tabFindFilter(server, PageFilterKey.GROUP_SCENES)
-                            ?: StashFindFilter(
-                                SortAndDirection(
-                                    SortOption.GroupSceneNumber,
-                                    SortDirectionEnum.ASC,
-                                ),
-                            ),
-                    objectFilter = SceneFilterType(groups = groupsFunc(scenesSubTags)),
-                ),
-            )
-        }
-        val cardContext =
-            remember(group.id) { CardContext.SceneCardContext(sceneInGroupId = group.id) }
-        val scenesTab =
-            remember(scenesFilter, scenesSubTags) {
-                TabProvider(
-                    context.getString(R.string.stashapp_scenes),
-                    TabType.SCENES,
-                ) { positionCallback ->
-                    StashGridTab(
-                        name = context.getString(R.string.stashapp_scenes),
-                        server = server,
-                        initialFilter = scenesFilter,
-                        itemOnClick = itemOnClick,
-                        longClicker = longClicker,
-                        modifier = Modifier,
-                        positionCallback = positionCallback,
-                        subToggleLabel = subToggleLabel,
-                        onSubToggleCheck = { scenesSubTags = it },
-                        subToggleChecked = scenesSubTags,
-                        composeUiConfig = uiConfig,
-                        onFilterChange = { scenesFilter = it },
-                        cardContext = { _, _ -> cardContext },
-                    )
-                }
-            }
-
-        // Performers
-        var performersSubTags by rememberSaveable { mutableStateOf(false) }
-        var performerFilter by rememberSaveable(performersSubTags, saver = filterArgsSaver) {
-            mutableStateOf(
-                FilterArgs(
-                    DataType.PERFORMER,
-                    findFilter = tabFindFilter(server, PageFilterKey.GROUP_PERFORMERS),
-                    objectFilter = PerformerFilterType(groups = groupsFunc(performersSubTags)),
-                ),
-            )
-        }
-        val performerTab =
-            remember(performerFilter, performersSubTags) {
-                TabProvider(
-                    context.getString(R.string.stashapp_performers),
-                    TabType.PERFORMERS,
-                ) { positionCallback ->
-                    StashGridTab(
-                        name = context.getString(R.string.stashapp_performers),
-                        server = server,
-                        initialFilter = performerFilter,
-                        itemOnClick = itemOnClick,
-                        longClicker = longClicker,
-                        modifier = Modifier,
-                        positionCallback = positionCallback,
-                        subToggleLabel = subToggleLabel,
-                        onSubToggleCheck = { performersSubTags = it },
-                        subToggleChecked = performersSubTags,
-                        composeUiConfig = uiConfig,
-                        onFilterChange = { performerFilter = it },
-                    )
-                }
-            }
-
-        // markers
-        var markersSubTags by rememberSaveable { mutableStateOf(false) }
-        var markersFilter by rememberSaveable(markersSubTags, saver = filterArgsSaver) {
-            mutableStateOf(
-                FilterArgs(
-                    DataType.MARKER,
-                    findFilter = null,
-                    objectFilter =
-                        SceneMarkerFilterType(
-                            scene_filter =
-                                Optional.present(
-                                    SceneFilterType(groups = groupsFunc(markersSubTags)),
-                                ),
-                        ),
-                ),
-            )
-        }
-        val markersTab =
-            remember(markersSubTags, markersFilter) {
-                TabProvider(
-                    context.getString(R.string.stashapp_markers),
-                    TabType.MARKERS,
-                ) { positionCallback ->
-                    StashGridTab(
-                        name = context.getString(R.string.stashapp_markers),
-                        server = server,
-                        initialFilter = markersFilter,
-                        itemOnClick = itemOnClick,
-                        longClicker = longClicker,
-                        modifier = Modifier,
-                        positionCallback = positionCallback,
-                        subToggleLabel = subToggleLabel,
-                        onSubToggleCheck = { markersSubTags = it },
-                        subToggleChecked = markersSubTags,
-                        composeUiConfig = uiConfig,
-                        onFilterChange = { markersFilter = it },
-                    )
-                }
-            }
-
-        // containing groups
-        val containingGroupsTab =
-            TabProvider(
-                stringResource(R.string.stashapp_containing_groups),
-                TabType.CONTAINING_GROUPS,
-            ) { positionCallback ->
-                var filter by rememberSaveable(saver = filterArgsSaver) {
-                    mutableStateOf(
-                        FilterArgs(
-                            dataType = DataType.GROUP,
-                            override =
-                                DataSupplierOverride.GroupRelationship(
-                                    group.id,
-                                    GroupRelationshipType.CONTAINING,
-                                ),
-                        ),
-                    )
-                }
-                StashGridTab(
-                    name = stringResource(R.string.stashapp_containing_groups),
-                    server = server,
-                    initialFilter = filter,
-                    itemOnClick = itemOnClick,
-                    longClicker = longClicker,
-                    modifier = Modifier,
-                    positionCallback = positionCallback,
-                    composeUiConfig = uiConfig,
-                    subToggleLabel = null,
-                    onFilterChange = { filter = it },
-                )
-            }
-
-        // sub groups
-        val subGroupsTab =
-            TabProvider(
-                stringResource(R.string.stashapp_sub_groups),
-                TabType.SUB_GROUPS,
-            ) { positionCallback ->
-                var filter by rememberSaveable(saver = filterArgsSaver) {
-                    mutableStateOf(
-                        FilterArgs(
-                            dataType = DataType.GROUP,
-                            findFilter = tabFindFilter(server, PageFilterKey.GROUP_SUB_GROUPS),
-                            override =
-                                DataSupplierOverride.GroupRelationship(
-                                    group.id,
-                                    GroupRelationshipType.SUB,
-                                ),
-                        ),
-                    )
-                }
-                StashGridTab(
-                    name = stringResource(R.string.stashapp_sub_groups),
-                    server = server,
-                    initialFilter = filter,
-                    itemOnClick = itemOnClick,
-                    longClicker = longClicker,
-                    composeUiConfig = uiConfig,
-                    modifier = Modifier,
-                    positionCallback = positionCallback,
-                    subToggleLabel =
-                        if (group.sub_group_count > 0) {
-                            stringResource(R.string.stashapp_include_sub_group_content)
-                        } else {
-                            null
                         },
-                    onFilterChange = { filter = it },
+                        itemOnClick = viewModel.itemClicker,
+                        longClicker = longClicker,
+                    )
+                }
+
+            // Scenes
+            var scenesSubTags by rememberSaveable { mutableStateOf(false) }
+            var scenesFilter by rememberSaveable(scenesSubTags, saver = filterArgsSaver) {
+                mutableStateOf(
+                    FilterArgs(
+                        DataType.SCENE,
+                        findFilter =
+                            tabFindFilter(serverPreferences, PageFilterKey.GROUP_SCENES)
+                                ?: StashFindFilter(
+                                    SortAndDirection(
+                                        SortOption.GroupSceneNumber,
+                                        SortDirectionEnum.ASC,
+                                    ),
+                                ),
+                        objectFilter = SceneFilterType(groups = groupsFunc(scenesSubTags)),
+                    ),
                 )
             }
+            val cardContext =
+                remember(group.id) { CardContext.SceneCardContext(sceneInGroupId = group.id) }
+            val scenesTab =
+                remember(scenesFilter, scenesSubTags) {
+                    TabProvider(
+                        context.getString(R.string.stashapp_scenes),
+                        TabType.SCENES,
+                    ) { positionCallback ->
+                        StashGridTab(
+                            name = context.getString(R.string.stashapp_scenes),
+                            initialFilter = scenesFilter,
+                            itemOnClick = viewModel.itemClicker,
+                            longClicker = longClicker,
+                            modifier = Modifier,
+                            positionCallback = positionCallback,
+                            subToggleLabel = subToggleLabel,
+                            onSubToggleCheck = { scenesSubTags = it },
+                            subToggleChecked = scenesSubTags,
+                            composeUiConfig = uiConfig,
+                            onFilterChange = { scenesFilter = it },
+                            cardContext = { _, _ -> cardContext },
+                        )
+                    }
+                }
 
-        val uiTabs =
-            getUiTabs(uiConfig.preferences.interfacePreferences.tabPreferences, DataType.GROUP)
-        val tabs =
-            listOf(
-                detailsTab,
-                scenesTab,
-                performerTab,
-                markersTab,
-                containingGroupsTab,
-                subGroupsTab,
-            ).filter { it.type in uiTabs }
-        val title = AnnotatedString(group.name)
-        LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
-        TabPage(
-            title,
-            uiConfig.preferences.interfacePreferences.rememberSelectedTab,
-            tabs,
-            DataType.GROUP,
-            modifier,
-            onUpdateTitle == null,
-        )
+            // Performers
+            var performersSubTags by rememberSaveable { mutableStateOf(false) }
+            var performerFilter by rememberSaveable(performersSubTags, saver = filterArgsSaver) {
+                mutableStateOf(
+                    FilterArgs(
+                        DataType.PERFORMER,
+                        findFilter =
+                            tabFindFilter(
+                                serverPreferences,
+                                PageFilterKey.GROUP_PERFORMERS,
+                            ),
+                        objectFilter = PerformerFilterType(groups = groupsFunc(performersSubTags)),
+                    ),
+                )
+            }
+            val performerTab =
+                remember(performerFilter, performersSubTags) {
+                    TabProvider(
+                        context.getString(R.string.stashapp_performers),
+                        TabType.PERFORMERS,
+                    ) { positionCallback ->
+                        StashGridTab(
+                            name = context.getString(R.string.stashapp_performers),
+                            initialFilter = performerFilter,
+                            itemOnClick = viewModel.itemClicker,
+                            longClicker = longClicker,
+                            modifier = Modifier,
+                            positionCallback = positionCallback,
+                            subToggleLabel = subToggleLabel,
+                            onSubToggleCheck = { performersSubTags = it },
+                            subToggleChecked = performersSubTags,
+                            composeUiConfig = uiConfig,
+                            onFilterChange = { performerFilter = it },
+                        )
+                    }
+                }
+
+            // markers
+            var markersSubTags by rememberSaveable { mutableStateOf(false) }
+            var markersFilter by rememberSaveable(markersSubTags, saver = filterArgsSaver) {
+                mutableStateOf(
+                    FilterArgs(
+                        DataType.MARKER,
+                        findFilter = null,
+                        objectFilter =
+                            SceneMarkerFilterType(
+                                scene_filter =
+                                    Optional.present(
+                                        SceneFilterType(groups = groupsFunc(markersSubTags)),
+                                    ),
+                            ),
+                    ),
+                )
+            }
+            val markersTab =
+                remember(markersSubTags, markersFilter) {
+                    TabProvider(
+                        context.getString(R.string.stashapp_markers),
+                        TabType.MARKERS,
+                    ) { positionCallback ->
+                        StashGridTab(
+                            name = context.getString(R.string.stashapp_markers),
+                            initialFilter = markersFilter,
+                            itemOnClick = viewModel.itemClicker,
+                            longClicker = longClicker,
+                            modifier = Modifier,
+                            positionCallback = positionCallback,
+                            subToggleLabel = subToggleLabel,
+                            onSubToggleCheck = { markersSubTags = it },
+                            subToggleChecked = markersSubTags,
+                            composeUiConfig = uiConfig,
+                            onFilterChange = { markersFilter = it },
+                        )
+                    }
+                }
+
+            // containing groups
+            val containingGroupsTab =
+                TabProvider(
+                    stringResource(R.string.stashapp_containing_groups),
+                    TabType.CONTAINING_GROUPS,
+                ) { positionCallback ->
+                    var filter by rememberSaveable(saver = filterArgsSaver) {
+                        mutableStateOf(
+                            FilterArgs(
+                                dataType = DataType.GROUP,
+                                override =
+                                    DataSupplierOverride.GroupRelationship(
+                                        group.id,
+                                        GroupRelationshipType.CONTAINING,
+                                    ),
+                            ),
+                        )
+                    }
+                    StashGridTab(
+                        name = stringResource(R.string.stashapp_containing_groups),
+                        initialFilter = filter,
+                        itemOnClick = viewModel.itemClicker,
+                        longClicker = longClicker,
+                        modifier = Modifier,
+                        positionCallback = positionCallback,
+                        composeUiConfig = uiConfig,
+                        subToggleLabel = null,
+                        onFilterChange = { filter = it },
+                    )
+                }
+
+            // sub groups
+            val subGroupsTab =
+                TabProvider(
+                    stringResource(R.string.stashapp_sub_groups),
+                    TabType.SUB_GROUPS,
+                ) { positionCallback ->
+                    var filter by rememberSaveable(saver = filterArgsSaver) {
+                        mutableStateOf(
+                            FilterArgs(
+                                dataType = DataType.GROUP,
+                                findFilter =
+                                    tabFindFilter(
+                                        serverPreferences,
+                                        PageFilterKey.GROUP_SUB_GROUPS,
+                                    ),
+                                override =
+                                    DataSupplierOverride.GroupRelationship(
+                                        group.id,
+                                        GroupRelationshipType.SUB,
+                                    ),
+                            ),
+                        )
+                    }
+                    StashGridTab(
+                        name = stringResource(R.string.stashapp_sub_groups),
+                        initialFilter = filter,
+                        itemOnClick = viewModel.itemClicker,
+                        longClicker = longClicker,
+                        composeUiConfig = uiConfig,
+                        modifier = Modifier,
+                        positionCallback = positionCallback,
+                        subToggleLabel =
+                            if (group.sub_group_count > 0) {
+                                stringResource(R.string.stashapp_include_sub_group_content)
+                            } else {
+                                null
+                            },
+                        onFilterChange = { filter = it },
+                    )
+                }
+
+            val uiTabs =
+                getUiTabs(uiConfig.preferences.interfacePreferences.tabPreferences, DataType.GROUP)
+            val tabs =
+                listOf(
+                    detailsTab,
+                    scenesTab,
+                    performerTab,
+                    markersTab,
+                    containingGroupsTab,
+                    subGroupsTab,
+                ).filter { it.type in uiTabs }
+            val title = AnnotatedString(group.name)
+            LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
+            TabPage(
+                title,
+                uiConfig.preferences.interfacePreferences.rememberSelectedTab,
+                tabs,
+                DataType.GROUP,
+                modifier,
+                onUpdateTitle == null,
+            )
+        }
     }
 }
 
