@@ -1,4 +1,5 @@
 [versions]
+aboutLibraries = "14.1.0"
 acra = "5.13.1"
 activity-compose = "1.13.0"
 androidsvg-aar = "1.4"
@@ -64,6 +65,8 @@ appcompat = "1.7.1"
 activityKtx = "1.13.0"
 
 [libraries]
+aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutLibraries" }
+aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutLibraries" }
 acra-dialog = { module = "ch.acra:acra-dialog", version.ref = "acra" }
 acra-http = { module = "ch.acra:acra-http", version.ref = "acra" }
 acra-limiter = { module = "ch.acra:acra-limiter", version.ref = "acra" }
@@ -169,3 +172,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobuf" }
 koin-compiler = { id = "io.insert-koin.compiler.plugin", version.ref = "koin-plugin" }
+aboutLibraries = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutLibraries" }

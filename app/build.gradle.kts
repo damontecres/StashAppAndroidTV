@@ -32,6 +32,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.protobuf)
     alias(libs.plugins.koin.compiler)
+    alias(libs.plugins.aboutLibraries)
 }
 
 val gitTags =
@@ -244,6 +245,8 @@ dependencies {
     implementation(libs.androidx.material3.adaptive.navigation3)
     implementation(libs.android.material)
     implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.aboutlibraries.core)
+    implementation(libs.aboutlibraries.compose.m3)
 
     implementation(kotlin("reflect"))
 

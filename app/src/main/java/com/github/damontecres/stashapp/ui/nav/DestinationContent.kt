@@ -14,7 +14,6 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.filter.CreateFilterScreen
-import com.github.damontecres.stashapp.ui.components.server.InitialSetup
 import com.github.damontecres.stashapp.ui.components.server.ManageServers
 import com.github.damontecres.stashapp.ui.pages.ChooseThemePage
 import com.github.damontecres.stashapp.ui.pages.DebugPage
@@ -22,6 +21,7 @@ import com.github.damontecres.stashapp.ui.pages.FilterPage
 import com.github.damontecres.stashapp.ui.pages.GalleryPage
 import com.github.damontecres.stashapp.ui.pages.GroupPage
 import com.github.damontecres.stashapp.ui.pages.ImagePage
+import com.github.damontecres.stashapp.ui.pages.LicenseInfoPage
 import com.github.damontecres.stashapp.ui.pages.MainPage
 import com.github.damontecres.stashapp.ui.pages.MarkerPage
 import com.github.damontecres.stashapp.ui.pages.MarkerTimestampPage
@@ -303,11 +303,7 @@ fun DestinationContent(
         }
 
         Destination.LicenseInfo -> {
-            TODO()
-        }
-
-        Destination.Setup -> {
-            InitialSetup(modifier)
+            LicenseInfoPage(modifier)
         }
     }
 }
