@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -22,6 +23,8 @@ import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.ui.AppTheme
+import com.github.damontecres.stashapp.ui.GlobalContext
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.chooseColorScheme
 import com.github.damontecres.stashapp.ui.defaultColorSchemeSet
 import com.github.damontecres.stashapp.ui.nav.ApplicationContent
@@ -32,13 +35,13 @@ import com.github.damontecres.stashapp.util.preferences
 import okhttp3.OkHttpClient
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
+import org.koin.core.qualifier.qualifier
 
 class MainActivity : AppCompatActivity() {
     private val navigationManager: NavigationManager by inject()
     private val serverRepository: ServerRepository by inject()
 
-    @AuthHttpClient
-    private val httpClient: OkHttpClient = get()
+    private val httpClient: OkHttpClient = get(qualifier<AuthHttpClient>())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,43 +73,52 @@ class MainActivity : AppCompatActivity() {
                     val currentServer by serverRepository.currentServer.collectAsState()
                     if (currentServer != CurrentServer.UNSET) {
                         key(currentServer) {
-                            ApplicationContent(
-                                currentServer = currentServer,
-                                preferences = preferences,
-                                navigationManager = navigationManager,
-                                onSwitchServer = {
-                                    TODO()
-                                },
-                                onChangeTheme = { name ->
-                                    try {
-                                        colorScheme =
-                                            chooseColorScheme(
-                                                preferences.interfacePreferences.themeStyle,
-                                                isSystemInDarkTheme,
-                                                if (name.isNullOrBlank() || name == "default") {
-                                                    defaultColorSchemeSet
-                                                } else {
-                                                    readThemeJson(
-                                                        this@MainActivity,
-                                                        name,
-                                                    )
-                                                },
-                                            )
-                                        Logger.i { "Updated theme" }
-                                    } catch (ex: Exception) {
-                                        Logger.e(ex) { "Exception changing theme" }
-                                        Toast
-                                            .makeText(
-                                                this@MainActivity,
-                                                "Error changing theme: ${ex.localizedMessage}",
-                                                Toast.LENGTH_LONG,
-                                            ).show()
-                                    }
-                                },
-                                modifier = Modifier.background(MaterialTheme.colorScheme.background),
-                                // TODO could use onKeyEvent here to make focus/movement sounds everywhere
-                                // But it wouldn't know if the focus would actually change
-                            )
+                            CompositionLocalProvider(
+                                LocalGlobalContext provides
+                                    GlobalContext(
+                                        currentServer,
+                                        navigationManager,
+                                        preferences,
+                                    ),
+                            ) {
+                                ApplicationContent(
+                                    currentServer = currentServer,
+                                    preferences = preferences,
+                                    navigationManager = navigationManager,
+                                    onSwitchServer = {
+                                        TODO()
+                                    },
+                                    onChangeTheme = { name ->
+                                        try {
+                                            colorScheme =
+                                                chooseColorScheme(
+                                                    preferences.interfacePreferences.themeStyle,
+                                                    isSystemInDarkTheme,
+                                                    if (name.isNullOrBlank() || name == "default") {
+                                                        defaultColorSchemeSet
+                                                    } else {
+                                                        readThemeJson(
+                                                            this@MainActivity,
+                                                            name,
+                                                        )
+                                                    },
+                                                )
+                                            Logger.i { "Updated theme" }
+                                        } catch (ex: Exception) {
+                                            Logger.e(ex) { "Exception changing theme" }
+                                            Toast
+                                                .makeText(
+                                                    this@MainActivity,
+                                                    "Error changing theme: ${ex.localizedMessage}",
+                                                    Toast.LENGTH_LONG,
+                                                ).show()
+                                        }
+                                    },
+                                    modifier = Modifier.background(MaterialTheme.colorScheme.background),
+                                    // TODO could use onKeyEvent here to make focus/movement sounds everywhere
+                                    // But it wouldn't know if the focus would actually change
+                                )
+                            }
                         }
                     }
                 }

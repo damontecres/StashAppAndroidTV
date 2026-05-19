@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
-import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -43,7 +42,6 @@ import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.screensaver.ChooseScreensaverFilterDialog
@@ -124,7 +122,6 @@ val uiPreferences =
         PreferenceGroup(
             R.string.new_ui,
             listOf(
-                StashPreference.UseNewUI,
                 StashPreference.GridJumpButtons,
                 StashPreference.ShowProgressSkipping,
                 StashPreference.MovementSound,
@@ -265,7 +262,7 @@ fun PreferencesContent(
     if (preferences.updatePreferences.checkForUpdates) {
         LaunchedEffect(Unit) {
             updateVersion =
-                UpdateChecker.getLatestRelease(context, preferences.updatePreferences.updateUrl)
+                viewModel.updateChecker.getLatestRelease(preferences.updatePreferences.updateUrl)
         }
     }
 
@@ -424,8 +421,7 @@ fun PreferencesContent(
                                         } else {
                                             scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                                                 updateVersion =
-                                                    UpdateChecker.getLatestRelease(
-                                                        context,
+                                                    viewModel.updateChecker.getLatestRelease(
                                                         preferences.updatePreferences.updateUrl,
                                                     )
                                             }
@@ -509,14 +505,6 @@ fun PreferencesContent(
                                                                     .isNotNullOrBlank(),
                                                             )
                                                         }
-                                                    }
-                                                    if (pref == StashPreference.UseNewUI && newValue is Boolean && !newValue) {
-                                                        context.startActivity(
-                                                            Intent(
-                                                                context,
-                                                                RootActivity::class.java,
-                                                            ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
-                                                        )
                                                     }
                                                 }
                                             }

@@ -14,7 +14,6 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.util.EventLogger
 import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.ts.TsExtractor
-import com.github.damontecres.stashapp.StashExoPlayer.Companion.getInstance
 import com.github.damontecres.stashapp.di.AuthHttpClient
 import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.server.StashServer

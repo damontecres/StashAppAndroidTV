@@ -114,6 +114,7 @@ class MainPageViewModel(
     private val serverRepository: ServerRepository,
     private val preferences: DataStore<StashPreferences>,
     val itemClicker: ItemClicker,
+    val updateChecker: UpdateChecker,
 ) : ViewModel() {
     val frontPageRows = mutableStateListOf<FrontPageParser.FrontPageRow.Success>()
 
@@ -169,8 +170,7 @@ class MainPageViewModel(
             val updatePrefs = preferences.data.first().updatePreferences
             if (updatePrefs.checkForUpdates) {
                 try {
-                    UpdateChecker.maybeShowUpdateToast(
-                        context,
+                    updateChecker.maybeShowUpdateToast(
                         updatePrefs.updateUrl,
                         false,
                     )
@@ -399,7 +399,7 @@ fun HomePageRow(
         var focusedIndex by rememberSaveable { mutableIntStateOf(0) }
         val rowModifier =
             if (rowFocusRequester != null) Modifier.focusRequester(rowFocusRequester) else Modifier
-        val server = LocalGlobalContext.current.server
+        val server = LocalGlobalContext.current.current.server
         LazyRow(
             modifier =
                 rowModifier
@@ -414,7 +414,6 @@ fun HomePageRow(
                         if (isPlayKeyUp(it)) {
                             val destination =
                                 getPlayDestinationForItem(
-                                    server,
                                     row.data[focusedIndex],
                                     FilterAndPosition(row.filter, focusedIndex),
                                     uiConfig.alwaysStartFromBeginning,

@@ -68,13 +68,6 @@ class SharedPreferencesListener(
         context.preferences.updateData {
             preference.setter.invoke(it, newValue)
         }
-        if (preference == StashPreference.UseNewUI) {
-            newValue as Boolean
-            if (newValue) {
-                Log.v("SharedPreferencesListener", "New UI enabled, unregistering listener")
-                sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
-            }
-        }
     }
 
     override fun onSharedPreferenceChanged(

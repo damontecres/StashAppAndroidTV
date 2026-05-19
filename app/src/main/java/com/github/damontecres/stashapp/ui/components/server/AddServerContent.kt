@@ -40,7 +40,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -59,6 +58,7 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.preferences
 import com.github.damontecres.stashapp.util.updateAdvancedPreferences
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 private const val TAG = "AddServer"
 
@@ -66,7 +66,7 @@ private const val TAG = "AddServer"
 fun AddServer(
     onSubmit: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ManageServersViewModel = viewModel(),
+    viewModel: ManageServersViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

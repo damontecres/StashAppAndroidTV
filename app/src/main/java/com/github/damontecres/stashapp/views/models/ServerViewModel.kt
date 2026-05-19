@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp.views.models
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -14,26 +13,26 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.server.StashServer
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.components.prefs.SharedPreferencesListener
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.TestResult
-import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getInt
-import com.github.damontecres.stashapp.util.getStringNotNull
-import com.github.damontecres.stashapp.util.launchIO
-import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import org.koin.core.annotation.KoinViewModel
 
 /**
  * Tracks the current server
  */
-open class ServerViewModel : ViewModel() {
+@KoinViewModel
+open class ServerViewModel(
+    private val serverRepository: ServerRepository,
+) : ViewModel() {
     private lateinit var preferenceListener: SharedPreferences.OnSharedPreferenceChangeListener
     private val _currentServer = EqualityMutableLiveData<StashServer?>()
     val currentServer: LiveData<StashServer?> = _currentServer
@@ -59,8 +58,7 @@ open class ServerViewModel : ViewModel() {
         if (newServer != null) {
             viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 try {
-                    newServer.updateServerPrefs()
-                    StashServer.setCurrentStashServer(StashApplication.getApplication(), newServer)
+                    serverRepository.setCurrentStashServer(newServer)
                     _currentServer.value = newServer
                     _serverConnection.value = ServerConnection.Success
                     submit(Destination.Main, true)
@@ -108,40 +106,25 @@ open class ServerViewModel : ViewModel() {
         currentServer.value?.let { server ->
             viewModelScope.launch(StashCoroutineExceptionHandler()) {
                 try {
-                    server.updateServerPrefs()
+                    serverRepository.updateServerPreferences()
                 } catch (ex: QueryEngine.QueryException) {
                     Log.w(TAG, "Error updating server preferences", ex)
-                    val result =
-                        testStashConnection(
-                            StashApplication.getApplication(),
-                            false,
-                            server.apolloClient,
-                        )
-                    if (result !is TestResult.Success) {
-                        Toast
-                            .makeText(
-                                StashApplication.getApplication(),
-                                "Error connecting to ${server.url}",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                    }
+//                    val result =
+//                        testStashConnection(
+//                            StashApplication.getApplication(),
+//                            false,
+//                            server.apolloClient,
+//                        )
+//                    if (result !is TestResult.Success) {
+//                        Toast
+//                            .makeText(
+//                                StashApplication.getApplication(),
+//                                "Error connecting to ${server.url}",
+//                                Toast.LENGTH_LONG,
+//                            ).show()
+//                    }
                 }
             }
-        }
-    }
-
-    fun maybeShowUpdate(context: Context) {
-        val pref = PreferenceManager.getDefaultSharedPreferences(context)
-        if (!pref.getBoolean("autoCheckForUpdates", true)) {
-            return
-        }
-        val updateUrl =
-            pref.getStringNotNull(
-                "updateCheckUrl",
-                context.getString(R.string.app_update_url),
-            )
-        viewModelScope.launchIO {
-            UpdateChecker.maybeShowUpdateToast(context, updateUrl, false)
         }
     }
 

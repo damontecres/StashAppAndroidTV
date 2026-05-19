@@ -64,7 +64,6 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.size.Size
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.VideoFilter
@@ -267,25 +266,25 @@ fun ImagePage(
                     playWhenReady = true
                 }
         }
-    LifecycleStartEffect(Unit) {
-        onStopOrDispose {
-            StashExoPlayer.releasePlayer()
-        }
-    }
-
     val playSlideshowDelay = uiConfig.preferences.interfacePreferences.slideShowIntervalMs
-    val presentationState = rememberPresentationState(player)
-    LaunchedEffect(player) {
-        StashExoPlayer.addListener(
+    LifecycleStartEffect(Unit) {
+        val listener =
             object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_ENDED) {
                         viewModel.pulseSlideshow(playSlideshowDelay)
                     }
                 }
-            },
-        )
+            }
+        player.addListener(listener)
+        onStopOrDispose {
+            player.removeListener(listener)
+            player.release()
+        }
     }
+
+    val presentationState = rememberPresentationState(player)
+
     LaunchedEffect(slideshowActive) {
         player.repeatMode = if (slideshowEnabled) Player.REPEAT_MODE_OFF else Player.REPEAT_MODE_ONE
         context.findActivity()?.keepScreenOn(slideshowActive)

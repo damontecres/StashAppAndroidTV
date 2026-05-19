@@ -18,7 +18,6 @@ import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.concatIfNotBlank
@@ -53,7 +52,6 @@ fun GalleryCard(
 
     val interactionSource = remember { MutableInteractionSource() }
     if (item != null && interactionSource.collectIsFocusedAsState().value) {
-        val server = LocalGlobalContext.current.server
         // TODO add image slidesow
 //        LaunchedEffect(Unit) {
 //            try {

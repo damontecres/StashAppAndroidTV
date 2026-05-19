@@ -144,17 +144,6 @@ fun <T> ComposablePreference(
             )
         }
 
-        StashPreference.UseNewUI -> {
-            SwitchPreference(
-                title = title,
-                value = value as Boolean,
-                onClick = { showConfirmOldUiDialog = true },
-                summary = preference.summary(context, value),
-                interactionSource = interactionSource,
-                modifier = modifier,
-            )
-        }
-
         StashPreference.NetworkCache -> {
             preference as StashSliderPreference
             val summary =

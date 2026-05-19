@@ -28,8 +28,6 @@ import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.exception.ApolloHttpException
-import com.bumptech.glide.load.model.GlideUrl
-import com.bumptech.glide.load.model.LazyHeaders
 import com.chrynan.parcelable.core.getParcelable
 import com.chrynan.parcelable.core.putParcelable
 import com.github.damontecres.stashapp.R
@@ -51,7 +49,6 @@ import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.proto.TabPreferences
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import com.github.damontecres.stashapp.views.fileNameFromPath
 import com.github.damontecres.stashapp.views.getRatingString
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -121,39 +118,6 @@ fun joinValueNotNull(
     } else {
         null
     }
-
-/**
- * Create a [GlideUrl], adding the API key to the headers if needed
- */
-fun createGlideUrl(
-    url: String,
-    apiKey: String?,
-): GlideUrl =
-    if (apiKey.isNullOrBlank()) {
-        GlideUrl(url)
-    } else {
-        GlideUrl(
-            url,
-            LazyHeaders
-                .Builder()
-                .addHeader(STASH_API_HEADER, apiKey.trim())
-                .build(),
-        )
-    }
-
-/**
- * Create a [GlideUrl], adding the API key to the headers if needed
- */
-fun createGlideUrl(
-    url: String,
-    context: Context,
-): GlideUrl {
-    val apiKey =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getString("stashApiKey", "")
-    return createGlideUrl(url, apiKey)
-}
 
 sealed interface TestResult {
     val message: String

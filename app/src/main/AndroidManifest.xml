@@ -33,9 +33,6 @@
         android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
-            android:exported="false" />
-        <activity
-            android:name=".RootActivity"
             android:banner="@mipmap/ic_banner"
             android:configChanges="orientation|screenSize|screenLayout"
             android:exported="true"

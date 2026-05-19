@@ -22,6 +22,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.data.VideoFilter
+import com.github.damontecres.stashapp.data.room.AppDatabase
 import com.github.damontecres.stashapp.data.room.PlaybackEffect
 import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
@@ -57,6 +58,7 @@ class ImageDetailsViewModel(
     private val serverLogger: ServerLogger,
     private val queryEngine: QueryEngine,
     private val mutationEngine: MutationEngine,
+    private val database: AppDatabase,
     val navigationManager: NavigationManager,
     val playerFactory: PlayerFactory,
     @InjectedParam private val filterArgs: FilterArgs,
@@ -157,8 +159,7 @@ class ImageDetailsViewModel(
                     viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
                         val server = serverRepository.currentServer.value.server
                         val vf =
-                            StashApplication
-                                .getDatabase()
+                            database
                                 .playbackEffectsDao()
                                 .getPlaybackEffect(server.url, galleryId, DataType.GALLERY)
                         if (vf != null && vf.videoFilter.hasImageFilter()) {
@@ -222,8 +223,7 @@ class ImageDetailsViewModel(
                             viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
                                 val server = serverRepository.currentServer.value.server
                                 val vf =
-                                    StashApplication
-                                        .getDatabase()
+                                    database
                                         .playbackEffectsDao()
                                         .getPlaybackEffect(server!!.url, image.id, DataType.IMAGE)
                                 if (vf != null && vf.videoFilter.hasImageFilter()) {
@@ -424,8 +424,7 @@ class ImageDetailsViewModel(
                 val server = serverRepository.currentServer.value.server
                 val vf = _imageFilter.value
                 if (vf != null) {
-                    StashApplication
-                        .getDatabase()
+                    database
                         .playbackEffectsDao()
                         .insert(PlaybackEffect(server!!.url, it.id, DataType.IMAGE, vf))
                     Log.d(TAG, "Saved VideoFilter for image ${it.id}")
@@ -449,8 +448,7 @@ class ImageDetailsViewModel(
                 val vf = _imageFilter.value
                 if (vf != null) {
                     galleryImageFilter = vf
-                    StashApplication
-                        .getDatabase()
+                    database
                         .playbackEffectsDao()
                         .insert(PlaybackEffect(server!!.url, galleryId, DataType.GALLERY, vf))
                     Log.d(TAG, "Saved VideoFilter for gallery $galleryId")

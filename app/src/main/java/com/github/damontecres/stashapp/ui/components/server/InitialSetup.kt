@@ -20,7 +20,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.di.server.StashServer
@@ -34,12 +33,13 @@ import com.github.damontecres.stashapp.util.updateInterfacePreferences
 import com.github.damontecres.stashapp.util.updatePinPreferences
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun InitialSetup(
     modifier: Modifier = Modifier,
-    viewModel: ManageServersViewModel = viewModel(),
-    serverViewModel: ServerViewModel = viewModel(),
+    viewModel: ManageServersViewModel = koinViewModel(),
+    serverViewModel: ServerViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

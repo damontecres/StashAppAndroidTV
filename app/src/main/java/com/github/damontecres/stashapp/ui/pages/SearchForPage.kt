@@ -33,7 +33,6 @@ import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
@@ -50,6 +49,7 @@ import com.github.damontecres.stashapp.api.type.TagCreateInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.data.room.AppDatabase
 import com.github.damontecres.stashapp.data.room.RecentSearchItem
 import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
@@ -57,7 +57,6 @@ import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.Material3AppTheme
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.ItemsRow
@@ -104,7 +103,6 @@ fun SearchForDialog(
 ) {
     if (show) {
         Material3AppTheme {
-            val server = LocalGlobalContext.current.server
             Dialog(
                 onDismissRequest = onDismissRequest,
                 properties =
@@ -154,6 +152,7 @@ class SearchForViewModel(
     val serverRepository: ServerRepository,
     val queryEngine: QueryEngine,
     val mutationEngine: MutationEngine,
+    val database: AppDatabase,
 ) : ViewModel()
 
 @Composable
@@ -190,8 +189,7 @@ fun SearchForPage(
             if (item is StashData) {
                 if (dataType in DATA_TYPE_SUGGESTIONS) {
                     scope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                        StashApplication
-                            .getDatabase()
+                        viewModel.database
                             .recentSearchItemsDao()
                             .insert(RecentSearchItem(server.url, item.id, dataType))
                     }
@@ -203,8 +201,7 @@ fun SearchForPage(
                         handleCreate(context, viewModel.mutationEngine, item.dataType, item.name)
                     if (newItem != null) {
                         withContext(Dispatchers.IO) {
-                            StashApplication
-                                .getDatabase()
+                            viewModel.database
                                 .recentSearchItemsDao()
                                 .insert(RecentSearchItem(server.url, newItem.id, dataType))
                         }
@@ -264,8 +261,7 @@ fun SearchForPage(
         LaunchedEffect(Unit) {
             scope.launch(StashCoroutineExceptionHandler() + Dispatchers.IO) {
                 val mostRecentIds =
-                    StashApplication
-                        .getDatabase()
+                    viewModel.database
                         .recentSearchItemsDao()
                         .getMostRecent(perPage, server.url, dataType)
                         .map { it.id }

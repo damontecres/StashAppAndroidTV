@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
@@ -68,11 +67,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.annotation.KoinViewModel
 import java.io.InputStream
 import java.io.OutputStream
 
-class UpdateViewModel :
-    ViewModel(),
+@KoinViewModel
+class UpdateViewModel(
+    private val updateChecker: UpdateChecker,
+) : ViewModel(),
     DownloadCallback {
     val release = MutableLiveData<DataLoadingState<Release>>(DataLoadingState.Pending)
 
@@ -92,7 +95,7 @@ class UpdateViewModel :
                 withContext(Dispatchers.Main) {
                     currentVersion.value = UpdateChecker.getInstalledVersion(context)
                 }
-                val release = UpdateChecker.getLatestRelease(context, updateUrl)
+                val release = updateChecker.getLatestRelease(updateUrl)
                 if (release != null) {
                     withContext(Dispatchers.Main) {
                         contentLength.value = -1
@@ -121,7 +124,7 @@ class UpdateViewModel :
                     downloading.value = true
                 }
                 try {
-                    UpdateChecker.installRelease(
+                    updateChecker.installRelease(
                         context.findActivity()!!,
                         release,
                         this@UpdateViewModel,
@@ -191,7 +194,7 @@ fun UpdateAppPage(
     composeUiConfig: ComposeUiConfig,
     navigationManager: NavigationManager,
     modifier: Modifier = Modifier,
-    viewModel: UpdateViewModel = viewModel(),
+    viewModel: UpdateViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
     val release by viewModel.release.observeAsState(DataLoadingState.Pending)

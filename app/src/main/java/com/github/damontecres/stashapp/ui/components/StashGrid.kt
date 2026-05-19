@@ -483,7 +483,6 @@ fun StashGrid(
             zeroFocus.tryRequestFocus()
         }
     }
-    val server = LocalGlobalContext.current.server
 
     var longPressing by remember { mutableStateOf(false) }
     Row(
@@ -520,7 +519,6 @@ fun StashGrid(
                     } else if (isPlayKeyUp(it)) {
                         val destination =
                             getPlayDestinationForItem(
-                                server,
                                 pager[focusedIndex],
                                 FilterAndPosition(pager.filter, focusedIndex),
                                 uiConfig.alwaysStartFromBeginning,

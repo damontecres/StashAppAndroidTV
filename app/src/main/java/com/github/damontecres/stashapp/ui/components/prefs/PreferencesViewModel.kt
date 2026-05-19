@@ -7,7 +7,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.imageLoader
-import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.api.JobQueueQuery
 import com.github.damontecres.stashapp.api.fragment.StashJob
 import com.github.damontecres.stashapp.api.type.JobStatusUpdateType
@@ -19,6 +18,7 @@ import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.launchDefault
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -36,6 +36,7 @@ class PreferencesViewModel(
     private val subscriptionEngine: SubscriptionEngine,
     val navigationManager: NavigationManager,
     val serverRepository: ServerRepository,
+    val updateChecker: UpdateChecker,
 ) : ViewModel() {
     private val lock = Mutex()
     val runningJobs = MutableLiveData<List<StashJob>>(listOf())
@@ -157,9 +158,7 @@ suspend fun clearCaches(context: Context) =
     withContext(Dispatchers.IO) {
         withContext(Dispatchers.Main) {
             Constants.getNetworkCache(context).evictAll()
-            Glide.get(context).clearMemory()
         }
-        Glide.get(context).clearDiskCache()
         context.imageLoader.memoryCache?.clear()
         context.imageLoader.diskCache?.clear()
     }

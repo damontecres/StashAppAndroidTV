@@ -15,8 +15,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.github.damontecres.stashapp.presenters.StashPresenter.Companion.isDefaultUrl
 import com.github.damontecres.stashapp.ui.components.CircularProgress
+import com.github.damontecres.stashapp.ui.isDefaultUrl
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
 @Composable

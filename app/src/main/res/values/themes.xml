@@ -1,49 +1,7 @@
 <resources>
 
-    <style name="Theme.StashAppAndroidTV" parent="@style/Theme.AppCompat.Leanback">
-        <item name="browseTitleViewLayout">@layout/main_title_view</item>
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Leanback</item>
-        <item name="android:colorBackground">@color/default_background</item>
-    </style>
-
-    <style name="NoTitleTheme" parent="@style/Theme.AppCompat.Leanback">
-        <item name="browseRowsMarginTop">5dp</item>
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Leanback</item>
-        <item name="android:colorBackground">@color/default_background</item>
-    </style>
-
-    <style name="PlaybackTheme" parent="@style/Theme.AppCompat.Leanback">
-        <!-- This is the background attr for exo_styled_settings_list_item -->
-        <item name="android:selectableItemBackground">@drawable/playback_popup_item_background
-        </item>
-    </style>
-
-    <style name="RatingBar" parent="Theme.AppCompat">
-        <item name="colorControlNormal">@android:color/darker_gray</item>
-        <item name="colorControlActivated">@color/gold</item>
-    </style>
-
-    <style name="GridTitleText">
-        <item name="android:singleLine">true</item>
-        <item name="android:maxLines">1</item>
-        <item name="android:ellipsize">end</item>
-        <item name="android:textAlignment">center</item>
-        <item name="android:textSize">40sp</item>
-    </style>
-
-    <style name="Theme.StashAppAndroidTV.GuidedStep" parent="@style/Theme.Leanback.GuidedStep">
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Leanback</item>
-        <item name="android:colorBackground">@color/default_background</item>
-        <item name="background">@color/default_background</item>
-        <item name="guidedActionsBackground">@color/popup_background</item>
-        <item name="guidedActionsSelectorDrawable">@drawable/guided_actions_selector</item>
-        <item name="guidanceDescriptionStyle">
-            @style/Theme.StashAppAndroidTV.GuidedStep.Description
-        </item>
-    </style>
-
-    <style name="Theme.StashAppAndroidTV.GuidedStep.Description" parent="Widget.Leanback.GuidanceDescriptionStyle">
-        <item name="android:maxLines">12</item>
+    <style name="Theme.StashAppAndroidTV" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:colorBackground">@android:color/background_dark</item>
     </style>
 
 </resources>

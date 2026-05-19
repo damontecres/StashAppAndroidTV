@@ -245,10 +245,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.androidx.material3.adaptive.navigation3)
 
-    implementation(libs.glide)
-    implementation(libs.glide.okhttp3.integration)
-    ksp(libs.glide.ksp)
-
     implementation(libs.android.material)
 
     implementation(libs.androidx.swiperefreshlayout)

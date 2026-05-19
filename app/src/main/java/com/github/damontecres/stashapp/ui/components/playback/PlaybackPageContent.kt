@@ -53,7 +53,6 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -87,6 +86,7 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.VideoFilter
+import com.github.damontecres.stashapp.data.room.AppDatabase
 import com.github.damontecres.stashapp.data.room.PlaybackEffect
 import com.github.damontecres.stashapp.di.AuthHttpClient
 import com.github.damontecres.stashapp.di.server.CurrentServer
@@ -139,6 +139,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.koin.androidx.compose.koinViewModel
 import org.koin.core.annotation.KoinViewModel
 import timber.log.Timber
 import java.util.Locale
@@ -155,6 +156,7 @@ class PlaybackViewModel(
     private val serverRepository: ServerRepository,
     private val queryEngine: QueryEngine,
     private val mutationEngine: MutationEngine,
+    private val database: AppDatabase,
 ) : ViewModel(),
     Player.Listener {
     private lateinit var exceptionHandler: CoroutineExceptionHandler
@@ -250,8 +252,7 @@ class PlaybackViewModel(
                 viewModelScope.launch(sceneJob + StashCoroutineExceptionHandler() + Dispatchers.IO) {
                     val server = serverRepository.currentServer.value.server
                     val vf =
-                        StashApplication
-                            .getDatabase()
+                        database
                             .playbackEffectsDao()
                             .getPlaybackEffect(server.url, tag.item.id, DataType.SCENE)
                     if (vf != null) {
@@ -430,8 +431,7 @@ class PlaybackViewModel(
                 val vf = state.value.videoFilter
                 if (vf != null) {
                     val server = serverRepository.currentServer.value.server
-                    StashApplication
-                        .getDatabase()
+                    database
                         .playbackEffectsDao()
                         .insert(PlaybackEffect(server.url, it.id, DataType.SCENE, vf))
                     Timber.d("Saved VideoFilter for scene %s", it.id)
@@ -597,7 +597,7 @@ fun PlaybackPageContent(
     itemOnClick: ItemOnClicker<Any>,
     modifier: Modifier = Modifier,
     controlsEnabled: Boolean = true,
-    viewModel: PlaybackViewModel = viewModel(),
+    viewModel: PlaybackViewModel = koinViewModel(),
     startPosition: Long = C.TIME_UNSET,
 ) {
     var savedStartPosition by rememberSaveable(startPosition) { mutableLongStateOf(startPosition) }

@@ -121,7 +121,6 @@ fun <T : StashData> ItemsRow(
     val firstFocus = remember { FocusRequester() }
     var focusedIndex by remember { mutableIntStateOf(focusPair?.column ?: 0) }
     val state = rememberLazyListState()
-    val server = LocalGlobalContext.current.server
     Column(
         modifier = modifier,
     ) {
@@ -139,7 +138,6 @@ fun <T : StashData> ItemsRow(
                         if (isPlayKeyUp(it)) {
                             val destination =
                                 getPlayDestinationForItem(
-                                    server,
                                     items[focusedIndex],
                                     null,
                                     uiConfig.alwaysStartFromBeginning,

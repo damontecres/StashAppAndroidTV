@@ -37,7 +37,7 @@ import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
-import com.github.damontecres.stashapp.di.server.StashServer
+import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.proto.PlaybackBackend
 import com.github.damontecres.stashapp.proto.PlaybackPreferences
@@ -54,7 +54,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 
 data class GlobalContext(
-    val server: StashServer,
+    val current: CurrentServer,
     val navigationManager: NavigationManager,
     val preferences: StashPreferences,
 )

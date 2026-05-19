@@ -24,7 +24,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
@@ -54,6 +53,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToByteArray
+import org.koin.androidx.compose.koinViewModel
 import org.koin.core.annotation.KoinViewModel
 import java.io.File
 
@@ -234,7 +234,7 @@ fun ChooseScreensaverFilterDialog(
 fun ChooseScreensaverFilter(
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
-    viewModel: ChooseScreensaverFilterViewModel = viewModel(),
+    viewModel: ChooseScreensaverFilterViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
 

@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.di.server
 
 import android.annotation.SuppressLint
 import android.content.Context
+import androidx.core.net.toUri
 import co.touchlab.kermit.Logger
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.annotations.ApolloExperimental
@@ -13,6 +14,7 @@ import com.github.damontecres.stashapp.di.StandardHttpClient
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.util.Constants.OK_HTTP_CACHE_DIR
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import okhttp3.Cache
 import okhttp3.CacheControl
 import okhttp3.Call
@@ -164,20 +166,63 @@ class StashApi(
             server: StashServer,
             httpClient: OkHttpClient,
         ): ApolloClient {
+            val url = cleanServerUrl(server.url)
             val apolloClient =
                 ApolloClient
                     .Builder()
-                    .serverUrl(server.url)
+                    .serverUrl(url)
                     .httpEngine(DefaultHttpEngine(httpClient))
                     .subscriptionNetworkTransport(
                         WebSocketNetworkTransport
                             .Builder()
-                            .serverUrl(server.url)
+                            .serverUrl(url)
                             .wsProtocol(GraphQLWsProtocol())
                             .webSocketEngine(WebSocketEngine(httpClient))
                             .build(),
                     ).build()
             return apolloClient
+        }
+
+        /**
+         * Cleans up the URL that a user enters
+         *
+         * Tries to add protocol (http) and endpoint (/graphql)
+         */
+        fun cleanServerUrl(stashUrl: String): String {
+            var cleanedStashUrl = stashUrl.trim()
+            if (!cleanedStashUrl.startsWith("http://") && !cleanedStashUrl.startsWith("https://")) {
+                // Assume http
+                cleanedStashUrl = "http://$cleanedStashUrl"
+            }
+            var url = cleanedStashUrl.toUri()
+            val pathSegments = url.pathSegments.toMutableList()
+            if (url.host.isNotNullOrBlank() && (pathSegments.isEmpty() || pathSegments.last() != "graphql")) {
+                pathSegments.add("graphql")
+            }
+            url =
+                url
+                    .buildUpon()
+                    .path(pathSegments.joinToString("/")) // Ensure the URL is the graphql endpoint
+                    .build()
+            return url.toString()
+        }
+
+        fun createLoginUrl(stashUrl: String): String {
+            val cleanedStashUrl = cleanServerUrl(stashUrl)
+            var url = cleanedStashUrl.toUri()
+            val pathSegments = url.pathSegments.toMutableList()
+            if (url.host.isNotNullOrBlank() && pathSegments.isNotEmpty() && pathSegments.last() == "graphql") {
+                pathSegments.removeLastOrNull()
+            }
+            if (url.host.isNotNullOrBlank()) {
+                pathSegments.add("login")
+            }
+            url =
+                url
+                    .buildUpon()
+                    .path(pathSegments.joinToString("/")) // Ensure the URL is the graphql endpoint
+                    .build()
+            return url.toString()
         }
     }
 }

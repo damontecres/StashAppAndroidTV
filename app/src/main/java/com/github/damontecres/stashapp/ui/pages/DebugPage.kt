@@ -35,7 +35,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.BuildConfig
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.room.PlaybackEffect
 import com.github.damontecres.stashapp.di.server.CurrentServer
@@ -89,16 +88,17 @@ fun DebugPage(
     val playbackEffects = remember { mutableStateListOf<PlaybackEffect>() }
     val logcat = remember { mutableStateListOf<String>() }
 
-    LaunchedEffect(Unit) {
-        val effects =
-            withContext(Dispatchers.IO) {
-                StashApplication
-                    .getDatabase()
-                    .playbackEffectsDao()
-                    .getPlaybackEffects(server.url)
-            }
-        playbackEffects.addAll(effects)
-    }
+    // TODO
+//    LaunchedEffect(Unit) {
+//        val effects =
+//            withContext(Dispatchers.IO) {
+//                StashApplication
+//                    .getDatabase()
+//                    .playbackEffectsDao()
+//                    .getPlaybackEffects(server.url)
+//            }
+//        playbackEffects.addAll(effects)
+//    }
     LaunchedEffect(Unit) {
         val lines =
             withContext(Dispatchers.IO) {

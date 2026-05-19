@@ -40,7 +40,6 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
-import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.playback.PlaybackMode
@@ -228,7 +227,6 @@ fun Modifier.ifElse(
 ): Modifier = then(if (condition) ifTrueModifier.invoke() else ifFalseModifier)
 
 fun getPlayDestinationForItem(
-    server: StashServer,
     item: Any?,
     filterAndPosition: FilterAndPosition?,
     alwaysStartFromBeginning: Boolean,
