@@ -19,6 +19,7 @@ data class ComposeUiConfig(
     val playSoundOnFocus: Boolean,
     val sfwMode: Boolean,
     val alwaysStartFromBeginning: Boolean,
+    val minimumPlayPercent: Int,
     val persistVideoFilters: Boolean = true,
     val cardSettings: CardUiSettings,
 ) {
@@ -43,6 +44,7 @@ data class ComposeUiConfig(
                 readOnlyModeEnabled = preferences.pinPreferences.readOnlyPin.isNotNullOrBlank(),
                 persistVideoFilters = preferences.playbackPreferences.saveVideoFilters,
                 sfwMode = serverPreferences.sfwMode,
+                minimumPlayPercent = serverPreferences.minimumPlayPercent,
                 alwaysStartFromBeginning = serverPreferences.alwaysStartFromBeginning,
             )
     }

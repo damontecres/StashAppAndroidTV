@@ -36,7 +36,6 @@ import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.BuildConfig
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.room.PlaybackEffect
 import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -85,20 +84,7 @@ fun DebugPage(
 
     val focusRequester = remember { FocusRequester() }
     val prefManager = remember { PreferenceManager.getDefaultSharedPreferences(context) }
-    val playbackEffects = remember { mutableStateListOf<PlaybackEffect>() }
     val logcat = remember { mutableStateListOf<String>() }
-
-    // TODO
-//    LaunchedEffect(Unit) {
-//        val effects =
-//            withContext(Dispatchers.IO) {
-//                StashApplication
-//                    .getDatabase()
-//                    .playbackEffectsDao()
-//                    .getPlaybackEffects(server.url)
-//            }
-//        playbackEffects.addAll(effects)
-//    }
     LaunchedEffect(Unit) {
         val lines =
             withContext(Dispatchers.IO) {
@@ -258,31 +244,6 @@ fun DebugPage(
                                     .weight(10f)
                                     .padding(4.dp),
                         )
-                    }
-                    playbackEffects.forEach {
-                        Row {
-                            Text(
-                                text = it.dataType.name,
-                                modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .padding(4.dp),
-                            )
-                            Text(
-                                text = it.id,
-                                modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .padding(4.dp),
-                            )
-                            Text(
-                                text = it.videoFilter.toString(),
-                                modifier =
-                                    Modifier
-                                        .weight(10f)
-                                        .padding(4.dp),
-                            )
-                        }
                     }
                 }
             }

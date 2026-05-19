@@ -435,7 +435,7 @@ class QueryEngine(
             DataType.GROUP -> findGroups(groupIds = ids)
             DataType.IMAGE -> findImages(ids = ids)
             DataType.GALLERY -> findGalleries(galleryIds = ids)
-            DataType.MARKER -> throw UnsupportedOperationException("Cannot query markers by ID") // TODO: Unsupported by the server
+            DataType.MARKER -> findMarkers(markerIds = ids)
         } as List<StashData>
     }
 

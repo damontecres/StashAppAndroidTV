@@ -6,7 +6,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.di.server.CurrentServer
-import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.StashPreferences
@@ -51,7 +50,6 @@ fun DestinationContent(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     onChangeTheme: (String?) -> Unit,
-    onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {

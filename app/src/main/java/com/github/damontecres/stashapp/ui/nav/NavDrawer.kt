@@ -41,7 +41,6 @@ import co.touchlab.kermit.Logger
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.server.ServerRepository
-import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.di.services.PlayerFactory
 import com.github.damontecres.stashapp.navigation.Destination
@@ -89,7 +88,6 @@ fun NavDrawer(
     longClicker: LongClicker<Any>,
     onSelectScreen: (DrawerPage) -> Unit,
     onChangeTheme: (String?) -> Unit,
-    onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: NavDrawerViewModel = koinViewModel(),
 ) {
@@ -241,7 +239,6 @@ fun NavDrawer(
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 onChangeTheme = onChangeTheme,
-                onSwitchServer = onSwitchServer,
                 modifier =
                     Modifier
                         .fillMaxSize()

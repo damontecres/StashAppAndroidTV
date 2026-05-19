@@ -47,7 +47,7 @@ class NavigationManager {
             backStack.removeLastOrNull()
         }
         if (backStack[0] !is Destination.Main) {
-//            backStack[0] = Destination.Main
+            backStack[0] = Destination.Main()
         }
         log()
     }
@@ -57,7 +57,6 @@ class NavigationManager {
      */
     fun reloadMain() {
         goToMain()
-        // TODO
         val id = (backStack[0] as Destination.Main).id + 1
         backStack[0] = Destination.Main(id)
         log()

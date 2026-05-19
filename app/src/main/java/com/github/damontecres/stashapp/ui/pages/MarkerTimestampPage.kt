@@ -263,7 +263,6 @@ fun MarkerTimestampPage(
                                         ),
                                     ) {
                                         try {
-                                            // TODO
                                             val mutationEngine = viewModel.mutationEngine
                                             val newEnd =
                                                 if (setEndTimestamp) {

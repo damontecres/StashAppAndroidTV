@@ -151,9 +151,6 @@ class MainActivity : AppCompatActivity() {
                                         currentServer = currentServer,
                                         preferences = preferences,
                                         navigationManager = navigationManager,
-                                        onSwitchServer = {
-                                            TODO()
-                                        },
                                         onChangeTheme = { name ->
                                             try {
                                                 colorScheme =

@@ -39,6 +39,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.filter.output.getAllIds
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.titleOrFilename
@@ -531,13 +532,13 @@ fun filterSummary(
     name: String,
     filterDataType: DataType,
     value: Any,
+    uiConfig: ComposeUiConfig,
     idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
 ): String =
     if (name == "rating100") {
         filterSummaryRating(
             value as IntCriterionInput,
-            // TODO look up
-            true,
+            uiConfig.ratingAsStars,
         )
     } else if (name == "duration") {
         filterSummaryDuration(value as IntCriterionInput)
@@ -624,6 +625,7 @@ fun filterSummary(
     dataType: DataType,
     type: KClass<in StashDataFilter>,
     f: StashDataFilter,
+    uiConfig: ComposeUiConfig,
     idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
 ): List<String> {
     val filterOptionNames = FilterOptions[dataType]!!.associateBy { it.name }
@@ -634,7 +636,7 @@ fun filterSummary(
                 val value = obj.getOrNull()
                 if (value != null) {
                     val nameStringId = filterOptionNames[param.name]?.nameStringId
-                    val valueStr = filterSummary(param.name, dataType, value, idLookup)
+                    val valueStr = filterSummary(param.name, dataType, value, uiConfig, idLookup)
                     val key =
                         if (nameStringId != null) {
                             context.getString(nameStringId)

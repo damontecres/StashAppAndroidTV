@@ -256,6 +256,7 @@ fun CreateFilterColumns(
 
     val filterSummaries =
         filterSummary(
+            uiConfig = uiConfig,
             context = context,
             dataType = dataType,
             type = dataType.filterType,
@@ -468,6 +469,7 @@ fun CreateFilterColumns(
                     objectFilterFocused = false
                 }
                 ObjectFilterList(
+                    uiConfig = uiConfig,
                     dataType = dataType,
                     current = objectFilter,
                     onObjectFilterClick = { selectedFilterOption = it },

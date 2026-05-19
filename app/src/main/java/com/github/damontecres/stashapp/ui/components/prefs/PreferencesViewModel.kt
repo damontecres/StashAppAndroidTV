@@ -20,6 +20,7 @@ import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.launchDefault
+import com.github.damontecres.stashapp.util.plugin.CompanionPluginService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -34,6 +35,7 @@ class PreferencesViewModel(
     private val queryEngine: QueryEngine,
     private val mutationEngine: MutationEngine,
     private val subscriptionEngine: SubscriptionEngine,
+    private val companionPluginService: CompanionPluginService,
     val navigationManager: NavigationManager,
     val serverRepository: ServerRepository,
     val updateChecker: UpdateChecker,
@@ -139,6 +141,12 @@ class PreferencesViewModel(
         viewModelScope.launchDefault {
             // TODO track status
             mutationEngine.triggerGenerate(serverRepository.currentServer.value.serverPreferences)
+        }
+    }
+
+    fun onSendLogs(verbose: Boolean) {
+        viewModelScope.launchDefault {
+            companionPluginService.sendLogCat(verbose)
         }
     }
 

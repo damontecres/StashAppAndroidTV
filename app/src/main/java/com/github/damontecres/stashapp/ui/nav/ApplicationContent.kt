@@ -21,7 +21,6 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.di.server.CurrentServer
-import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
@@ -47,7 +46,6 @@ fun ApplicationContent(
     preferences: StashPreferences,
     navigationManager: NavigationManager,
     onChangeTheme: (String?) -> Unit,
-    onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -129,12 +127,6 @@ fun ApplicationContent(
     val defaultSelection: DrawerPage = DrawerPage.HomePage
     var selectedScreen by rememberSaveable { mutableStateOf<DrawerPage?>(defaultSelection) }
 
-    // TODO Using AnimatedNavHost breaks the grid focus restoration
-//    AnimatedNavHost(
-//        controller = navController,
-//        transitionSpec = DestinationTransitionSpec(),
-//        modifier = modifier,
-//    ) { destination ->
     NavDisplay(
         backStack = navigationManager.backStack,
         onBack = { navigationManager.goBack() },
@@ -162,7 +154,6 @@ fun ApplicationContent(
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
                         onChangeTheme = onChangeTheme,
-                        onSwitchServer = onSwitchServer,
                         modifier = Modifier.fillMaxSize(),
                         onUpdateTitle = null,
                     )
@@ -261,7 +252,6 @@ fun ApplicationContent(
                             longClicker = longClicker,
                             onSelectScreen = onSelectScreen,
                             onChangeTheme = onChangeTheme,
-                            onSwitchServer = onSwitchServer,
                             modifier = Modifier,
                         )
                     } else {
@@ -277,7 +267,6 @@ fun ApplicationContent(
                             longClicker = longClicker,
                             onSelectScreen = onSelectScreen,
                             onChangeTheme = onChangeTheme,
-                            onSwitchServer = onSwitchServer,
                             modifier = Modifier,
                         )
                     }

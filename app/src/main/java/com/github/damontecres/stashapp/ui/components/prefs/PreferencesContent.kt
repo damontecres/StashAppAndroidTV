@@ -515,6 +515,7 @@ fun PreferencesContent(
                                     interactionSource = interactionSource,
                                     onTriggerScan = viewModel::onTriggerScan,
                                     onTriggerGenerate = viewModel::onTriggerGenerate,
+                                    onSendLogs = viewModel::onSendLogs,
                                     modifier =
                                         Modifier
                                             .ifElse(

@@ -67,6 +67,7 @@ fun <T> ComposablePreference(
     onCacheClear: () -> Unit,
     onTriggerScan: () -> Unit,
     onTriggerGenerate: () -> Unit,
+    onSendLogs: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
@@ -84,13 +85,10 @@ fun <T> ComposablePreference(
         scope.launch(StashCoroutineExceptionHandler()) {
             when (preference) {
                 StashPreference.CurrentServer -> {
-                    TODO()
-//                    testStashConnection(context, true, server.apolloClient)
                 }
 
                 StashPreference.SendLogs -> {
-                    TODO()
-//                    CompanionPlugin.sendLogCat(context, server, false)
+                    onSendLogs.invoke(false)
                 }
 
                 StashPreference.CacheClear -> {
@@ -122,8 +120,7 @@ fun <T> ComposablePreference(
         scope.launch(StashCoroutineExceptionHandler()) {
             when (preference) {
                 StashPreference.SendLogs -> {
-                    TODO()
-//                    CompanionPlugin.sendLogCat(context, server, true)
+                    onSendLogs.invoke(true)
                 }
 
                 else -> {

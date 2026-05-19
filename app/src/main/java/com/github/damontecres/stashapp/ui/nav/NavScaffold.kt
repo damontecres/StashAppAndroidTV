@@ -35,7 +35,6 @@ import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.di.server.CurrentServer
-import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.StashPreferences
@@ -60,7 +59,6 @@ fun NavScaffold(
     longClicker: LongClicker<Any>,
     onSelectScreen: (DrawerPage) -> Unit,
     onChangeTheme: (String?) -> Unit,
-    onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -192,7 +190,6 @@ fun NavScaffold(
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 onChangeTheme = onChangeTheme,
-                onSwitchServer = onSwitchServer,
                 modifier =
                     Modifier
                         .fillMaxSize(),

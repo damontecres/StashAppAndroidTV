@@ -192,6 +192,7 @@ class PlaybackViewModel(
         videoFiltersEnabled: Boolean,
         uiConfig: ComposeUiConfig,
     ) {
+        this.uiConfig = uiConfig
         this.player = player
         this.trackActivity = trackActivity
         this.markersEnabled = markersEnabled
@@ -234,7 +235,7 @@ class PlaybackViewModel(
                 trackActivityListener =
                     TrackActivityPlaybackListener(
                         mutationEngine = mutationEngine,
-                        minimumPlayPercent = 0f, // TODO
+                        minimumPlayPercent = uiConfig.minimumPlayPercent.toFloat() / 100f,
                         scene = it,
                         getCurrentPosition = {
                             player.currentPosition
