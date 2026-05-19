@@ -42,7 +42,6 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.navigation.Destination
@@ -52,6 +51,7 @@ import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.ui.util.playOnClickSound
 import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
+import com.github.damontecres.stashapp.util.PreferenceScreenOption
 import com.github.damontecres.stashapp.util.Release
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.UpdateChecker

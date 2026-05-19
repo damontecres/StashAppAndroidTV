@@ -93,8 +93,8 @@ import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
-import com.github.damontecres.stashapp.navigation.NavigationManager
-import com.github.damontecres.stashapp.playback.PlaylistFragment
+import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.playback.MediaItemTag
 import com.github.damontecres.stashapp.playback.TrackActivityPlaybackListener
 import com.github.damontecres.stashapp.playback.TrackSupport
 import com.github.damontecres.stashapp.playback.TrackSupportReason
@@ -210,7 +210,7 @@ class PlaybackViewModel(
 
     private var sceneJob: Job = Job()
 
-    fun changeScene(tag: PlaylistFragment.MediaItemTag) {
+    fun changeScene(tag: MediaItemTag) {
         sceneJob.cancelChildren()
         _state.update {
             PlaybackState(
@@ -517,7 +517,7 @@ class PlaybackViewModel(
     ) {
         _info.update { PlaybackInfo(currentPlaylistIndex = player.currentMediaItemIndex) }
         if (mediaItem != null) {
-            changeScene(mediaItem.localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
+            changeScene(mediaItem.localConfiguration!!.tag as MediaItemTag)
         }
     }
 
@@ -563,7 +563,7 @@ data class SpriteData(
 )
 
 data class PlaybackState(
-    val mediaItemTag: PlaylistFragment.MediaItemTag? = null,
+    val mediaItemTag: MediaItemTag? = null,
     val markers: List<BasicMarker> = emptyList(),
     val performers: List<PerformerData> = emptyList(),
     val oCount: Int = 0,
@@ -699,7 +699,7 @@ fun PlaybackPageContent(
             useVideoFilters,
             uiConfig,
         )
-        viewModel.changeScene(playlist[currentPlaylistIndex].localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
+        viewModel.changeScene(playlist[currentPlaylistIndex].localConfiguration!!.tag as MediaItemTag)
         maybeMuteAudio(uiConfig.preferences, false, player)
         player.setMediaItems(playlist, startIndex, savedStartPosition)
         if (playlistPager == null) {
@@ -738,7 +738,7 @@ fun PlaybackPageContent(
                                 val currentPosition = player.currentMediaItemIndex
                                 if (current != null) {
                                     val tag =
-                                        (current.localConfiguration!!.tag as PlaylistFragment.MediaItemTag)
+                                        (current.localConfiguration!!.tag as MediaItemTag)
                                     val id = tag.item.id
                                     val isTranscodingOrDirect =
                                         tag.streamDecision.transcodeDecision == TranscodeDecision.Transcode ||
@@ -753,7 +753,7 @@ fun PlaybackPageContent(
                                                 uiConfig.preferences.playbackPreferences,
                                             )
                                         val newTag =
-                                            newMediaItem.localConfiguration!!.tag as PlaylistFragment.MediaItemTag
+                                            newMediaItem.localConfiguration!!.tag as MediaItemTag
                                         Timber.d(
                                             "Using new transcoding media item: ${newTag.streamDecision}",
                                         )

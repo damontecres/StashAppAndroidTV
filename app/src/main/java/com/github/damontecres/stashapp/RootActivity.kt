@@ -23,12 +23,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationListener
-import com.github.damontecres.stashapp.navigation.NavigationManager
-import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
-import com.github.damontecres.stashapp.navigation.NavigationManagerLeanback
 import com.github.damontecres.stashapp.util.KeyEventDispatcher
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.composeEnabled
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -41,9 +36,7 @@ import kotlin.properties.Delegates
 /**
  * The only activity in the app
  */
-class RootActivity :
-    AppCompatActivity(),
-    NavigationListener {
+class RootActivity : AppCompatActivity() {
     private val serverViewModel by viewModels<ServerViewModel>()
     private var useCompose by Delegates.notNull<Boolean>()
     private lateinit var navigationManager: NavigationManager
@@ -59,7 +52,7 @@ class RootActivity :
         useCompose = composeEnabled(this)
         navigationManager =
             if (useCompose) {
-                NavigationManagerCompose(this, serverViewModel)
+                NavigationManagerLeanback(this)
             } else {
                 NavigationManagerLeanback(this)
             }

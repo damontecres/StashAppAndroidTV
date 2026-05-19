@@ -42,7 +42,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.data.Scene
@@ -125,12 +124,9 @@ fun MarkerTimestampPage(
 
             val player =
                 remember {
-                    StashExoPlayer
-                        .getInstance(
-                            context,
-                            server,
-                            uiConfig.preferences.playbackPreferences,
-                        ).apply {
+                    viewModel.playerFactory
+                        .createPlayer(uiConfig.preferences.playbackPreferences)
+                        .apply {
                             playWhenReady = false
                         }
                 }

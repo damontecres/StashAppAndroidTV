@@ -8,14 +8,12 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.PageFilterKey
-import com.github.damontecres.stashapp.util.ServerPreferences.Companion.PREF_MINIMUM_PLAY_PERCENT
-import com.github.damontecres.stashapp.util.ServerPreferences.Companion.PREF_TRACK_ACTIVITY
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.clear
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.parseDictionary
-import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
+import com.github.damontecres.stashapp.util.plugin.CompanionPluginService
 import dev.b3nedikt.restring.Restring
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -75,7 +73,7 @@ data class ServerPreferences(
 
             val companionPluginVersion =
                 config.plugins
-                    ?.firstOrNull { it.id == CompanionPlugin.PLUGIN_ID }
+                    ?.firstOrNull { it.id == CompanionPluginService.PLUGIN_ID }
                     ?.version
                     ?.let { Version.tryFromString(it) }
             val menuItems =
@@ -145,9 +143,8 @@ data class ServerPreferences(
             var serverPreferences = serverPreferences
             val trackActivity =
                 ui
-                    .getCaseInsensitive(
-                        PREF_TRACK_ACTIVITY,
-                    )?.toString()
+                    .getCaseInsensitive("trackActivity")
+                    ?.toString()
                     ?.toBoolean() ?: if (serverPreferences.version.isAtLeast(Version.V0_26_0)) {
                     // If server is >=0.26.0 and doesn't provide a value, default to true
                     // See https://github.com/stashapp/stash/pull/4710
@@ -157,7 +154,8 @@ data class ServerPreferences(
                     false
                 }
 
-            val minimumPlayPercent = ui.getCaseInsensitive(PREF_MINIMUM_PLAY_PERCENT)?.toString()?.toIntOrNull() ?: 0
+            val minimumPlayPercent =
+                ui.getCaseInsensitive("minimumPlayPercent")?.toString()?.toIntOrNull() ?: 0
             val ratingSystemOptionsRaw = ui.getCaseInsensitive("ratingSystemOptions")
 
             try {

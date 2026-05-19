@@ -23,11 +23,11 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.util.ScreenSize
 import com.github.damontecres.stashapp.ui.util.screenSize
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.preferences
 import com.github.damontecres.stashapp.util.showToastOnMain
 import com.github.damontecres.stashapp.util.updateInterfacePreferences

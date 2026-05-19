@@ -76,11 +76,6 @@ import kotlin.time.toDuration
 class QueryEngine(
     api: StashApi,
 ) : StashEngine(api) {
-    // TODO remove this
-    fun asUtilQueryEngine() =
-        com.github.damontecres.stashapp.util
-            .QueryEngine(api.apolloClient, null)
-
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
             val queryName = query.operation.name()

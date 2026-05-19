@@ -81,6 +81,6 @@ class PinFragment : Fragment(R.layout.pin_dialog) {
     }
 
     private fun startMain() {
-        serverViewModel.navigationManager.clearPinFragment()
+//        serverViewModel.navigationManager.clearPinFragment()
     }
 }

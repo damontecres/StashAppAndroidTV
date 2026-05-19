@@ -54,7 +54,7 @@ class FilterViewModel(
                 dataSupplierFactory.create<Query.Data, StashData, Query.Data>(filterArgs)
             val pagingSource =
                 StashPagingSource(
-                    queryEngine.asUtilQueryEngine(),
+                    queryEngine,
                     dataSupplier,
                 ) { _, _, item -> item }
             val pager =
@@ -77,7 +77,7 @@ class FilterViewModel(
             AlphabetSearchUtils.findPosition(
                 letter,
                 filter,
-                queryEngine.asUtilQueryEngine(),
+                queryEngine,
                 dataSupplierFactory,
             )
         val jumpPosition =

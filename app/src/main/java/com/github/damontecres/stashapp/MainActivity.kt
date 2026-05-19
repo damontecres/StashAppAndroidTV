@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -16,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import androidx.tv.material3.MaterialTheme
+import co.touchlab.kermit.Logger
 import com.github.damontecres.stashapp.di.AuthHttpClient
 import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.server.ServerRepository
@@ -92,9 +92,9 @@ class MainActivity : AppCompatActivity() {
                                                     )
                                                 },
                                             )
-                                        Log.i(TAG, "Updated theme")
+                                        Logger.i { "Updated theme" }
                                     } catch (ex: Exception) {
-                                        Log.e(TAG, "Exception changing theme", ex)
+                                        Logger.e(ex) { "Exception changing theme" }
                                         Toast
                                             .makeText(
                                                 this@MainActivity,

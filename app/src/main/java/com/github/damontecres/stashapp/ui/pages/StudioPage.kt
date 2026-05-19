@@ -35,6 +35,7 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.services.ItemClicker
 import com.github.damontecres.stashapp.di.services.ServerLogger
@@ -62,7 +63,6 @@ import com.github.damontecres.stashapp.ui.showSetStudio
 import com.github.damontecres.stashapp.ui.util.DataLoadingState
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.PageFilterKey
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.launchIO
@@ -83,7 +83,7 @@ class StudioDetailsViewModel(
     private val context: Application,
     private val serverRepository: ServerRepository,
     private val serverLogger: ServerLogger,
-    val queryEngine: com.github.damontecres.stashapp.di.server.QueryEngine,
+    val queryEngine: QueryEngine,
     val mutationEngine: com.github.damontecres.stashapp.di.server.MutationEngine,
     val itemClicker: ItemClicker,
     val navigationManager: com.github.damontecres.stashapp.di.services.NavigationManager,

@@ -23,6 +23,7 @@ import coil3.request.ImageRequest
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.suppliers.toFilterArgs

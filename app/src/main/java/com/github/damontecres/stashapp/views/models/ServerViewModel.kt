@@ -13,13 +13,13 @@ import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.components.prefs.SharedPreferencesListener
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getInt

@@ -259,8 +259,8 @@ fun ImagePage(
     }
     val player =
         remember {
-            StashExoPlayer
-                .getInstance(context, currentServer, uiConfig.preferences.playbackPreferences)
+            viewModel.playerFactory
+                .createPlayer(uiConfig.preferences.playbackPreferences)
                 .apply {
                     maybeMuteAudio(uiConfig.preferences, false, this)
                     repeatMode = Player.REPEAT_MODE_OFF

@@ -30,8 +30,8 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.playback.CodecSupport
+import com.github.damontecres.stashapp.playback.MediaItemTag
 import com.github.damontecres.stashapp.playback.PlaybackMode
-import com.github.damontecres.stashapp.playback.PlaylistFragment
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.proto.PlaybackBackend
@@ -110,7 +110,7 @@ fun PlaybackPage(
         val media =
             remember {
                 buildMediaItem(context, decision, playbackScene) {
-                    setTag(PlaylistFragment.MediaItemTag(playbackScene, decision))
+                    setTag(MediaItemTag(playbackScene, decision))
                 }
             }
 
@@ -337,7 +337,7 @@ private fun convertToMediaItem(
                 CodecSupport.getSupportedCodecs(prefs),
             )
         return buildMediaItem(context, decision, scene) {
-            setTag(PlaylistFragment.MediaItemTag(scene, decision))
+            setTag(MediaItemTag(scene, decision))
         }
     } else {
         // Markers
@@ -354,7 +354,7 @@ private fun convertToMediaItem(
             )
         val mediaItem =
             buildMediaItem(context, decision, scene) {
-                setTag(PlaylistFragment.MediaItemTag(scene, decision))
+                setTag(MediaItemTag(scene, decision))
                 val startPos =
                     item.seconds.seconds.inWholeMilliseconds
                         .coerceAtLeast(0L)

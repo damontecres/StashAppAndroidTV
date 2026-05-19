@@ -1,11 +1,13 @@
 package com.github.damontecres.stashapp.ui.components.prefs
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.imageLoader
+import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.api.JobQueueQuery
 import com.github.damontecres.stashapp.api.fragment.StashJob
 import com.github.damontecres.stashapp.api.type.JobStatusUpdateType
@@ -18,10 +20,12 @@ import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.launchDefault
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
@@ -126,14 +130,14 @@ class PreferencesViewModel(
     fun onTriggerScan() {
         viewModelScope.launchDefault {
             // TODO track status
-            mutationEngine.triggerScan()
+            mutationEngine.triggerScan(serverRepository.currentServer.value.serverPreferences)
         }
     }
 
     fun onTriggerGenerate() {
         viewModelScope.launchDefault {
             // TODO track status
-            mutationEngine.triggerGenerate()
+            mutationEngine.triggerGenerate(serverRepository.currentServer.value.serverPreferences)
         }
     }
 
@@ -148,3 +152,14 @@ data class CacheUsage(
     val imageMemoryMax: Long,
     val imageDiskUsed: Long,
 )
+
+suspend fun clearCaches(context: Context) =
+    withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Main) {
+            Constants.getNetworkCache(context).evictAll()
+            Glide.get(context).clearMemory()
+        }
+        Glide.get(context).clearDiskCache()
+        context.imageLoader.memoryCache?.clear()
+        context.imageLoader.diskCache?.clear()
+    }

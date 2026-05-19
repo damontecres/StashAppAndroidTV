@@ -8,7 +8,6 @@ import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.type.CircumcisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.util.StashServer
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -166,7 +165,7 @@ fun formatBytes(
  */
 fun formatNumber(
     number: Int,
-    abbreviateCounters: Boolean = StashServer.requireCurrentServer().serverPreferences.abbreviateCounters,
+    abbreviateCounters: Boolean,
 ): String =
     if (abbreviateCounters) {
         abbreviateCounter(number)

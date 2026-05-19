@@ -46,7 +46,7 @@ import com.github.damontecres.stashapp.ui.components.TableRowComposable
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
+import com.github.damontecres.stashapp.util.plugin.CompanionPluginService
 import com.github.damontecres.stashapp.util.toReadableString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -102,7 +102,7 @@ fun DebugPage(
     LaunchedEffect(Unit) {
         val lines =
             withContext(Dispatchers.IO) {
-                CompanionPlugin.getLogCatLines(true)
+                CompanionPluginService.getLogCatLines(true)
             }
         logcat.addAll(lines)
     }

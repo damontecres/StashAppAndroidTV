@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.di.server
 
 import android.annotation.SuppressLint
 import android.content.Context
-import androidx.datastore.core.DataStore
 import co.touchlab.kermit.Logger
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.annotations.ApolloExperimental
@@ -14,7 +13,6 @@ import com.github.damontecres.stashapp.di.StandardHttpClient
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.util.Constants.OK_HTTP_CACHE_DIR
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
-import kotlinx.coroutines.flow.first
 import okhttp3.Cache
 import okhttp3.CacheControl
 import okhttp3.Call
@@ -35,7 +33,6 @@ import kotlin.time.DurationUnit
 class StashApi(
     private val context: Context,
     @param:StandardHttpClient private val httpClient: OkHttpClient,
-    private val preferences: DataStore<StashPreferences>,
 ) {
     @OptIn(ApolloExperimental::class)
     var server: StashServer = StashServer.UNSET
@@ -44,38 +41,34 @@ class StashApi(
     lateinit var apolloClient: ApolloClient
         private set
 
-    suspend fun changeServer(server: StashServer) {
+    suspend fun changeServer(
+        preferences: StashPreferences,
+        server: StashServer,
+    ) {
         Timber.i("Switching server to %s", server.url)
-        this.apolloClient = createApolloClient(server)
+        this.apolloClient = createApolloClient(preferences, server)
         this.server = server
     }
 
-    suspend fun createFor(server: StashServer) =
-        StashApi(context, httpClient, preferences).apply {
-            changeServer(server)
+    fun createFor(server: StashServer) =
+        StashApi(context, httpClient).apply {
+            this.server = server
+            apolloClient = createApolloClient(server, httpClient)
         }
 
     @OptIn(ApolloExperimental::class)
-    suspend fun createApolloClient(server: StashServer): ApolloClient {
-        val client = createOkHttpClient(server)
-        val apolloClient =
-            ApolloClient
-                .Builder()
-                .serverUrl(server.url)
-                .httpEngine(DefaultHttpEngine(client))
-                .subscriptionNetworkTransport(
-                    WebSocketNetworkTransport
-                        .Builder()
-                        .serverUrl(server.url)
-                        .wsProtocol(GraphQLWsProtocol())
-                        .webSocketEngine(WebSocketEngine(client))
-                        .build(),
-                ).build()
-        return apolloClient
+    suspend fun createApolloClient(
+        preferences: StashPreferences,
+        server: StashServer,
+    ): ApolloClient {
+        val client = createOkHttpClient(preferences, server)
+        return createApolloClient(server, client)
     }
 
-    private suspend fun createOkHttpClient(server: StashServer): OkHttpClient {
-        val preferences = preferences.data.first()
+    private suspend fun createOkHttpClient(
+        preferences: StashPreferences,
+        server: StashServer,
+    ): OkHttpClient {
         val trustAll = preferences.advancedPreferences.trustSelfSignedCertificates
         val cacheDuration =
             cacheDurationPrefToDuration(preferences.cachePreferences.cacheExpirationTime)
@@ -166,6 +159,26 @@ class StashApi(
     }
 
     companion object {
+        @OptIn(ApolloExperimental::class)
+        fun createApolloClient(
+            server: StashServer,
+            httpClient: OkHttpClient,
+        ): ApolloClient {
+            val apolloClient =
+                ApolloClient
+                    .Builder()
+                    .serverUrl(server.url)
+                    .httpEngine(DefaultHttpEngine(httpClient))
+                    .subscriptionNetworkTransport(
+                        WebSocketNetworkTransport
+                            .Builder()
+                            .serverUrl(server.url)
+                            .wsProtocol(GraphQLWsProtocol())
+                            .webSocketEngine(WebSocketEngine(httpClient))
+                            .build(),
+                    ).build()
+            return apolloClient
+        }
     }
 }
 

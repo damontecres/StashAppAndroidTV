@@ -70,7 +70,6 @@ import org.koin.core.annotation.Single
 @Single
 class MutationEngine(
     api: StashApi,
-    private val serverRepository: ServerRepository,
 ) : StashEngine(api) {
     var readOnlyMode = false
 
@@ -135,8 +134,8 @@ class MutationEngine(
         return result.data!!.sceneAddPlay.count
     }
 
-    suspend fun triggerScan(): String {
-        val config = serverRepository.currentServer.value.serverPreferences.scanConfig
+    suspend fun triggerScan(serverPreferences: ServerPreferences): String {
+        val config = serverPreferences.scanConfig
         val mutation =
             MetadataScanMutation(
                 ScanMetadataInput(
@@ -153,8 +152,8 @@ class MutationEngine(
         return executeMutation(mutation).data!!.metadataScan
     }
 
-    suspend fun triggerGenerate(): String {
-        val config = serverRepository.currentServer.value.serverPreferences.generateConfig
+    suspend fun triggerGenerate(serverPreferences: ServerPreferences): String {
+        val config = serverPreferences.generateConfig
         val mutation =
             MetadataGenerateMutation(
                 GenerateMetadataInput(

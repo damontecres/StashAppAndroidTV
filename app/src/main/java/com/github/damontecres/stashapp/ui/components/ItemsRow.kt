@@ -138,7 +138,12 @@ fun <T : StashData> ItemsRow(
                     .onKeyEvent {
                         if (isPlayKeyUp(it)) {
                             val destination =
-                                getPlayDestinationForItem(server, items[focusedIndex], null)
+                                getPlayDestinationForItem(
+                                    server,
+                                    items[focusedIndex],
+                                    null,
+                                    uiConfig.alwaysStartFromBeginning,
+                                )
                             return@onKeyEvent if (destination != null) {
                                 navigationManager.navigate(destination)
                                 true

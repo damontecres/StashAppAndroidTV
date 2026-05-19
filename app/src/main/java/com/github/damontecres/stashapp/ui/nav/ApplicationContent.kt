@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.nav
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -15,7 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
-import com.github.damontecres.stashapp.PreferenceScreenOption
+import co.touchlab.kermit.Logger
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
@@ -33,6 +32,7 @@ import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.pages.DialogParams
+import com.github.damontecres.stashapp.util.PreferenceScreenOption
 
 /**
  * Shows the actual compose content of the application
@@ -96,7 +96,7 @@ fun ApplicationContent(
                             "Unknown item. This is probably a bug",
                             Toast.LENGTH_SHORT,
                         ).show()
-                    Log.e(TAG, "Unknown item type: ${item::class.qualifiedName}")
+                    Logger.e { "Unknown item type: ${item::class.qualifiedName}" }
                 }
             }
         }
@@ -203,10 +203,7 @@ fun ApplicationContent(
                     val onSelectScreen = { page: DrawerPage ->
                         val refreshMain =
                             selectedScreen == DrawerPage.HomePage && page == DrawerPage.HomePage
-                        Log.v(
-                            TAG,
-                            "Navigating to $page",
-                        )
+                        Logger.v { "Navigating to $page" }
                         selectedScreen = page
                         if (refreshMain) {
                             navigationManager.goToMain()

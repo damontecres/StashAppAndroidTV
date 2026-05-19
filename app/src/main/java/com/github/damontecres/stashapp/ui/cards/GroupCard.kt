@@ -17,7 +17,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.presenters.GroupPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -55,8 +54,8 @@ fun GroupCard(
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
         uiConfig = uiConfig,
-        imageWidth = GroupPresenter.CARD_WIDTH.dp / 2,
-        imageHeight = GroupPresenter.CARD_HEIGHT.dp / 2,
+        imageWidth = dataTypeImageWidth(DataType.GROUP).dp / 2,
+        imageHeight = dataTypeImageHeight(DataType.GROUP).dp / 2,
         imageUrl = imageUrl,
         defaultImageDrawableRes = R.drawable.default_group,
         videoUrl = null,

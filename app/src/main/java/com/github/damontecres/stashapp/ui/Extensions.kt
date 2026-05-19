@@ -27,7 +27,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -38,14 +37,14 @@ import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
-import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.di.server.StashServer
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.proto.PlaybackBackend
 import com.github.damontecres.stashapp.proto.PlaybackPreferences
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.proto.copy
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.compat.detectTvDevice
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.preferences
@@ -63,19 +62,12 @@ data class GlobalContext(
 val LocalGlobalContext =
     compositionLocalOf<GlobalContext> { throw IllegalStateException("Shouldn't call this") }
 
-object PlayerContext {
-    fun player(
-        context: Context,
-        server: StashServer,
-    ): Player =
-        StashExoPlayer.getInstanceForCard(context, server).apply {
-            repeatMode = Player.REPEAT_MODE_ONE
-            playWhenReady = true
-        }
-}
+data class PlayerContext(
+    val player: Player?,
+)
 
 val LocalPlayerContext =
-    compositionLocalOf<PlayerContext> { PlayerContext }
+    compositionLocalOf<PlayerContext> { throw IllegalStateException() }
 
 enum class DeviceType {
     TV,
@@ -203,3 +195,6 @@ val Context.playbackPreferencesForOldUi: PlaybackPreferences
                 playbackBackend = PlaybackBackend.EXO_PLAYER
             }
         }
+
+val String?.isDefaultUrl: Boolean
+    get() = this?.contains("default=true") == true

@@ -1,11 +1,6 @@
 package com.github.damontecres.stashapp.navigation
 
-import android.os.Bundle
-import android.os.Parcel
-import android.os.Parcelable
-import android.os.Parcelable.Creator
 import androidx.navigation3.runtime.NavKey
-import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -27,9 +22,8 @@ import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.PreferenceScreenOption
 import com.github.damontecres.stashapp.util.Release
-import com.github.damontecres.stashapp.util.getDestination
-import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.serialization.Serializable
 import java.util.concurrent.atomic.AtomicLong
@@ -41,8 +35,7 @@ import java.util.concurrent.atomic.AtomicLong
 sealed class Destination(
     val fullScreen: Boolean = false,
     val fullScreenTouch: Boolean = fullScreen,
-) : Parcelable,
-    NavKey {
+) : NavKey {
     protected val destId = counter.getAndIncrement()
 
     val fragmentTag = "${this::class.simpleName}_$destId"
@@ -161,30 +154,8 @@ sealed class Destination(
     @Serializable
     data object LicenseInfo : Destination(true)
 
-    override fun describeContents(): Int = 0
-
-    override fun writeToParcel(
-        out: Parcel,
-        flags: Int,
-    ) {
-        val bundle = Bundle()
-        bundle.putDestination(this)
-        out.writeBundle(bundle)
-    }
-
     companion object {
         private val counter = AtomicLong(0)
-
-        @JvmField
-        val CREATOR =
-            object : Creator<Destination?> {
-                override fun createFromParcel(`in`: Parcel): Destination? =
-                    `in`
-                        .readBundle(Destination::class.java.getClassLoader())
-                        ?.getDestination<Destination>()
-
-                override fun newArray(size: Int): Array<Destination?> = arrayOfNulls(size)
-            }
 
         fun fromStashData(item: StashData): Destination =
             when (val dataType = getDataType(item)) {

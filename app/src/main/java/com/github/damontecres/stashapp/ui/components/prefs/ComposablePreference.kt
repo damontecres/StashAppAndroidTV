@@ -41,7 +41,6 @@ import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.ui.compat.Button
@@ -95,7 +94,7 @@ fun <T> ComposablePreference(
                 }
 
                 StashPreference.CacheClear -> {
-                    SettingsFragment.clearCaches(context)
+                    clearCaches(context)
                     onCacheClear.invoke()
                 }
 

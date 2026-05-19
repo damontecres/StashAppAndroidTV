@@ -6,7 +6,7 @@ import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

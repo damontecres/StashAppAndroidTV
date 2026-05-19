@@ -9,7 +9,6 @@ import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.navigation.Destination
@@ -21,6 +20,7 @@ import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.proto.ThemeStyle
+import com.github.damontecres.stashapp.util.PreferenceScreenOption
 import com.github.damontecres.stashapp.util.StashDreamService
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.isNotNullOrBlank

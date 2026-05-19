@@ -17,6 +17,7 @@ import androidx.media3.extractor.ts.TsExtractor
 import com.github.damontecres.stashapp.StashExoPlayer.Companion.getInstance
 import com.github.damontecres.stashapp.di.AuthHttpClient
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.proto.PlaybackBackend
 import com.github.damontecres.stashapp.proto.PlaybackHttpClient
 import com.github.damontecres.stashapp.proto.PlaybackPreferences
@@ -36,6 +37,7 @@ class PlayerFactory(
     private val serverRepository: ServerRepository,
 ) {
     private var currentPlayer: Player? = null
+    private var currentCardPlayer: Player? = null
 
     /**
      * Create a new [ExoPlayer] instance. [getInstance] should be preferred where possible.
@@ -135,6 +137,56 @@ class PlayerFactory(
             }
 
         this@PlayerFactory.currentPlayer = player
+        return player
+    }
+
+    @OptIn(UnstableApi::class)
+    fun createPlayerForCard(server: StashServer): ExoPlayer {
+        this.currentCardPlayer?.release()
+        val dataSourceFactory =
+            DefaultHttpDataSource
+                .Factory()
+                .setConnectTimeoutMs(5_000)
+                .setReadTimeoutMs(30_000)
+                .setUserAgent(StashClient.createUserAgent(context))
+                .apply {
+                    if (server.apiKey.isNotNullOrBlank()) {
+                        setDefaultRequestProperties(mapOf(Constants.STASH_API_HEADER to server.apiKey))
+                    }
+                }
+        val trackSelector = DefaultTrackSelector(context)
+        trackSelector.parameters =
+            trackSelector
+                .buildUponParameters()
+                .setAllowInvalidateSelectionsOnRendererCapabilitiesChange(true)
+                .setAudioOffloadPreferences(
+                    TrackSelectionParameters.AudioOffloadPreferences
+                        .Builder()
+                        .setAudioOffloadMode(TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED)
+                        .build(),
+                ).build()
+        val extractorsFactory =
+            DefaultExtractorsFactory().apply {
+                setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3)
+                setConstantBitrateSeekingEnabled(true)
+                setConstantBitrateSeekingAlwaysEnabled(true)
+            }
+        val player =
+            ExoPlayer
+                .Builder(context)
+                .setMediaSourceFactory(
+                    DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory),
+                ).setRenderersFactory(
+                    DefaultRenderersFactory(context)
+                        .setEnableDecoderFallback(true)
+                        .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON),
+                ).setTrackSelector(trackSelector)
+                .build()
+                .apply {
+                    repeatMode = Player.REPEAT_MODE_ONE
+                    playWhenReady = true
+                }
+        this.currentCardPlayer = player
         return player
     }
 }

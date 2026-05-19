@@ -15,6 +15,8 @@ data class StashServer(
     val cleanedApiKey by lazy { apiKey?.trim() }
     val serverRoot by lazy { getServerRoot(url) }
 
+    val serverKey get() = url.replace(Regex("[^\\w.]"), "_")
+
     companion object {
         private const val SERVER_PREF_PREFIX = "server_"
         private const val SERVER_APIKEY_PREF_PREFIX = "apikey_"

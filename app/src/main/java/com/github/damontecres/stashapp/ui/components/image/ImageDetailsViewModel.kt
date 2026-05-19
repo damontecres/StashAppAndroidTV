@@ -27,6 +27,7 @@ import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.PlayerFactory
 import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -57,6 +58,7 @@ class ImageDetailsViewModel(
     private val queryEngine: QueryEngine,
     private val mutationEngine: MutationEngine,
     val navigationManager: NavigationManager,
+    val playerFactory: PlayerFactory,
     @InjectedParam private val filterArgs: FilterArgs,
     @InjectedParam private val startPosition: Int,
 ) : ViewModel() {
@@ -129,7 +131,7 @@ class ImageDetailsViewModel(
                 dataSupplierFactory.create<Query.Data, ImageData, Query.Data>(filterArgs)
             val pagingSource =
                 StashPagingSource(
-                    queryEngine.asUtilQueryEngine(),
+                    queryEngine,
                     dataSupplier,
                 ) { _, _, item -> item }
             val pager = ComposePager(filterArgs, pagingSource, viewModelScope)

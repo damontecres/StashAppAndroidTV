@@ -137,7 +137,7 @@ class MainPageViewModel(
                     val frontPageParser =
                         FrontPageParser(
                             context,
-                            queryEngine.asUtilQueryEngine(),
+                            queryEngine,
                             filterParser,
                             pageSize,
                         )
@@ -417,6 +417,7 @@ fun HomePageRow(
                                     server,
                                     row.data[focusedIndex],
                                     FilterAndPosition(row.filter, focusedIndex),
+                                    uiConfig.alwaysStartFromBeginning,
                                 )
                             return@onKeyEvent if (destination != null) {
                                 navigationManager.navigate(destination)

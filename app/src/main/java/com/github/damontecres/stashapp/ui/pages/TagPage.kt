@@ -34,6 +34,7 @@ import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.services.ItemClicker
 import com.github.damontecres.stashapp.di.services.ServerLogger
@@ -56,7 +57,6 @@ import com.github.damontecres.stashapp.ui.filterArgsSaver
 import com.github.damontecres.stashapp.ui.util.DataLoadingState
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.PageFilterKey
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.launchIO
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,7 +75,7 @@ class TagDetailsViewModel(
     private val context: Application,
     private val serverRepository: ServerRepository,
     private val serverLogger: ServerLogger,
-    private val queryEngine: com.github.damontecres.stashapp.di.server.QueryEngine,
+    private val queryEngine: QueryEngine,
     val mutationEngine: com.github.damontecres.stashapp.di.server.MutationEngine,
     val itemClicker: ItemClicker,
     val navigationManager: com.github.damontecres.stashapp.di.services.NavigationManager,

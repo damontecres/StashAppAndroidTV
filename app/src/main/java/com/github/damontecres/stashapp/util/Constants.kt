@@ -10,7 +10,6 @@ import android.text.TextUtils
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Adapter
 import android.widget.FrameLayout
@@ -50,15 +49,6 @@ import com.github.damontecres.stashapp.api.fragment.VideoFile
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.navigation.NavigationManager
-import com.github.damontecres.stashapp.playback.PlaybackMode
-import com.github.damontecres.stashapp.presenters.ClassPresenterSelector
-import com.github.damontecres.stashapp.presenters.ImagePresenter
-import com.github.damontecres.stashapp.presenters.MarkerPresenter
-import com.github.damontecres.stashapp.presenters.ScenePresenter
-import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.proto.TabPreferences
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
@@ -736,7 +726,7 @@ fun showSetRatingToast(
     ratingsAsStars: Boolean? = null,
 ) {
     val asStars =
-        ratingsAsStars ?: StashServer.requireCurrentServer().serverPreferences.ratingsAsStars
+        ratingsAsStars ?: true // TODO
     val ratingStr = getRatingString(rating100, asStars)
     Toast
         .makeText(
@@ -951,28 +941,6 @@ fun Bundle.putFilterArgs(
     return this
 }
 
-@OptIn(ExperimentalSerializationApi::class)
-fun Bundle.putDestination(destination: Destination): Bundle {
-    putParcelable(NavigationManager.DESTINATION_ARG, destination, StashParcelable)
-    return this
-}
-
-@OptIn(ExperimentalSerializationApi::class)
-fun <T : Destination> Bundle.maybeGetDestination(): T? =
-    getParcelable(NavigationManager.DESTINATION_ARG, Destination::class, 0, StashParcelable) as T?
-
-fun <T : Destination> Bundle.getDestination(): T = maybeGetDestination()!!
-
-@OptIn(ExperimentalSerializationApi::class)
-fun <T : Destination> Bundle.getDestination(name: String): T = getParcelable(name, Destination::class, 0, StashParcelable) as T
-
-fun experimentalFeaturesEnabled(): Boolean {
-    val context = StashApplication.getApplication()
-    return PreferenceManager
-        .getDefaultSharedPreferences(context)
-        .getBoolean(context.getString(R.string.pref_key_experimental_features), false)
-}
-
 fun readOnlyModeEnabled(): Boolean {
     val context = StashApplication.getApplication()
     return PreferenceManager
@@ -1044,81 +1012,6 @@ fun getUiTabs(
 }
 
 fun Optional.Companion.presentIfNotNullOrBlank(value: String?): Optional<String> = presentIfNotNull(value?.ifBlank { null })
-
-fun maybeStartPlayback(
-    context: Context,
-    item: Any,
-) {
-    when (item) {
-        is SlimSceneData -> {
-            StashApplication.navigationManager.navigate(
-                Destination.Playback(
-                    item.id,
-                    item.resume_position ?: 0L,
-                    PlaybackMode.Choose,
-                ),
-            )
-        }
-
-        is MarkerData -> {
-            StashApplication.navigationManager.navigate(
-                Destination.Playback(
-                    item.scene.minimalSceneData.id,
-                    (item.seconds * 1000).toLong(),
-                    PlaybackMode.Choose,
-                ),
-            )
-        }
-    }
-}
-
-fun addExtraGridLongClicks(
-    ps: ClassPresenterSelector,
-    dataType: DataType,
-    getFilterPosition: () -> FilterAndPosition,
-) {
-    when (dataType) {
-        DataType.SCENE -> {
-            val current = ps.getPresenter(SlimSceneData::class.java) as ScenePresenter
-            current.longClickCallBack.addAction(StashPresenter.PopUpItem.PLAY_FROM) { _, item ->
-                val (filter, position) = getFilterPosition.invoke()
-                if (position >= 0) {
-                    StashApplication.navigationManager.navigate(
-                        Destination.Playlist(filter, position),
-                    )
-                }
-            }
-        }
-
-        DataType.MARKER -> {
-            val current = ps.getPresenter(MarkerData::class.java) as MarkerPresenter
-            current.longClickCallBack.addAction(StashPresenter.PopUpItem.PLAY_FROM) { _, item ->
-                val (filter, position) = getFilterPosition.invoke()
-                if (position >= 0) {
-                    StashApplication.navigationManager.navigate(
-                        Destination.Playlist(filter, position, 30_000L),
-                    )
-                }
-            }
-        }
-
-        DataType.IMAGE -> {
-            val current = ps.getPresenter(ImageData::class.java) as ImagePresenter
-            current.longClickCallBack.addAction(StashPresenter.PopUpItem.PLAY_FROM) { _, item ->
-                val (filter, position) = getFilterPosition.invoke()
-                if (position >= 0) {
-                    StashApplication.navigationManager.navigate(
-                        Destination.Slideshow(filter, position, true),
-                    )
-                }
-            }
-        }
-
-        else -> {
-            // no-op
-        }
-    }
-}
 
 /**
  * Turns a [StashDataFilter] into a more readable string by excluding absent optional fields
@@ -1200,44 +1093,7 @@ fun getPreference(
     .getDefaultSharedPreferences(context)
     .getBoolean(context.getString(key), default)
 
-fun getPreference(
-    context: Context,
-    @StringRes key: Int,
-    default: String,
-) = PreferenceManager
-    .getDefaultSharedPreferences(context)
-    .getString(context.getString(key), default)
-
 fun composeEnabled(context: Context = StashApplication.getApplication()) = getPreference(context, R.string.pref_key_use_compose_ui, true)
-
-fun View.updateLayoutParams(transform: ViewGroup.LayoutParams.() -> Unit) {
-    val lp = layoutParams
-    transform(layoutParams)
-    layoutParams = lp
-}
-
-fun calculatePageSize(
-    context: Context,
-    dataType: DataType,
-): Int {
-    val cardSize =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getInt("cardSize", context.getString(R.string.card_size_default))
-    val numberOfColumns =
-        (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
-    val maxSearchResults =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getInt("maxSearchResults", 25)
-    val number = (numberOfColumns * 5).coerceAtLeast(maxSearchResults + numberOfColumns * 2)
-    val remainder = number % numberOfColumns
-    return if (remainder == 0) {
-        number
-    } else {
-        number + (numberOfColumns - remainder)
-    }
-}
 
 fun Context.findActivity(): Activity? {
     if (this is Activity) {

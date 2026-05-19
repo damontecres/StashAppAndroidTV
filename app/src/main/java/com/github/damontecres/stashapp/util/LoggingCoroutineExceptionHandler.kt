@@ -5,7 +5,6 @@ import android.widget.Toast
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.di.server.CurrentServer
-import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -49,12 +48,10 @@ class LoggingCoroutineExceptionHandler(
                 } else {
                     getPreference(context, R.string.pref_key_log_to_server, true)
                 }
-            val destination = StashApplication.navigationManager.previousDestination
             if (server.serverPreferences.companionPluginInstalled && logToServer) {
-                val compose = StashApplication.navigationManager is NavigationManagerCompose
                 scope.launchIO {
                     val message =
-                        "Exception: compose=$compose, destination=$destination\n${exception.stackTraceToString()}"
+                        "Exception:\n${exception.stackTraceToString()}"
                     TODO()
 //                    CompanionPlugin.sendLogMessage(server, message, true)
                 }

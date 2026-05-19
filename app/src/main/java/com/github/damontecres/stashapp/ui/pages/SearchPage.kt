@@ -40,9 +40,9 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard

@@ -11,7 +11,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.presenters.ImagePresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
@@ -61,8 +60,8 @@ fun ImageCard(
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
         uiConfig = uiConfig,
-        imageWidth = ImagePresenter.CARD_WIDTH.dp / 2,
-        imageHeight = ImagePresenter.CARD_HEIGHT.dp / 2,
+        imageWidth = dataTypeImageWidth(DataType.IMAGE).dp / 2,
+        imageHeight = dataTypeImageHeight(DataType.IMAGE).dp / 2,
         imageUrl = imageUrl,
         defaultImageDrawableRes = R.drawable.default_image,
         videoUrl = item?.paths?.preview,

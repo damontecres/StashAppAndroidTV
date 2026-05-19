@@ -13,7 +13,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
@@ -56,8 +55,8 @@ fun StudioCard(
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
         uiConfig = uiConfig,
-        imageWidth = StudioPresenter.CARD_WIDTH.dp / 2,
-        imageHeight = StudioPresenter.CARD_HEIGHT.dp / 2,
+        imageWidth = dataTypeImageWidth(DataType.STUDIO).dp / 2,
+        imageHeight = dataTypeImageHeight(DataType.STUDIO).dp / 2,
         imageUrl = imageUrl,
         contentPadding = PaddingValues(8.dp),
         defaultImageDrawableRes = R.drawable.default_studio,

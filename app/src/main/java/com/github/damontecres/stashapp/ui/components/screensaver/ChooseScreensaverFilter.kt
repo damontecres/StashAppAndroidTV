@@ -34,6 +34,9 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.SortOption
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -42,9 +45,7 @@ import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.filter.CreateFilterContent
 import com.github.damontecres.stashapp.util.FilterParser
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashParcelable
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.launchDefault
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.showToastOnMain
@@ -53,19 +54,24 @@ import kotlinx.coroutines.flow.update
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToByteArray
+import org.koin.core.annotation.KoinViewModel
 import java.io.File
 
 private const val TAG = "ChooseScreensaver"
 
 @OptIn(ExperimentalSerializationApi::class)
-class ChooseScreensaverFilterViewModel : ViewModel() {
+@KoinViewModel
+class ChooseScreensaverFilterViewModel(
+    private val serverRepository: ServerRepository,
+    private val queryEngine: QueryEngine,
+) : ViewModel() {
     private val context = StashApplication.getApplication()
-    private val server = StashServer.requireCurrentServer()
 
     val state = MutableStateFlow(ChooseScreensaverFilterState())
 
     init {
         viewModelScope.launchIO {
+            val server = serverRepository.currentServer.value.server
             val file = getScreensaverFile(context, server)
             if (file.exists()) {
                 try {
@@ -86,7 +92,7 @@ class ChooseScreensaverFilterViewModel : ViewModel() {
                     showToastOnMain(context, "Error reading filter: ${ex.localizedMessage}", Toast.LENGTH_LONG)
                 }
             }
-            val savedFilters = QueryEngine(server).getSavedFilters(DataType.IMAGE)
+            val savedFilters = queryEngine.getSavedFilters(DataType.IMAGE)
             state.update {
                 val savedFilter = it.savedFilterId?.let { id -> savedFilters.firstOrNull { it.id == id } }
                 it.copy(
@@ -105,7 +111,7 @@ class ChooseScreensaverFilterViewModel : ViewModel() {
         viewModelScope.launchIO {
             try {
                 val toSave = ScreensaverFilter(filterId, filter)
-                val file = getScreensaverFile(context, server)
+                val file = getScreensaverFile(context, serverRepository.currentServer.value.server)
                 file.parentFile!!.mkdirs()
                 toSave.write(file)
                 val savedFilter = filterId?.let { id -> state.value.savedFilters.firstOrNull { it.id == id } }
@@ -126,14 +132,15 @@ class ChooseScreensaverFilterViewModel : ViewModel() {
 
     fun saveFilter(savedFilter: SavedFilter) {
         viewModelScope.launchDefault {
-            val filterArgs = savedFilter.toFilterArgs(FilterParser(server.version))
+            val filterArgs =
+                savedFilter.toFilterArgs(FilterParser(serverRepository.currentServerVersion))
             saveFilter(filterArgs, savedFilter.id)
         }
     }
 
     fun deleteFilter() {
         viewModelScope.launchIO {
-            val file = getScreensaverFile(context, server)
+            val file = getScreensaverFile(context, serverRepository.currentServer.value.server)
             file.delete()
             state.update {
                 it.copy(
@@ -149,7 +156,7 @@ fun getScreensaverFile(
     context: Context,
     server: StashServer,
 ): File {
-    val filename = server.serverPreferences.serverKey
+    val filename = server.serverKey
     val parentDir = File(context.filesDir, "screensaver")
     return File(parentDir, filename)
 }

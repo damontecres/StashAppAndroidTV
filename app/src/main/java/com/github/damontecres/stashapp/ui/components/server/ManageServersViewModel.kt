@@ -5,9 +5,11 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.apollographql.apollo.ApolloClient
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.CredentialsQuery
 import com.github.damontecres.stashapp.api.GenerateApiKeyMutation
+import com.github.damontecres.stashapp.di.StandardHttpClient
 import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
@@ -15,6 +17,7 @@ import com.github.damontecres.stashapp.di.server.StashApi
 import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.TRUST_ALL_CERTS
 import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchIO
@@ -26,14 +29,22 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.Cookie
+import okhttp3.CookieJar
 import okhttp3.FormBody
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.koin.core.annotation.KoinViewModel
+import java.security.SecureRandom
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLContext
 
 @KoinViewModel
 class ManageServersViewModel(
     private val context: Application,
     private val api: StashApi,
+    @param:StandardHttpClient private val httpClient: OkHttpClient,
     private val serverRepository: ServerRepository,
 ) : ViewModel() {
     val currentServer get() = serverRepository.currentServer
@@ -63,7 +74,7 @@ class ManageServersViewModel(
         viewModelScope.launch {
             serverStatus.value =
                 serverStatus.value!!.toMutableMap().apply { put(server, ServerTestResult.Pending) }
-            val apolloClient = api.createApolloClient(server)
+            val apolloClient = StashApi.createApolloClient(server, httpClient)
             val result =
                 testStashConnection(
                     context,
@@ -142,10 +153,8 @@ class ManageServersViewModel(
                             if (useUsername && username.isNotNullOrBlank() && apiKey.isNotNullOrBlank()) {
                                 testWithUsername(serverUrl, username, apiKey, trustCerts)
                             } else {
-                                val apolloClient =
-                                    api.createApolloClient(
-                                        StashServer(serverUrl, apiKey?.ifBlank { null }),
-                                    )
+                                val server = StashServer(serverUrl, apiKey?.ifBlank { null })
+                                val apolloClient = StashApi.createApolloClient(server, httpClient)
                                 val result = testStashConnection(context, false, apolloClient)
                                 if (result is TestResult.Error && result.exception is CancellationException) {
                                     connectionState.value = ConnectionState.Inactive
@@ -177,8 +186,7 @@ class ManageServersViewModel(
         trustCerts: Boolean,
     ) {
         try {
-            TODO()
-            val httpClient = StashClient.createCookieHttpClient(trustCerts)
+            val httpClient = createCookieHttpClient(trustCerts)
             val loginUrl = StashClient.createLoginUrl(serverUrl)
             val request =
                 Request
@@ -200,7 +208,7 @@ class ManageServersViewModel(
             } else {
                 val testApi = api.createFor(StashServer(serverUrl, null))
                 val queryEngine = QueryEngine(testApi)
-                val mutationEngine = MutationEngine(testApi, serverRepository)
+                val mutationEngine = MutationEngine(testApi)
 
                 val res = queryEngine.executeQuery(CredentialsQuery())
                 var currentApiKey =
@@ -239,6 +247,50 @@ class ManageServersViewModel(
                         ex,
                     ),
                 )
+        }
+    }
+
+    /**
+     * Build an [ApolloClient] suitable for testing connectivity for the specified server.
+     */
+    fun createCookieHttpClient(trustCerts: Boolean): OkHttpClient {
+        var builder =
+            httpClient
+                .newBuilder()
+                .cookieJar(
+                    object : CookieJar {
+                        private val cookies = mutableMapOf<String, List<Cookie>>()
+
+                        override fun loadForRequest(url: HttpUrl): List<Cookie> = cookies[url.host] ?: listOf()
+
+                        override fun saveFromResponse(
+                            url: HttpUrl,
+                            cookies: List<Cookie>,
+                        ) {
+                            this.cookies[url.host] = cookies
+                        }
+                    },
+                ).readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+
+        if (trustCerts) {
+            val sslContext = SSLContext.getInstance("SSL")
+            sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
+            builder =
+                builder
+                    .sslSocketFactory(
+                        sslContext.socketFactory,
+                        TRUST_ALL_CERTS,
+                    ).hostnameVerifier { _, _ ->
+                        true
+                    }
+        }
+        return builder.build()
+    }
+
+    fun switchServer(server: StashServer) {
+        viewModelScope.launch {
+            serverRepository.setCurrentStashServer(server)
         }
     }
 

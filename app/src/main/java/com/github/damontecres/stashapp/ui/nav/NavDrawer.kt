@@ -17,6 +17,8 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -27,6 +29,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
@@ -36,8 +39,10 @@ import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.di.server.CurrentServer
+import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.PlayerFactory
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -52,7 +57,23 @@ import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.ui.util.playOnClickSound
 import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.annotation.KoinViewModel
+
+@KoinViewModel
+class NavDrawerViewModel(
+    private val serverRepository: ServerRepository,
+    private val playerFactory: PlayerFactory,
+) : ViewModel() {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val player =
+        serverRepository.currentServer.mapLatest {
+            playerFactory.createPlayerForCard(it.server)
+        }
+}
 
 @Composable
 fun NavDrawer(
@@ -69,6 +90,7 @@ fun NavDrawer(
     onChangeTheme: (String?) -> Unit,
     onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: NavDrawerViewModel = koinViewModel(),
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val listState = rememberLazyListState()
@@ -94,116 +116,117 @@ fun NavDrawer(
     val serverUrlInteractionSource = remember { MutableInteractionSource() }
     val serverFocused = serverUrlInteractionSource.collectIsFocusedAsState().value
 
-    NavigationDrawer(
-        modifier =
-            modifier
-                .focusRequester(drawerFocusRequester),
-        drawerState = drawerState,
-        drawerContent = {
-            LazyColumn(
-                state = listState,
-                contentPadding = PaddingValues(0.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween,
-                modifier =
-                    Modifier
-                        .fillMaxHeight()
-                        .background(MaterialTheme.colorScheme.background)
-                        .focusGroup()
-                        .focusProperties {
-                            onExit = {
-                                val selectedIndex = pages.indexOf(selectedScreen)
-                                if (selectedIndex !in listState.layoutInfo.visibleItemsInfo.map { it.index }) {
-                                    scope.launch(StashCoroutineExceptionHandler()) {
-                                        listState.animateScrollToItem(selectedIndex)
+    val player by viewModel.player.collectAsState(null)
+    CompositionLocalProvider(
+        LocalPlayerContext provides PlayerContext(player),
+    ) {
+        NavigationDrawer(
+            modifier =
+                modifier
+                    .focusRequester(drawerFocusRequester),
+            drawerState = drawerState,
+            drawerContent = {
+                LazyColumn(
+                    state = listState,
+                    contentPadding = PaddingValues(0.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    modifier =
+                        Modifier
+                            .fillMaxHeight()
+                            .background(MaterialTheme.colorScheme.background)
+                            .focusGroup()
+                            .focusProperties {
+                                onExit = {
+                                    val selectedIndex = pages.indexOf(selectedScreen)
+                                    if (selectedIndex !in listState.layoutInfo.visibleItemsInfo.map { it.index }) {
+                                        scope.launch(StashCoroutineExceptionHandler()) {
+                                            listState.animateScrollToItem(selectedIndex)
+                                        }
                                     }
                                 }
-                            }
-                            onEnter = {
-                                initialFocus.tryRequestFocus()
-                            }
-                        }
-//                                    .focusRestorer(initialFocus)
-                        .selectableGroup()
-                        .ifElse(
-                            isNotTvDevice,
-                            Modifier.clickable(true) {
-                                if (drawerState.currentValue == DrawerValue.Open) {
-                                    drawerState.setValue(DrawerValue.Closed)
-                                } else {
-                                    drawerState.setValue(DrawerValue.Open)
+                                onEnter = {
+                                    initialFocus.tryRequestFocus()
                                 }
-                            },
-                        ),
-            ) {
-                item {
-                    val onClick = {
-                        if (composeUiConfig.playSoundOnFocus) {
-                            playOnClickSound(
-                                context,
-                            )
-                        }
-                        navigationManager.navigate(
-                            Destination.ManageServers(
-                                false,
+                            }
+//                                    .focusRestorer(initialFocus)
+                            .selectableGroup()
+                            .ifElse(
+                                isNotTvDevice,
+                                Modifier.clickable(true) {
+                                    if (drawerState.currentValue == DrawerValue.Open) {
+                                        drawerState.setValue(DrawerValue.Closed)
+                                    } else {
+                                        drawerState.setValue(DrawerValue.Open)
+                                    }
+                                },
                             ),
-                        )
-                    }
-                    NavigationDrawerItem(
-                        modifier =
-                            Modifier
-                                .playSoundOnFocus(composeUiConfig.playSoundOnFocus),
-                        selected = false,
-                        onClick = onClick,
-                        leadingContent = {
-                            Icon(
-                                painterResource(id = R.drawable.stash_logo),
-                                contentDescription = null,
-                            )
-                        },
-                        interactionSource = serverUrlInteractionSource,
-                    ) {
-                        Text(
-                            modifier =
-                                Modifier
-                                    .enableMarquee(serverFocused)
-                                    .ifElse(
-                                        isNotTvDevice,
-                                        Modifier.clickable(onClick = onClick),
-                                    ),
-                            text = currentServer.server.url,
-                            maxLines = 1,
-                        )
-                    }
-                }
-                items(
-                    pages,
-                    key = null,
-                ) { page ->
-                    NavDrawerListItem(
-                        page = page,
-                        selectedScreen = selectedScreen,
-                        initialFocus = initialFocus,
-                        composeUiConfig = composeUiConfig,
-                        drawerOpen = drawerState.currentValue == DrawerValue.Open,
-                        onClick = {
+                ) {
+                    item {
+                        val onClick = {
                             if (composeUiConfig.playSoundOnFocus) {
                                 playOnClickSound(
                                     context,
                                 )
                             }
-                            drawerState.setValue(DrawerValue.Closed)
-                            onSelectScreen(page)
-                        },
-                        onVisible = { visiblePages[page] = it },
-                        modifier = Modifier,
-                    )
+                            navigationManager.navigate(
+                                Destination.ManageServers(
+                                    false,
+                                ),
+                            )
+                        }
+                        NavigationDrawerItem(
+                            modifier =
+                                Modifier
+                                    .playSoundOnFocus(composeUiConfig.playSoundOnFocus),
+                            selected = false,
+                            onClick = onClick,
+                            leadingContent = {
+                                Icon(
+                                    painterResource(id = R.drawable.stash_logo),
+                                    contentDescription = null,
+                                )
+                            },
+                            interactionSource = serverUrlInteractionSource,
+                        ) {
+                            Text(
+                                modifier =
+                                    Modifier
+                                        .enableMarquee(serverFocused)
+                                        .ifElse(
+                                            isNotTvDevice,
+                                            Modifier.clickable(onClick = onClick),
+                                        ),
+                                text = currentServer.server.url,
+                                maxLines = 1,
+                            )
+                        }
+                    }
+                    items(
+                        pages,
+                        key = null,
+                    ) { page ->
+                        NavDrawerListItem(
+                            page = page,
+                            selectedScreen = selectedScreen,
+                            initialFocus = initialFocus,
+                            composeUiConfig = composeUiConfig,
+                            drawerOpen = drawerState.currentValue == DrawerValue.Open,
+                            onClick = {
+                                if (composeUiConfig.playSoundOnFocus) {
+                                    playOnClickSound(
+                                        context,
+                                    )
+                                }
+                                drawerState.setValue(DrawerValue.Closed)
+                                onSelectScreen(page)
+                            },
+                            onVisible = { visiblePages[page] = it },
+                            modifier = Modifier,
+                        )
+                    }
                 }
-            }
-        },
-    ) {
-        CompositionLocalProvider(
-            LocalPlayerContext provides PlayerContext,
+            },
         ) {
             DestinationContent(
                 preferences = preferences,

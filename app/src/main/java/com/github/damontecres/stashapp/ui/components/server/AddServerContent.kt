@@ -45,6 +45,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.CircularProgress
@@ -53,7 +54,6 @@ import com.github.damontecres.stashapp.ui.components.SwitchWithLabel
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreferencesSerializer
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.preferences

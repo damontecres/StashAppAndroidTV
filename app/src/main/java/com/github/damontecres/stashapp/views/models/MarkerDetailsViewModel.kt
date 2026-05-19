@@ -13,6 +13,7 @@ import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.services.ItemClicker
 import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.PlayerFactory
 import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.ui.showAddTag
 import com.github.damontecres.stashapp.ui.showShort
@@ -31,6 +32,7 @@ class MarkerDetailsViewModel(
     val itemClicker: ItemClicker,
     val mutationEngine: MutationEngine,
     val navigationManager: NavigationManager,
+    val playerFactory: PlayerFactory,
     @InjectedParam private val id: String,
 ) : ViewModel() {
     val seconds = MutableLiveData<Double>()

@@ -9,10 +9,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.tv.material3.MaterialTheme
-import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.prefs.PreferencesContent
+import com.github.damontecres.stashapp.util.PreferenceScreenOption
 
 @SuppressLint("RestrictedApi")
 @Composable

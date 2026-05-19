@@ -39,7 +39,6 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.filter.output.getAllIds
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.titleOrFilename
@@ -255,9 +254,11 @@ fun filterSummary(f: StringCriterionInput): String {
     }
 }
 
-fun filterSummaryRating(f: IntCriterionInput): String {
+fun filterSummaryRating(
+    f: IntCriterionInput,
+    ratingsAsStars: Boolean,
+): String {
     val context = StashApplication.getApplication()
-    val ratingsAsStars = StashServer.requireCurrentServer().serverPreferences.ratingsAsStars
     val modStr = f.modifier.getString(context)
     val value = f.value
     val value2 = f.value2.getOrNull()
@@ -533,7 +534,11 @@ fun filterSummary(
     idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
 ): String =
     if (name == "rating100") {
-        filterSummaryRating(value as IntCriterionInput)
+        filterSummaryRating(
+            value as IntCriterionInput,
+            // TODO look up
+            true,
+        )
     } else if (name == "duration") {
         filterSummaryDuration(value as IntCriterionInput)
     } else {

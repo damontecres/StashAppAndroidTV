@@ -47,13 +47,13 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.filter.SimpleListItem
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
-import com.github.damontecres.stashapp.util.StashServer
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -81,7 +81,7 @@ fun ManageServers(
     fun switchServer(server: StashServer) {
         val status = serverStatus[server]
         if (status == ServerTestResult.Success) {
-            onSwitchServer.invoke(server)
+            viewModel.switchServer(server)
         } else {
             viewModel.testServer(server)
         }
@@ -116,7 +116,7 @@ fun ManageServers(
 
         currentServer?.let { current ->
             Text(
-                text = "Current: ${current.url}",
+                text = "Current: ${current.server.url}",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
@@ -211,7 +211,7 @@ fun ManageServers(
             AddServer(
                 onSubmit = {
                     viewModel.addServer(it)
-                    onSwitchServer.invoke(it)
+                    viewModel.switchServer(it)
                 },
                 modifier =
                     Modifier

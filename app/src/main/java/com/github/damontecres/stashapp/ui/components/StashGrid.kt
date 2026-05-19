@@ -60,7 +60,6 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -68,6 +67,7 @@ import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.cards.CardContext
 import com.github.damontecres.stashapp.ui.cards.StashCard
+import com.github.damontecres.stashapp.ui.cards.dataTypeImageWidth
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.playback.isBackwardButton
@@ -347,7 +347,7 @@ fun StashGrid(
     val startPosition = initialPosition.coerceIn(0, (pager.size - 1).coerceAtLeast(0))
     val columns =
         (
-            uiConfig.cardSettings.columns * (ScenePresenter.CARD_WIDTH.toDouble() / pager.filter.dataType.defaultCardWidth) +
+            uiConfig.cardSettings.columns * (dataTypeImageWidth(DataType.SCENE).toDouble() / pager.filter.dataType.defaultCardWidth) +
                 // TODO better sizing
                 if (isNotTvDevice && orientation == Configuration.ORIENTATION_LANDSCAPE) 1 else 0
         ).toInt()
@@ -523,6 +523,7 @@ fun StashGrid(
                                 server,
                                 pager[focusedIndex],
                                 FilterAndPosition(pager.filter, focusedIndex),
+                                uiConfig.alwaysStartFromBeginning,
                             )
                         return@onKeyEvent if (destination != null) {
                             navigationManager.navigate(destination)

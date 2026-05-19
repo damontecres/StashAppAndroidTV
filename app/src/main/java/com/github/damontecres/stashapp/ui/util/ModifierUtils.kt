@@ -40,11 +40,11 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.tryRequestFocus
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 
@@ -231,13 +231,14 @@ fun getPlayDestinationForItem(
     server: StashServer,
     item: Any?,
     filterAndPosition: FilterAndPosition?,
+    alwaysStartFromBeginning: Boolean,
 ): Destination? {
     val destination =
         when (item) {
             is SlimSceneData -> {
                 Destination.Playback(
                     item.id,
-                    if (server.serverPreferences.alwaysStartFromBeginning) {
+                    if (alwaysStartFromBeginning) {
                         0L
                     } else {
                         item.resume_position ?: 0L

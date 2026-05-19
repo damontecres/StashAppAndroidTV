@@ -135,7 +135,7 @@ class SceneDetailsViewModel(
                             .create<Query.Data, SlimSceneData, Query.Data>(filterArgs)
                     suggestions.value =
                         StashPagingSource<Query.Data, SlimSceneData, SlimSceneData, Query.Data>(
-                            queryEngine.asUtilQueryEngine(),
+                            queryEngine,
                             supplier,
                         ).fetchPage(
                             1,

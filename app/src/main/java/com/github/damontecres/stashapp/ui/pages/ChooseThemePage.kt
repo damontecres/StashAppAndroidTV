@@ -44,7 +44,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.di.services.NavigationManager
-import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.cards.IconRowText
@@ -176,7 +175,7 @@ fun ChooseThemePage(
                                                     MaterialTheme.colorScheme.tertiary,
                                                 ).clip(RectangleShape)
                                                 .height(4.dp)
-                                                .width((ScenePresenter.CARD_WIDTH * percentWatched).dp / 2),
+                                                .width((dataTypeImageWidth(DataType.SCENE) * percentWatched).dp / 2),
                                     )
                                 }
                             },
