@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.filter.CreateFilterScreen
+import com.github.damontecres.stashapp.ui.components.server.InitialSetup
 import com.github.damontecres.stashapp.ui.components.server.ManageServers
 import com.github.damontecres.stashapp.ui.pages.ChooseThemePage
 import com.github.damontecres.stashapp.ui.pages.DebugPage
@@ -306,7 +307,7 @@ fun DestinationContent(
         }
 
         Destination.Setup -> {
-            TODO()
+            InitialSetup(modifier)
         }
     }
 }

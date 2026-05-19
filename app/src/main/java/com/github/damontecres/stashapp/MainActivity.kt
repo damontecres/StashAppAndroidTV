@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -33,6 +34,7 @@ import com.github.damontecres.stashapp.ui.GlobalContext
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.chooseColorScheme
 import com.github.damontecres.stashapp.ui.components.LoadingPage
+import com.github.damontecres.stashapp.ui.components.server.InitialSetup
 import com.github.damontecres.stashapp.ui.defaultColorSchemeSet
 import com.github.damontecres.stashapp.ui.nav.ApplicationContent
 import com.github.damontecres.stashapp.ui.nav.CoilConfig
@@ -89,14 +91,16 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launchDefault {
             val prefs = preferences.data.first()
             val hasPin = prefs.pinPreferences.pin.isNotNullOrBlank()
-            if (serverRepository.restore()) {
-                // Success
-                showContent(hasPin)
-            } else {
-                // TODO
-                navigationManager.navigate(Destination.Setup)
-            }
+            serverRepository.restore()
+            showContent(hasPin)
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        Timber.d("onSaveInstanceState")
+        val str = json.encodeToString(navigationManager.backStack.toList())
+        outState.putString(KEY_BACK_STACK, str)
     }
 
     fun showContent(hasPin: Boolean) {
@@ -130,6 +134,9 @@ class MainActivity : AppCompatActivity() {
                         )
                     } else {
                         val currentServer by serverRepository.currentServer.collectAsState()
+                        LaunchedEffect(currentServer) {
+                            Logger.i { "Switched server to ${currentServer.server.url}" }
+                        }
                         if (currentServer != CurrentServer.UNSET) {
                             key(currentServer) {
                                 CompositionLocalProvider(
@@ -179,6 +186,8 @@ class MainActivity : AppCompatActivity() {
                                     )
                                 }
                             }
+                        } else {
+                            InitialSetup(Modifier.fillMaxSize())
                         }
                     }
                 }

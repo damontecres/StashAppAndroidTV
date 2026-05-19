@@ -52,11 +52,13 @@ class StashApi(
         this.server = server
     }
 
-    fun createFor(server: StashServer) =
-        StashApi(context, httpClient).apply {
-            this.server = server
-            apolloClient = createApolloClient(server, httpClient)
-        }
+    fun createFor(
+        server: StashServer,
+        client: OkHttpClient,
+    ) = StashApi(context, client).apply {
+        this.server = server
+        apolloClient = createApolloClient(server, client)
+    }
 
     @OptIn(ApolloExperimental::class)
     suspend fun createApolloClient(
@@ -167,17 +169,22 @@ class StashApi(
             httpClient: OkHttpClient,
         ): ApolloClient {
             val url = cleanServerUrl(server.url)
+            val client =
+                httpClient
+                    .newBuilder()
+                    .addInterceptor(ServerInterceptor(server))
+                    .build()
             val apolloClient =
                 ApolloClient
                     .Builder()
                     .serverUrl(url)
-                    .httpEngine(DefaultHttpEngine(httpClient))
+                    .httpEngine(DefaultHttpEngine(client))
                     .subscriptionNetworkTransport(
                         WebSocketNetworkTransport
                             .Builder()
                             .serverUrl(url)
                             .wsProtocol(GraphQLWsProtocol())
-                            .webSocketEngine(WebSocketEngine(httpClient))
+                            .webSocketEngine(WebSocketEngine(client))
                             .build(),
                     ).build()
             return apolloClient

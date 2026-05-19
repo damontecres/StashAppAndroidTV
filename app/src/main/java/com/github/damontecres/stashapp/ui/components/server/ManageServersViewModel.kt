@@ -208,7 +208,7 @@ class ManageServersViewModel(
             if (!response.isSuccessful) {
                 connectionState.value = ConnectionState.Result(TestResult.AuthRequired)
             } else {
-                val testApi = api.createFor(StashServer(serverUrl, null))
+                val testApi = api.createFor(StashServer(serverUrl, null), httpClient)
                 val queryEngine = QueryEngine(testApi)
                 val mutationEngine = MutationEngine(testApi)
 
@@ -272,8 +272,8 @@ class ManageServersViewModel(
                             this.cookies[url.host] = cookies
                         }
                     },
-                ).readTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
+                ).readTimeout(7, TimeUnit.SECONDS)
+                .writeTimeout(7, TimeUnit.SECONDS)
 
         if (trustCerts) {
             val sslContext = SSLContext.getInstance("SSL")
