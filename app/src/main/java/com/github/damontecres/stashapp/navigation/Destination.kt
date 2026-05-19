@@ -108,14 +108,6 @@ sealed class Destination(
     }
 
     @Serializable
-    data class SearchFor(
-        val requestKey: String,
-        val sourceId: Long,
-        val dataType: DataType,
-        val title: String? = null,
-    ) : Destination()
-
-    @Serializable
     data class UpdateMarker(
         val markerId: String,
     ) : Destination(true)
@@ -125,13 +117,6 @@ sealed class Destination(
         val release: Release,
     ) : Destination(true) {
         override fun toString(): String = "UpdateApp(version=${release.version})"
-    }
-
-    @Serializable
-    data class ReleaseChangelog(
-        val release: Release,
-    ) : Destination(true) {
-        override fun toString(): String = "ReleaseChangelog(version=${release.version})"
     }
 
     @Serializable

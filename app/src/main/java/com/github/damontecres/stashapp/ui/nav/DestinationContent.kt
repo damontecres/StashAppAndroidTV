@@ -305,14 +305,6 @@ fun DestinationContent(
             TODO()
         }
 
-        is Destination.ReleaseChangelog -> {
-            TODO()
-        }
-
-        is Destination.SearchFor -> {
-            TODO()
-        }
-
         Destination.Setup -> {
             TODO()
         }

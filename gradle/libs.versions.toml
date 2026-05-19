@@ -67,7 +67,6 @@ activityKtx = "1.13.0"
 acra-dialog = { module = "ch.acra:acra-dialog", version.ref = "acra" }
 acra-http = { module = "ch.acra:acra-http", version.ref = "acra" }
 acra-limiter = { module = "ch.acra:acra-limiter", version.ref = "acra" }
-androidsvg-aar = { module = "com.caverock:androidsvg-aar", version.ref = "androidsvg-aar" }
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
 androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "datastore" }
@@ -85,9 +84,6 @@ androidx-test-rules = { module = "androidx.test:rules", version.ref = "androidx-
 androidx-test-ext-truth = { module = "androidx.test.ext:truth", version.ref = "androidx-test-ext-truth" }
 
 androidx-leanback = { module = "androidx.leanback:leanback", version.ref = "leanback" }
-androidx-leanback-preference = { module = "androidx.leanback:leanback-preference", version.ref = "leanback-preference" }
-androidx-leanback-tab = { module = "androidx.leanback:leanback-tab", version.ref = "leanback-tab" }
-androidx-leanback-grid = { module = "androidx.leanback:leanback-grid", version.ref = "leanback-grid" }
 androidx-media3-effect = { module = "androidx.media3:media3-effect", version.ref = "androidx-media3" }
 androidx-media3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "androidx-media3" }
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "androidx-media3" }
@@ -113,9 +109,6 @@ compose-wheel-picker = { module = "com.github.zj565061763:compose-wheel-picker",
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 markwon-core = { module = "io.noties.markwon:core", version.ref = "markwon-core" }
-glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
-glide-okhttp3-integration = { module = "com.github.bumptech.glide:okhttp3-integration", version.ref = "glide" }
-glide-ksp = { module = "com.github.bumptech.glide:ksp", version.ref = "glide" }
 junit = { module = "junit:junit", version.ref = "junit" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines-android" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
@@ -125,14 +118,9 @@ mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito-core" }
 parcelable-core = { module = "com.chrynan.parcelable:parcelable-core", version.ref = "parcelable-core" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preference-ktx-version" }
-previewseekbar = { module = "com.github.rubensousa:previewseekbar", version.ref = "previewseekbar" }
-previewseekbar-media3 = { module = "com.github.rubensousa:previewseekbar-media3", version.ref = "previewseekbar-media3" }
-navigation-reimagined = { module = "dev.olshevski.navigation:reimagined", version.ref = "navigation-reimagined" }
 restring = { module = "dev.b3nedikt.restring:restring", version.ref = "restring" }
 reword = { module = "dev.b3nedikt.reword:reword", version.ref = "reword" }
-viewpump = { module = "dev.b3nedikt.viewpump:viewpump", version.ref = "viewpump" }
 protobuf-kotlin-lite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobuf-javalite" }
-zoomlayout = { module = "com.otaliastudios:zoomlayout", version.ref = "zoomlayout" }
 multiplatform-markdown-renderer = { module = "com.mikepenz:multiplatform-markdown-renderer", version.ref = "multiplatformMarkdownRenderer" }
 multiplatform-markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "multiplatformMarkdownRenderer" }
 
@@ -163,6 +151,7 @@ koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
 wholphin-extensions-mpv = { module = "com.github.damontecres.wholphin.mpv:wholphin-mpv", version.ref = "wholphin-extensions" }
 wholphin-extensions-ffmpeg = { module = "com.github.damontecres.wholphin.media3:decoder-ffmpeg", version.ref = "wholphin-extensions" }
 wholphin-extensions-av1 = { module = "com.github.damontecres.wholphin.media3:decoder-av1", version.ref = "wholphin-extensions" }
+
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
 androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelNav3" }

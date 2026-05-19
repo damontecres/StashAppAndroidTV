@@ -7,22 +7,14 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
 import android.view.WindowManager
-import android.widget.Adapter
-import android.widget.FrameLayout
-import android.widget.ListAdapter
-import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
-import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
-import androidx.leanback.widget.ArrayObjectAdapter
-import androidx.leanback.widget.Visibility
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Optional
@@ -645,22 +637,6 @@ fun fakeMarker(
     __typename = "",
 )
 
-fun ScrollView.onlyScrollIfNeeded() {
-    val childHeight = getChildAt(0).height
-    val isScrollable =
-        height < childHeight + paddingTop + paddingBottom
-    isFocusable = isScrollable
-    isVerticalScrollBarEnabled = isScrollable
-}
-
-fun NestedScrollView.onlyScrollIfNeeded() {
-    val childHeight = getChildAt(0).height
-    val isScrollable =
-        height < childHeight + paddingTop + paddingBottom
-    isFocusable = isScrollable
-    isVerticalScrollBarEnabled = isScrollable
-}
-
 fun SharedPreferences.getStringNotNull(
     key: String,
     defValue: String,
@@ -670,10 +646,6 @@ fun SharedPreferences.getInt(
     key: String,
     defValue: String,
 ): Int = getStringNotNull(key, defValue).toIntOrNull() ?: defValue.toInt()
-
-fun ArrayObjectAdapter.isEmpty(): Boolean = size() == 0
-
-fun ArrayObjectAdapter.isNotEmpty(): Boolean = !isEmpty()
 
 val ImageData.maxFileSize: Long
     get() =
@@ -719,62 +691,6 @@ fun View.animateToVisible(durationMs: Long? = null) {
             alpha = 0f
             visibility = View.VISIBLE
         }
-}
-
-fun View.animateToInvisible(
-    @Visibility targetVisibility: Int = View.INVISIBLE,
-    durationMs: Long? = null,
-) {
-    if (visibility == targetVisibility) return
-
-    val duration =
-        durationMs ?: resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
-    animate()
-        .alpha(0f)
-        .setDuration(duration)
-        .setListener(null)
-        .withEndAction {
-            alpha = 1f
-            visibility = targetVisibility
-        }
-}
-
-/**
- * Gets the max measured width size for the views produced by an ArrayAdapter
- */
-fun getMaxMeasuredWidth(
-    context: Context,
-    adapter: ListAdapter,
-    maxWidth: Int? = null,
-    maxWidthFraction: Double? = 0.4,
-): Int {
-    val widest =
-        if (maxWidth != null) {
-            maxWidth
-        } else if (maxWidthFraction != null && context is Activity) {
-            val displayMetrics = DisplayMetrics()
-            context.windowManager.defaultDisplay.getMetrics(displayMetrics)
-            (displayMetrics.widthPixels * maxWidthFraction).toInt()
-        } else {
-            Log.w(Constants.TAG, "maxWidthFraction is not null, but couldn't get window size")
-            Int.MAX_VALUE
-        }
-
-    val tempParent = FrameLayout(context)
-    var maxMeasuredWidth = 0
-    var itemView: View? = null
-    val measureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-
-    for (i in 0 until adapter.count) {
-        if (adapter.getItemViewType(i) != Adapter.IGNORE_ITEM_VIEW_TYPE) {
-            itemView = adapter.getView(i, itemView, tempParent)
-            itemView.measure(measureSpec, measureSpec)
-            if (itemView.measuredWidth > maxMeasuredWidth) {
-                maxMeasuredWidth = itemView.measuredWidth
-            }
-        }
-    }
-    return widest.coerceAtMost(maxMeasuredWidth)
 }
 
 /**
@@ -933,48 +849,6 @@ fun getUiTabs(
     else -> throw UnsupportedOperationException("$dataType not supported")
 }.toSet()
 
-fun getUiTabs(
-    context: Context,
-    dataType: DataType,
-): Set<String> {
-    val prefKey: Int
-    val defaultArrayKey: Int
-    when (dataType) {
-        DataType.PERFORMER -> {
-            prefKey = R.string.pref_key_ui_performer_tabs
-            defaultArrayKey = R.array.performer_tabs
-        }
-
-        DataType.GALLERY -> {
-            prefKey = R.string.pref_key_ui_gallery_tabs
-            defaultArrayKey = R.array.gallery_tabs
-        }
-
-        DataType.GROUP -> {
-            prefKey = R.string.pref_key_ui_group_tabs
-            defaultArrayKey = R.array.group_tabs
-        }
-
-        DataType.STUDIO -> {
-            prefKey = R.string.pref_key_ui_studio_tabs
-            defaultArrayKey = R.array.studio_tabs
-        }
-
-        DataType.TAG -> {
-            prefKey = R.string.pref_key_ui_tag_tabs
-            defaultArrayKey = R.array.tag_tabs
-        }
-
-        else -> {
-            throw UnsupportedOperationException("$dataType not supported")
-        }
-    }
-    val defaultValues = context.resources.getStringArray(defaultArrayKey).toSet()
-    return PreferenceManager
-        .getDefaultSharedPreferences(context)
-        .getStringSet(context.getString(prefKey), defaultValues)!!
-}
-
 fun Optional.Companion.presentIfNotNullOrBlank(value: String?): Optional<String> = presentIfNotNull(value?.ifBlank { null })
 
 /**
@@ -1056,8 +930,6 @@ fun getPreference(
 ) = PreferenceManager
     .getDefaultSharedPreferences(context)
     .getBoolean(context.getString(key), default)
-
-fun composeEnabled(context: Context = StashApplication.getApplication()) = getPreference(context, R.string.pref_key_use_compose_ui, true)
 
 fun Context.findActivity(): Activity? {
     if (this is Activity) {
