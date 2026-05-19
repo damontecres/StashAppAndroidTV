@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.di.server
 
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.datastore.core.DataStore
 import androidx.preference.PreferenceManager
@@ -48,11 +47,7 @@ class ServerRepository(
     }
 
     suspend fun setCurrentStashServer(server: StashServer) {
-        val manager = PreferenceManager.getDefaultSharedPreferences(context)
-        manager.edit(true) {
-            putString(PREF_STASH_URL, server.url)
-            putString(PREF_STASH_API_KEY, server.apiKey)
-        }
+        addAndSwitchServer(server)
     }
 
     suspend fun removeStashServer(server: StashServer) {
@@ -75,10 +70,7 @@ class ServerRepository(
         }
     }
 
-    suspend fun addAndSwitchServer(
-        newServer: StashServer,
-        otherSettings: ((SharedPreferences.Editor) -> Unit)? = null,
-    ) {
+    suspend fun addAndSwitchServer(newServer: StashServer) {
         val manager = PreferenceManager.getDefaultSharedPreferences(context)
         val current = findConfiguredStashServer(context)
         val currentServerKey = SERVER_PREF_PREFIX + current?.url
@@ -96,9 +88,6 @@ class ServerRepository(
             putString(newApiKeyKey, newServer.apiKey)
             putString(PREF_STASH_URL, newServer.url)
             putString(PREF_STASH_API_KEY, newServer.apiKey)
-            if (otherSettings != null) {
-                otherSettings(this)
-            }
         }
         api.changeServer(preferences.data.first(), newServer)
         val config = QueryEngine(api).getServerConfiguration()

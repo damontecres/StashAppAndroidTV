@@ -62,7 +62,7 @@ class FilterViewModel(
             job =
                 viewModelScope.launchIO {
                     pager.init()
-                    withContext(Dispatchers.IO) {
+                    withContext(Dispatchers.Main) {
                         this@FilterViewModel.pager.value = pager
                     }
                 }

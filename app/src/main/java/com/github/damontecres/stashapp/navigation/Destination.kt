@@ -44,7 +44,9 @@ sealed class Destination(
     data object Setup : Destination(true)
 
     @Serializable
-    data object Main : Destination()
+    data class Main(
+        val id: Int = 0,
+    ) : Destination()
 
     @Serializable
     data class Settings(

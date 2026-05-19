@@ -66,7 +66,9 @@ fun ManageServers(
     val allServers by viewModel.allServers.observeAsState(listOf())
     val serverStatus by viewModel.serverStatus.observeAsState(mapOf())
     val serversWithOutCurrent =
-        remember { allServers.toMutableList().apply { remove(currentServer.server) } }
+        remember(currentServer, allServers) {
+            allServers.toMutableList().apply { remove(currentServer.server) }
+        }
 
     var showAddServer by remember { mutableStateOf(false) }
     var showServerDialog by remember { mutableStateOf<StashServer?>(null) }

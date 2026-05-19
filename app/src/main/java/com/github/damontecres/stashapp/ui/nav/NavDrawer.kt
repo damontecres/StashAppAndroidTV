@@ -37,6 +37,7 @@ import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
+import co.touchlab.kermit.Logger
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.server.ServerRepository
@@ -138,8 +139,11 @@ fun NavDrawer(
                             .focusGroup()
                             .focusProperties {
                                 onExit = {
+                                    Logger.v { "onExit: selectedScreen=$selectedScreen, pages=$pages" }
                                     val selectedIndex = pages.indexOf(selectedScreen)
-                                    if (selectedIndex !in listState.layoutInfo.visibleItemsInfo.map { it.index }) {
+                                    if (selectedIndex >= 0 &&
+                                        selectedIndex !in listState.layoutInfo.visibleItemsInfo.map { it.index }
+                                    ) {
                                         scope.launch(StashCoroutineExceptionHandler()) {
                                             listState.animateScrollToItem(selectedIndex)
                                         }

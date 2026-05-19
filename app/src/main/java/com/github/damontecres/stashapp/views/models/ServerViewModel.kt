@@ -61,7 +61,7 @@ open class ServerViewModel(
                     serverRepository.setCurrentStashServer(newServer)
                     _currentServer.value = newServer
                     _serverConnection.value = ServerConnection.Success
-                    submit(Destination.Main, true)
+//                    submit(Destination.Main, true)
                 } catch (ex: Exception) {
                     Log.e(TAG, "Error switching servers", ex)
                     _currentServer.setValueNoCheck(null)

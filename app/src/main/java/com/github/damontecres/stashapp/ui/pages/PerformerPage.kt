@@ -123,7 +123,7 @@ class PerformerDetailsViewModel(
     val favorite = MutableLiveData(false)
     val rating100 = MutableLiveData(0)
 
-    fun init(): PerformerDetailsViewModel {
+    init {
         viewModelScope.launch(exceptionHandler.with("Error fetching performer")) {
             try {
                 val performer = queryEngine.getPerformer(performerId)
@@ -136,7 +136,6 @@ class PerformerDetailsViewModel(
                 loadingState.value = PerformerLoadingState.Error
             }
         }
-        return this
     }
 
     private suspend fun refresh(performer: PerformerData) {

@@ -12,7 +12,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import co.touchlab.kermit.Logger
 import com.github.damontecres.stashapp.api.fragment.ImageData
@@ -137,6 +139,11 @@ fun ApplicationContent(
         backStack = navigationManager.backStack,
         onBack = { navigationManager.goBack() },
         modifier = modifier,
+        entryDecorators =
+            listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator(),
+            ),
         entryProvider = { destination ->
             NavEntry(destination, contentKey = destination.toString()) {
                 LaunchedEffect(Unit) {
@@ -163,7 +170,7 @@ fun ApplicationContent(
                     // Highlight on the nav drawer as user navigates around the app
                     selectedScreen =
                         when (destination) {
-                            Destination.Main -> {
+                            is Destination.Main -> {
                                 DrawerPage.HomePage
                             }
 
@@ -211,7 +218,10 @@ fun ApplicationContent(
                             val pageDest =
                                 when (page) {
                                     DrawerPage.HomePage -> {
-                                        Destination.Main
+                                        val id =
+                                            (navigationManager.backStack.firstOrNull() as? Destination.Main)?.id
+                                                ?: 0
+                                        Destination.Main(id + 1)
                                     }
 
                                     DrawerPage.SearchPage -> {

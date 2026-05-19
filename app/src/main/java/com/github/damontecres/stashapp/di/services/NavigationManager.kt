@@ -8,7 +8,7 @@ import org.koin.core.annotation.Single
 
 @Single
 class NavigationManager {
-    var backStack: MutableList<Destination> = NavBackStack(Destination.Main)
+    var backStack: MutableList<Destination> = NavBackStack(Destination.Main())
 
     /**
      * Go to the specified [Destination]
@@ -47,7 +47,7 @@ class NavigationManager {
             backStack.removeLastOrNull()
         }
         if (backStack[0] !is Destination.Main) {
-            backStack[0] = Destination.Main
+//            backStack[0] = Destination.Main
         }
         log()
     }
@@ -55,12 +55,12 @@ class NavigationManager {
     /**
      * Go all the way back to the home page, and reload it from scratch
      */
-    fun reloadHome() {
+    fun reloadMain() {
         goToMain()
         // TODO
-//        val id = (backStack[0] as Destination.Main).id + 1
-//        backStack[0] = Destination.Main(id)
-//        log()
+        val id = (backStack[0] as Destination.Main).id + 1
+        backStack[0] = Destination.Main(id)
+        log()
     }
 
     /**
