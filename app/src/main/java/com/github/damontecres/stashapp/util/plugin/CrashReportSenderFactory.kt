@@ -2,10 +2,15 @@ package com.github.damontecres.stashapp.util.plugin
 
 import android.content.Context
 import android.util.Log
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.RunPluginTaskMutation
-import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.di.server.ServerRepository.Companion.PREF_STASH_API_KEY
+import com.github.damontecres.stashapp.di.server.ServerRepository.Companion.PREF_STASH_URL
+import com.github.damontecres.stashapp.di.server.StashApi
+import com.github.damontecres.stashapp.di.server.StashServer
 import com.google.auto.service.AutoService
 import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
 import org.acra.config.CoreConfiguration
 import org.acra.data.CrashReportData
 import org.acra.sender.ReportSender
@@ -28,13 +33,13 @@ class CrashReportSenderFactory : ReportSenderFactory {
         ) {
             Log.w(TAG, "Sending crash report")
             try {
-                StashServer.findConfiguredStashServer(context)?.let { server ->
-                    val client = server.apolloClient
+                findConfiguredStashServer(context)?.let { server ->
+                    val client = StashApi.createApolloClient(server, OkHttpClient())
                     val mutation =
                         RunPluginTaskMutation(
-                            plugin_id = CompanionPlugin.PLUGIN_ID,
-                            task_name = CompanionPlugin.CRASH_TASK_NAME,
-                            args_map = mapOf(CompanionPlugin.CRASH_TASK_NAME to errorContent.toJSON()),
+                            plugin_id = CompanionPluginService.PLUGIN_ID,
+                            task_name = CompanionPluginService.CRASH_TASK_NAME,
+                            args_map = mapOf(CompanionPluginService.CRASH_TASK_NAME to errorContent.toJSON()),
                         )
                     runBlocking {
                         val response = client.mutation(mutation).execute()
@@ -49,6 +54,13 @@ class CrashReportSenderFactory : ReportSenderFactory {
                 Log.e(TAG, "Error while sending crash report", ex)
                 throw ReportSenderException("Error while sending crash report ", ex)
             }
+        }
+
+        fun findConfiguredStashServer(context: Context): StashServer? {
+            val manager = PreferenceManager.getDefaultSharedPreferences(context)
+            val url = manager.getString(PREF_STASH_URL, null)
+            val apiKey = manager.getString(PREF_STASH_API_KEY, null)
+            return url?.let { StashServer(url, apiKey) }
         }
     }
 

@@ -89,7 +89,6 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
-import com.github.damontecres.stashapp.presenters.StashPresenter.Companion.isDefaultUrl
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
@@ -98,6 +97,7 @@ import com.github.damontecres.stashapp.ui.LocalPlayerContext
 import com.github.damontecres.stashapp.ui.compat.Card
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
+import com.github.damontecres.stashapp.ui.isDefaultUrl
 import com.github.damontecres.stashapp.ui.util.playOnClickSound
 import com.github.damontecres.stashapp.util.CreateNew
 import com.github.damontecres.stashapp.util.asSlimeSceneData
@@ -328,27 +328,25 @@ fun RootCard(
             contentAlignment = Alignment.Center,
         ) {
             if (focusedAfterDelay && playVideoPreviews && videoUrl.isNotNullOrBlank()) {
-                val player =
-                    LocalPlayerContext.current.player(
-                        context,
-                        LocalGlobalContext.current.server,
-                    )
+                val player = LocalPlayerContext.current.player
                 LaunchedEffect(player) {
-                    maybeMuteAudio(uiConfig.preferences, true, player)
-                    val mediaItem =
-                        MediaItem
-                            .Builder()
-                            .setUri(videoUrl.toUri())
-                            .setMimeType(MimeTypes.VIDEO_MP4)
-                            .build()
+                    player?.let {
+                        maybeMuteAudio(uiConfig.preferences, true, player)
+                        val mediaItem =
+                            MediaItem
+                                .Builder()
+                                .setUri(videoUrl.toUri())
+                                .setMimeType(MimeTypes.VIDEO_MP4)
+                                .build()
 
-                    player.setMediaItem(mediaItem, C.TIME_UNSET)
-                    player.playWhenReady = true
-                    player.prepare()
+                        player.setMediaItem(mediaItem, C.TIME_UNSET)
+                        player.playWhenReady = true
+                        player.prepare()
+                    }
                 }
                 LifecycleStartEffect(Unit) {
                     onStopOrDispose {
-                        player.stop()
+                        player?.stop()
                     }
                 }
                 val contentScale = ContentScale.Fit

@@ -15,40 +15,32 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.presenters.GalleryPresenter
-import com.github.damontecres.stashapp.presenters.GroupPresenter
-import com.github.damontecres.stashapp.presenters.ImagePresenter
-import com.github.damontecres.stashapp.presenters.MarkerPresenter
-import com.github.damontecres.stashapp.presenters.PerformerPresenter
-import com.github.damontecres.stashapp.presenters.ScenePresenter
-import com.github.damontecres.stashapp.presenters.StudioPresenter
-import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
 
 fun dataTypeImageWidth(dataType: DataType) =
     when (dataType) {
-        DataType.GALLERY -> GalleryPresenter.CARD_WIDTH
-        DataType.IMAGE -> ImagePresenter.CARD_WIDTH
-        DataType.MARKER -> MarkerPresenter.CARD_WIDTH
-        DataType.GROUP -> GroupPresenter.CARD_WIDTH
-        DataType.PERFORMER -> PerformerPresenter.CARD_WIDTH
-        DataType.SCENE -> ScenePresenter.CARD_WIDTH
-        DataType.STUDIO -> StudioPresenter.CARD_WIDTH
-        DataType.TAG -> TagPresenter.CARD_WIDTH
+        DataType.GALLERY -> 345
+        DataType.IMAGE -> 345
+        DataType.MARKER -> 345
+        DataType.GROUP -> 250
+        DataType.PERFORMER -> 254
+        DataType.SCENE -> 345
+        DataType.STUDIO -> 345
+        DataType.TAG -> 250
     }
 
 fun dataTypeImageHeight(dataType: DataType) =
     when (dataType) {
-        DataType.GALLERY -> GalleryPresenter.CARD_HEIGHT
-        DataType.IMAGE -> ImagePresenter.CARD_HEIGHT
-        DataType.MARKER -> MarkerPresenter.CARD_HEIGHT
-        DataType.GROUP -> GroupPresenter.CARD_HEIGHT
-        DataType.PERFORMER -> PerformerPresenter.CARD_HEIGHT
-        DataType.SCENE -> ScenePresenter.CARD_HEIGHT
-        DataType.STUDIO -> StudioPresenter.CARD_HEIGHT
-        DataType.TAG -> TagPresenter.CARD_HEIGHT
+        DataType.GALLERY -> 145
+        DataType.IMAGE -> 145
+        DataType.MARKER -> 194
+        DataType.GROUP -> 250
+        DataType.PERFORMER -> 381
+        DataType.SCENE -> 194
+        DataType.STUDIO -> 194
+        DataType.TAG -> 250
     }
 
 @Composable

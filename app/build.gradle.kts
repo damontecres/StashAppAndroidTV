@@ -31,6 +31,8 @@ plugins {
     alias(libs.plugins.room)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.protobuf)
+    alias(libs.plugins.koin.compiler)
+    alias(libs.plugins.aboutLibraries)
 }
 
 val gitTags =
@@ -233,20 +235,19 @@ protobuf {
 }
 
 dependencies {
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.leanback)
-    implementation(libs.androidx.leanback.preference)
-    implementation(libs.androidx.leanback.tab)
-
-    implementation(libs.glide)
-    implementation(libs.glide.okhttp3.integration)
-    ksp(libs.glide.ksp)
-
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    implementation(libs.androidx.material3.adaptive.navigation3)
     implementation(libs.android.material)
-
     implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.aboutlibraries.core)
+    implementation(libs.aboutlibraries.compose.m3)
 
-    implementation(libs.androidsvg.aar)
     implementation(kotlin("reflect"))
 
     implementation(libs.androidx.preference.ktx)
@@ -264,11 +265,8 @@ dependencies {
     implementation(libs.androidx.media3.datasource.okhttp)
     implementation(libs.androidx.media3.effect)
     implementation(libs.androidx.media3.transformer)
-    implementation(libs.previewseekbar)
-    implementation(libs.previewseekbar.media3)
     implementation(libs.androidx.constraintlayout)
 
-    implementation(libs.zoomlayout)
     implementation(libs.compose.wheel.picker)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.markwon.core)
@@ -300,17 +298,13 @@ dependencies {
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.android.material)
-    implementation(libs.androidx.swiperefreshlayout)
-    implementation(libs.androidsvg.aar)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.coil.network.cachecontrol)
     implementation(libs.coil.svg)
     implementation(libs.coil.gif)
-    implementation(libs.navigation.reimagined)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.restring)
-    implementation(libs.viewpump)
     implementation(libs.reword)
     implementation(libs.androidx.datastore)
     implementation(libs.protobuf.kotlin.lite)
@@ -319,6 +313,16 @@ dependencies {
 
     implementation(libs.timber)
     implementation(libs.slf4j2.timber)
+    implementation(libs.kermit)
+
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.core)
+    implementation(libs.koin.annotations)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.compose)
+    implementation(libs.koin.compose.viewmodel)
+
     if (ffmpegModuleExists.get()) {
         logger.info("Using local ffmpeg decoder")
         implementation(files("libs/lib-decoder-ffmpeg-release.aar"))

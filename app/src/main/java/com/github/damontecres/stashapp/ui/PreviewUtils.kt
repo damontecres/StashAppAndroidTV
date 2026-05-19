@@ -109,6 +109,8 @@ val uiConfigPreview =
         showCardProgress = true,
         playSoundOnFocus = true,
         sfwMode = false,
+        alwaysStartFromBeginning = false,
+        minimumPlayPercent = 100,
         cardSettings =
             CardUiSettings(
                 maxSearchResults = 25,

@@ -12,7 +12,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
@@ -63,8 +62,8 @@ fun MarkerCard(
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
         uiConfig = uiConfig,
-        imageWidth = MarkerPresenter.CARD_WIDTH.dp / 2,
-        imageHeight = MarkerPresenter.CARD_HEIGHT.dp / 2,
+        imageWidth = dataTypeImageWidth(DataType.MARKER).dp / 2,
+        imageHeight = dataTypeImageHeight(DataType.MARKER).dp / 2,
         imageUrl = imageUrl,
         defaultImageDrawableRes = R.drawable.default_scene,
         videoUrl = videoUrl,

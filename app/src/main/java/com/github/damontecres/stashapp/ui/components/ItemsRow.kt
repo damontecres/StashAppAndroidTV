@@ -121,7 +121,6 @@ fun <T : StashData> ItemsRow(
     val firstFocus = remember { FocusRequester() }
     var focusedIndex by remember { mutableIntStateOf(focusPair?.column ?: 0) }
     val state = rememberLazyListState()
-    val server = LocalGlobalContext.current.server
     Column(
         modifier = modifier,
     ) {
@@ -138,7 +137,11 @@ fun <T : StashData> ItemsRow(
                     .onKeyEvent {
                         if (isPlayKeyUp(it)) {
                             val destination =
-                                getPlayDestinationForItem(server, items[focusedIndex], null)
+                                getPlayDestinationForItem(
+                                    items[focusedIndex],
+                                    null,
+                                    uiConfig.alwaysStartFromBeginning,
+                                )
                             return@onKeyEvent if (destination != null) {
                                 navigationManager.navigate(destination)
                                 true

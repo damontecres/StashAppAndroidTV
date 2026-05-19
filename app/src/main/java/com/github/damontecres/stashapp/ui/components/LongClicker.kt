@@ -12,10 +12,10 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.MAX_PLAYLIST_SIZE

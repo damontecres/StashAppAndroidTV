@@ -34,21 +34,23 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.CurrentServer
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.util.ScreenSize
 import com.github.damontecres.stashapp.ui.util.screenSize
-import com.github.damontecres.stashapp.util.StashServer
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun NavScaffold(
-    server: StashServer,
-    navigationManager: NavigationManagerCompose,
+    preferences: StashPreferences,
+    currentServer: CurrentServer,
+    navigationManager: NavigationManager,
     composeUiConfig: ComposeUiConfig,
     destination: Destination,
     selectedScreen: DrawerPage?,
@@ -57,7 +59,6 @@ fun NavScaffold(
     longClicker: LongClicker<Any>,
     onSelectScreen: (DrawerPage) -> Unit,
     onChangeTheme: (String?) -> Unit,
-    onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -181,14 +182,14 @@ fun NavScaffold(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             DestinationContent(
+                preferences = preferences,
+                currentServer = currentServer,
                 navManager = navigationManager,
-                server = server,
                 destination = destination,
                 composeUiConfig = composeUiConfig,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 onChangeTheme = onChangeTheme,
-                onSwitchServer = onSwitchServer,
                 modifier =
                     Modifier
                         .fillMaxSize(),

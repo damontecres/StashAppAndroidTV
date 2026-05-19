@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.util
 
 import android.Manifest
 import android.app.Activity
+import android.app.Application
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -18,6 +19,7 @@ import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.di.StandardHttpClient
 import com.github.damontecres.stashapp.ui.pages.DownloadCallback
 import com.github.damontecres.stashapp.ui.pages.copyTo
 import kotlinx.coroutines.Dispatchers
@@ -28,13 +30,237 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.koin.core.annotation.Single
 import java.io.File
 import java.util.Date
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 
-class UpdateChecker {
+@Single
+class UpdateChecker(
+    private val context: Application,
+    @param:StandardHttpClient private val httpClient: OkHttpClient,
+) {
+    suspend fun maybeShowUpdateToast(
+        updateUrl: String,
+        showNegativeToast: Boolean = false,
+    ) = withContext(Dispatchers.IO) {
+        val pref = PreferenceManager.getDefaultSharedPreferences(context)
+        val now = Date()
+        val lastUpdateCheckThreshold =
+            pref
+                .getLong(context.getString(R.string.pref_key_update_last_check_threshold), 12)
+                .hours
+        val lastUpdateCheck =
+            pref.getLong(
+                context.getString(R.string.pref_key_update_last_check),
+                0,
+            )
+        val timeSince = (now.time - lastUpdateCheck).milliseconds
+        Log.v(TAG, "Last successful update check was $timeSince ago")
+        val installedVersion = getInstalledVersion(context)
+        val latestRelease = getLatestRelease(updateUrl)
+        if (latestRelease != null && latestRelease.version.isGreaterThan(installedVersion)) {
+            Log.v(TAG, "Update available $installedVersion => ${latestRelease.version}")
+            pref.edit {
+                putLong(context.getString(R.string.pref_key_update_last_check), now.time)
+            }
+            if (lastUpdateCheckThreshold >= timeSince) {
+                Log.i(
+                    TAG,
+                    "Skipping update notification, threshold is $lastUpdateCheckThreshold",
+                )
+            } else {
+                showToastOnMain(
+                    context,
+                    "Update available: $installedVersion => ${latestRelease.version}!",
+                    Toast.LENGTH_LONG,
+                )
+            }
+        } else {
+            Log.v(TAG, "No update available for $installedVersion")
+            if (showNegativeToast) {
+                showToastOnMain(
+                    context,
+                    "No updates available, $installedVersion is the latest!",
+                    Toast.LENGTH_LONG,
+                )
+            }
+        }
+    }
+
+    suspend fun getLatestRelease(updateUrl: String): Release? {
+        return withContext(Dispatchers.IO) {
+            val preferredAsset =
+                if (PreferenceManager
+                        .getDefaultSharedPreferences(context)
+                        .getBoolean("updatePreferRelease", true)
+                ) {
+                    RELEASE_ASSET_NAME
+                } else {
+                    DEBUG_ASSET_NAME
+                }
+
+            val request =
+                Request
+                    .Builder()
+                    .url(updateUrl)
+                    .get()
+                    .build()
+            httpClient.newCall(request).execute().use {
+                if (it.isSuccessful && it.body != null) {
+                    val result = Json.parseToJsonElement(it.body!!.string())
+                    val name = result.jsonObject["name"]?.jsonPrimitive?.contentOrNull
+                    val version = Version.tryFromString(name)
+                    val publishedAt =
+                        result.jsonObject["published_at"]?.jsonPrimitive?.contentOrNull
+                    val body = result.jsonObject["body"]?.jsonPrimitive?.contentOrNull
+                    val downloadUrl =
+                        result.jsonObject["assets"]
+                            ?.jsonArray
+                            ?.firstOrNull { asset ->
+                                val assetName =
+                                    asset.jsonObject["name"]?.jsonPrimitive?.contentOrNull
+                                assetName == ASSET_NAME || assetName == preferredAsset
+                            }?.jsonObject
+                            ?.get("browser_download_url")
+                            ?.jsonPrimitive
+                            ?.contentOrNull
+                    if (version != null) {
+                        val notes =
+                            if (body.isNotNullOrBlank()) {
+                                NOTE_REGEX
+                                    .findAll(body)
+                                    .map { m ->
+                                        m.groupValues[1]
+                                    }.toList()
+                            } else {
+                                listOf()
+                            }
+                        return@use Release(version, downloadUrl, publishedAt, body, notes)
+                    } else {
+                        Log.w(TAG, "Update version parsing failed. name=$name")
+                    }
+                } else {
+                    Log.w(TAG, "Update check failed: ${it.message}")
+                }
+                return@use null
+            }
+        }
+    }
+
+    suspend fun installRelease(
+        activity: Activity,
+        release: Release,
+        callback: DownloadCallback,
+    ) {
+        withContext(Dispatchers.IO) {
+            cleanup(activity)
+            val request =
+                Request
+                    .Builder()
+                    .url(release.downloadUrl!!)
+                    .get()
+                    .build()
+            httpClient.newCall(request).execute().use {
+                if (it.isSuccessful && it.body != null) {
+                    Log.v(TAG, "Request successful for ${release.downloadUrl}")
+                    withContext(Dispatchers.Main) {
+                        callback.contentLength(it.body!!.contentLength())
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        val contentValues =
+                            ContentValues().apply {
+                                put(MediaStore.MediaColumns.DISPLAY_NAME, ASSET_NAME)
+                                put(MediaStore.MediaColumns.MIME_TYPE, APK_MIME_TYPE)
+                                put(
+                                    MediaStore.MediaColumns.RELATIVE_PATH,
+                                    Environment.DIRECTORY_DOWNLOADS,
+                                )
+                            }
+                        val resolver = activity.contentResolver
+                        val uri =
+                            resolver.insert(
+                                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                                contentValues,
+                            )
+                        if (uri != null) {
+                            it.body!!.byteStream().use { input ->
+                                resolver.openOutputStream(uri).use { output ->
+                                    copyTo(input, output!!, callback = callback)
+                                }
+                            }
+
+                            val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
+                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            intent.data = uri
+                            activity.startActivity(intent)
+                        } else {
+                            Log.e(TAG, "Resolver URI is null")
+                            showToastOnMain(
+                                activity,
+                                "There was an error downloading the release",
+                                Toast.LENGTH_LONG,
+                            )
+                        }
+                    } else {
+                        if (ContextCompat.checkSelfPermission(
+                                activity,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            ) != PackageManager.PERMISSION_GRANTED ||
+                            ContextCompat.checkSelfPermission(
+                                activity,
+                                Manifest.permission.READ_EXTERNAL_STORAGE,
+                            ) != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            ActivityCompat.requestPermissions(
+                                activity,
+                                arrayOf(
+                                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                                ),
+                                PERMISSION_REQUEST_CODE,
+                            )
+                        } else {
+                            val downloadDir =
+                                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                            downloadDir.mkdirs()
+                            val targetFile = File(downloadDir, ASSET_NAME)
+                            targetFile.outputStream().use { output ->
+                                copyTo(it.body!!.byteStream(), output, callback = callback)
+                            }
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
+                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                intent.data =
+                                    FileProvider.getUriForFile(
+                                        activity,
+                                        activity.packageName + ".provider",
+                                        targetFile,
+                                    )
+                                activity.startActivity(intent)
+                            } else {
+                                val intent = Intent(Intent.ACTION_VIEW)
+                                intent.setDataAndType(Uri.fromFile(targetFile), APK_MIME_TYPE)
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                activity.startActivity(intent)
+                            }
+                        }
+                    }
+                } else {
+                    Log.v(TAG, "Request failed for ${release.downloadUrl}: ${it.code}")
+                    showToastOnMain(
+                        activity,
+                        "Error downloading release: ${it.message}",
+                        Toast.LENGTH_LONG,
+                    )
+                }
+            }
+        }
+    }
+
     companion object {
         private const val ASSET_NAME = "StashAppAndroidTV.apk"
         private const val DEBUG_ASSET_NAME = "StashAppAndroidTV-debug.apk"
@@ -48,232 +274,9 @@ class UpdateChecker {
 
         private val NOTE_REGEX = Regex("<!-- app-note:(.+) -->")
 
-        suspend fun maybeShowUpdateToast(
-            context: Context,
-            updateUrl: String,
-            showNegativeToast: Boolean = false,
-        ) = withContext(Dispatchers.IO) {
-            val pref = PreferenceManager.getDefaultSharedPreferences(context)
-            val now = Date()
-            val lastUpdateCheckThreshold =
-                pref
-                    .getLong(context.getString(R.string.pref_key_update_last_check_threshold), 12)
-                    .hours
-            val lastUpdateCheck =
-                pref.getLong(
-                    context.getString(R.string.pref_key_update_last_check),
-                    0,
-                )
-            val timeSince = (now.time - lastUpdateCheck).milliseconds
-            Log.v(TAG, "Last successful update check was $timeSince ago")
-            val installedVersion = getInstalledVersion(context)
-            val latestRelease = getLatestRelease(context, updateUrl)
-            if (latestRelease != null && latestRelease.version.isGreaterThan(installedVersion)) {
-                Log.v(TAG, "Update available $installedVersion => ${latestRelease.version}")
-                pref.edit {
-                    putLong(context.getString(R.string.pref_key_update_last_check), now.time)
-                }
-                if (lastUpdateCheckThreshold >= timeSince) {
-                    Log.i(
-                        TAG,
-                        "Skipping update notification, threshold is $lastUpdateCheckThreshold",
-                    )
-                } else {
-                    showToastOnMain(
-                        context,
-                        "Update available: $installedVersion => ${latestRelease.version}!",
-                        Toast.LENGTH_LONG,
-                    )
-                }
-            } else {
-                Log.v(TAG, "No update available for $installedVersion")
-                if (showNegativeToast) {
-                    showToastOnMain(
-                        context,
-                        "No updates available, $installedVersion is the latest!",
-                        Toast.LENGTH_LONG,
-                    )
-                }
-            }
-        }
-
         fun getInstalledVersion(context: Context): Version {
             val pkgInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             return Version.fromString(pkgInfo.versionName!!)
-        }
-
-        suspend fun getLatestRelease(
-            context: Context,
-            updateUrl: String,
-        ): Release? {
-            return withContext(Dispatchers.IO) {
-                val preferredAsset =
-                    if (PreferenceManager
-                            .getDefaultSharedPreferences(context)
-                            .getBoolean("updatePreferRelease", true)
-                    ) {
-                        RELEASE_ASSET_NAME
-                    } else {
-                        DEBUG_ASSET_NAME
-                    }
-
-                val client = StashClient.okHttpClient
-                val request =
-                    Request
-                        .Builder()
-                        .url(updateUrl)
-                        .get()
-                        .build()
-                client.newCall(request).execute().use {
-                    if (it.isSuccessful && it.body != null) {
-                        val result = Json.parseToJsonElement(it.body!!.string())
-                        val name = result.jsonObject["name"]?.jsonPrimitive?.contentOrNull
-                        val version = Version.tryFromString(name)
-                        val publishedAt = result.jsonObject["published_at"]?.jsonPrimitive?.contentOrNull
-                        val body = result.jsonObject["body"]?.jsonPrimitive?.contentOrNull
-                        val downloadUrl =
-                            result.jsonObject["assets"]
-                                ?.jsonArray
-                                ?.firstOrNull { asset ->
-                                    val assetName =
-                                        asset.jsonObject["name"]?.jsonPrimitive?.contentOrNull
-                                    assetName == ASSET_NAME || assetName == preferredAsset
-                                }?.jsonObject
-                                ?.get("browser_download_url")
-                                ?.jsonPrimitive
-                                ?.contentOrNull
-                        if (version != null) {
-                            val notes =
-                                if (body.isNotNullOrBlank()) {
-                                    NOTE_REGEX
-                                        .findAll(body)
-                                        .map { m ->
-                                            m.groupValues[1]
-                                        }.toList()
-                                } else {
-                                    listOf()
-                                }
-                            return@use Release(version, downloadUrl, publishedAt, body, notes)
-                        } else {
-                            Log.w(TAG, "Update version parsing failed. name=$name")
-                        }
-                    } else {
-                        Log.w(TAG, "Update check failed: ${it.message}")
-                    }
-                    return@use null
-                }
-            }
-        }
-
-        suspend fun installRelease(
-            activity: Activity,
-            release: Release,
-            callback: DownloadCallback,
-        ) {
-            withContext(Dispatchers.IO) {
-                cleanup(activity)
-                val client = StashClient.okHttpClient
-                val request =
-                    Request
-                        .Builder()
-                        .url(release.downloadUrl!!)
-                        .get()
-                        .build()
-                client.newCall(request).execute().use {
-                    if (it.isSuccessful && it.body != null) {
-                        Log.v(TAG, "Request successful for ${release.downloadUrl}")
-                        withContext(Dispatchers.Main) {
-                            callback.contentLength(it.body!!.contentLength())
-                        }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            val contentValues =
-                                ContentValues().apply {
-                                    put(MediaStore.MediaColumns.DISPLAY_NAME, ASSET_NAME)
-                                    put(MediaStore.MediaColumns.MIME_TYPE, APK_MIME_TYPE)
-                                    put(
-                                        MediaStore.MediaColumns.RELATIVE_PATH,
-                                        Environment.DIRECTORY_DOWNLOADS,
-                                    )
-                                }
-                            val resolver = activity.contentResolver
-                            val uri =
-                                resolver.insert(
-                                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-                                    contentValues,
-                                )
-                            if (uri != null) {
-                                it.body!!.byteStream().use { input ->
-                                    resolver.openOutputStream(uri).use { output ->
-                                        copyTo(input, output!!, callback = callback)
-                                    }
-                                }
-
-                                val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
-                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                intent.data = uri
-                                activity.startActivity(intent)
-                            } else {
-                                Log.e(TAG, "Resolver URI is null")
-                                showToastOnMain(
-                                    activity,
-                                    "There was an error downloading the release",
-                                    Toast.LENGTH_LONG,
-                                )
-                            }
-                        } else {
-                            if (ContextCompat.checkSelfPermission(
-                                    activity,
-                                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                ) != PackageManager.PERMISSION_GRANTED ||
-                                ContextCompat.checkSelfPermission(
-                                    activity,
-                                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                                ) != PackageManager.PERMISSION_GRANTED
-                            ) {
-                                ActivityCompat.requestPermissions(
-                                    activity,
-                                    arrayOf(
-                                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                                    ),
-                                    PERMISSION_REQUEST_CODE,
-                                )
-                            } else {
-                                val downloadDir =
-                                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                                downloadDir.mkdirs()
-                                val targetFile = File(downloadDir, ASSET_NAME)
-                                targetFile.outputStream().use { output ->
-                                    copyTo(it.body!!.byteStream(), output, callback = callback)
-                                }
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                                    val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
-                                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    intent.data =
-                                        FileProvider.getUriForFile(
-                                            activity,
-                                            activity.packageName + ".provider",
-                                            targetFile,
-                                        )
-                                    activity.startActivity(intent)
-                                } else {
-                                    val intent = Intent(Intent.ACTION_VIEW)
-                                    intent.setDataAndType(Uri.fromFile(targetFile), APK_MIME_TYPE)
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    activity.startActivity(intent)
-                                }
-                            }
-                        }
-                    } else {
-                        Log.v(TAG, "Request failed for ${release.downloadUrl}: ${it.code}")
-                        showToastOnMain(
-                            activity,
-                            "Error downloading release: ${it.message}",
-                            Toast.LENGTH_LONG,
-                        )
-                    }
-                }
-            }
         }
 
         /**

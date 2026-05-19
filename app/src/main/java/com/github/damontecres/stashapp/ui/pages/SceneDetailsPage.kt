@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -32,9 +33,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.MutableCreationExtras
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -67,15 +65,16 @@ import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.ServerPreferences
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
-import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
 import com.github.damontecres.stashapp.ui.components.DeleteDialog
@@ -93,39 +92,26 @@ import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsViewModel
 import com.github.damontecres.stashapp.ui.components.scene.SceneLoadingState
 import com.github.damontecres.stashapp.ui.components.scene.sceneDetailsBody
 import com.github.damontecres.stashapp.ui.tryRequestFocus
-import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asString
 import com.github.damontecres.stashapp.util.fakeMarker
 import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.toSeconds
 import com.github.damontecres.stashapp.views.durationToString
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun SceneDetailsPage(
-    server: StashServer,
-    navigationManager: NavigationManager,
     sceneId: String,
-    itemOnClick: ItemOnClicker<Any>,
-    playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
+    viewModel: SceneDetailsViewModel =
+        koinViewModel(key = sceneId) {
+            parametersOf(sceneId)
+        },
 ) {
-    val viewModel =
-        ViewModelProvider.create(
-            LocalViewModelStoreOwner.current!!,
-            SceneDetailsViewModel.Factory,
-            MutableCreationExtras().apply {
-                set(SceneDetailsViewModel.SERVER_KEY, server)
-                set(SceneDetailsViewModel.SCENE_ID_KEY, sceneId)
-                set(
-                    SceneDetailsViewModel.PAGE_SIZE_KEY,
-                    uiConfig.preferences.searchPreferences.maxResults,
-                )
-            },
-        )[SceneDetailsViewModel::class]
     val loadingState by viewModel.loadingState.observeAsState()
     val tags by viewModel.tags.observeAsState(listOf())
     val performers by viewModel.performers.observeAsState(listOf())
@@ -161,8 +147,10 @@ fun SceneDetailsPage(
                     onUpdateTitle?.invoke(AnnotatedString(it))
                 }
             }
+            val server by viewModel.currentServer.collectAsState()
             SceneDetails(
-                server = server,
+                serverPreferences = server.serverPreferences,
+                navigationManager = viewModel.navigationManager,
                 scene = state.scene,
                 rating100 = rating100,
                 oCount = oCount,
@@ -174,8 +162,16 @@ fun SceneDetailsPage(
                 studio = studio,
                 suggestions = suggestions,
                 uiConfig = uiConfig,
-                itemOnClick = itemOnClick,
-                playOnClick = playOnClick,
+                itemOnClick = viewModel.itemClicker::onClick,
+                playOnClick = { position, mode ->
+                    viewModel.navigationManager.navigate(
+                        Destination.Playback(
+                            sceneId,
+                            position,
+                            mode,
+                        ),
+                    )
+                },
                 addItem = { item ->
                     when (item) {
                         is PerformerData, is SlimPerformerData -> viewModel.addPerformer(item.id)
@@ -209,7 +205,7 @@ fun SceneDetailsPage(
                     viewModel.deleteScene(deleteFiles, deleteGenerated) {
                         if (it) {
                             Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show()
-                            navigationManager.goBack()
+                            viewModel.navigationManager.goBack()
                         } else {
                             Toast
                                 .makeText(context, "Error deleting scene", Toast.LENGTH_SHORT)
@@ -238,7 +234,8 @@ data class DialogParams(
 
 @Composable
 fun SceneDetails(
-    server: StashServer,
+    serverPreferences: ServerPreferences,
+    navigationManager: com.github.damontecres.stashapp.di.services.NavigationManager,
     scene: FullSceneData,
     rating100: Int,
     oCount: Int,
@@ -261,7 +258,6 @@ fun SceneDetails(
     showRatingBar: Boolean = true,
 ) {
     val context = LocalContext.current
-    val navigationManager = LocalGlobalContext.current.navigationManager
 
     var showDialog by remember { mutableStateOf<DialogParams?>(null) }
     var showDetailsDialog by remember { mutableStateOf(false) }
@@ -328,7 +324,7 @@ fun SceneDetails(
             DefaultLongClicker(
                 navigationManager,
                 itemOnClick,
-                server.serverPreferences.alwaysStartFromBeginning,
+                serverPreferences.alwaysStartFromBeginning,
                 markerPlayAllOnClick = { },
             ) { showDialog = it }
         }
@@ -445,7 +441,7 @@ fun SceneDetails(
                 onRatingChange = onRatingChange,
                 removeLongClicker = removeLongClicker,
                 studio = studio,
-                alwaysStartFromBeginning = server.serverPreferences.alwaysStartFromBeginning,
+                alwaysStartFromBeginning = serverPreferences.alwaysStartFromBeginning,
                 showEditButton = uiConfig.readOnlyModeDisabled,
                 editOnClick = {
                     showDialog =
@@ -528,7 +524,7 @@ fun SceneDetails(
                             fromLongClick = false,
                             items =
                                 moreOptionsItems(
-                                    server = server,
+                                    serverPreferences = serverPreferences,
                                     context = context,
                                     navigationManager = navigationManager,
                                     scene = scene,
@@ -650,7 +646,7 @@ fun SceneDetails(
 }
 
 fun moreOptionsItems(
-    server: StashServer,
+    serverPreferences: ServerPreferences,
     context: Context,
     navigationManager: NavigationManager,
     scene: FullSceneData,
@@ -674,7 +670,7 @@ fun moreOptionsItems(
                 Icons.Default.PlayArrow,
             ) {
                 playOnClick(
-                    if (server.serverPreferences.alwaysStartFromBeginning) {
+                    if (serverPreferences.alwaysStartFromBeginning) {
                         0L
                     } else {
                         scene.resume_position ?: 0
@@ -691,7 +687,7 @@ fun moreOptionsItems(
                 // TODO show options for other resolutions
                 val format = streamChoice.asString
                 playOnClick(
-                    if (server.serverPreferences.alwaysStartFromBeginning) {
+                    if (serverPreferences.alwaysStartFromBeginning) {
                         0L
                     } else {
                         scene.resume_position ?: 0

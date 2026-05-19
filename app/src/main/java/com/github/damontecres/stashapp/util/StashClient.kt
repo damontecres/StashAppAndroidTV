@@ -4,31 +4,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.os.Build
-import android.util.Log
 import androidx.core.net.toUri
-import androidx.preference.PreferenceManager
-import com.apollographql.apollo.ApolloClient
-import com.apollographql.apollo.annotations.ApolloExperimental
-import com.apollographql.apollo.network.http.DefaultHttpEngine
-import com.apollographql.apollo.network.websocket.GraphQLWsProtocol
-import com.apollographql.apollo.network.websocket.WebSocketEngine
-import com.apollographql.apollo.network.websocket.WebSocketNetworkTransport
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashApplication
-import okhttp3.CacheControl
-import okhttp3.Call
-import okhttp3.Cookie
-import okhttp3.CookieJar
-import okhttp3.EventListener
-import okhttp3.HttpUrl
-import okhttp3.OkHttpClient
-import okhttp3.Response
-import java.security.SecureRandom
 import java.security.cert.X509Certificate
-import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
-import kotlin.time.DurationUnit
 
 /**
  * Provides static functions to get clients to interact with the server
@@ -37,161 +16,6 @@ class StashClient private constructor() {
     companion object {
         private const val TAG = "StashClient"
         private const val OK_HTTP_TAG = "$TAG.OkHttpClient"
-
-        val okHttpClient = createOkHttpClient()
-
-        private fun createOkHttpClient(): OkHttpClient {
-            val context = StashApplication.getApplication()
-            val manager = PreferenceManager.getDefaultSharedPreferences(context)
-            val trustAll = manager.getBoolean("trustAllCerts", false)
-            val cacheDuration =
-                cacheDurationPrefToDuration(manager.getInt("networkCacheDuration", 3))
-            val cacheLogging = manager.getBoolean("networkCacheLogging", false)
-            val networkTimeout = manager.getInt("networkTimeout", 15).toLong()
-
-            val userAgent = createUserAgent(context)
-
-            Log.v(TAG, "User-Agent=$userAgent")
-            var builder =
-                OkHttpClient
-                    .Builder()
-                    .readTimeout(networkTimeout, TimeUnit.SECONDS)
-                    .writeTimeout(networkTimeout, TimeUnit.SECONDS)
-                    .addInterceptor {
-                        it.proceed(
-                            it
-                                .request()
-                                .newBuilder()
-                                .header("User-Agent", userAgent)
-                                .build(),
-                        )
-                    }
-
-            if (trustAll) {
-                val sslContext = SSLContext.getInstance("SSL")
-                sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
-                builder =
-                    builder
-                        .sslSocketFactory(
-                            sslContext.socketFactory,
-                            TRUST_ALL_CERTS,
-                        ).hostnameVerifier { _, _ ->
-                            true
-                        }
-            }
-            if (cacheLogging) {
-                Log.d(
-                    OK_HTTP_TAG,
-                    "cacheDuration in hours: ${
-                        cacheDuration?.toInt(
-                            DurationUnit.HOURS,
-                        )
-                    }",
-                )
-                builder =
-                    builder.eventListener(
-                        object : EventListener() {
-                            override fun cacheHit(
-                                call: Call,
-                                response: Response,
-                            ) {
-                                Log.v(
-                                    OK_HTTP_TAG,
-                                    "cacheHit: ${call.request().url} => ${response.code}",
-                                )
-                            }
-
-                            override fun cacheMiss(call: Call) {
-                                Log.v(OK_HTTP_TAG, "cacheMiss: ${call.request().url}")
-                            }
-
-                            override fun cacheConditionalHit(
-                                call: Call,
-                                cachedResponse: Response,
-                            ) {
-                                Log.v(
-                                    OK_HTTP_TAG,
-                                    "cacheConditionalHit: ${call.request().url} => ${cachedResponse.code}",
-                                )
-                            }
-                        },
-                    )
-            }
-            val cacheControl =
-                if (cacheDuration != null) {
-                    CacheControl
-                        .Builder()
-                        .maxAge(
-                            cacheDuration.toInt(DurationUnit.HOURS),
-                            TimeUnit.HOURS,
-                        ).build()
-                } else {
-                    CacheControl.Builder().noCache().build()
-                }
-            builder =
-                builder.addNetworkInterceptor {
-                    val request =
-                        it
-                            .request()
-                            .newBuilder()
-                            .cacheControl(cacheControl)
-                            .build()
-                    it.proceed(request)
-                }
-
-            builder.cache(Constants.getNetworkCache(context))
-            return builder.build()
-        }
-
-        /**
-         * Create an [OkHttpClient]. Prefer using [StashServer.okHttpClient] when possible
-         */
-        fun createOkHttpClient(server: StashServer): OkHttpClient {
-            val serverUrlRoot = getServerRoot(server.url)
-
-            var builder = okHttpClient.newBuilder()
-            val trustAll =
-                PreferenceManager
-                    .getDefaultSharedPreferences(StashApplication.getApplication())
-                    .getBoolean("trustAllCerts", false)
-            if (trustAll) {
-                val sslContext = SSLContext.getInstance("SSL")
-                sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
-                builder =
-                    builder
-                        .sslSocketFactory(
-                            sslContext.socketFactory,
-                            TRUST_ALL_CERTS,
-                        ).hostnameVerifier { _, _ ->
-                            true
-                        }
-            }
-
-            if (server.apiKey.isNotNullOrBlank()) {
-                val cleanedApiKey = server.apiKey.trim()
-                builder =
-                    builder.addInterceptor {
-                        val request =
-                            if (it
-                                    .request()
-                                    .url
-                                    .toString()
-                                    .startsWith(serverUrlRoot)
-                            ) {
-                                // Only set the API Key if the target URL is the stash server
-                                it
-                                    .request()
-                                    .newBuilder()
-                                    .addHeader(Constants.STASH_API_HEADER, cleanedApiKey)
-                                    .build()
-                            } else {
-                                it.request()
-                            }
-                        it.proceed(request)
-                    }
-            }
-            return builder.build()
-        }
 
         /**
          * Create the user agent used in HTTP calls
@@ -215,27 +39,6 @@ class StashClient private constructor() {
                     Build.DEVICE,
                 ).joinNotNullOrBlank("; ")
             return "$appName/$versionStr ($comments) ($device)"
-        }
-
-        /**
-         * Create a new [ApolloClient]. Prefer using [StashServer.apolloClient] when possible
-         */
-        @OptIn(ApolloExperimental::class)
-        fun createApolloClient(server: StashServer): ApolloClient {
-            val url = cleanServerUrl(server.url)
-            val httpClient = server.okHttpClient
-            return ApolloClient
-                .Builder()
-                .serverUrl(url)
-                .httpEngine(DefaultHttpEngine(httpClient))
-                .subscriptionNetworkTransport(
-                    WebSocketNetworkTransport
-                        .Builder()
-                        .serverUrl(url)
-                        .wsProtocol(GraphQLWsProtocol())
-                        .webSocketEngine(WebSocketEngine(httpClient))
-                        .build(),
-                ).build()
         }
 
         /**
@@ -303,98 +106,10 @@ class StashClient private constructor() {
                     .build()
             return url.toString()
         }
-
-        /**
-         * Build an [ApolloClient] suitable for testing connectivity for the specified server.
-         *
-         * @see [com.github.damontecres.stashapp.util.testStashConnection]
-         */
-        fun createTestApolloClient(
-            context: Context,
-            server: StashServer,
-            trustCerts: Boolean,
-        ): ApolloClient {
-            val url = cleanServerUrl(server.url)
-            var builder =
-                okHttpClient
-                    .newBuilder()
-                    .readTimeout(30, TimeUnit.SECONDS)
-                    .writeTimeout(30, TimeUnit.SECONDS)
-
-            if (trustCerts) {
-                val sslContext = SSLContext.getInstance("SSL")
-                sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
-                builder =
-                    builder
-                        .sslSocketFactory(
-                            sslContext.socketFactory,
-                            TRUST_ALL_CERTS,
-                        ).hostnameVerifier { _, _ ->
-                            true
-                        }
-            }
-            if (server.apiKey.isNotNullOrBlank()) {
-                val cleanedApiKey = server.apiKey.trim()
-                builder =
-                    builder.addInterceptor {
-                        val request =
-                            it
-                                .request()
-                                .newBuilder()
-                                .addHeader(Constants.STASH_API_HEADER, cleanedApiKey)
-                                .build()
-                        it.proceed(request)
-                    }
-            }
-            val httpClient = builder.build()
-            return ApolloClient
-                .Builder()
-                .serverUrl(url)
-                .httpEngine(DefaultHttpEngine(httpClient))
-                .build()
-        }
-
-        /**
-         * Build an [ApolloClient] suitable for testing connectivity for the specified server.
-         */
-        fun createCookieHttpClient(trustCerts: Boolean): OkHttpClient {
-            var builder =
-                okHttpClient
-                    .newBuilder()
-                    .cookieJar(
-                        object : CookieJar {
-                            private val cookies = mutableMapOf<String, List<Cookie>>()
-
-                            override fun loadForRequest(url: HttpUrl): List<Cookie> = cookies[url.host] ?: listOf()
-
-                            override fun saveFromResponse(
-                                url: HttpUrl,
-                                cookies: List<Cookie>,
-                            ) {
-                                this.cookies[url.host] = cookies
-                            }
-                        },
-                    ).readTimeout(30, TimeUnit.SECONDS)
-                    .writeTimeout(30, TimeUnit.SECONDS)
-
-            if (trustCerts) {
-                val sslContext = SSLContext.getInstance("SSL")
-                sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
-                builder =
-                    builder
-                        .sslSocketFactory(
-                            sslContext.socketFactory,
-                            TRUST_ALL_CERTS,
-                        ).hostnameVerifier { _, _ ->
-                            true
-                        }
-            }
-            return builder.build()
-        }
     }
 }
 
-private val TRUST_ALL_CERTS: X509TrustManager =
+val TRUST_ALL_CERTS: X509TrustManager =
     @SuppressLint("CustomX509TrustManager")
     object : X509TrustManager {
         @SuppressLint("TrustAllX509TrustManager")

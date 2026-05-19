@@ -244,7 +244,7 @@
     <string name="enable_screensaver">Enable screensaver</string>
     <string name="screensaver_filter">Set filter for screensaver</string>
     <string name="screensaver">Screensaver</string>
-    <string name="mpv_hardware_decoding">MPV: Ue hardware decoding</string>
+    <string name="mpv_hardware_decoding">MPV: Use hardware decoding</string>
     <string name="pref_key_mpv_hardware_decoding">playback.mpv.hardwareDecoding</string>
     <string name="pref_key_mpv_gpu_next">playback.mpv.gpuNext</string>
     <string name="mpv_gpu_next">MPV: Use gpu-next</string>

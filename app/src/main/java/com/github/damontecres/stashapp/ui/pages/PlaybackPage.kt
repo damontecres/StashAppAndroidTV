@@ -15,12 +15,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import com.apollographql.apollo.api.Optional
-import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
@@ -29,13 +28,15 @@ import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.playback.CodecSupport
+import com.github.damontecres.stashapp.playback.MediaItemTag
 import com.github.damontecres.stashapp.playback.PlaybackMode
-import com.github.damontecres.stashapp.playback.PlaylistFragment
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.proto.PlaybackBackend
 import com.github.damontecres.stashapp.proto.PlaybackPreferences
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -43,31 +44,33 @@ import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageContent
-import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.SkipParams
-import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun PlaybackPage(
-    server: StashServer,
+    preferences: StashPreferences,
     uiConfig: ComposeUiConfig,
     sceneId: String,
     startPosition: Long,
     playbackMode: PlaybackMode,
     itemOnClick: ItemOnClicker<Any>,
     modifier: Modifier = Modifier,
-    viewModel: PlaybackPageViewModel = viewModel(),
+    viewModel: PlaybackPageViewModel =
+        koinViewModel {
+            parametersOf(sceneId)
+        },
 ) {
-    OneTimeLaunchedEffect { viewModel.init(server, sceneId) }
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
+    val currentServer by viewModel.currentServer.collectAsState()
 
     val playbackMode =
         remember(playbackMode, uiConfig) {
@@ -80,26 +83,18 @@ fun PlaybackPage(
     state?.let { state ->
         val player =
             remember {
-                val skipParams =
-                    uiConfig.preferences.playbackPreferences.let {
-                        SkipParams.Values(
-                            it.skipForwardMs,
-                            it.skipBackwardMs,
-                        )
-                    }
-                val httpClient = uiConfig.preferences.playbackPreferences.playbackHttpClient
-                val debugLogging = uiConfig.preferences.playbackPreferences.debugLoggingEnabled
-                val backend = uiConfig.preferences.playbackPreferences.playbackBackend
-                StashExoPlayer
-                    .getInstance(
-                        context,
-                        server,
-                        uiConfig.preferences.playbackPreferences,
-                    ).apply {
+                viewModel.playerFactory
+                    .createPlayer(preferences.playbackPreferences)
+                    .apply {
                         repeatMode = Player.REPEAT_MODE_OFF
                         playWhenReady = true
                     }
             }
+        LifecycleResumeEffect(Unit) {
+            onPauseOrDispose {
+                player.release()
+            }
+        }
         val playbackScene = state.scene
         val decision =
             remember {
@@ -115,12 +110,12 @@ fun PlaybackPage(
         val media =
             remember {
                 buildMediaItem(context, decision, playbackScene) {
-                    setTag(PlaylistFragment.MediaItemTag(playbackScene, decision))
+                    setTag(MediaItemTag(playbackScene, decision))
                 }
             }
 
         PlaybackPageContent(
-            server = server,
+            currentServer = currentServer,
             player = player,
             playlist = listOf(media),
             startIndex = 0,
@@ -128,7 +123,7 @@ fun PlaybackPage(
             markersEnabled = true,
             playlistPager = null,
             modifier =
-                Modifier
+                modifier
                     .fillMaxSize()
                     .background(Color.Transparent),
             controlsEnabled = true,
@@ -176,24 +171,25 @@ const val PLAYLIST_PREFETCH = 15
 
 @Composable
 fun PlaylistPlaybackPage(
-    server: StashServer,
+    preferences: StashPreferences,
+    currentServer: CurrentServer,
     uiConfig: ComposeUiConfig,
     filterArgs: FilterArgs,
     startIndex: Int,
     itemOnClick: ItemOnClicker<Any>,
     modifier: Modifier = Modifier,
     clipDuration: Duration = 30.seconds,
-    viewModel: FilterViewModel = viewModel(key = "main"),
-    playlistViewModel: FilterViewModel = viewModel(key = "playlist"),
+    viewModel: FilterViewModel = koinViewModel(key = "main"),
+    playlistViewModel: FilterViewModel = koinViewModel(key = "playlist"),
 ) {
     val scope = rememberCoroutineScope()
     Log.v("PlaybackPageContent", "startIndex=$startIndex")
     val context = LocalContext.current
 
-    LaunchedEffect(server, filterArgs) {
+    LaunchedEffect(currentServer, filterArgs) {
         // TODO switch to single query
-        viewModel.setFilter(server, adjustFilter(filterArgs), uiConfig.cardSettings.columns)
-        playlistViewModel.setFilter(server, filterArgs, uiConfig.cardSettings.columns)
+        viewModel.setFilter(adjustFilter(filterArgs), uiConfig.cardSettings.columns)
+        playlistViewModel.setFilter(filterArgs, uiConfig.cardSettings.columns)
     }
     val pager by viewModel.pager.observeAsState()
 //    var playlist by remember(pager) { mutableStateOf<List<MediaItem>>(listOf()) }
@@ -223,22 +219,27 @@ fun PlaylistPlaybackPage(
     if (playlist.isNotEmpty()) {
         val player =
             remember {
-                StashExoPlayer
-                    .getInstance(context, server, uiConfig.preferences.playbackPreferences)
+                viewModel.playerFactory
+                    .createPlayer(preferences.playbackPreferences)
                     .apply {
                         repeatMode = Player.REPEAT_MODE_OFF
                         playWhenReady = true
                     }
             }
+        LifecycleResumeEffect(Unit) {
+            onPauseOrDispose {
+                player.release()
+            }
+        }
         val mutex = remember { Mutex() }
         LaunchedEffect(Unit) {
-            StashExoPlayer.addListener(
+            player.addListener(
                 object : Player.Listener {
                     override fun onMediaItemTransition(
                         mediaItem: MediaItem?,
                         reason: Int,
                     ) {
-                        scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
+                        scope.launch(LoggingCoroutineExceptionHandler(currentServer, scope)) {
                             mutex.withLock {
                                 val currentIndex = player.currentMediaItemIndex
                                 val count = player.mediaItemCount
@@ -271,7 +272,7 @@ fun PlaylistPlaybackPage(
         }
 
         PlaybackPageContent(
-            server = server,
+            currentServer = currentServer,
             player = player,
             playlist = playlist,
             startIndex = startIndex,
@@ -283,7 +284,7 @@ fun PlaylistPlaybackPage(
                 if (index < player.mediaItemCount) {
                     player.seekTo(index, C.TIME_UNSET)
                 } else {
-                    scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
+                    scope.launch(LoggingCoroutineExceptionHandler(currentServer, scope)) {
                         mutex.withLock {
                             val count = player.mediaItemCount
                             pager?.let { pager ->
@@ -336,7 +337,7 @@ private fun convertToMediaItem(
                 CodecSupport.getSupportedCodecs(prefs),
             )
         return buildMediaItem(context, decision, scene) {
-            setTag(PlaylistFragment.MediaItemTag(scene, decision))
+            setTag(MediaItemTag(scene, decision))
         }
     } else {
         // Markers
@@ -353,7 +354,7 @@ private fun convertToMediaItem(
             )
         val mediaItem =
             buildMediaItem(context, decision, scene) {
-                setTag(PlaylistFragment.MediaItemTag(scene, decision))
+                setTag(MediaItemTag(scene, decision))
                 val startPos =
                     item.seconds.seconds.inWholeMilliseconds
                         .coerceAtLeast(0L)

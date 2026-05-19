@@ -21,7 +21,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
@@ -106,8 +105,8 @@ fun PerformerCard(
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
         uiConfig = uiConfig,
-        imageWidth = PerformerPresenter.CARD_WIDTH.dp / 2,
-        imageHeight = PerformerPresenter.CARD_HEIGHT.dp / 2,
+        imageWidth = dataTypeImageWidth(DataType.PERFORMER).dp / 2,
+        imageHeight = dataTypeImageHeight(DataType.PERFORMER).dp / 2,
         imageUrl = item?.image_path,
         title = title,
         subtitle = { Text(subtitle) },

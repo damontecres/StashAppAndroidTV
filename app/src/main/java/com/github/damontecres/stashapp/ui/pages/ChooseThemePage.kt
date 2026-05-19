@@ -43,10 +43,7 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationListener
-import com.github.damontecres.stashapp.navigation.NavigationManager
-import com.github.damontecres.stashapp.presenters.ScenePresenter
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.cards.IconRowText
@@ -62,7 +59,6 @@ import com.github.damontecres.stashapp.ui.parseThemeJson
 import com.github.damontecres.stashapp.ui.readThemeJson
 import com.github.damontecres.stashapp.ui.uiConfigPreview
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.preferences
 import com.github.damontecres.stashapp.util.updateInterfacePreferences
@@ -75,7 +71,6 @@ private const val TAG = "ChooseTheme"
 
 @Composable
 fun ChooseThemePage(
-    server: StashServer,
     navigationManager: NavigationManager,
     uiConfig: ComposeUiConfig,
     onChooseTheme: (String?) -> Unit,
@@ -180,7 +175,7 @@ fun ChooseThemePage(
                                                     MaterialTheme.colorScheme.tertiary,
                                                 ).clip(RectangleShape)
                                                 .height(4.dp)
-                                                .width((ScenePresenter.CARD_WIDTH * percentWatched).dp / 2),
+                                                .width((dataTypeImageWidth(DataType.SCENE) * percentWatched).dp / 2),
                                     )
                                 }
                             },
@@ -361,33 +356,7 @@ fun deleteJson(
 private fun ChooseThemePagePreview() {
     PreviewTheme {
         ChooseThemePage(
-            server = StashServer("0.0.0.0", null),
-            navigationManager =
-                object : NavigationManager {
-                    override var previousDestination: Destination?
-                        get() = TODO("Not yet implemented")
-                        set(value) {}
-
-                    override fun navigate(destination: Destination) {
-                        TODO("Not yet implemented")
-                    }
-
-                    override fun goBack() {
-                        TODO("Not yet implemented")
-                    }
-
-                    override fun goToMain() {
-                        TODO("Not yet implemented")
-                    }
-
-                    override fun clearPinFragment() {
-                        TODO("Not yet implemented")
-                    }
-
-                    override fun addListener(listener: NavigationListener) {
-                        TODO("Not yet implemented")
-                    }
-                },
+            navigationManager = NavigationManager(),
             uiConfig = uiConfigPreview,
             onChooseTheme = {},
             modifier = Modifier,

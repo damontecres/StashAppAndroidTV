@@ -26,7 +26,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
@@ -65,8 +64,8 @@ fun SceneCard(
         longClicker = longClicker,
         getFilterAndPosition = getFilterAndPosition,
         uiConfig = uiConfig,
-        imageWidth = ScenePresenter.CARD_WIDTH.dp / 2,
-        imageHeight = ScenePresenter.CARD_HEIGHT.dp / 2,
+        imageWidth = dataTypeImageWidth(DataType.SCENE).dp / 2,
+        imageHeight = dataTypeImageHeight(DataType.SCENE).dp / 2,
         imageUrl = item?.paths?.screenshot,
         defaultImageDrawableRes = R.drawable.default_scene,
         videoUrl = item?.paths?.preview,
@@ -128,7 +127,7 @@ fun SceneCard(
                                         MaterialTheme.colorScheme.tertiary,
                                     ).clip(RectangleShape)
                                     .height(4.dp)
-                                    .width((ScenePresenter.CARD_WIDTH * percentWatched).dp / 2),
+                                    .width((dataTypeImageWidth(DataType.SCENE) * percentWatched).dp / 2),
                         )
                     }
                 }

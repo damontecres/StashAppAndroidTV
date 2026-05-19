@@ -4,8 +4,7 @@ import android.util.Log
 import android.widget.Toast
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
-import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
+import com.github.damontecres.stashapp.di.server.CurrentServer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -14,7 +13,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.coroutines.CoroutineContext
 
 class LoggingCoroutineExceptionHandler(
-    private val server: StashServer,
+    private val server: CurrentServer,
     private val scope: CoroutineScope,
     private val showToast: Boolean = true,
     private val toastMessage: String = "Error",
@@ -49,13 +48,12 @@ class LoggingCoroutineExceptionHandler(
                 } else {
                     getPreference(context, R.string.pref_key_log_to_server, true)
                 }
-            val destination = StashApplication.navigationManager.previousDestination
             if (server.serverPreferences.companionPluginInstalled && logToServer) {
-                val compose = StashApplication.navigationManager is NavigationManagerCompose
                 scope.launchIO {
                     val message =
-                        "Exception: compose=$compose, destination=$destination\n${exception.stackTraceToString()}"
-                    CompanionPlugin.sendLogMessage(server, message, true)
+                        "Exception:\n${exception.stackTraceToString()}"
+                    TODO()
+//                    CompanionPlugin.sendLogMessage(server, message, true)
                 }
             }
 

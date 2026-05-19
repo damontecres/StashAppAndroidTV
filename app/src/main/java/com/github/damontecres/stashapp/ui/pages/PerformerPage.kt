@@ -10,8 +10,8 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -30,13 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
-import androidx.lifecycle.viewmodel.MutableCreationExtras
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.apollographql.apollo.api.Optional
@@ -58,14 +52,16 @@ import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerPreferences
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.ItemClicker
+import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationListener
-import com.github.damontecres.stashapp.navigation.NavigationManager
-import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.GlobalContext
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.PreviewTheme
 import com.github.damontecres.stashapp.ui.components.BasicItemInfo
@@ -88,28 +84,35 @@ import com.github.damontecres.stashapp.ui.tagPreview
 import com.github.damontecres.stashapp.ui.titleCount
 import com.github.damontecres.stashapp.ui.uiConfigPreview
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
-import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.math.floor
 import kotlin.math.round
 import kotlin.math.roundToInt
 
 private const val TAG = "PerformerPage"
 
+@KoinViewModel
 class PerformerDetailsViewModel(
-    server: StashServer,
-    val performerId: String,
+    private val serverRepository: ServerRepository,
+    private val serverLogger: ServerLogger,
+    private val queryEngine: QueryEngine,
+    private val mutationEngine: MutationEngine,
+    val itemClicker: ItemClicker,
+    val navigationManager: com.github.damontecres.stashapp.di.services.NavigationManager,
+    @InjectedParam private val performerId: String,
 ) : ViewModel() {
-    private val queryEngine = QueryEngine(server)
-    private val mutationEngine = MutationEngine(server)
-    private val exceptionHandler = LoggingCoroutineExceptionHandler(server, viewModelScope)
+    val currentServer get() = serverRepository.currentServer
+    private val exceptionHandler =
+        LoggingCoroutineExceptionHandler(serverRepository.currentServer.value, viewModelScope)
 
     private var performer: PerformerData? = null
 
@@ -120,7 +123,7 @@ class PerformerDetailsViewModel(
     val favorite = MutableLiveData(false)
     val rating100 = MutableLiveData(0)
 
-    fun init(): PerformerDetailsViewModel {
+    init {
         viewModelScope.launch(exceptionHandler.with("Error fetching performer")) {
             try {
                 val performer = queryEngine.getPerformer(performerId)
@@ -133,7 +136,6 @@ class PerformerDetailsViewModel(
                 loadingState.value = PerformerLoadingState.Error
             }
         }
-        return this
     }
 
     private suspend fun refresh(performer: PerformerData) {
@@ -206,19 +208,6 @@ class PerformerDetailsViewModel(
             this@PerformerDetailsViewModel.favorite.value = newFavorite
         }
     }
-
-    companion object {
-        val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
-        val PERFORMER_ID_KEY = object : CreationExtras.Key<String> {}
-        val Factory: ViewModelProvider.Factory =
-            viewModelFactory {
-                initializer {
-                    val server = this[SERVER_KEY]!!
-                    val performerId = this[PERFORMER_ID_KEY]!!
-                    PerformerDetailsViewModel(server, performerId).init()
-                }
-            }
-    }
 }
 
 sealed class PerformerLoadingState {
@@ -233,23 +222,16 @@ sealed class PerformerLoadingState {
 
 @Composable
 fun PerformerPage(
-    server: StashServer,
     id: String,
-    itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
+    viewModel: PerformerDetailsViewModel =
+        koinViewModel {
+            parametersOf(id)
+        },
 ) {
-    val viewModel =
-        ViewModelProvider.create(
-            LocalViewModelStoreOwner.current!!,
-            PerformerDetailsViewModel.Factory,
-            MutableCreationExtras().apply {
-                set(PerformerDetailsViewModel.SERVER_KEY, server)
-                set(PerformerDetailsViewModel.PERFORMER_ID_KEY, id)
-            },
-        )[PerformerDetailsViewModel::class]
     val loadingState by viewModel.loadingState.observeAsState()
     val tags by viewModel.tags.observeAsState(listOf())
     val studios by viewModel.studios.observeAsState(listOf())
@@ -274,8 +256,9 @@ fun PerformerPage(
         }
 
         is PerformerLoadingState.Success -> {
+            val currentServer by viewModel.currentServer.collectAsState()
             PerformerDetailsPage(
-                server = server,
+                serverPreferences = currentServer.serverPreferences,
                 perf = state.performer,
                 tags = tags,
                 studios = studios,
@@ -284,7 +267,7 @@ fun PerformerPage(
                 onFavoriteClick = viewModel::toggleFavorite,
                 rating100 = rating100,
                 onRatingChange = viewModel::updateRating,
-                itemOnClick = itemOnClick,
+                itemOnClick = viewModel.itemClicker,
                 longClicker = longClicker,
                 onUpdateTitle = onUpdateTitle,
                 onEdit = { edit ->
@@ -306,7 +289,7 @@ fun PerformerPage(
 
 @Composable
 fun PerformerDetailsPage(
-    server: StashServer,
+    serverPreferences: ServerPreferences,
     perf: PerformerData,
     tags: List<TagData>,
     studios: List<StudioData>,
@@ -332,7 +315,7 @@ fun PerformerDetailsPage(
         )
     val uiTabs =
         getUiTabs(uiConfig.preferences.interfacePreferences.tabPreferences, DataType.PERFORMER)
-    val createTab = createTabFunc(server, itemOnClick, longClicker, uiConfig)
+    val createTab = createTabFunc(itemOnClick, longClicker, uiConfig)
     val tabs =
         listOf(
             TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
@@ -355,28 +338,32 @@ fun PerformerDetailsPage(
             createTab(
                 FilterArgs(
                     dataType = DataType.SCENE,
-                    findFilter = tabFindFilter(server, PageFilterKey.PERFORMER_SCENES),
+                    findFilter = tabFindFilter(serverPreferences, PageFilterKey.PERFORMER_SCENES),
                     objectFilter = SceneFilterType(performers = performers),
                 ),
             ),
             createTab(
                 FilterArgs(
                     dataType = DataType.GALLERY,
-                    findFilter = tabFindFilter(server, PageFilterKey.PERFORMER_GALLERIES),
+                    findFilter =
+                        tabFindFilter(
+                            serverPreferences,
+                            PageFilterKey.PERFORMER_GALLERIES,
+                        ),
                     objectFilter = GalleryFilterType(performers = performers),
                 ),
             ),
             createTab(
                 FilterArgs(
                     dataType = DataType.IMAGE,
-                    findFilter = tabFindFilter(server, PageFilterKey.PERFORMER_IMAGES),
+                    findFilter = tabFindFilter(serverPreferences, PageFilterKey.PERFORMER_IMAGES),
                     objectFilter = ImageFilterType(performers = performers),
                 ),
             ),
             createTab(
                 FilterArgs(
                     dataType = DataType.GROUP,
-                    findFilter = tabFindFilter(server, PageFilterKey.PERFORMER_GROUPS),
+                    findFilter = tabFindFilter(serverPreferences, PageFilterKey.PERFORMER_GROUPS),
                     objectFilter = GroupFilterType(performers = performers),
                 ),
             ),
@@ -395,13 +382,12 @@ fun PerformerDetailsPage(
                 val navigationManager = LocalGlobalContext.current.navigationManager
                 StashGridTab(
                     name = stringResource(R.string.stashapp_appears_with),
-                    server = server,
                     initialFilter =
                         FilterArgs(
                             dataType = DataType.PERFORMER,
                             findFilter =
                                 tabFindFilter(
-                                    server,
+                                    serverPreferences,
                                     PageFilterKey.PERFORMER_APPEARS_WITH,
                                 ),
                             objectFilter = PerformerFilterType(performers = performers),
@@ -712,52 +698,24 @@ private fun PerformerDetailsPreview() {
         LongClicker<Any> { item, filterAndPosition ->
         }
     PreviewTheme {
-        CompositionLocalProvider(
-            LocalGlobalContext provides
-                GlobalContext(
-                    StashServer("http://0.0.0.0", null),
-                    object : NavigationManager {
-                        override var previousDestination: Destination?
-                            get() = null
-                            set(value) {}
-
-                        override fun navigate(destination: Destination) {
-                        }
-
-                        override fun goBack() {
-                        }
-
-                        override fun goToMain() {
-                        }
-
-                        override fun clearPinFragment() {
-                        }
-
-                        override fun addListener(listener: NavigationListener) {
-                        }
-                    },
-                    StashPreferences.getDefaultInstance(),
-                ),
-        ) {
-            PerformerDetails(
-                perf = performer,
-                tags = listOf(tagPreview, tagPreview.copy(id = "723")),
-                studios = listOf(),
-                favorite = performer.favorite,
-                favoriteClick = {},
-                rating100 = performer.rating100 ?: 0,
-                rating100Click = {},
-                uiConfig = uiConfigPreview,
-                itemOnClick = itemOnClick,
-                longClicker = longClicker,
-                onShowDialog = {},
-                onEdit = {},
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(color = MaterialTheme.colorScheme.background),
-            )
-        }
+        PerformerDetails(
+            perf = performer,
+            tags = listOf(tagPreview, tagPreview.copy(id = "723")),
+            studios = listOf(),
+            favorite = performer.favorite,
+            favoriteClick = {},
+            rating100 = performer.rating100 ?: 0,
+            rating100Click = {},
+            uiConfig = uiConfigPreview,
+            itemOnClick = itemOnClick,
+            longClicker = longClicker,
+            onShowDialog = {},
+            onEdit = {},
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(color = MaterialTheme.colorScheme.background),
+        )
     }
 }
 

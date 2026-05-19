@@ -27,7 +27,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
@@ -39,6 +38,7 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.di.server.ServerPreferences
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -51,8 +51,8 @@ import com.github.damontecres.stashapp.ui.filterArgsSaver
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
 import com.github.damontecres.stashapp.util.PageFilterKey
-import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.delay
+import org.koin.androidx.compose.koinViewModel
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -203,7 +203,6 @@ data class TabProvider(
 )
 
 fun createTabFunc(
-    server: StashServer,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     composeUiConfig: ComposeUiConfig,
@@ -230,7 +229,6 @@ fun createTabFunc(
             }
             StashGridTab(
                 name = name,
-                server = server,
                 initialFilter = filter,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
@@ -247,14 +245,13 @@ fun createTabFunc(
 @Composable
 fun StashGridTab(
     name: String,
-    server: StashServer,
     initialFilter: FilterArgs,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     composeUiConfig: ComposeUiConfig,
     onFilterChange: (FilterArgs) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: FilterViewModel = viewModel(key = name),
+    viewModel: FilterViewModel = koinViewModel(key = name),
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
     subToggleLabel: String? = null,
     onSubToggleCheck: ((Boolean) -> Unit)? = null,
@@ -263,13 +260,12 @@ fun StashGridTab(
     cardContext: ((index: Int, item: StashData) -> CardContext)? = null,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
-    LaunchedEffect(server, initialFilter) {
-        viewModel.setFilter(server, initialFilter, composeUiConfig.cardSettings.columns)
+    LaunchedEffect(initialFilter) {
+        viewModel.setFilter(initialFilter, composeUiConfig.cardSettings.columns)
     }
     val pager by viewModel.pager.observeAsState()
     pager?.let { newPager ->
         StashGridControls(
-            server = server,
             pager = newPager,
             initialPosition = -1,
             itemOnClick = itemOnClick,
@@ -299,10 +295,9 @@ fun StashGridTab(
 }
 
 fun tabFindFilter(
-    server: StashServer,
+    serverPreferences: ServerPreferences,
     pageFilterKey: PageFilterKey,
 ): StashFindFilter? =
-    server.serverPreferences
-        .getDefaultPageFilter(pageFilterKey)
-        .findFilter
+    serverPreferences.defaultPageFilters[pageFilterKey]
+        ?.findFilter
         ?.withResolvedRandom()

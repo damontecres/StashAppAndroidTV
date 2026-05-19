@@ -22,17 +22,21 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.data.VideoFilter
+import com.github.damontecres.stashapp.data.room.AppDatabase
 import com.github.damontecres.stashapp.data.room.PlaybackEffect
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.PlayerFactory
+import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.ui.galleryId
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.showSetRatingToast
@@ -43,11 +47,23 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 import timber.log.Timber
 import kotlin.properties.Delegates
 
-class ImageDetailsViewModel : ViewModel() {
-    private var server: StashServer? = null
+@KoinViewModel
+class ImageDetailsViewModel(
+    private val serverRepository: ServerRepository,
+    private val serverLogger: ServerLogger,
+    private val queryEngine: QueryEngine,
+    private val mutationEngine: MutationEngine,
+    private val database: AppDatabase,
+    val navigationManager: NavigationManager,
+    val playerFactory: PlayerFactory,
+    @InjectedParam private val filterArgs: FilterArgs,
+    @InjectedParam private val startPosition: Int,
+) : ViewModel() {
     private var saveFilters = true
     private lateinit var exceptionHandler: LoggingCoroutineExceptionHandler
 
@@ -94,9 +110,6 @@ class ImageDetailsViewModel : ViewModel() {
     val galleryId: LiveData<String?> = _galleryId
 
     fun init(
-        server: StashServer,
-        filterArgs: FilterArgs,
-        startPosition: Int,
         slideshow: Boolean,
         slideshowDelay: Long,
         saveFilters: Boolean,
@@ -104,26 +117,33 @@ class ImageDetailsViewModel : ViewModel() {
         Log.v(TAG, "View model init")
         this.saveFilters = saveFilters
         this.slideshowDelay = slideshowDelay
-        if (pager.value?.filter != filterArgs || server != this.server) {
+        if (pager.value?.filter != filterArgs) {
             if (filterArgs.dataType != DataType.IMAGE) {
                 throw IllegalArgumentException("Cannot use ${filterArgs.dataType}")
             }
             _galleryId.value = (filterArgs.objectFilter as? ImageFilterType)?.galleryId
-            this.server = server
             this.exceptionHandler =
                 LoggingCoroutineExceptionHandler(
-                    server,
+                    serverRepository.currentServer.value,
                     viewModelScope,
                     toastMessage = "Error updating image",
                 )
-            val dataSupplierFactory = DataSupplierFactory(server.version)
+            val dataSupplierFactory = DataSupplierFactory(serverRepository.currentServerVersion)
             val dataSupplier =
                 dataSupplierFactory.create<Query.Data, ImageData, Query.Data>(filterArgs)
             val pagingSource =
-                StashPagingSource(QueryEngine(server), dataSupplier) { _, _, item -> item }
+                StashPagingSource(
+                    queryEngine,
+                    dataSupplier,
+                ) { _, _, item -> item }
             val pager = ComposePager(filterArgs, pagingSource, viewModelScope)
             Log.v(TAG, "Pager created: filterArgs=$filterArgs")
-            viewModelScope.launch(LoggingCoroutineExceptionHandler(server, viewModelScope)) {
+            viewModelScope.launch(
+                LoggingCoroutineExceptionHandler(
+                    serverRepository.currentServer.value,
+                    viewModelScope,
+                ),
+            ) {
                 pager.init()
                 Log.v(TAG, "Pager size: ${pager.size}")
                 this@ImageDetailsViewModel.pager.value = pager
@@ -137,9 +157,9 @@ class ImageDetailsViewModel : ViewModel() {
             galleryId.value?.let { galleryId ->
                 viewModelScope.launchIO {
                     viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+                        val server = serverRepository.currentServer.value.server
                         val vf =
-                            StashApplication
-                                .getDatabase()
+                            database
                                 .playbackEffectsDao()
                                 .getPlaybackEffect(server.url, galleryId, DataType.GALLERY)
                         if (vf != null && vf.videoFilter.hasImageFilter()) {
@@ -192,7 +212,6 @@ class ImageDetailsViewModel : ViewModel() {
                     Log.v(TAG, "Got image for $position: ${image != null}")
                     if (image != null) {
                         this@ImageDetailsViewModel.position.value = position
-                        val queryEngine = QueryEngine(server!!)
                         rating100.value = image.rating100 ?: 0
                         oCount.value = image.o_counter ?: 0
                         tags.value = listOf()
@@ -202,9 +221,9 @@ class ImageDetailsViewModel : ViewModel() {
                         updateImageFilter(galleryImageFilter)
                         if (saveFilters) {
                             viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
+                                val server = serverRepository.currentServer.value.server
                                 val vf =
-                                    StashApplication
-                                        .getDatabase()
+                                    database
                                         .playbackEffectsDao()
                                         .getPlaybackEffect(server!!.url, image.id, DataType.IMAGE)
                                 if (vf != null && vf.videoFilter.hasImageFilter()) {
@@ -263,7 +282,7 @@ class ImageDetailsViewModel : ViewModel() {
                 } catch (ex: Exception) {
                     loadingState.value = ImageLoadingState.Error
                     LoggingCoroutineExceptionHandler(
-                        server!!,
+                        serverRepository.currentServer.value,
                         viewModelScope,
                         toastMessage = "Error fetching image",
                     ).handleException(ex)
@@ -291,7 +310,6 @@ class ImageDetailsViewModel : ViewModel() {
             val mutable = it.toMutableList()
             mutator.invoke(mutable)
             viewModelScope.launch(exceptionHandler) {
-                val mutationEngine = MutationEngine(server!!)
                 val result = mutationEngine.updateImage(imageId = imageId, tagIds = mutable)
                 if (result != null) {
                     tags.value = result.tags.map { it.tagData }
@@ -319,7 +337,6 @@ class ImageDetailsViewModel : ViewModel() {
             val mutable = it.toMutableList()
             mutator.invoke(mutable)
             viewModelScope.launch(exceptionHandler) {
-                val mutationEngine = MutationEngine(server!!)
                 val result = mutationEngine.updateImage(imageId = imageId, performerIds = mutable)
                 if (result != null) {
                     performers.value = result.performers.map { it.performerData }
@@ -333,7 +350,6 @@ class ImageDetailsViewModel : ViewModel() {
         rating100: Int,
     ) {
         viewModelScope.launch(exceptionHandler) {
-            val mutationEngine = MutationEngine(server!!)
             val newRating =
                 mutationEngine.updateImage(imageId, rating100 = rating100)?.rating100 ?: 0
             this@ImageDetailsViewModel.rating100.value = newRating
@@ -343,7 +359,6 @@ class ImageDetailsViewModel : ViewModel() {
 
     fun updateOCount(action: suspend MutationEngine.(String) -> OCounter) {
         viewModelScope.launch(exceptionHandler) {
-            val mutationEngine = MutationEngine(server!!)
             val newOCount = action.invoke(mutationEngine, _image.value!!.id)
             oCount.value = newOCount.count
         }
@@ -404,24 +419,22 @@ class ImageDetailsViewModel : ViewModel() {
     }
 
     fun saveImageFilter() {
-        if (server != null) {
-            image.value?.let {
-                viewModelScope.launchIO(StashCoroutineExceptionHandler(autoToast = true)) {
-                    val vf = _imageFilter.value
-                    if (vf != null) {
-                        StashApplication
-                            .getDatabase()
-                            .playbackEffectsDao()
-                            .insert(PlaybackEffect(server!!.url, it.id, DataType.IMAGE, vf))
-                        Log.d(TAG, "Saved VideoFilter for image ${it.id}")
-                        withContext(Dispatchers.Main) {
-                            Toast
-                                .makeText(
-                                    StashApplication.getApplication(),
-                                    "Saved",
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                        }
+        image.value?.let {
+            viewModelScope.launchIO(StashCoroutineExceptionHandler(autoToast = true)) {
+                val server = serverRepository.currentServer.value.server
+                val vf = _imageFilter.value
+                if (vf != null) {
+                    database
+                        .playbackEffectsDao()
+                        .insert(PlaybackEffect(server!!.url, it.id, DataType.IMAGE, vf))
+                    Log.d(TAG, "Saved VideoFilter for image ${it.id}")
+                    withContext(Dispatchers.Main) {
+                        Toast
+                            .makeText(
+                                StashApplication.getApplication(),
+                                "Saved",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                 }
             }
@@ -429,25 +442,23 @@ class ImageDetailsViewModel : ViewModel() {
     }
 
     fun saveGalleryFilter() {
-        if (server != null) {
-            galleryId.value?.let { galleryId ->
-                viewModelScope.launchIO(StashCoroutineExceptionHandler(autoToast = true)) {
-                    val vf = _imageFilter.value
-                    if (vf != null) {
-                        galleryImageFilter = vf
-                        StashApplication
-                            .getDatabase()
-                            .playbackEffectsDao()
-                            .insert(PlaybackEffect(server!!.url, galleryId, DataType.GALLERY, vf))
-                        Log.d(TAG, "Saved VideoFilter for gallery $galleryId")
-                        withContext(Dispatchers.Main) {
-                            Toast
-                                .makeText(
-                                    StashApplication.getApplication(),
-                                    "Saved",
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                        }
+        galleryId.value?.let { galleryId ->
+            viewModelScope.launchIO(StashCoroutineExceptionHandler(autoToast = true)) {
+                val server = serverRepository.currentServer.value.server
+                val vf = _imageFilter.value
+                if (vf != null) {
+                    galleryImageFilter = vf
+                    database
+                        .playbackEffectsDao()
+                        .insert(PlaybackEffect(server!!.url, galleryId, DataType.GALLERY, vf))
+                    Log.d(TAG, "Saved VideoFilter for gallery $galleryId")
+                    withContext(Dispatchers.Main) {
+                        Toast
+                            .makeText(
+                                StashApplication.getApplication(),
+                                "Saved",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                 }
             }

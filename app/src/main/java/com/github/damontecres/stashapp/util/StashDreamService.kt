@@ -23,6 +23,8 @@ import coil3.request.ImageRequest
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
@@ -36,11 +38,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.ExperimentalSerializationApi
+import org.koin.android.ext.android.get
 import kotlin.time.Duration.Companion.seconds
 
 class StashDreamService :
     DreamService(),
     SavedStateRegistryOwner {
+    private val serverRepository: ServerRepository = get()
+    private val queryEngine: QueryEngine = get()
+
     private val lifecycleRegistry = LifecycleRegistry(this)
 
     private val savedStateRegistryController =
@@ -53,7 +59,6 @@ class StashDreamService :
 
     override fun onCreate() {
         super.onCreate()
-
         savedStateRegistryController.performRestore(null)
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
     }
@@ -99,9 +104,9 @@ class StashDreamService :
     @OptIn(ExperimentalSerializationApi::class)
     private fun createFlow(): Flow<ImageData> =
         flow {
-            val server = StashServer.requireCurrentServer()
-            val queryEngine = QueryEngine(server)
-            val file = getScreensaverFile(this@StashDreamService, server)
+            serverRepository.restore()
+            val current = serverRepository.currentServer.value
+            val file = getScreensaverFile(this@StashDreamService, current.server)
             val screensaverFilter =
                 try {
                     if (file.exists()) {
@@ -119,15 +124,17 @@ class StashDreamService :
                     Log.v(TAG, "Fetching saved filter ${screensaverFilter.savedFilterId}")
                     queryEngine
                         .getSavedFilter(screensaverFilter.savedFilterId)
-                        ?.toFilterArgs(FilterParser(server.version))
+                        ?.toFilterArgs(FilterParser(current.serverPreferences.version))
                 } else {
                     screensaverFilter.filter
                 } ?: screensaverFilter.filter
             val dataSupplier =
-                DataSupplierFactory(server.version).create<Query.Data, StashData, Query.Data>(filter)
+                DataSupplierFactory(current.serverPreferences.version).create<Query.Data, StashData, Query.Data>(
+                    filter,
+                )
             val pagingSource =
                 StashPagingSource<Query.Data, StashData, StashData, Query.Data>(
-                    QueryEngine(server),
+                    queryEngine,
                     dataSupplier = dataSupplier,
                 )
             val pager =
