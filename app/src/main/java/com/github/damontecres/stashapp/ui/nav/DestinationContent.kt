@@ -31,6 +31,7 @@ import com.github.damontecres.stashapp.ui.pages.PlaylistPlaybackPage
 import com.github.damontecres.stashapp.ui.pages.SceneDetailsPage
 import com.github.damontecres.stashapp.ui.pages.SearchPage
 import com.github.damontecres.stashapp.ui.pages.SettingsPage
+import com.github.damontecres.stashapp.ui.pages.SettingsPinPage
 import com.github.damontecres.stashapp.ui.pages.StudioPage
 import com.github.damontecres.stashapp.ui.pages.TagPage
 import com.github.damontecres.stashapp.ui.pages.UpdateAppPage
@@ -55,40 +56,13 @@ fun DestinationContent(
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     when (destination) {
-        is Destination.Pin -> {
-            throw UnsupportedOperationException("Destination.Pin")
-        }
-
-        //                    PinEntryPage(
-//                        pinPreference = R.string.pref_key_pin_code,
-//                        title = stringResource(R.string.enter_pin),
-//                        onCorrectPin = {
-//                            if (navigationManager.controller.backstack.entries.size > 1) {
-//                                navigationManager.goBack()
-//                            } else {
-//                                navigationManager.goToMain()
-//                            }
-//                        },
-//                        preventBack = true,
-//                        modifier = Modifier.fillMaxSize(),
-//                    )
-
         is Destination.SettingsPin -> {
-            throw UnsupportedOperationException("Destination.SettingsPin")
+            SettingsPinPage(
+                navigationManager = navManager,
+                preferences = preferences,
+                modifier = modifier,
+            )
         }
-
-        //                    PinEntryPage(
-//                        pinPreference = R.string.pref_key_read_only_mode_pin,
-//                        title = stringResource(R.string.enter_settings_pin),
-//                        onCorrectPin = {
-//                            // Pop Destination.SettingsPin off the stack and go to settings
-//                            // This prevents showing the PIN entry again when going back from settings
-//                            navigationManager.goBack()
-//                            navigationManager.navigate(Destination.Settings(PreferenceScreenOption.BASIC))
-//                        },
-//                        preventBack = false,
-//                        modifier = Modifier.fillMaxSize(),
-//                    )
 
         is Destination.UpdateApp -> {
             UpdateAppPage(

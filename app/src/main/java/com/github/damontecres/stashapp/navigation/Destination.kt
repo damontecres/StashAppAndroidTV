@@ -54,9 +54,6 @@ sealed class Destination(
     data object Search : Destination()
 
     @Serializable
-    data object Pin : Destination(true)
-
-    @Serializable
     data object SettingsPin : Destination(true)
 
     @Serializable

@@ -29,9 +29,13 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.util.PreferenceScreenOption
 import com.github.damontecres.stashapp.util.findActivity
 
 @Composable
@@ -118,4 +122,25 @@ fun PinEntryPage(
             }
         }
     }
+}
+
+@Composable
+fun SettingsPinPage(
+    navigationManager: NavigationManager,
+    preferences: StashPreferences,
+    modifier: Modifier = Modifier,
+) {
+    PinEntryPage(
+        title = stringResource(R.string.enter_settings_pin),
+        requiredPin = preferences.pinPreferences.readOnlyPin,
+        autoSubmit = preferences.pinPreferences.autoSubmit,
+        onCorrectPin = {
+            // Pop Destination.SettingsPin off the stack and go to settings
+            // This prevents showing the PIN entry again when going back from settings
+            navigationManager.goBack()
+            navigationManager.navigate(Destination.Settings(PreferenceScreenOption.BASIC))
+        },
+        preventBack = false,
+        modifier = modifier,
+    )
 }
