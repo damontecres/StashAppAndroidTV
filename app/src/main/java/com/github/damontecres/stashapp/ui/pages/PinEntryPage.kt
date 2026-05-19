@@ -2,9 +2,13 @@ package com.github.damontecres.stashapp.ui.pages
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
@@ -25,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.tryRequestFocus
@@ -37,15 +40,13 @@ fun PinEntryPage(
     title: String,
     onCorrectPin: () -> Unit,
     preventBack: Boolean,
-    uiConfig: ComposeUiConfig,
+    autoSubmit: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     BackHandler(enabled = preventBack) {
         context.findActivity()?.finish()
     }
-
-    val autoSubmit = uiConfig.preferences.pinPreferences.autoSubmit
 
     val validate = { input: String ->
         input == requiredPin
@@ -66,8 +67,17 @@ fun PinEntryPage(
     }
     Box(modifier = modifier) {
         LazyColumn(
-            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(16.dp),
+            modifier =
+                Modifier
+                    .padding(top = 80.dp)
+                    .align(Alignment.TopCenter)
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(16.dp),
+                    ),
         ) {
             item {
                 Text(
