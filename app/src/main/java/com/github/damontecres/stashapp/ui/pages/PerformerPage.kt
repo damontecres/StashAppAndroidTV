@@ -96,6 +96,7 @@ import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.views.careerString
 import kotlinx.coroutines.launch
 import kotlin.math.floor
 import kotlin.math.round
@@ -557,6 +558,13 @@ fun PerformerDetails(
                 }
                 add(TableRow.from(context, R.string.stashapp_death_date, perf.death_date))
                 add(
+                    TableRow.from(
+                        context,
+                        R.string.stashapp_career_length,
+                        perf.careerString,
+                    ),
+                )
+                add(
                     TableRow.from(context, R.string.stashapp_country, perf.country) {
                         navigateTo(
                             R.string.stashapp_country,
@@ -637,13 +645,6 @@ fun PerformerDetails(
                     add(TableRow.from(context, R.string.stashapp_tattoos, perf.tattoos))
                     add(TableRow.from(context, R.string.stashapp_piercings, perf.piercings))
                 }
-                add(
-                    TableRow.from(
-                        context,
-                        R.string.stashapp_career_length,
-                        listOf(perf.career_start, perf.career_end).joinToString(" - "),
-                    ),
-                )
             }.filterNotNull()
         }
     ItemDetails(
