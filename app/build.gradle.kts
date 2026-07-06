@@ -26,7 +26,9 @@ val av1ModuleExists =
 val mpvModuleExists =
     providers.provider { project.file("libs/wholphin-mpv-release.aar").exists() }
 val extensionsRepoActive =
-    providers.provider { project.hasProperty("WholphinExtensionsUsername") }
+    providers.provider {
+        (project.findProperty("WholphinExtensionsUsername") as? String)?.isNotBlank() == true
+    }
 
 plugins {
     alias(libs.plugins.android.application)
