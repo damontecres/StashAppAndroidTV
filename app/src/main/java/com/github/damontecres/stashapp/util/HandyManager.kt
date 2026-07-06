@@ -83,7 +83,7 @@ object HandyManager {
                     .build()
                 client.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
-                        val body = response.body?.string() ?: return@use
+                        val body = response.body.string()
                         val serverTime = JSONObject(body).getLong("serverTime")
                         val receiveTime = System.currentTimeMillis()
                         val rtt = receiveTime - sendTime
@@ -129,7 +129,7 @@ object HandyManager {
                 if (response.isSuccessful) {
                     Pair(true, "Connected successfully")
                 } else {
-                    val body = response.body?.string() ?: ""
+                    val body = response.body.string()
                     var errorMsg = "HTTP ${response.code}"
                     try {
                         if (body.isNotEmpty()) {
@@ -162,7 +162,7 @@ object HandyManager {
                 .build()
             client.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
-                    val body = response.body?.string() ?: return@use Pair(0L, 0L)
+                    val body = response.body.string()
                     val serverTime = JSONObject(body).getLong("serverTime")
                     val receiveTime = System.currentTimeMillis()
                     val rtt = receiveTime - sendTime
@@ -179,7 +179,7 @@ object HandyManager {
     }
 
     private suspend fun parseHandyResponse(response: okhttp3.Response): HandyResult {
-        val body = response.body?.string() ?: ""
+        val body = response.body.string()
         if (response.isSuccessful) {
             val jsonResponse = try { JSONObject(body) } catch (@Suppress("TooGenericExceptionCaught") e: Exception) { null }
             if (jsonResponse != null && jsonResponse.has("error")) {
@@ -293,7 +293,7 @@ object HandyManager {
             val downloadRequest = Request.Builder().url(localUrl).get().build()
             val content = client.newCall(downloadRequest).execute().use { response ->
                 if (!response.isSuccessful) return@use null
-                response.body?.bytes()
+                response.body.bytes()
             } ?: return@withContext null
 
             // 2. Upload to Handy Hosting API
@@ -310,7 +310,7 @@ object HandyManager {
 
             client.newCall(uploadRequest).execute().use { response ->
                 if (response.isSuccessful) {
-                    val body = response.body?.string() ?: return@use null
+                    val body = response.body.string()
                     val json = JSONObject(body)
                     // The API returns { "url": "...", "id": "..." }
                     val publicUrl = json.optString("url")

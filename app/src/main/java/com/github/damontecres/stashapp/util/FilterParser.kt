@@ -33,6 +33,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 /**
  * Parse a server-side filter from JSON (Map<String, *>)
  */
+@Suppress("UNCHECKED_CAST")
 class FilterParser(
     private val serverVersion: Version,
 ) {

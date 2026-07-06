@@ -147,7 +147,7 @@ fun PhashDistanceCriterionInput.toMap(): Map<String, Any> =
 fun DuplicationCriterionInput.toMap(): Map<String, Any> =
     buildMap {
         put("modifier", CriterionModifier.EQUALS.rawValue)
-        if (duplicated.getOrNull() == false) {
+        if (phash.getOrNull() == false) {
             put("value", false)
         } else {
             put("value", true)
@@ -172,6 +172,7 @@ fun ResolutionCriterionInput.toMap(): Map<String, Any> =
                 ResolutionEnum.STANDARD_HD -> "720p"
                 ResolutionEnum.FULL_HD -> "1080p"
                 ResolutionEnum.QUAD_HD -> "1440p"
+                @Suppress("DEPRECATION")
                 ResolutionEnum.VR_HD,
                 ResolutionEnum.FOUR_K -> "4k"
                 ResolutionEnum.FIVE_K -> "5k"

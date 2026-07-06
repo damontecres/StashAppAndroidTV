@@ -17,7 +17,6 @@ import androidx.media3.exoplayer.util.EventLogger
 import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.ts.TsExtractor
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.StashExoPlayer.Companion.getInstance
 import com.github.damontecres.stashapp.proto.PlaybackBackend
 import com.github.damontecres.stashapp.proto.PlaybackHttpClient
 import com.github.damontecres.stashapp.proto.PlaybackPreferences
@@ -27,7 +26,6 @@ import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.wholphin.mpv.MpvPlayer
 import timber.log.Timber
 
 /**
@@ -107,107 +105,130 @@ class StashExoPlayer private constructor() {
             val debugLogging = playbackPreferences.debugLoggingEnabled
             this.playbackPreferences = playbackPreferences.copy {}
             return if (playbackPreferences.playbackBackend == PlaybackBackend.MPV) {
-                MpvPlayer(
-                    context,
-                    playbackPreferences.mpvPreferences.hardwareDecoding,
-                    playbackPreferences.mpvPreferences.gpuNext,
-                )
+                try {
+                    val clazz = Class.forName("com.github.damontecres.wholphin.mpv.MpvPlayer")
+                    val constructor =
+                        clazz.getConstructor(
+                            Context::class.java,
+                            Boolean::class.java,
+                            Boolean::class.java,
+                        )
+                    constructor.newInstance(
+                        context,
+                        playbackPreferences.mpvPreferences.hardwareDecoding,
+                        playbackPreferences.mpvPreferences.gpuNext,
+                    ) as Player
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to create MpvPlayer, falling back to ExoPlayer")
+                    createExoPlayer(
+                        context,
+                        server,
+                        httpClient,
+                        skipParams,
+                        debugLogging,
+                    )
+                }
             } else {
-                val dataSourceFactory =
-                    when (httpClient) {
-                        PlaybackHttpClient.OKHTTP -> {
-                            OkHttpDataSource
-                                .Factory(server.streamingOkHttpClient)
-                        }
-
-                        else -> {
-                            DefaultHttpDataSource
-                                .Factory()
-                                .setConnectTimeoutMs(5_000)
-                                .setReadTimeoutMs(30_000)
-                                .setUserAgent(StashClient.createUserAgent(context))
-                                .apply {
-                                    if (server.apiKey.isNotNullOrBlank()) {
-                                        setDefaultRequestProperties(mapOf(Constants.STASH_API_HEADER to server.apiKey))
-                                    }
-                                }
-                        }
-                    }
-                Log.d(TAG, "createInstance")
-                val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-                val skipForward =
-                    when (skipParams) {
-                        is SkipParams.Default -> {
-                            preferences.getInt(
-                                context.getString(R.string.pref_key_skip_forward_time),
-                                30,
-                            ) * 1000L
-                        }
-
-                        is SkipParams.Values -> {
-                            skipParams.skipForward
-                        }
-                    }
-                val skipBack =
-                    when (skipParams) {
-                        is SkipParams.Default -> {
-                            preferences.getInt(
-                                context.getString(R.string.pref_key_skip_back_time),
-                                10,
-                            ) * 1000L
-                        }
-
-                        is SkipParams.Values -> {
-                            skipParams.skipBack
-                        }
-                    }
-                val trackSelector = DefaultTrackSelector(context)
-                trackSelector.parameters =
-                    trackSelector
-                        .buildUponParameters()
-                        .setAllowInvalidateSelectionsOnRendererCapabilitiesChange(true)
-                        .setAudioOffloadPreferences(
-                            TrackSelectionParameters.AudioOffloadPreferences
-                                .Builder()
-                                .setAudioOffloadMode(TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED)
-                                .build(),
-                        ).build()
-                val extractorsFactory =
-                    DefaultExtractorsFactory().apply {
-                        setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3)
-                        setConstantBitrateSeekingEnabled(true)
-                        setConstantBitrateSeekingAlwaysEnabled(true)
-                    }
-                ExoPlayer
-                    .Builder(context)
-//                .setLoadControl(
-//                    DefaultLoadControl
-//                        .Builder()
-//                        .setBufferDurationsMs(
-//                            5_000,
-//                            30_000,
-//                            DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
-//                            DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
-//                        ).setTargetBufferBytes(64_000_000)
-//                        .setPrioritizeTimeOverSizeThresholds(false)
-//                        .build(),
-//                )
-                    .setMediaSourceFactory(
-                        DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory),
-                    ).setRenderersFactory(
-                        DefaultRenderersFactory(context)
-                            .setEnableDecoderFallback(true)
-                            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON),
-                    ).setSeekBackIncrementMs(skipBack)
-                    .setSeekForwardIncrementMs(skipForward)
-                    .setTrackSelector(trackSelector)
-                    .build()
-                    .also {
-                        if (debugLogging) {
-                            it.addAnalyticsListener(EventLogger())
-                        }
-                    }
+                createExoPlayer(
+                    context,
+                    server,
+                    httpClient,
+                    skipParams,
+                    debugLogging,
+                )
             }
+        }
+
+        @OptIn(UnstableApi::class)
+        private fun createExoPlayer(
+            context: Context,
+            server: StashServer,
+            httpClient: PlaybackHttpClient,
+            skipParams: SkipParams,
+            debugLogging: Boolean,
+        ): ExoPlayer {
+            val dataSourceFactory =
+                when (httpClient) {
+                    PlaybackHttpClient.OKHTTP -> {
+                        OkHttpDataSource
+                            .Factory(server.streamingOkHttpClient)
+                    }
+
+                    else -> {
+                        DefaultHttpDataSource
+                            .Factory()
+                            .setConnectTimeoutMs(5_000)
+                            .setReadTimeoutMs(30_000)
+                            .setUserAgent(StashClient.createUserAgent(context))
+                            .apply {
+                                if (server.apiKey.isNotNullOrBlank()) {
+                                    setDefaultRequestProperties(mapOf(Constants.STASH_API_HEADER to server.apiKey))
+                                }
+                            }
+                    }
+                }
+            Log.d(TAG, "createInstance")
+            val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+            val skipForward =
+                when (skipParams) {
+                    is SkipParams.Default -> {
+                        preferences.getInt(
+                            context.getString(R.string.pref_key_skip_forward_time),
+                            30,
+                        ) * 1000L
+                    }
+
+                    is SkipParams.Values -> {
+                        skipParams.skipForward
+                    }
+                }
+            val skipBack =
+                when (skipParams) {
+                    is SkipParams.Default -> {
+                        preferences.getInt(
+                            context.getString(R.string.pref_key_skip_back_time),
+                            10,
+                        ) * 1000L
+                    }
+
+                    is SkipParams.Values -> {
+                        skipParams.skipBack
+                    }
+                }
+            val trackSelector = DefaultTrackSelector(context)
+            trackSelector.parameters =
+                trackSelector
+                    .buildUponParameters()
+                    .setAllowInvalidateSelectionsOnRendererCapabilitiesChange(true)
+                    .setAudioOffloadPreferences(
+                        TrackSelectionParameters.AudioOffloadPreferences
+                            .Builder()
+                            .setAudioOffloadMode(TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED)
+                            .build(),
+                    ).build()
+            val extractorsFactory =
+                DefaultExtractorsFactory().apply {
+                    setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3)
+                    setConstantBitrateSeekingEnabled(true)
+                    setConstantBitrateSeekingAlwaysEnabled(true)
+                }
+            return ExoPlayer
+                .Builder(context)
+                .setMediaSourceFactory(
+                    DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory),
+                ).setRenderersFactory(
+                    DefaultRenderersFactory(context)
+                        .setEnableDecoderFallback(true)
+                        .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON),
+                ).setSeekBackIncrementMs(skipBack)
+                .setSeekForwardIncrementMs(skipForward)
+                .setTrackSelector(trackSelector)
+                .build()
+                .also {
+                    if (debugLogging) {
+                        it.addAnalyticsListener(EventLogger())
+                    }
+                }
         }
 
         @OptIn(UnstableApi::class)
@@ -291,9 +312,14 @@ class StashExoPlayer private constructor() {
 val Player.isReleased: Boolean
     @OptIn(UnstableApi::class)
     get() {
-        return when (this) {
-            is ExoPlayer -> isReleased
-            is MpvPlayer -> isReleased
-            else -> throw IllegalStateException("Unknown Player type: ${this::class.qualifiedName}")
+        if (this is ExoPlayer) return isReleased
+        try {
+            val mpvClass = Class.forName("com.github.damontecres.wholphin.mpv.MpvPlayer")
+            if (mpvClass.isInstance(this)) {
+                return mpvClass.getMethod("isReleased").invoke(this) as Boolean
+            }
+        } catch (e: Exception) {
+            // ignore
         }
+        throw IllegalStateException("Unknown Player type: ${this::class.qualifiedName}")
     }

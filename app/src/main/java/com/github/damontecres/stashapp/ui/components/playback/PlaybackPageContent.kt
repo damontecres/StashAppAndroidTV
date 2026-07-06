@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -325,7 +326,7 @@ class PlaybackViewModel :
                 }
             if (res.isSuccessful) {
                 res.body.use {
-                    it?.bytes()?.let {
+                    it.bytes().let {
                         try {
                             val baseUrl = StashClient.getServerRoot(server.url)
                             val regex = Regex("(\\w+\\.\\w+)#xywh=(\\d+),(\\d+),(\\d+),(\\d+)")
@@ -362,7 +363,6 @@ class PlaybackViewModel :
                             return@withContext emptyList()
                         }
                     }
-                    emptyList()
                 }
             } else {
                 Timber.d("No sprites for %s", sceneId)

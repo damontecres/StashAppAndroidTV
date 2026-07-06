@@ -227,7 +227,7 @@ class StashClient private constructor() {
             return ApolloClient
                 .Builder()
                 .serverUrl(url)
-                .httpEngine(DefaultHttpEngine(httpClient))
+                .httpEngine(DefaultHttpEngine { httpClient })
                 .subscriptionNetworkTransport(
                     WebSocketNetworkTransport
                         .Builder()
@@ -350,7 +350,7 @@ class StashClient private constructor() {
             return ApolloClient
                 .Builder()
                 .serverUrl(url)
-                .httpEngine(DefaultHttpEngine(httpClient))
+                .httpEngine(DefaultHttpEngine { httpClient })
                 .build()
         }
 

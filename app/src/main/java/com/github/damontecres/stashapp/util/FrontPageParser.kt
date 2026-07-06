@@ -70,7 +70,9 @@ class FrontPageParser(
     private suspend fun addCustomFilterRow(frontPageFilter: Map<String, *>): Deferred<FrontPageRow> =
         withContext(Dispatchers.IO) {
             try {
+                @Suppress("UNCHECKED_CAST")
                 val msg = frontPageFilter["message"] as Map<String, *>
+                @Suppress("UNCHECKED_CAST")
                 val objType =
                     (msg["values"] as Map<String, String>)["objects"] as String
                 val description =

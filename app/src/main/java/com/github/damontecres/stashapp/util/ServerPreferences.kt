@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.github.damontecres.stashapp.util
 
 import android.content.Context

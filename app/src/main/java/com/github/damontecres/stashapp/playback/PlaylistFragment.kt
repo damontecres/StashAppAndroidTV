@@ -7,7 +7,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.annotation.OptIn
-import androidx.core.os.bundleOf
 import androidx.fragment.app.commit
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
@@ -104,7 +103,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         val index = player?.currentMediaItemIndex ?: return
         setFragmentResult(
             Constants.PLAYLIST_INDEX_REQUEST_KEY,
-            bundleOf(Constants.PLAYLIST_INDEX_REQUEST_KEY to index),
+            Bundle().apply { putInt(Constants.PLAYLIST_INDEX_REQUEST_KEY, index) },
         )
     }
 
@@ -216,12 +215,15 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
             buildMediaItem(requireContext(), streamDecision, scene) {
                 // Keep the metadata and clipping config from the unresolved item
                 setMediaMetadata(mediaItem.mediaMetadata)
-                mediaItem.clippingConfiguration.let {
-                    setClipStartPositionMs(it.startPositionMs)
-                    setClipEndPositionMs(it.endPositionMs)
-                    setClipRelativeToDefaultPosition(it.relativeToDefaultPosition)
-                    setClipStartsAtKeyFrame(it.startsAtKeyFrame)
-                }
+                val clippingConfiguration = mediaItem.clippingConfiguration
+                setClippingConfiguration(
+                    MediaItem.ClippingConfiguration.Builder()
+                        .setStartPositionMs(clippingConfiguration.startPositionMs)
+                        .setEndPositionMs(clippingConfiguration.endPositionMs)
+                        .setRelativeToDefaultPosition(clippingConfiguration.relativeToDefaultPosition)
+                        .setStartsAtKeyFrame(clippingConfiguration.startsAtKeyFrame)
+                        .build(),
+                )
                 setTag(MediaItemTag(scene, streamDecision))
             }
 

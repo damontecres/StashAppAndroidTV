@@ -182,7 +182,7 @@ fun ImagePage(
     )
 
     val state =
-        rememberTransformableState { zoomChange, offsetChange, rotationChange ->
+        rememberTransformableState { _, zoomChange, offsetChange, rotationChange ->
             zoomFactor *= zoomChange
             rotation += rotationChange
             panX += offsetChange.x

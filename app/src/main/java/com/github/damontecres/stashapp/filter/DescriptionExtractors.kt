@@ -370,7 +370,7 @@ fun filterSummary(f: PhashDistanceCriterionInput): String {
 
 fun filterSummary(f: DuplicationCriterionInput): String {
     // TODO update to new fields
-    val duplicated = f.duplicated.getOrNull()
+    val duplicated = f.phash.getOrNull()
     val distance = f.distance.getOrNull()
     return if (distance != null) {
         "$duplicated ($distance)"
@@ -389,6 +389,7 @@ fun resolutionName(res: ResolutionEnum): String =
         ResolutionEnum.STANDARD_HD -> "720p"
         ResolutionEnum.FULL_HD -> "1080p"
         ResolutionEnum.QUAD_HD -> "1440p"
+        @Suppress("DEPRECATION")
         ResolutionEnum.VR_HD,
         ResolutionEnum.FOUR_K -> "4K"
         ResolutionEnum.FIVE_K -> "5K"

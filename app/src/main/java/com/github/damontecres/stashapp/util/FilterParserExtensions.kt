@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.github.damontecres.stashapp.util
 
 import com.apollographql.apollo.api.Optional

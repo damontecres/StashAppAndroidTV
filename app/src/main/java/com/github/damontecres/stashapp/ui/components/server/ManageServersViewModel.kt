@@ -179,7 +179,7 @@ class ManageServersViewModel : ViewModel() {
                     ApolloClient
                         .Builder()
                         .serverUrl(StashClient.cleanServerUrl(serverUrl))
-                        .httpEngine(DefaultHttpEngine(httpClient))
+                        .httpEngine(DefaultHttpEngine { httpClient })
                         .build()
                 val queryEngine = QueryEngine(apolloClient, null)
                 val mutationEngine = MutationEngine(apolloClient, null)

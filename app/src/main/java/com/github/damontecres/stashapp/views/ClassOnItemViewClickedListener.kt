@@ -53,6 +53,7 @@ class ClassOnItemViewClickedListener(
             rowViewHolder: RowPresenter.ViewHolder?,
             row: Row?,
         ) {
+            @Suppress("UNCHECKED_CAST")
             onItemClicked(item as T)
         }
 

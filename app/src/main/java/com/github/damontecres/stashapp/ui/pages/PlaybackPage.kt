@@ -45,6 +45,7 @@ import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.proto.PlaybackBackend
 import com.github.damontecres.stashapp.proto.PlaybackPreferences
+import com.github.damontecres.stashapp.proto.copy
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -61,6 +62,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 import android.widget.Toast
@@ -277,10 +279,14 @@ fun PlaylistPlaybackPage(
                         val resolvedItem = buildMediaItem(context, decision, scene) {
                             setMediaMetadata(mediaItem.mediaMetadata)
                             val config = mediaItem.clippingConfiguration
-                            setClipStartPositionMs(config.startPositionMs)
-                            setClipEndPositionMs(config.endPositionMs)
-                            setClipRelativeToDefaultPosition(config.relativeToDefaultPosition)
-                            setClipStartsAtKeyFrame(config.startsAtKeyFrame)
+                            setClippingConfiguration(
+                                MediaItem.ClippingConfiguration.Builder()
+                                    .setStartPositionMs(config.startPositionMs)
+                                    .setEndPositionMs(config.endPositionMs)
+                                    .setRelativeToDefaultPosition(config.relativeToDefaultPosition)
+                                    .setStartsAtKeyFrame(config.startsAtKeyFrame)
+                                    .build(),
+                            )
                             setTag(PlaylistFragment.MediaItemTag(scene, decision))
                         }
                         if (playerIndex < activePlayer.mediaItemCount &&
@@ -440,10 +446,11 @@ private fun convertToUnresolvedMediaItem(
             setTag(PlaylistFragment.MediaItemTag(scene, null))
             val startPos = item.seconds.seconds.inWholeMilliseconds.coerceAtLeast(0L)
             // Note: clipping end is not strictly needed for unresolved items but kept for consistency
-            val clipConfig = MediaItem.ClippingConfiguration.Builder()
-                .setStartPositionMs(startPos)
-                .build()
-            setClippingConfiguration(clipConfig)
+            setClippingConfiguration(
+                MediaItem.ClippingConfiguration.Builder()
+                    .setStartPositionMs(startPos)
+                    .build(),
+            )
         }
     }
 }

@@ -14,7 +14,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.annotation.LayoutRes
 import androidx.annotation.OptIn
-import androidx.core.os.bundleOf
 import androidx.core.view.get
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -686,7 +685,7 @@ abstract class PlaybackFragment(
             }
         setFragmentResult(
             Constants.POSITION_REQUEST_KEY,
-            bundleOf(Constants.POSITION_REQUEST_KEY to positionToSave),
+            Bundle().apply { putLong(Constants.POSITION_REQUEST_KEY, positionToSave) },
         )
     }
 

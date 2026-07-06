@@ -59,7 +59,7 @@ fun rememberMobileGestureModifier(
         }
     }
     val transformState =
-        rememberTransformableState { zoomChange, offsetChange, _ ->
+        rememberTransformableState { _, zoomChange, offsetChange, _ ->
             zoomFactor = (zoomFactor * zoomChange).coerceIn(1f, GESTURE_MAX_ZOOM)
             if (zoomFactor > 1f) {
                 val maxX = surfaceWidth * (zoomFactor - 1f) / 2f

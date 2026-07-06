@@ -5,7 +5,6 @@ import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.os.bundleOf
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
 import androidx.leanback.app.SearchSupportFragment
@@ -180,10 +179,10 @@ class SearchForFragment :
             }
             setFragmentResult(
                 searchFor.requestKey,
-                bundleOf(
-                    RESULT_ID_KEY to searchFor.sourceId,
-                    RESULT_ITEM_ID_KEY to item.id,
-                ).putDataType(dataType),
+                Bundle().apply {
+                    putLong(RESULT_ID_KEY, searchFor.sourceId)
+                    putString(RESULT_ITEM_ID_KEY, item.id)
+                }.putDataType(dataType),
             )
             serverViewModel.navigationManager.goBack()
         }

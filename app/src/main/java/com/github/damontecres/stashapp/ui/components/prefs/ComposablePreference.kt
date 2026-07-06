@@ -115,7 +115,7 @@ fun <T> ComposablePreference(
                 }
 
                 StashPreference.HandyTestConnection -> {
-                    kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                    scope.launch(kotlinx.coroutines.Dispatchers.Main) {
                         com.github.damontecres.stashapp.util.HandyManager.initialize(context)
                         Toast.makeText(context, "Testing connection...", Toast.LENGTH_SHORT).show()
                         val (success, msg) = com.github.damontecres.stashapp.util.HandyManager.testConnection()
@@ -125,7 +125,7 @@ fun <T> ComposablePreference(
                 }
 
                 StashPreference.HandyTestHardware -> {
-                    kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                    scope.launch(kotlinx.coroutines.Dispatchers.Main) {
                         com.github.damontecres.stashapp.util.HandyManager.initialize(context)
                         Toast.makeText(context, "Starting hardware test...", Toast.LENGTH_SHORT).show()
                         val result = com.github.damontecres.stashapp.util.HandyManager.testHardware()
@@ -135,7 +135,7 @@ fun <T> ComposablePreference(
                 }
                 
                 StashPreference.HandySyncTime -> {
-                    kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                    scope.launch(kotlinx.coroutines.Dispatchers.Main) {
                         com.github.damontecres.stashapp.util.HandyManager.initialize(context)
                         Toast.makeText(context, "Measuring latency...", Toast.LENGTH_SHORT).show()
                         val (rtt, offset) = com.github.damontecres.stashapp.util.HandyManager.syncServerTimeV2()

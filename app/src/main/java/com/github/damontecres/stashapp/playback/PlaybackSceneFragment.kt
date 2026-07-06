@@ -5,7 +5,6 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.annotation.OptIn
-import androidx.core.os.bundleOf
 import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.C
 import androidx.media3.common.Player
@@ -66,7 +65,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                             if (playbackState == Player.STATE_ENDED) {
                                 setFragmentResult(
                                     Constants.POSITION_REQUEST_KEY,
-                                    bundleOf(Constants.POSITION_REQUEST_KEY to 0L),
+                                    Bundle().apply { putLong(Constants.POSITION_REQUEST_KEY, 0L) },
                                 )
                                 StashApplication.navigationManager.goBack()
                             }

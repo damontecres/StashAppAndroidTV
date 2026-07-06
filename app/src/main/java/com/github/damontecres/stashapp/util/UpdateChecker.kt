@@ -125,8 +125,8 @@ class UpdateChecker {
                         .get()
                         .build()
                 client.newCall(request).execute().use {
-                    if (it.isSuccessful && it.body != null) {
-                        val result = Json.parseToJsonElement(it.body!!.string())
+                    if (it.isSuccessful) {
+                        val result = Json.parseToJsonElement(it.body.string())
                         val name = result.jsonObject["name"]?.jsonPrimitive?.contentOrNull
                         val version = Version.tryFromString(name)
                         val publishedAt = result.jsonObject["published_at"]?.jsonPrimitive?.contentOrNull
@@ -180,10 +180,10 @@ class UpdateChecker {
                         .get()
                         .build()
                 client.newCall(request).execute().use {
-                    if (it.isSuccessful && it.body != null) {
+                    if (it.isSuccessful) {
                         Log.v(TAG, "Request successful for ${release.downloadUrl}")
                         withContext(Dispatchers.Main) {
-                            callback.contentLength(it.body!!.contentLength())
+                            callback.contentLength(it.body.contentLength())
                         }
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             val contentValues =
@@ -202,7 +202,7 @@ class UpdateChecker {
                                     contentValues,
                                 )
                             if (uri != null) {
-                                it.body!!.byteStream().use { input ->
+                                it.body.byteStream().use { input ->
                                     resolver.openOutputStream(uri).use { output ->
                                         copyTo(input, output!!, callback = callback)
                                     }
@@ -245,7 +245,7 @@ class UpdateChecker {
                                 downloadDir.mkdirs()
                                 val targetFile = File(downloadDir, ASSET_NAME)
                                 targetFile.outputStream().use { output ->
-                                    copyTo(it.body!!.byteStream(), output, callback = callback)
+                                    copyTo(it.body.byteStream(), output, callback = callback)
                                 }
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                                     @Suppress("DEPRECATION")
