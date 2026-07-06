@@ -41,6 +41,7 @@ import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.isReleased
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.ui.playbackPreferencesForOldUi
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.KeyEventDispatcher
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -152,12 +153,13 @@ abstract class PlaybackFragment(
         return false
     }
 
-    private fun preparePlayer(): Player =
-        StashExoPlayer
+    private fun preparePlayer(): Player {
+        val playbackPreferences = requireContext().playbackPreferencesForOldUi
+        return StashExoPlayer
             .getInstance(
                 requireContext(),
                 serverViewModel.requireServer(),
-                skipParams,
+                playbackPreferences,
             ).also { it.setupPlayer() }
             .also {
                 StashExoPlayer.addListener(
@@ -220,6 +222,7 @@ abstract class PlaybackFragment(
                     },
                 )
             }
+    }
 
     protected fun updateDebugInfo(
         streamDecision: StreamDecision?,

@@ -39,13 +39,19 @@ import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.proto.PlaybackBackend
+import com.github.damontecres.stashapp.proto.PlaybackPreferences
 import com.github.damontecres.stashapp.proto.StashPreferences
+import com.github.damontecres.stashapp.proto.copy
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.compat.detectTvDevice
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.name
+import com.github.damontecres.stashapp.util.preferences
 import com.github.damontecres.stashapp.util.putFilterArgs
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 
 data class GlobalContext(
@@ -65,7 +71,7 @@ object PlayerContext {
         context: Context,
         server: StashServer,
     ): Player =
-        StashExoPlayer.getInstance(context, server).apply {
+        StashExoPlayer.getInstanceForCard(context, server).apply {
             repeatMode = Player.REPEAT_MODE_ONE
             playWhenReady = true
         }
@@ -192,3 +198,11 @@ val ImageFilterType.galleryId: String?
             }
         }
     }
+
+val Context.playbackPreferencesForOldUi: PlaybackPreferences
+    get() =
+        runBlocking {
+            this@playbackPreferencesForOldUi.preferences.data.first().playbackPreferences.copy {
+                playbackBackend = PlaybackBackend.EXO_PLAYER
+            }
+        }

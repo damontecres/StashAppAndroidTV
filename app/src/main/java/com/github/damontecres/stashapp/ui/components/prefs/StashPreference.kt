@@ -27,6 +27,7 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.updateAdvancedPreferences
 import com.github.damontecres.stashapp.util.updateCachePreferences
 import com.github.damontecres.stashapp.util.updateInterfacePreferences
+import com.github.damontecres.stashapp.util.updateMpvPreferences
 import com.github.damontecres.stashapp.util.updatePinPreferences
 import com.github.damontecres.stashapp.util.updatePlaybackPreferences
 import com.github.damontecres.stashapp.util.updateScreensaverPreferences
@@ -580,7 +581,7 @@ sealed interface StashPreference<T> {
                 setter = { prefs, value ->
                     prefs.updateInterfacePreferences { useUpDownPreviousNext = value }
                 },
-                summaryOn = R.string.enabled_for_markers,
+                summaryOn = R.string.enabled_for_scenes_and_markers,
                 summaryOff = R.string.transcode_options_disabled,
             )
 
@@ -1464,6 +1465,32 @@ sealed interface StashPreference<T> {
                         value.name.lowercase(),
                     )
                 },
+            )
+
+        val MpvHardwareDecoding =
+            StashSwitchPreference(
+                title = R.string.mpv_hardware_decoding,
+                prefKey = R.string.pref_key_mpv_hardware_decoding,
+                defaultValue = true,
+                getter = { it.playbackPreferences.mpvPreferences.hardwareDecoding },
+                setter = { prefs, value ->
+                    prefs.updateMpvPreferences { hardwareDecoding = value }
+                },
+                summaryOn = R.string.stashapp_actions_enable,
+                summaryOff = R.string.transcode_options_disabled,
+            )
+
+        val MpvGpuNext =
+            StashSwitchPreference(
+                title = R.string.mpv_gpu_next,
+                prefKey = R.string.pref_key_mpv_gpu_next,
+                defaultValue = false,
+                getter = { it.playbackPreferences.mpvPreferences.gpuNext },
+                setter = { prefs, value ->
+                    prefs.updateMpvPreferences { gpuNext = value }
+                },
+                summaryOn = R.string.stashapp_actions_enable,
+                summaryOff = R.string.transcode_options_disabled,
             )
 
         val ImageThreads =

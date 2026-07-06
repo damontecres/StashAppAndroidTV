@@ -104,6 +104,11 @@ enum PlaybackBackend{
   MPV = 1;
 }
 
+message MpvPreferences {
+  bool hardware_decoding = 1;
+  bool gpu_next = 2;
+}
+
 message PlaybackPreferences {
   int64 skip_forward_ms = 1;
   int64 skip_backward_ms = 2;
@@ -130,6 +135,7 @@ message PlaybackPreferences {
   int64 handy_delay_compensation = 22;
   bool handy_cloud_bridge = 23;
   bool handy_enabled = 24;
+  MpvPreferences mpv_preferences = 25;
 }
 
 message CachePreferences {

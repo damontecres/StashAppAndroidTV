@@ -27,10 +27,6 @@ jobs:
           submodules: true # Need the submodules to build
       - name: Setup
         uses: ./.github/actions/setup
-      - name: Native build
-        uses: ./.github/actions/native-build
-        with:
-          cache: false
       - name: Build app
         id: buildapp
         env:
@@ -38,6 +34,8 @@ jobs:
           KEY_PASSWORD: "${{ secrets.KEY_PASSWORD }}"
           KEY_STORE_PASSWORD: "${{ secrets.KEY_STORE_PASSWORD }}"
           SIGNING_KEY: "${{ secrets.SIGNING_KEY }}"
+          ORG_GRADLE_PROJECT_WholphinExtensionsUsername: "${{ secrets.EXTENSIONS_USERNAME }}"
+          ORG_GRADLE_PROJECT_WholphinExtensionsPassword: "${{ secrets.EXTENSIONS_PASSWORD }}"
         run: |
           ./gradlew clean assembleRelease --no-daemon
       - name: Verify signatures

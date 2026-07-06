@@ -8,6 +8,7 @@ import androidx.datastore.dataStore
 import com.github.damontecres.stashapp.proto.AdvancedPreferences
 import com.github.damontecres.stashapp.proto.CachePreferences
 import com.github.damontecres.stashapp.proto.InterfacePreferences
+import com.github.damontecres.stashapp.proto.MpvPreferences
 import com.github.damontecres.stashapp.proto.PinPreferences
 import com.github.damontecres.stashapp.proto.PlaybackPreferences
 import com.github.damontecres.stashapp.proto.ScreensaverPreferences
@@ -83,6 +84,15 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                             addAllDirectPlayVideo(StashPreference.DirectPlayVideo.defaultValue)
                             addAllDirectPlayAudio(StashPreference.DirectPlayAudio.defaultValue)
                             addAllDirectPlayFormat(StashPreference.DirectPlayFormat.defaultValue)
+
+                            playbackBackend = StashPreference.PlaybackBackendPref.defaultValue
+                            mpvPreferences =
+                                MpvPreferences
+                                    .newBuilder()
+                                    .apply {
+                                        hardwareDecoding = StashPreference.MpvHardwareDecoding.defaultValue
+                                        gpuNext = StashPreference.MpvGpuNext.defaultValue
+                                    }.build()
                         }.build()
                 updatePreferences =
                     UpdatePreferences
@@ -163,6 +173,11 @@ inline fun StashPreferences.updateTabPreferences(block: TabPreferences.Builder.(
 inline fun StashPreferences.updatePlaybackPreferences(block: PlaybackPreferences.Builder.() -> Unit): StashPreferences =
     update {
         playbackPreferences = playbackPreferences.toBuilder().apply(block).build()
+    }
+
+inline fun StashPreferences.updateMpvPreferences(block: MpvPreferences.Builder.() -> Unit): StashPreferences =
+    updatePlaybackPreferences {
+        mpvPreferences = mpvPreferences.toBuilder().apply(block).build()
     }
 
 inline fun StashPreferences.updateAdvancedPreferences(block: AdvancedPreferences.Builder.() -> Unit): StashPreferences =

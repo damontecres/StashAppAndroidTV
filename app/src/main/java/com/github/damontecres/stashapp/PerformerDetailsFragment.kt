@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.views.careerString
 import com.github.damontecres.stashapp.views.models.PerformerViewModel
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
@@ -119,10 +120,9 @@ class PerformerDetailsFragment : DetailsFragment() {
 
         addRow(R.string.stashapp_tattoos, perf.tattoos)
         addRow(R.string.stashapp_piercings, perf.piercings)
-        addRow(
-            R.string.stashapp_career_length,
-            listOf(perf.career_start, perf.career_end).joinToString(" - "),
-        )
+        perf.careerString?.let {
+            addRow(R.string.stashapp_career_length, it)
+        }
         addRow(R.string.stashapp_created_at, parseTimeToString(perf.created_at))
         addRow(R.string.stashapp_updated_at, parseTimeToString(perf.updated_at))
 

@@ -202,6 +202,16 @@ class AppUpgradeHandler(
                 }
             }
         }
+        if (previousVersion.isLessThan(Version.fromString("v0.9.0-2-g0"))) {
+            CoroutineScope(Dispatchers.IO + StashCoroutineExceptionHandler()).launch {
+                context.preferences.updateData {
+                    it.updateMpvPreferences {
+                        hardwareDecoding = StashPreference.MpvHardwareDecoding.defaultValue
+                        gpuNext = StashPreference.MpvGpuNext.defaultValue
+                    }
+                }
+            }
+        }
     }
 
     private fun SharedPreferences.ensureSetHas(

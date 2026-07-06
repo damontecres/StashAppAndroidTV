@@ -29,6 +29,7 @@ import org.acra.ReportField
 import org.acra.config.dialog
 import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
+import timber.log.Timber
 
 class StashApplication : Application() {
     @OptIn(ExperimentalComposeRuntimeApi::class)
@@ -51,6 +52,8 @@ class StashApplication : Application() {
 //                    .build(),
 //            )
         }
+
+        Timber.plant(Timber.DebugTree())
 
         application = this
 

@@ -209,7 +209,7 @@ fun PlaybackControls(
             intervals = seekBarIntervals,
             modifier =
                 Modifier
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 4.dp)
                     .fillMaxWidth(.95f),
         )
         Row(
@@ -774,6 +774,9 @@ fun PlaybackButtons(
         }
     }
 }
+
+private val buttonPadding = 4.dp
+private val buttonSize = 40.dp
 
 @Composable
 fun PlaybackButton(

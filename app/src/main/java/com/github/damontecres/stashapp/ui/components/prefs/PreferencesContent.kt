@@ -181,6 +181,13 @@ val advancedPreferences =
             ),
         ),
         PreferenceGroup(
+            R.string.mpv_settings,
+            listOf(
+                StashPreference.MpvHardwareDecoding,
+                StashPreference.MpvGpuNext,
+            ),
+        ),
+        PreferenceGroup(
             R.string.screensaver,
             listOf(
                 StashPreference.ScreensaverEnable,

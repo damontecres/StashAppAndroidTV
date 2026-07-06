@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.playback.StashPlayerView
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
+import com.github.damontecres.stashapp.ui.playbackPreferencesForOldUi
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.keepScreenOn
@@ -91,11 +92,13 @@ class ImageClipFragment :
     override fun onStart() {
         // Always release the player and recreate
         StashExoPlayer.releasePlayer()
+        val playbackPreferences = requireContext().playbackPreferencesForOldUi
         player =
             StashExoPlayer
                 .getInstance(
                     requireContext(),
                     StashServer.requireCurrentServer(),
+                    playbackPreferences,
                 ).also {
                     videoView.player = it
                     it.repeatMode =

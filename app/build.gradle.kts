@@ -1,4 +1,5 @@
-
+import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.variant.FilterConfiguration
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.google.protobuf.gradle.id
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -11,14 +12,24 @@ fun File.writeTextIfDifferent(text: String) {
     }
 }
 
-val isCI = if (System.getenv("CI") != null) System.getenv("CI").toBoolean() else false
-val ffmpegModuleExists = project.file("libs/lib-decoder-ffmpeg-release.aar").exists()
-val av1ModuleExists = project.file("libs/lib-decoder-av1-release.aar").exists()
-val shouldSign = isCI && System.getenv("KEY_ALIAS") != null
+val isCI = providers.environmentVariable("CI").orElse("false").map { it.toBoolean() }
+val shouldSign =
+    isCI.zip(
+        providers.environmentVariable("KEY_ALIAS").orElse("").map { it.isNotBlank() },
+    ) { isCI, hasKey ->
+        isCI && hasKey
+    }
+val ffmpegModuleExists =
+    providers.provider { project.file("libs/lib-decoder-ffmpeg-release.aar").exists() }
+val av1ModuleExists =
+    providers.provider { project.file("libs/lib-decoder-av1-release.aar").exists() }
+val mpvModuleExists =
+    providers.provider { project.file("libs/wholphin-mpv-release.aar").exists() }
+val extensionsRepoActive =
+    providers.provider { project.hasProperty("WholphinExtensionsUsername") }
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     id("kotlin-parcelize")
     alias(libs.plugins.apollo)
@@ -46,7 +57,15 @@ val gitDescribe =
         .standardOutput.asText
         .getOrElse("v0.0.0").ifBlank { "v0.0.0" }
 
-android {
+kotlin {
+    compilerOptions {
+        languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_3
+        jvmTarget = JvmTarget.JVM_21
+        javaParameters = true
+    }
+}
+
+configure<ApplicationExtension> {
     namespace = "com.github.damontecres.stashapp"
     compileSdk = 36
 
@@ -73,7 +92,7 @@ android {
         vectorDrawables.useSupportLibrary = true
     }
     signingConfigs {
-        if (shouldSign) {
+        if (shouldSign.get()) {
             create("ci") {
                 file("ci.keystore").writeBytes(
                     Base64.getDecoder().decode(System.getenv("SIGNING_KEY")),
@@ -99,7 +118,7 @@ android {
             )
             isDebuggable = false
 
-            if (shouldSign) {
+            if (shouldSign.get()) {
                 signingConfig = signingConfigs.getByName("ci")
             }
         }
@@ -107,21 +126,9 @@ android {
             isMinifyEnabled = false
             isDebuggable = true
             applicationIdSuffix = ".debug"
-            if (shouldSign) {
+            if (shouldSign.get()) {
                 signingConfig = signingConfigs.getByName("ci")
             }
-        }
-
-        applicationVariants.all {
-            val variant = this
-            variant.outputs
-                .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
-                .forEach { output ->
-                    val abi = output.getFilter("ABI").let { if (it != null) "-$it" else "" }
-                    val outputFileName =
-                        "StashAppAndroidTV-${variant.baseName}-${variant.versionName}-${variant.versionCode}$abi.apk"
-                    output.outputFileName = outputFileName
-                }
         }
     }
     splits {
@@ -133,22 +140,38 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
         isCoreLibraryDesugaringEnabled = true
-    }
-    kotlin {
-        compilerOptions {
-            jvmTarget = JvmTarget.JVM_11
-            javaParameters = true
-        }
     }
     lint {
         disable.add("MissingTranslation")
         disable.add("LocalContextGetResourceValueCall") // TODO
     }
-    room {
-        schemaDirectory("$projectDir/schemas")
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.outputs
+            .map { it as com.android.build.api.variant.impl.VariantOutputImpl }
+            .forEach { output ->
+                val abi = output.getFilter(FilterConfiguration.FilterType.ABI)?.identifier
+                val parts =
+                    listOf(
+                        "StashAppAndroidTV",
+                        variant.flavorName,
+                        variant.buildType,
+                        output.versionName.get(),
+                        output.versionCode.get().toString(),
+                        abi,
+                    ).filterNot { it.isNullOrBlank() }
+                val outputFileName = parts.joinToString("-")
+                output.outputFileName = "$outputFileName.apk"
+            }
     }
     
     testOptions {
@@ -188,11 +211,6 @@ apollo {
         packageName.set("com.github.damontecres.stashapp.api")
         schemaFile = File("$projectDir/src/main/graphql/schema.graphqls")
         generateOptionalOperationVariables.set(false)
-        outputDirConnection {
-            // Fixes where classes aren't detected in unit tests
-            // See: https://community.apollographql.com/t/android-warning-duplicate-content-roots-detected-after-just-adding-apollo3-kotlin-client/4529/6
-            connectToKotlinSourceSet("main")
-        }
         plugin(project(":apollo-compiler"))
     }
 }
@@ -316,11 +334,34 @@ dependencies {
     implementation(libs.multiplatform.markdown.renderer)
     implementation(libs.multiplatform.markdown.renderer.m3)
 
-    if (ffmpegModuleExists || isCI) {
+    implementation(libs.timber)
+    implementation(libs.slf4j2.timber)
+    if (ffmpegModuleExists.get()) {
+        logger.info("Using local ffmpeg decoder")
         implementation(files("libs/lib-decoder-ffmpeg-release.aar"))
+    } else if (extensionsRepoActive.get()) {
+        logger.info("Using prebuilt ffmpeg decoder")
+        implementation(libs.wholphin.extensions.ffmpeg)
+    } else {
+        logger.warn("Media3 ffmpeg decoder was NOT found")
     }
-    if (av1ModuleExists || isCI) {
+    if (av1ModuleExists.get()) {
+        logger.info("Using local av1 decoder")
         implementation(files("libs/lib-decoder-av1-release.aar"))
+    } else if (extensionsRepoActive.get()) {
+        logger.info("Using prebuilt av1 decoder")
+        implementation(libs.wholphin.extensions.av1)
+    } else {
+        logger.warn("Media3 av1 decoder was NOT found")
+    }
+    if (mpvModuleExists.get()) {
+        logger.info("Using local libMPV build")
+        implementation(files("libs/wholphin-mpv-release.aar"))
+    } else if (extensionsRepoActive.get()) {
+        logger.info("Using prebuilt libMPV")
+        implementation(libs.wholphin.extensions.mpv)
+    } else {
+        logger.warn("libMPV was NOT found")
     }
 
     testImplementation(libs.androidx.test.core.ktx)

@@ -260,11 +260,13 @@ fun ImagePage(
     }
     val player =
         remember {
-            StashExoPlayer.getInstance(context, server).apply {
-                maybeMuteAudio(uiConfig.preferences, false, this)
-                repeatMode = Player.REPEAT_MODE_OFF
-                playWhenReady = true
-            }
+            StashExoPlayer
+                .getInstance(context, server, uiConfig.preferences.playbackPreferences)
+                .apply {
+                    maybeMuteAudio(uiConfig.preferences, false, this)
+                    repeatMode = Player.REPEAT_MODE_OFF
+                    playWhenReady = true
+                }
         }
     LifecycleStartEffect(Unit) {
         onStopOrDispose {

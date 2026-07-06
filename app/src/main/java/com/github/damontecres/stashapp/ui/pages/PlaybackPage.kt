@@ -61,7 +61,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 import android.widget.Toast
@@ -94,20 +93,10 @@ fun PlaybackPage(
         }
     state?.let { state ->
         var player by remember { mutableStateOf<Player?>(null) }
-        val skipParams = remember(uiConfig) {
-            uiConfig.preferences.playbackPreferences.let {
-                SkipParams.Values(
-                    it.skipForwardMs,
-                    it.skipBackwardMs,
-                )
-            }
-        }
-        val httpClient = uiConfig.preferences.playbackPreferences.playbackHttpClient
-        val debugLogging = uiConfig.preferences.playbackPreferences.debugLoggingEnabled
-        val backend = uiConfig.preferences.playbackPreferences.playbackBackend
+        val playbackPreferences = uiConfig.preferences.playbackPreferences
 
         LifecycleStartEffect(Unit) {
-            val p = StashExoPlayer.getInstance(context, server, skipParams, httpClient.name, debugLogging, backend).apply {
+            val p = StashExoPlayer.getInstance(context, server, playbackPreferences).apply {
                 repeatMode = Player.REPEAT_MODE_OFF
                 playWhenReady = true
             }
@@ -231,26 +220,21 @@ fun PlaylistPlaybackPage(
     var isBuildingPlaylist by remember { mutableStateOf(true) }
 
     var player by remember { mutableStateOf<Player?>(null) }
-    val skipParams = remember(uiConfig) {
-        val skipForward = uiConfig.preferences.playbackPreferences.skipForwardMs.milliseconds
-        val skipBack = uiConfig.preferences.playbackPreferences.skipBackwardMs.milliseconds
+    val playbackPreferences = remember(uiConfig, clipDuration) {
         if (viewModel.dataType == DataType.MARKER) {
-            SkipParams.Values(
-                (clipDuration / 4).coerceAtMost(skipForward).inWholeMilliseconds,
-                (clipDuration / 4).coerceAtMost(skipBack).inWholeMilliseconds,
-            )
+            val skipForward = uiConfig.preferences.playbackPreferences.skipForwardMs.milliseconds
+            val skipBack = uiConfig.preferences.playbackPreferences.skipBackwardMs.milliseconds
+            uiConfig.preferences.playbackPreferences.copy {
+                skipForwardMs = (clipDuration / 4).coerceAtMost(skipForward).inWholeMilliseconds
+                skipBackwardMs = (clipDuration / 4).coerceAtMost(skipBack).inWholeMilliseconds
+            }
         } else {
-            SkipParams.Values(
-                skipForward.inWholeMilliseconds,
-                skipBack.inWholeMilliseconds,
-            )
+            uiConfig.preferences.playbackPreferences
         }
     }
-    val httpClient = uiConfig.preferences.playbackPreferences.playbackHttpClient
-    val debugLogging = uiConfig.preferences.playbackPreferences.debugLoggingEnabled
 
     LifecycleStartEffect(Unit) {
-        val p = StashExoPlayer.getInstance(context, server, skipParams, httpClient.name, debugLogging).apply {
+        val p = StashExoPlayer.getInstance(context, server, playbackPreferences).apply {
             repeatMode = Player.REPEAT_MODE_OFF
             playWhenReady = true
         }

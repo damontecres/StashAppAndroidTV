@@ -19,13 +19,16 @@ import androidx.media3.extractor.ts.TsExtractor
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.StashExoPlayer.Companion.getInstance
 import com.github.damontecres.stashapp.proto.PlaybackBackend
+import com.github.damontecres.stashapp.proto.PlaybackHttpClient
+import com.github.damontecres.stashapp.proto.PlaybackPreferences
+import com.github.damontecres.stashapp.proto.copy
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.getPreference
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.mpv.MpvPlayer
+import com.github.damontecres.wholphin.mpv.MpvPlayer
+import timber.log.Timber
 
 /**
  * Manages a static [ExoPlayer] which might be reused between views
@@ -41,46 +44,40 @@ class StashExoPlayer private constructor() {
         private var instance: Player? = null // Volatile modifier is necessary
 
         @Volatile
-        private var skipParams: SkipParams? = null
+        private var playbackPreferences: PlaybackPreferences? = null
+
+        @OptIn(UnstableApi::class)
+        fun getInstanceForCard(
+            context: Context,
+            server: StashServer,
+        ): Player =
+            getInstance(
+                context,
+                server,
+                PlaybackPreferences
+                    .newBuilder()
+                    .apply {
+                        playbackBackend = PlaybackBackend.EXO_PLAYER
+                        skipForwardMs = 30_000
+                        skipBackwardMs = 30_000
+                    }.build(),
+            )
 
         @OptIn(UnstableApi::class)
         fun getInstance(
             context: Context,
             server: StashServer,
-        ): Player = getInstance(context, server, SkipParams.Default)
-
-        @OptIn(UnstableApi::class)
-        fun getInstance(
-            context: Context,
-            server: StashServer,
-            skipParams: SkipParams,
-            httpClientChoice: String =
-                getPreference(
-                    context,
-                    R.string.pref_key_playback_http_client,
-                    context.getString(R.string.playback_http_client_okhttp),
-                )!!,
-            debugLogging: Boolean =
-                getPreference(
-                    context,
-                    R.string.pref_key_playback_debug_logging,
-                    false,
-                ),
-            backend: PlaybackBackend = PlaybackBackend.EXO_PLAYER,
+            playbackPreferences: PlaybackPreferences,
         ): Player {
-            if (instance == null || skipParams != this.skipParams) {
+            if (instance == null || playbackPreferences != this.playbackPreferences) {
                 synchronized(this) {
                     // synchronized to avoid concurrency problem
-                    if (instance == null || skipParams != this.skipParams) {
-                        this.skipParams = skipParams
+                    if (instance == null || playbackPreferences != this.playbackPreferences) {
                         instance =
                             createInstance(
                                 context,
                                 server,
-                                skipParams,
-                                httpClientChoice,
-                                debugLogging,
-                                backend,
+                                playbackPreferences,
                             )
                     }
                 }
@@ -95,19 +92,30 @@ class StashExoPlayer private constructor() {
         fun createInstance(
             context: Context,
             server: StashServer,
-            skipParams: SkipParams,
-            httpClientChoice: String,
-            debugLogging: Boolean,
-            backend: PlaybackBackend = PlaybackBackend.EXO_PLAYER,
+            playbackPreferences: PlaybackPreferences,
         ): Player {
             releasePlayer()
-            Log.i(TAG, "backend=$backend")
-            return if (backend == PlaybackBackend.MPV) {
-                MpvPlayer(context, true, false)
+            Timber.i("backend=%s", playbackPreferences.playbackBackend)
+            val skipParams =
+                playbackPreferences.let {
+                    SkipParams.Values(
+                        it.skipForwardMs,
+                        it.skipBackwardMs,
+                    )
+                }
+            val httpClient = playbackPreferences.playbackHttpClient
+            val debugLogging = playbackPreferences.debugLoggingEnabled
+            this.playbackPreferences = playbackPreferences.copy {}
+            return if (playbackPreferences.playbackBackend == PlaybackBackend.MPV) {
+                MpvPlayer(
+                    context,
+                    playbackPreferences.mpvPreferences.hardwareDecoding,
+                    playbackPreferences.mpvPreferences.gpuNext,
+                )
             } else {
                 val dataSourceFactory =
-                    when (httpClientChoice.lowercase()) {
-                        context.getString(R.string.playback_http_client_okhttp) -> {
+                    when (httpClient) {
+                        PlaybackHttpClient.OKHTTP -> {
                             OkHttpDataSource
                                 .Factory(server.streamingOkHttpClient)
                         }
@@ -215,7 +223,7 @@ class StashExoPlayer private constructor() {
                             instance!!.release()
                         }
                         instance = null
-                        skipParams = null
+                        playbackPreferences = null
                     }
                 }
             }
