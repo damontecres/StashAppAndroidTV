@@ -4,6 +4,7 @@ All significant changes to the Stash App Android TV project are documented in th
 
 | Version | Type | Description | Impact |
 | :--- | :--- | :--- | :--- |
+| **Maintenance** | `Fix` | **Funscript-Wiedergabe bei Duplikaten & Standby-Fix:** Falls ein Video-Duplikat keine Funscript-Datei hat, sucht die App nun per phash/oshash/checksum nach interaktiven Duplikaten auf dem Server und spielt dessen Funscript ab. Zudem wird der ExoPlayer nach dem Standby mittels `LifecycleStartEffect` neu erstellt, um Hänger zu vermeiden. Die Wiedergabe wird an der korrekten Stelle (`currentPlaylistIndex`) fortgesetzt. | Medium |
 | **Maintenance** | `Fix` | **Kritische Playlist-Startlatenz behoben:** Root cause war das sequentielle Laden aller Szenen von Index 0 bis `startIndex` (~34 Netzwerkanfragen bei Index 808). Neue Architektur: Playlist wird jetzt nur in einem Fenster von ±10 Elementen um den `startIndex` aufgebaut (`PLAYLIST_WINDOW=10`). Initiale Anfragen reduziert von O(startIndex) auf O(1). `CodecSupport`- und `StreamDecision`-Cache im `FilterViewModel` implementiert. "Building playlist..." Ladeanzeige ergänzt. | Critical |
 | **Maintenance** | `Fix` | Behebung von Git-Tag-Konflikten (`develop`) und Festlegung von `main` als primärem Target-Branch. | Low |
 | **v0.8.26** | `Feature` | Video-Wiederholung (Loop): Neuer Button im Querformat & Menü-Option im Hochformat für nahtlose Wiedergabe. | Medium |
@@ -24,6 +25,16 @@ All significant changes to the Stash App Android TV project are documented in th
 | **v0.8.4** | `Feature` | Added Interactive gamepad icons to Scene Cards and 15s loading Timeout-Toast for Funscripts on Video Start (Playback). | Low |
 | **v0.8.3** | `Fix` / `Feature` | Extended error information for The Handy API connection test in both UIs (Compose & XML). Added missing Handy settings to the old UI. | Low |
 | **v0.8.2** | `Feature` | Direct The Handy API (Funscripts) integration into ExoPlayer. Introduced HandyManager for REST communication. | Low |
+
+### Design & Structure Documentation (Maintenance)
+- **Problem:**
+  - Duplicate videos without a funscript file showed the handy/funscript icon (due to interactive status propagation or duplicate identification) but the funscript did not play because the URL was blank/404.
+  - Waking up from standby on Android TV caused the player to get stuck because the ExoPlayer was released on stop but not recreated. Additionally, the player reset to `startIndex` rather than resuming at the correct playlist index.
+- **Solution:**
+  - Added query support for `fingerprints` on `VideoFile` so the client gets hashes (`phash`, `oshash`, `checksum`) of the current scene's files.
+  - Implemented `findDuplicateFunscriptUrl` in `QueryEngine` to search for duplicate interactive scenes sharing the same file fingerprints and fetch their funscript.
+  - Managed the player instance dynamically in Composable scope using `LifecycleStartEffect` to release/recreate the player on pause/stop and start/resume.
+  - Linked player listeners and setup code to `LaunchedEffect(player)` and passed `currentPlaylistIndex` to preserve the correct playlist item when recovering.
 
 ### Design & Structure Documentation (v0.8.27)
 - **Problem:** Eager stream resolution (calling `getStreamDecision` for every item in a fetched page) was causing ~10s startup latency when jumping to high playlist indices.

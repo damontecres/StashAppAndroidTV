@@ -204,6 +204,10 @@ fragment VideoFile on VideoFile {
     height
     frame_rate
     bit_rate
+    fingerprints {
+        type
+        value
+    }
     __typename
 }
 

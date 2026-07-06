@@ -46,7 +46,10 @@ import com.github.damontecres.stashapp.api.fragment.StashJob
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
+import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
+import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.FindJobInput
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -55,7 +58,6 @@ import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.JobStatus
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
-import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
@@ -134,6 +136,66 @@ class QueryEngine(
     suspend fun getVideoScene(sceneId: String): VideoSceneData? {
         val query = client.query(GetVideoSceneQuery(id = sceneId))
         return executeQuery(query).data?.findScene?.videoSceneData
+    }
+
+    suspend fun findDuplicateFunscriptUrl(
+        sceneId: String,
+        fingerprints: List<Pair<String, String>>
+    ): String? {
+        val phash = fingerprints.find { it.first == "phash" }?.second
+        val oshash = fingerprints.find { it.first == "oshash" }?.second
+        val md5 = fingerprints.find { it.first == "md5" }?.second
+
+        if (!phash.isNullOrBlank()) {
+            val filter = SceneFilterType(
+                phash_distance = Optional.present(PhashDistanceCriterionInput(
+                    value = phash,
+                    modifier = CriterionModifier.EQUALS,
+                    distance = Optional.present(0)
+                )),
+                interactive = Optional.present(true)
+            )
+            val results = findScenes(sceneFilter = filter)
+            for (scene in results) {
+                if (scene.id != sceneId && !scene.paths.funscript.isNullOrBlank()) {
+                    return scene.paths.funscript
+                }
+            }
+        }
+
+        if (!oshash.isNullOrBlank()) {
+            val filter = SceneFilterType(
+                oshash = Optional.present(StringCriterionInput(
+                    value = oshash,
+                    modifier = CriterionModifier.EQUALS
+                )),
+                interactive = Optional.present(true)
+            )
+            val results = findScenes(sceneFilter = filter)
+            for (scene in results) {
+                if (scene.id != sceneId && !scene.paths.funscript.isNullOrBlank()) {
+                    return scene.paths.funscript
+                }
+            }
+        }
+
+        if (!md5.isNullOrBlank()) {
+            val filter = SceneFilterType(
+                checksum = Optional.present(StringCriterionInput(
+                    value = md5,
+                    modifier = CriterionModifier.EQUALS
+                )),
+                interactive = Optional.present(true)
+            )
+            val results = findScenes(sceneFilter = filter)
+            for (scene in results) {
+                if (scene.id != sceneId && !scene.paths.funscript.isNullOrBlank()) {
+                    return scene.paths.funscript
+                }
+            }
+        }
+
+        return null
     }
 
     suspend fun findPerformers(

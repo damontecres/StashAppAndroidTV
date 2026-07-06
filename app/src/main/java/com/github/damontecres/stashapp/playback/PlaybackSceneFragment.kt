@@ -27,6 +27,8 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.getDestination
+import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashServer
 
 @OptIn(UnstableApi::class)
 class PlaybackSceneFragment : PlaybackFragment() {
@@ -145,70 +147,98 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     }
 
                     if (scene.interactive &&
-                        !funscriptUrl.isNullOrBlank() &&
                         com.github.damontecres.stashapp.util.HandyManager.isHandyEnabled
                     ) {
-                        Toast.makeText(requireContext(), R.string.funscript_loading, Toast.LENGTH_SHORT).show()
-
-                        val isLocalIp = funscriptUrl.contains("//192.168.") ||
-                            funscriptUrl.contains("//10.") ||
-                            funscriptUrl.contains("//172.") ||
-                            funscriptUrl.contains("//localhost") ||
-                            funscriptUrl.contains("//127.0.0.1")
-
                         lifecycleScope.launch {
                             try {
                                 exoPlayer.playWhenReady = false
-                                if (isLocalIp) {
-                                    Toast.makeText(requireContext(), R.string.handy_cloud_bridge_uploading, Toast.LENGTH_SHORT).show()
+                                var currentUrl = scene.funscriptUrl
+
+                                // If blank/null, try duplicate scenes
+                                if (currentUrl.isNullOrBlank()) {
+                                    val queryEngine = QueryEngine(StashServer.requireCurrentServer())
+                                    val dupUrl = queryEngine.findDuplicateFunscriptUrl(scene.id, scene.fingerprints)
+                                    if (!dupUrl.isNullOrBlank()) {
+                                        currentUrl = dupUrl
+                                    }
                                 }
-                                val result =
-                                    withTimeoutOrNull(30000L) {
-                                        com.github.damontecres.stashapp.util.HandyManager.initialize(requireContext())
-                                        com.github.damontecres.stashapp.util.HandyManager.setup(funscriptUrl)
-                                    } ?: com.github.damontecres.stashapp.util.HandyManager.HandyResult.GenericError("Timeout")
 
-                                if (result is com.github.damontecres.stashapp.util.HandyManager.HandyResult.Success) {
-                                    Toast.makeText(requireContext(), R.string.funscript_success, Toast.LENGTH_SHORT).show()
-                                    Log.i(TAG, "Handy setup successful")
-                                    StashExoPlayer.addListener(
-                                        object : Player.Listener {
-                                            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                                                if (isPlaying) {
-                                                    com.github.damontecres.stashapp.util.HandyManager.play(exoPlayer.currentPosition)
-                                                } else {
-                                                    com.github.damontecres.stashapp.util.HandyManager.stop()
-                                                }
-                                            }
+                                if (!currentUrl.isNullOrBlank()) {
+                                    Toast.makeText(requireContext(), R.string.funscript_loading, Toast.LENGTH_SHORT).show()
 
-                                            override fun onPositionDiscontinuity(
-                                                oldPosition: Player.PositionInfo,
-                                                newPosition: Player.PositionInfo,
-                                                reason: Int,
-                                            ) {
-                                                if (exoPlayer.isPlaying) {
-                                                    com.github.damontecres.stashapp.util.HandyManager.play(newPosition.positionMs)
-                                                }
-                                            }
-                                        },
-                                    )
-                                } else {
-                                    val errorMsg = result.toString()
-                                    Log.e(TAG, "Handy setup failed: $errorMsg")
+                                    val isLocalIp = currentUrl.contains("//192.168.") ||
+                                        currentUrl.contains("//10.") ||
+                                        currentUrl.contains("//172.") ||
+                                        currentUrl.contains("//localhost") ||
+                                        currentUrl.contains("//127.0.0.1")
 
-                                    withContext(Dispatchers.Main) {
-                                        val errorText = "The Handy cloud could not process the funscript.\n\nError: $errorMsg\n\nURL: $funscriptUrl\n\nNote: If you use a local IP, the Handy cloud cannot reach it."
-                                        val builder = AlertDialog.Builder(requireContext())
-                                        builder.setTitle("Handy Funscript Error")
-                                        builder.setMessage(errorText)
-                                        builder.setPositiveButton(android.R.string.ok, null)
-                                        builder.setNeutralButton("Copy Error") { _, _ ->
-                                            val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                                            val clip = android.content.ClipData.newPlainText("Handy Error", errorText)
-                                            clipboard.setPrimaryClip(clip)
-                                            Toast.makeText(requireContext(), "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                                    if (isLocalIp) {
+                                        Toast.makeText(requireContext(), R.string.handy_cloud_bridge_uploading, Toast.LENGTH_SHORT).show()
+                                    }
+
+                                    val initialUrl = currentUrl
+                                    var result =
+                                        withTimeoutOrNull(30000L) {
+                                            com.github.damontecres.stashapp.util.HandyManager.initialize(requireContext())
+                                            com.github.damontecres.stashapp.util.HandyManager.setup(initialUrl)
+                                        } ?: com.github.damontecres.stashapp.util.HandyManager.HandyResult.GenericError("Timeout")
+
+                                    // If failed and we played from primary URL, try duplicate
+                                    if (result !is com.github.damontecres.stashapp.util.HandyManager.HandyResult.Success && scene.funscriptUrl == currentUrl) {
+                                        val queryEngine = QueryEngine(StashServer.requireCurrentServer())
+                                        val dupUrl = queryEngine.findDuplicateFunscriptUrl(scene.id, scene.fingerprints)
+                                        if (!dupUrl.isNullOrBlank()) {
+                                            currentUrl = dupUrl
+                                            val backupUrl = currentUrl
+                                            result = withTimeoutOrNull(30000L) {
+                                                com.github.damontecres.stashapp.util.HandyManager.setup(backupUrl)
+                                            } ?: com.github.damontecres.stashapp.util.HandyManager.HandyResult.GenericError("Timeout")
                                         }
-                                        builder.show()
+                                    }
+
+                                    if (result is com.github.damontecres.stashapp.util.HandyManager.HandyResult.Success) {
+                                        Toast.makeText(requireContext(), R.string.funscript_success, Toast.LENGTH_SHORT).show()
+                                        Log.i(TAG, "Handy setup successful")
+                                        StashExoPlayer.addListener(
+                                            object : Player.Listener {
+                                                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                                                    if (isPlaying) {
+                                                        com.github.damontecres.stashapp.util.HandyManager.play(exoPlayer.currentPosition)
+                                                    } else {
+                                                        com.github.damontecres.stashapp.util.HandyManager.stop()
+                                                    }
+                                                }
+
+                                                override fun onPositionDiscontinuity(
+                                                    oldPosition: Player.PositionInfo,
+                                                    newPosition: Player.PositionInfo,
+                                                    reason: Int,
+                                                ) {
+                                                    if (exoPlayer.isPlaying) {
+                                                        com.github.damontecres.stashapp.util.HandyManager.play(newPosition.positionMs)
+                                                    }
+                                                }
+                                            },
+                                        )
+                                    } else {
+                                        val errorMsg = result.toString()
+                                        Log.e(TAG, "Handy setup failed: $errorMsg")
+
+                                        val displayUrl = currentUrl
+                                        withContext(Dispatchers.Main) {
+                                            val errorText = "The Handy cloud could not process the funscript.\n\nError: $errorMsg\n\nURL: $displayUrl\n\nNote: If you use a local IP, the Handy cloud cannot reach it."
+                                            val builder = AlertDialog.Builder(requireContext())
+                                            builder.setTitle("Handy Funscript Error")
+                                            builder.setMessage(errorText)
+                                            builder.setPositiveButton(android.R.string.ok, null)
+                                            builder.setNeutralButton("Copy Error") { _, _ ->
+                                                val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                                val clip = android.content.ClipData.newPlainText("Handy Error", errorText)
+                                                clipboard.setPrimaryClip(clip)
+                                                Toast.makeText(requireContext(), "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                                            }
+                                            builder.show()
+                                        }
                                     }
                                 }
                             } catch (e: Exception) {
@@ -262,17 +292,42 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     }
                     if (enabled) {
                         // Attempt to reconnect if enabled inline
-                        Toast.makeText(requireContext(), R.string.funscript_loading, Toast.LENGTH_SHORT).show()
-                        val funscriptUrl = scene.funscriptUrl
-                        if (!funscriptUrl.isNullOrBlank()) {
-                            lifecycleScope.launch {
+                        lifecycleScope.launch {
+                            var currentUrl = scene.funscriptUrl
+
+                            // If blank/null, try duplicate scenes
+                            if (currentUrl.isNullOrBlank()) {
+                                val queryEngine = QueryEngine(StashServer.requireCurrentServer())
+                                val dupUrl = queryEngine.findDuplicateFunscriptUrl(scene.id, scene.fingerprints)
+                                if (!dupUrl.isNullOrBlank()) {
+                                    currentUrl = dupUrl
+                                }
+                            }
+
+                            if (!currentUrl.isNullOrBlank()) {
+                                Toast.makeText(requireContext(), R.string.funscript_loading, Toast.LENGTH_SHORT).show()
                                 val exoPlayer = player as ExoPlayer
                                 val wasPlaying = exoPlayer.playWhenReady
                                 try {
                                     exoPlayer.playWhenReady = false
-                                    val result = withTimeoutOrNull(30000L) {
-                                        com.github.damontecres.stashapp.util.HandyManager.setup(funscriptUrl)
+                                    val initialUrl = currentUrl
+                                    var result = withTimeoutOrNull(30000L) {
+                                        com.github.damontecres.stashapp.util.HandyManager.setup(initialUrl)
                                     }
+
+                                    // If failed and we played from primary URL, try duplicate
+                                    if (result !is com.github.damontecres.stashapp.util.HandyManager.HandyResult.Success && scene.funscriptUrl == currentUrl) {
+                                        val queryEngine = QueryEngine(StashServer.requireCurrentServer())
+                                        val dupUrl = queryEngine.findDuplicateFunscriptUrl(scene.id, scene.fingerprints)
+                                        if (!dupUrl.isNullOrBlank()) {
+                                            currentUrl = dupUrl
+                                            val backupUrl = currentUrl
+                                            result = withTimeoutOrNull(30000L) {
+                                                com.github.damontecres.stashapp.util.HandyManager.setup(backupUrl)
+                                            }
+                                        }
+                                    }
+
                                     if (result is com.github.damontecres.stashapp.util.HandyManager.HandyResult.Success) {
                                         Toast.makeText(requireContext(), R.string.funscript_success, Toast.LENGTH_SHORT).show()
                                         if (wasPlaying) {

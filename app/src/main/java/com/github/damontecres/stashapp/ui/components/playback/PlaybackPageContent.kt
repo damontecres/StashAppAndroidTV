@@ -353,36 +353,68 @@ class PlaybackViewModel : ViewModel() {
         if (!com.github.damontecres.stashapp.util.HandyManager.isHandyEnabled) return
 
         if (scene.interactive) {
-            val funscriptUrl = scene.paths.funscript
-            if (!funscriptUrl.isNullOrBlank()) {
-                player.pause()
-                showToast(R.string.funscript_loading, Toast.LENGTH_SHORT)
-                
-                val isLocalIp = funscriptUrl.contains("//192.168.") || 
-                                funscriptUrl.contains("//10.") || 
-                                funscriptUrl.contains("//172.") || 
-                                funscriptUrl.contains("//localhost") || 
-                                funscriptUrl.contains("//127.0.0.1")
-                
-                handyJob = viewModelScope.launch {
+            handyJob = viewModelScope.launch {
+                var funscriptUrl = scene.paths.funscript
+
+                // If blank/null, try duplicate scenes
+                if (funscriptUrl.isNullOrBlank()) {
+                    val fingerprints = scene.files.flatMap { file ->
+                        file.videoFile.fingerprints.map { Pair(it.type, it.value) }
+                    }
+                    val queryEngine = QueryEngine(server)
+                    val dupUrl = queryEngine.findDuplicateFunscriptUrl(scene.id, fingerprints)
+                    if (!dupUrl.isNullOrBlank()) {
+                        funscriptUrl = dupUrl
+                    }
+                }
+
+                if (!funscriptUrl.isNullOrBlank()) {
+                    player.pause()
+                    showToast(R.string.funscript_loading, Toast.LENGTH_SHORT)
+                    
+                    var currentUrl = funscriptUrl
+                    val isLocalIp = currentUrl.contains("//192.168.") || 
+                                    currentUrl.contains("//10.") || 
+                                    currentUrl.contains("//172.") || 
+                                    currentUrl.contains("//localhost") || 
+                                    currentUrl.contains("//127.0.0.1")
+                    
                     try {
                         if (isLocalIp) {
                             showToast(R.string.handy_cloud_bridge_uploading, Toast.LENGTH_SHORT)
                         }
                         
-                        val result = kotlinx.coroutines.withTimeoutOrNull(30000L) {
+                        val initialUrl = currentUrl
+                        var result = kotlinx.coroutines.withTimeoutOrNull(30000L) {
                             com.github.damontecres.stashapp.util.HandyManager.initialize(StashApplication.getApplication())
-                            com.github.damontecres.stashapp.util.HandyManager.setup(funscriptUrl)
+                            com.github.damontecres.stashapp.util.HandyManager.setup(initialUrl)
                         } ?: com.github.damontecres.stashapp.util.HandyManager.HandyResult.GenericError("Timeout")
+
+                        // If failed and we played from primary URL, try duplicate
+                        if (result !is com.github.damontecres.stashapp.util.HandyManager.HandyResult.Success && scene.paths.funscript == currentUrl) {
+                            val fingerprints = scene.files.flatMap { file ->
+                                file.videoFile.fingerprints.map { Pair(it.type, it.value) }
+                            }
+                            val queryEngine = QueryEngine(server)
+                            val dupUrl = queryEngine.findDuplicateFunscriptUrl(scene.id, fingerprints)
+                            if (!dupUrl.isNullOrBlank()) {
+                                currentUrl = dupUrl
+                                val backupUrl = currentUrl
+                                result = kotlinx.coroutines.withTimeoutOrNull(30000L) {
+                                    com.github.damontecres.stashapp.util.HandyManager.setup(backupUrl)
+                                } ?: com.github.damontecres.stashapp.util.HandyManager.HandyResult.GenericError("Timeout")
+                            }
+                        }
 
                         if (result is com.github.damontecres.stashapp.util.HandyManager.HandyResult.Success) {
                             showToast(R.string.funscript_success, Toast.LENGTH_SHORT)
                             Log.i(TAG, "Handy setup successful")
                         } else {
                             val errorMsg = result.toString()
+                            val displayUrl = currentUrl
                             viewModelScope.launch {
                                 withContext(Dispatchers.Main) {
-                                    handyError.value = "The Handy cloud could not process the funscript.\n\nError: $errorMsg\n\nURL: $funscriptUrl\n\nNote: If you use a local IP, the Handy cloud cannot reach it."
+                                    handyError.value = "The Handy cloud could not process the funscript.\n\nError: $errorMsg\n\nURL: $displayUrl\n\nNote: If you use a local IP, the Handy cloud cannot reach it."
                                 }
                             }
                             Log.e(TAG, "Handy setup failed: $errorMsg")
@@ -627,7 +659,7 @@ fun PlaybackPageContent(
     var videoDecoder by remember { mutableStateOf<String?>(null) }
     var audioDecoder by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(player) {
         viewModel.init(
             server,
             player,
@@ -643,7 +675,7 @@ fun PlaybackPageContent(
             viewModel.videoFilter.startThrottling(DRAG_THROTTLE_DELAY)
         }
         maybeMuteAudio(uiConfig.preferences, false, player)
-        player.setMediaItems(playlist, startIndex, savedStartPosition)
+        player.setMediaItems(playlist, currentPlaylistIndex, savedStartPosition)
         if (playlistPager == null) {
             player.setupFinishedBehavior(
                 uiConfig.preferences.playbackPreferences.playbackFinishBehavior,

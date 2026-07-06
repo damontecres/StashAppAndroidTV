@@ -158,6 +158,7 @@ val slimScenePreview =
                             height = 1080,
                             frame_rate = 24.94,
                             bit_rate = 2600,
+                            fingerprints = listOf(),
                             __typename = "",
                         ),
                 ),

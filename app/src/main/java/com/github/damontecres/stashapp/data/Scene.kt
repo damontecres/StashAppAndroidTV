@@ -30,6 +30,7 @@ data class Scene(
     val oCounter: Int?,
     val captionUrl: String?,
     val captions: List<Caption>,
+    val fingerprints: List<Pair<String, String>> = emptyList(),
 ) {
     val durationPosition get() = duration?.times(1000L)?.toLong()
 
@@ -44,6 +45,9 @@ data class Scene(
                         Pair(it.label.toString(), it.url)
                     }
             val fileData = data.files.firstOrNull()?.videoFile
+            val fingerprints = data.files.flatMap { file ->
+                file.videoFile.fingerprints.map { Pair(it.type, it.value) }
+            }
             return Scene(
                 id = data.id,
                 title = data.titleOrFilename,
@@ -65,6 +69,7 @@ data class Scene(
                 oCounter = data.o_counter,
                 captionUrl = data.paths.caption,
                 captions = data.captions?.map { it.caption }.orEmpty(),
+                fingerprints = fingerprints,
             )
         }
 
@@ -76,6 +81,9 @@ data class Scene(
                         Pair(it.label.toString(), it.url)
                     }
             val fileData = data.files.firstOrNull()?.videoFile
+            val fingerprints = data.files.flatMap { file ->
+                file.videoFile.fingerprints.map { Pair(it.type, it.value) }
+            }
             return Scene(
                 id = data.id,
                 title = data.titleOrFilename,
@@ -97,6 +105,7 @@ data class Scene(
                 oCounter = null,
                 captionUrl = data.paths.caption,
                 captions = data.captions?.map { it.caption }.orEmpty(),
+                fingerprints = fingerprints,
             )
         }
 
@@ -116,6 +125,9 @@ data class Scene(
                 } else {
                     video.titleOrFilename
                 } + " (${marker.formatSeconds})"
+            val fingerprints = video.files.flatMap { file ->
+                file.videoFile.fingerprints.map { Pair(it.type, it.value) }
+            }
             return Scene(
                 id = video.id,
                 title = title,
@@ -137,6 +149,7 @@ data class Scene(
                 oCounter = null,
                 captionUrl = video.paths.caption,
                 captions = video.captions?.map { it.caption }.orEmpty(),
+                fingerprints = fingerprints,
             )
         }
     }
