@@ -30,6 +30,7 @@ val extensionsRepoActive =
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     id("kotlin-parcelize")
     alias(libs.plugins.apollo)
@@ -59,7 +60,6 @@ val gitDescribe =
 
 kotlin {
     compilerOptions {
-        languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_3
         jvmTarget = JvmTarget.JVM_21
         javaParameters = true
     }
@@ -71,9 +71,10 @@ configure<ApplicationExtension> {
 
     sourceSets {
         getByName("main") {
-            res.srcDirs("src/main/res", "${layout.buildDirectory.get().asFile}/generated/res/server")
+            res.directories.add("src/main/res")
+            res.directories.add("${layout.buildDirectory.get().asFile}/generated/res/server")
         }
-        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+        getByName("androidTest").assets.directories.add("$projectDir/schemas")
     }
 
     buildFeatures {
@@ -148,6 +149,10 @@ configure<ApplicationExtension> {
         disable.add("MissingTranslation")
         disable.add("LocalContextGetResourceValueCall") // TODO
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 room {
@@ -172,10 +177,6 @@ androidComponents {
                 val outputFileName = parts.joinToString("-")
                 output.outputFileName = "$outputFileName.apk"
             }
-    }
-    
-    testOptions {
-        unitTests.isIncludeAndroidResources = true
     }
 }
 

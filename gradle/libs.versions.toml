@@ -155,6 +155,7 @@ wholphin-extensions-av1 = { module = "com.github.damontecres.wholphin.media3:dec
 android-application = { id = "com.android.application", version.ref = "android-application" }
 apollo = { id = "com.apollographql.apollo", version.ref = "apollo" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
