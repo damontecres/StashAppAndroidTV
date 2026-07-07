@@ -100,8 +100,9 @@ sealed class Destination(
     data class Filter(
         val filterArgs: FilterArgs,
         val scrollToNextPage: Boolean = false,
+        val position: Int = 0,
     ) : Destination() {
-        override fun toString(): String = "Filter(destId=$destId, dataType=${filterArgs.dataType}, scrollToNextPage=$scrollToNextPage)"
+        override fun toString(): String = "Filter(destId=$destId, dataType=${filterArgs.dataType}, scrollToNextPage=$scrollToNextPage, position=$position)"
     }
 
     @Serializable

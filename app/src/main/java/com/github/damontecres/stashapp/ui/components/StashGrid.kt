@@ -364,6 +364,14 @@ fun StashGrid(
     var focusedIndex by rememberSaveable { mutableIntStateOf(initialPosition) }
     var focusedIndexOnExit by rememberSaveable { mutableIntStateOf(-1) }
 
+    LaunchedEffect(initialPosition) {
+        if (initialPosition >= 0 && initialPosition < pager.size) {
+            focusedIndex = initialPosition
+            gridState.scrollToItem(initialPosition, 0)
+            firstFocus.tryRequestFocus()
+        }
+    }
+
     // Tracks whether the very first requestFocus has run, if the caller isn't requesting focus,
     // then the first time will never run
     var hasRequestFocusRun by rememberSaveable { mutableStateOf(!requestFocus) }

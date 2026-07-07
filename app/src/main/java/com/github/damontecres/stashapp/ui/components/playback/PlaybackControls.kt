@@ -107,6 +107,7 @@ sealed interface PlaybackAction {
     data object ShowVideoFilterDialog : PlaybackAction
 
     data object ShowSceneDetails : PlaybackAction
+    data object ShowRatingDialog : PlaybackAction
     data object ToggleHandy : PlaybackAction
     data object Rewind : PlaybackAction
     data object FastForward : PlaybackAction

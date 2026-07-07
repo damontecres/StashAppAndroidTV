@@ -45,7 +45,9 @@ import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.proto.PlaybackBackend
 import com.github.damontecres.stashapp.proto.PlaybackPreferences
-import com.github.damontecres.stashapp.proto.copy
+import com.github.damontecres.stashapp.navigation.Destination
+import dev.olshevski.navigation.reimagined.navEntry
+import dev.olshevski.navigation.reimagined.NavAction
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -69,6 +71,8 @@ import android.widget.Toast
 import com.github.damontecres.stashapp.playback.StreamDecision
 import com.github.damontecres.stashapp.playback.buildUnresolvedMediaItem
 import java.util.concurrent.ConcurrentHashMap
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 
 @Composable
 fun PlaybackPage(
@@ -198,6 +202,9 @@ fun PlaylistPlaybackPage(
     viewModel: FilterViewModel = viewModel(key = "main"),
     playlistViewModel: FilterViewModel = viewModel(key = "playlist"),
 ) {
+    val globalContext = LocalGlobalContext.current
+    val navManager = globalContext.navigationManager as? NavigationManagerCompose
+    val controller = navManager?.controller
     val scope = rememberCoroutineScope()
     Log.v("PlaybackPageContent", "startIndex=$startIndex")
     val context = LocalContext.current
@@ -226,10 +233,10 @@ fun PlaylistPlaybackPage(
         if (viewModel.dataType == DataType.MARKER) {
             val skipForward = uiConfig.preferences.playbackPreferences.skipForwardMs.milliseconds
             val skipBack = uiConfig.preferences.playbackPreferences.skipBackwardMs.milliseconds
-            uiConfig.preferences.playbackPreferences.copy {
+            uiConfig.preferences.playbackPreferences.toBuilder().apply {
                 skipForwardMs = (clipDuration / 4).coerceAtMost(skipForward).inWholeMilliseconds
                 skipBackwardMs = (clipDuration / 4).coerceAtMost(skipBack).inWholeMilliseconds
-            }
+            }.build()
         } else {
             uiConfig.preferences.playbackPreferences
         }
@@ -344,6 +351,39 @@ fun PlaylistPlaybackPage(
                             resolveMediaItemAt(currentPlayerIndex)
                             resolveMediaItemAt(currentPlayerIndex + 1)
                             if (currentPlayerIndex > 0) resolveMediaItemAt(currentPlayerIndex - 1)
+                        }
+
+                        // Update backstack to keep target positions in history synced
+                        if (controller != null) {
+                            val currentScene = (mediaItem?.localConfiguration?.tag as? PlaylistFragment.MediaItemTag)?.item
+                            val currentBackstack = controller.backstack.entries
+                            val newBackstack = currentBackstack.map { entry ->
+                                val dest = entry.destination
+                                val newDest = when (dest) {
+                                    is Destination.Playlist -> {
+                                        dest.copy(position = currentAbsoluteIndex)
+                                    }
+                                    is Destination.Item -> {
+                                        if (dest.dataType == DataType.SCENE && currentScene != null) {
+                                            dest.copy(id = currentScene.id, filterPosition = currentAbsoluteIndex)
+                                        } else {
+                                            dest
+                                        }
+                                    }
+                                    is Destination.Filter -> {
+                                        dest.copy(position = currentAbsoluteIndex)
+                                    }
+                                    else -> dest
+                                }
+                                if (newDest != dest) {
+                                    navEntry(newDest)
+                                } else {
+                                    entry
+                                }
+                            }
+                            if (newBackstack != currentBackstack) {
+                                controller.setNewBackstack(newBackstack, NavAction.Replace)
+                            }
                         }
 
                         // Append forward if near end of loaded window

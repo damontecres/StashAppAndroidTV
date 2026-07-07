@@ -207,6 +207,7 @@ fun DestinationContent(
                 navigationManager = navManager,
                 initialFilter = destination.filterArgs,
                 scrollToNextPage = destination.scrollToNextPage,
+                initialPosition = destination.position,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 uiConfig = composeUiConfig,

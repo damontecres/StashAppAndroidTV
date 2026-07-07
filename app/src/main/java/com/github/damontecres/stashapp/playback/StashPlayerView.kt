@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.findFragment
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
+import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.views.SkipIndicator
@@ -26,6 +27,22 @@ class StashPlayerView(
 
     private val dPadSkipEnabled: Boolean =
         PreferenceManager.getDefaultSharedPreferences(context).getBoolean("skipWithDpad", true)
+
+    init {
+        subtitleView?.apply {
+            setApplyEmbeddedStyles(false)
+            setApplyEmbeddedFontSizes(false)
+            val customStyle = CaptionStyleCompat(
+                android.graphics.Color.WHITE,
+                android.graphics.Color.parseColor("#80000000"),
+                android.graphics.Color.TRANSPARENT,
+                CaptionStyleCompat.EDGE_TYPE_OUTLINE,
+                android.graphics.Color.BLACK,
+                null
+            )
+            setStyle(customStyle)
+        }
+    }
 
     var skipIndicator: SkipIndicator? = null
 

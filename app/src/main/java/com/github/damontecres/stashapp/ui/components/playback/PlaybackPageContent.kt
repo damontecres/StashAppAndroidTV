@@ -52,6 +52,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
@@ -77,6 +78,7 @@ import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.extractor.text.SubtitleParser
 import androidx.media3.extractor.text.webvtt.WebvttParser
+import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.SubtitleView
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
@@ -117,6 +119,8 @@ import com.github.damontecres.stashapp.ui.compat.detectTvDevice
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.Rating100
+import com.github.damontecres.stashapp.ui.components.ratingBarHeight
 import com.github.damontecres.stashapp.ui.components.image.DRAG_THROTTLE_DELAY
 import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
 import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
@@ -730,6 +734,7 @@ fun PlaybackPageContent(
 
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
     var showSceneDetails by rememberSaveable { mutableStateOf(false) }
+    var showRatingDialog by rememberSaveable { mutableStateOf(false) }
 
     // Reactive Handy state so the icon recomposes when toggled
     var isHandyEnabled by remember { mutableStateOf(com.github.damontecres.stashapp.util.HandyManager.isHandyEnabled) }
@@ -1063,7 +1068,17 @@ fun PlaybackPageContent(
             AndroidView(
                 factory = {
                     SubtitleView(context).apply {
-                        setUserDefaultStyle()
+                        setApplyEmbeddedStyles(false)
+                        setApplyEmbeddedFontSizes(false)
+                        val customStyle = CaptionStyleCompat(
+                            android.graphics.Color.WHITE,
+                            android.graphics.Color.parseColor("#80000000"),
+                            android.graphics.Color.TRANSPARENT,
+                            CaptionStyleCompat.EDGE_TYPE_OUTLINE,
+                            android.graphics.Color.BLACK,
+                            null
+                        )
+                        setStyle(customStyle)
                         setUserDefaultTextSize()
                     }
                 },
@@ -1154,6 +1169,10 @@ fun PlaybackPageContent(
                                 showSceneDetails = true
                             }
 
+                            PlaybackAction.ShowRatingDialog -> {
+                                showRatingDialog = true
+                            }
+
                             PlaybackAction.ToggleHandy -> {
                                 com.github.damontecres.stashapp.util.HandyManager.initialize(context)
                                 val enabled = !com.github.damontecres.stashapp.util.HandyManager.isHandyEnabled
@@ -1218,6 +1237,7 @@ fun PlaybackPageContent(
                                 if (useVideoFilters) {
                                     put("Set video filters", PlaybackAction.ShowVideoFilterDialog)
                                 }
+                                put("Rate", PlaybackAction.ShowRatingDialog)
                                 put("Details", PlaybackAction.ShowSceneDetails)
                             },
                         ),
@@ -1374,6 +1394,65 @@ fun PlaybackPageContent(
                         rating100 = rating100,
                         onRatingChange = { viewModel.updateRating(scene.id, it) },
                     )
+                }
+            }
+        }
+        AnimatedVisibility(showRatingDialog && scene != null) {
+            LaunchedEffect(Unit) {
+                playingBeforeDialog = player.isPlaying
+                player.pause()
+                controllerViewState.hideControls()
+            }
+            scene?.let { scene ->
+                Dialog(
+                    onDismissRequest = {
+                        showRatingDialog = false
+                        if (playingBeforeDialog) {
+                            player.play()
+                        }
+                    },
+                    properties = DialogProperties(usePlatformDefaultWidth = false),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable {
+                                showRatingDialog = false
+                                if (playingBeforeDialog) {
+                                    player.play()
+                                }
+                            }
+                            .background(Color.Black.copy(alpha = 0.5f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .clickable(enabled = false) {}
+                                .background(Material3Theme.colorScheme.surface, shape = RoundedCornerShape(16.dp))
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.set_rating),
+                                style = Material3Theme.typography.titleMedium,
+                                color = Material3Theme.colorScheme.onSurface
+                            )
+                            Rating100(
+                                rating100 = rating100,
+                                onRatingChange = { newRating ->
+                                    viewModel.updateRating(scene.id, newRating)
+                                    showRatingDialog = false
+                                    if (playingBeforeDialog) {
+                                        player.play()
+                                    }
+                                },
+                                uiConfig = uiConfig,
+                                enabled = true,
+                                modifier = Modifier.height(ratingBarHeight)
+                            )
+                        }
+                    }
                 }
             }
         }

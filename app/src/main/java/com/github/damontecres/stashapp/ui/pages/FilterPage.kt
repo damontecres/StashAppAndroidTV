@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -33,6 +34,7 @@ fun FilterPage(
     navigationManager: NavigationManagerCompose,
     initialFilter: FilterArgs,
     scrollToNextPage: Boolean,
+    initialPosition: Int = 0,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
@@ -48,12 +50,15 @@ fun FilterPage(
     }
     val pager by viewModel.pager.observeAsState()
 
-    val initialPosition =
-        if (scrollToNextPage) {
+    val startPosition = remember(initialPosition, scrollToNextPage) {
+        if (initialPosition > 0) {
+            initialPosition
+        } else if (scrollToNextPage) {
             uiConfig.preferences.searchPreferences.maxResults
         } else {
             0
         }
+    }
     Column(
         modifier = modifier,
     ) {
@@ -102,7 +107,7 @@ fun FilterPage(
                 },
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
-                initialPosition = initialPosition,
+                initialPosition = startPosition,
                 updateFilter = {
                     viewModel.setFilter(server, it, uiConfig.cardSettings.columns)
                 },
