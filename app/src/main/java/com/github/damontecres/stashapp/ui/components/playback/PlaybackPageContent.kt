@@ -735,6 +735,7 @@ fun PlaybackPageContent(
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
     var showSceneDetails by rememberSaveable { mutableStateOf(false) }
     var showRatingDialog by rememberSaveable { mutableStateOf(false) }
+    val ratingFocusRequester = remember { FocusRequester() }
 
     // Reactive Handy state so the icon recomposes when toggled
     var isHandyEnabled by remember { mutableStateOf(com.github.damontecres.stashapp.util.HandyManager.isHandyEnabled) }
@@ -1402,6 +1403,8 @@ fun PlaybackPageContent(
                 playingBeforeDialog = player.isPlaying
                 player.pause()
                 controllerViewState.hideControls()
+                kotlinx.coroutines.delay(100L)
+                ratingFocusRequester.tryRequestFocus()
             }
             scene?.let { scene ->
                 Dialog(
@@ -1449,8 +1452,19 @@ fun PlaybackPageContent(
                                 },
                                 uiConfig = uiConfig,
                                 enabled = true,
-                                modifier = Modifier.height(ratingBarHeight)
+                                modifier = Modifier.height(ratingBarHeight),
+                                focusRequester = ratingFocusRequester
                             )
+                            Button(
+                                onClick = {
+                                    showRatingDialog = false
+                                    if (playingBeforeDialog) {
+                                        player.play()
+                                    }
+                                }
+                            ) {
+                                Text(text = "Cancel")
+                            }
                         }
                     }
                 }

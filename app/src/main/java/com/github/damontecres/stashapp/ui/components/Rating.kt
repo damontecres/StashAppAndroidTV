@@ -101,6 +101,7 @@ fun Rating100(
     enabled: Boolean,
     modifier: Modifier = Modifier,
     bgColor: Color = AppColors.TransparentBlack75, // MaterialTheme.colorScheme.background,
+    focusRequester: FocusRequester? = null,
 ) {
     Rating100(
         rating100,
@@ -111,6 +112,7 @@ fun Rating100(
         uiConfig.playSoundOnFocus,
         modifier,
         bgColor,
+        focusRequester,
     )
 }
 
@@ -124,6 +126,7 @@ fun Rating100(
     playSoundOnFocus: Boolean,
     modifier: Modifier = Modifier,
     bgColor: Color = AppColors.TransparentBlack75, // MaterialTheme.colorScheme.background,
+    focusRequester: FocusRequester? = null,
 ) {
     if (ratingAsStars) {
         StarRating(
@@ -134,6 +137,7 @@ fun Rating100(
             playSoundOnFocus = playSoundOnFocus,
             modifier = modifier,
             bgColor = bgColor,
+            focusRequester = focusRequester,
         )
     } else {
         DecimalRating(
@@ -142,6 +146,7 @@ fun Rating100(
             enabled = enabled,
             playSoundOnFocus = playSoundOnFocus,
             modifier = modifier,
+            focusRequester = focusRequester,
         )
     }
 }
@@ -155,6 +160,7 @@ fun StarRating(
     playSoundOnFocus: Boolean,
     modifier: Modifier = Modifier,
     bgColor: Color = AppColors.TransparentBlack75, // MaterialTheme.colorScheme.background,
+    focusRequester: FocusRequester? = null,
 ) {
     val context = LocalContext.current
     var tempRating by remember(rating100) { mutableIntStateOf(rating100) }
@@ -169,6 +175,7 @@ fun StarRating(
         LazyRow(
             modifier =
                 Modifier
+                    .focusRequester(focusRequester ?: remember { FocusRequester() })
                     .selectableGroup()
                     .padding(4.dp)
                     .drawWithCache {
@@ -300,6 +307,7 @@ fun DecimalRating(
     enabled: Boolean,
     playSoundOnFocus: Boolean,
     modifier: Modifier = Modifier,
+    focusRequester: FocusRequester? = null,
 ) {
     val context = LocalContext.current
     val rating = getRatingAsDecimalString(rating100, false)
@@ -320,6 +328,7 @@ fun DecimalRating(
     Row(
         modifier =
             modifier
+                .focusRequester(focusRequester ?: remember { FocusRequester() })
                 .padding(4.dp)
                 .background(background)
                 .clickable(
