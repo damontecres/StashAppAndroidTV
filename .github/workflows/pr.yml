@@ -50,13 +50,13 @@ jobs:
       - name: Tar build dirs
         run: |
           tar -czf build.tgz ./app/.
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         id: upload-build-dirs
         with:
           name: "${{ env.BUILD_DIRS_ARTIFACT }}"
           path: build.tgz
           if-no-files-found: error
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: APKs
           path: "${{ steps.buildapp.outputs.apks }}"
