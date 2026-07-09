@@ -79,7 +79,6 @@ import com.github.damontecres.stashapp.ui.components.main.MainPageHeader
 import com.github.damontecres.stashapp.ui.isPlayKeyUp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.CrossFadeFactory
-import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
 import com.github.damontecres.stashapp.ui.util.getPlayDestinationForItem
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.FilterParser
@@ -96,15 +95,28 @@ import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.views.formatBytes
 import com.github.damontecres.stashapp.views.formatNumber
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "MainPage"
 
 class MainPageViewModel : ViewModel() {
+    enum class LoadState {
+        Loading,
+        Ready,
+        Error,
+    }
+
     private lateinit var server: StashServer
 
     val frontPageRows = mutableStateListOf<FrontPageParser.FrontPageRow.Success>()
+
+    var loadState by mutableStateOf(LoadState.Loading)
+        private set
+
+    var loadError by mutableStateOf<String?>(null)
+        private set
 
     private val _serverStats = MutableLiveData<StatisticsQuery.Stats?>()
     val serverStats: LiveData<StatisticsQuery.Stats?> = _serverStats
@@ -116,13 +128,23 @@ class MainPageViewModel : ViewModel() {
         prefs: StashPreferences,
     ) {
         this.server = server
+        frontPageRows.clear()
+        loadState = LoadState.Loading
+        loadError = null
         viewModelScope.launchDefault(LoggingCoroutineExceptionHandler(server, viewModelScope)) {
-            val queryEngine = server.queryEngine
-            val filterParser = FilterParser(server.version)
-            @Suppress("UNCHECKED_CAST")
-            val frontPageContent =
-                server.serverPreferences.uiConfiguration?.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
-            if (frontPageContent != null) {
+            try {
+                server.updateServerPrefs()
+                val queryEngine = server.queryEngine
+                val filterParser = FilterParser(server.version)
+                @Suppress("UNCHECKED_CAST")
+                val frontPageContent =
+                    server.serverPreferences.uiConfiguration?.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
+                if (frontPageContent == null) {
+                    Log.e(TAG, "frontPageContent is null after loading server configuration")
+                    loadError = "Unable to find front page content. Check the Web UI."
+                    loadState = LoadState.Error
+                    return@launchDefault
+                }
                 Log.d(TAG, "${frontPageContent.size} front page rows")
                 val frontPageParser =
                     FrontPageParser(
@@ -132,14 +154,20 @@ class MainPageViewModel : ViewModel() {
                         prefs.searchPreferences.maxResults,
                     )
                 val jobs = frontPageParser.parse(frontPageContent)
+                if (jobs.isEmpty()) {
+                    loadError = "No front page rows configured."
+                    loadState = LoadState.Error
+                    return@launchDefault
+                }
 
+                var completedJobs = AtomicInteger(0)
+                var successfulRows = AtomicInteger(0)
                 jobs.forEachIndexed { index, job ->
                     viewModelScope.launchDefault {
                         try {
                             job.await().let { row ->
                                 if (row is FrontPageParser.FrontPageRow.Success) {
-                                    // Add rows as they finish, but with a tiny staggered delay
-                                    // to allow the UI to breathe between row insertions
+                                    successfulRows.incrementAndGet()
                                     if (index > 0) {
                                         kotlinx.coroutines.delay((index * 50).toLong())
                                     }
@@ -148,9 +176,22 @@ class MainPageViewModel : ViewModel() {
                             }
                         } catch (ex: Exception) {
                             Log.e(TAG, "Error fetching row data", ex)
+                        } finally {
+                            if (completedJobs.incrementAndGet() == jobs.size) {
+                                if (successfulRows.get() == 0) {
+                                    loadError = "Unable to load front page rows from the server."
+                                    loadState = LoadState.Error
+                                } else {
+                                    loadState = LoadState.Ready
+                                }
+                            }
                         }
                     }
                 }
+            } catch (ex: Exception) {
+                Log.e(TAG, "Error loading front page", ex)
+                loadError = ex.message ?: "Error loading home page"
+                loadState = LoadState.Error
             }
         }
     }
@@ -179,8 +220,12 @@ class MainPageViewModel : ViewModel() {
             return
         }
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
-            _serverStats.value = server.queryEngine.executeQuery(StatisticsQuery()).data?.stats
-            lastStatsUpdate = System.currentTimeMillis()
+            try {
+                _serverStats.value = server.queryEngine.executeQuery(StatisticsQuery()).data?.stats
+                lastStatsUpdate = System.currentTimeMillis()
+            } catch (ex: Exception) {
+                Log.w(TAG, "Error loading server statistics", ex)
+            }
         }
     }
 }
@@ -195,11 +240,13 @@ fun MainPage(
     viewModel: MainPageViewModel = viewModel(),
 ) {
     val context = LocalContext.current
-    OneTimeLaunchedEffect {
+    LaunchedEffect(server.url) {
         viewModel.init(context, server, uiConfig.preferences)
     }
 
-    val frontPageRows = viewModel.frontPageRows // .observeAsState(listOf())
+    val frontPageRows = viewModel.frontPageRows
+    val loadState = viewModel.loadState
+    val loadError = viewModel.loadError
     val serverStats by viewModel.serverStats.observeAsState()
 
     val focusRequester = remember { FocusRequester() }
@@ -207,16 +254,7 @@ fun MainPage(
         viewModel.checkForUpdate(context, uiConfig.preferences.updatePreferences)
         viewModel.updateStatistics()
     }
-    if (frontPageRows.isEmpty()) {
-        Box(modifier = modifier.fillMaxSize()) {
-            CircularProgress(
-                modifier =
-                    Modifier
-                        .size(160.dp)
-                        .align(Alignment.Center),
-            )
-        }
-    } else {
+    if (frontPageRows.isNotEmpty()) {
         LaunchedEffect(server, frontPageRows) {
             focusRequester.tryRequestFocus()
         }
@@ -229,6 +267,27 @@ fun MainPage(
             itemOnClick = itemOnClick,
             longClicker = longClicker,
         )
+    } else if (loadState == MainPageViewModel.LoadState.Loading) {
+        Box(modifier = modifier.fillMaxSize()) {
+            CircularProgress(
+                modifier =
+                    Modifier
+                        .size(160.dp)
+                        .align(Alignment.Center),
+            )
+        }
+    } else {
+        Box(modifier = modifier.fillMaxSize()) {
+            Text(
+                text = loadError ?: "Unable to load home page.",
+                modifier =
+                    Modifier
+                        .align(Alignment.Center)
+                        .padding(24.dp),
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.titleMedium,
+            )
+        }
     }
 }
 

@@ -43,12 +43,14 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
+import com.github.damontecres.stashapp.ui.components.StarRatingFocusStyle
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.ui.components.ratingBarHeight
 import com.github.damontecres.stashapp.ui.util.ifElse
@@ -184,6 +186,9 @@ fun SceneDetailsHeaderInfo(
     removeLongClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
     showRatingBar: Boolean = true,
+    starFocusStyle: StarRatingFocusStyle? = null,
+    ratingBackgroundColor: Color? = null,
+    dimContent: Boolean = true,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -208,7 +213,7 @@ fun SceneDetailsHeaderInfo(
         )
 
         Column(
-            modifier = Modifier.alpha(0.75f),
+            modifier = if (dimContent) Modifier.alpha(0.75f) else Modifier,
         ) {
             // Rating
             if (showRatingBar) {
@@ -221,6 +226,8 @@ fun SceneDetailsHeaderInfo(
                         Modifier
                             .height(ratingBarHeight)
                             .padding(start = 12.dp),
+                    bgColor = ratingBackgroundColor ?: AppColors.TransparentBlack75,
+                    starFocusStyle = starFocusStyle,
                 )
             }
             // Quick info

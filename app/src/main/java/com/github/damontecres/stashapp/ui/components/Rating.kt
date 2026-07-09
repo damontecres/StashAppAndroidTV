@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.ui.components
 import android.widget.Toast
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -37,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -90,6 +92,25 @@ enum class StarRatingPrecision {
 val FilledStarColor = Color(0xFFFFC700)
 val EmptyStarColor = Color(0x2AFFC700)
 
+data class StarRatingFocusStyle(
+    val background: Color,
+    val border: Color,
+    val scale: Float = 1.12f,
+    val borderWidth: Dp = 2.dp,
+    val labelColor: Color = Color.White,
+) {
+    companion object {
+        val Playback =
+            StarRatingFocusStyle(
+                background = Color.White.copy(alpha = 0.22f),
+                border = Color.White,
+                scale = 1.15f,
+                borderWidth = 2.dp,
+                labelColor = Color.White,
+            )
+    }
+}
+
 val ratingBarHeight: Dp
     @Composable get() = if (isTvDevice) 32.dp else 48.dp
 
@@ -102,6 +123,7 @@ fun Rating100(
     modifier: Modifier = Modifier,
     bgColor: Color = AppColors.TransparentBlack75, // MaterialTheme.colorScheme.background,
     focusRequester: FocusRequester? = null,
+    starFocusStyle: StarRatingFocusStyle? = null,
 ) {
     Rating100(
         rating100,
@@ -113,6 +135,7 @@ fun Rating100(
         modifier,
         bgColor,
         focusRequester,
+        starFocusStyle,
     )
 }
 
@@ -127,6 +150,7 @@ fun Rating100(
     modifier: Modifier = Modifier,
     bgColor: Color = AppColors.TransparentBlack75, // MaterialTheme.colorScheme.background,
     focusRequester: FocusRequester? = null,
+    starFocusStyle: StarRatingFocusStyle? = null,
 ) {
     if (ratingAsStars) {
         StarRating(
@@ -138,6 +162,7 @@ fun Rating100(
             modifier = modifier,
             bgColor = bgColor,
             focusRequester = focusRequester,
+            starFocusStyle = starFocusStyle,
         )
     } else {
         DecimalRating(
@@ -161,141 +186,184 @@ fun StarRating(
     modifier: Modifier = Modifier,
     bgColor: Color = AppColors.TransparentBlack75, // MaterialTheme.colorScheme.background,
     focusRequester: FocusRequester? = null,
+    starFocusStyle: StarRatingFocusStyle? = null,
 ) {
     val context = LocalContext.current
     var tempRating by remember(rating100) { mutableIntStateOf(rating100) }
     val percentage = (if (enabled) tempRating else rating100) / 100f
     val focusRequesters = remember { List(5) { FocusRequester() } }
-    Box(
-        modifier =
-            modifier
-                .clip(RoundedCornerShape(16.dp))
-                .background(bgColor),
+    val previewRating = if (enabled) tempRating else rating100
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        LazyRow(
+        Box(
             modifier =
                 Modifier
-                    .focusRequester(focusRequester ?: remember { FocusRequester() })
-                    .selectableGroup()
-                    .padding(4.dp)
-                    .drawWithCache {
-                        onDrawWithContent {
-                            drawContent()
-                            if (percentage in 0f..<1f) {
-                                drawRect(
-                                    color = bgColor,
-                                    topLeft = Offset(size.width * percentage, 0f),
-                                    blendMode = BlendMode.SrcAtop,
-                                )
-                            }
-                        }
-                    }.focusGroup()
-                    .focusProperties {
-                        onEnter = {
-                            val index =
-                                if (rating100 <= 20) {
-                                    0
-                                } else if (rating100 <= 40) {
-                                    1
-                                } else if (rating100 <= 60) {
-                                    2
-                                } else if (rating100 <= 80) {
-                                    3
-                                } else {
-                                    4
-                                }
-                            focusRequesters[index].tryRequestFocus()
-                        }
-                    },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly,
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(bgColor),
         ) {
-            for (i in 1..5) {
-                item {
-                    val isRated = (if (enabled) tempRating else rating100) >= (i * 20)
-                    val icon = Icons.Filled.Star
-                    var focused by remember { mutableStateOf(false) }
+            LazyRow(
+                modifier =
+                    Modifier
+                        .focusRequester(focusRequester ?: remember { FocusRequester() })
+                        .selectableGroup()
+                        .padding(4.dp)
+                        .drawWithCache {
+                            onDrawWithContent {
+                                drawContent()
+                                if (percentage > 0f && percentage < 1f) {
+                                    drawRect(
+                                        color = bgColor,
+                                        topLeft = Offset(size.width * percentage, 0f),
+                                        blendMode = BlendMode.SrcAtop,
+                                    )
+                                }
+                            }
+                        }.focusGroup()
+                        .focusProperties {
+                            onEnter = {
+                                val index =
+                                    if (rating100 <= 20) {
+                                        0
+                                    } else if (rating100 <= 40) {
+                                        1
+                                    } else if (rating100 <= 60) {
+                                        2
+                                    } else if (rating100 <= 80) {
+                                        3
+                                    } else {
+                                        4
+                                    }
+                                focusRequesters[index].tryRequestFocus()
+                            }
+                        },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                for (i in 1..5) {
+                    item {
+                        val isRated = previewRating >= (i * 20)
+                        val icon = Icons.Filled.Star
+                        var focused by remember { mutableStateOf(false) }
 
-                    val focusedColor =
-                        if (focused) {
-                            MaterialTheme.colorScheme.border
-                        } else {
-                            Color.Unspecified
-                        }
-                    Box(
-                        modifier =
-                            Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(focusedColor),
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            tint = FilledStarColor,
-                            contentDescription = null,
+                        val focusedBackground =
+                            if (focused) {
+                                starFocusStyle?.background ?: MaterialTheme.colorScheme.border
+                            } else {
+                                Color.Transparent
+                            }
+                        val focusedBorder =
+                            if (focused) {
+                                starFocusStyle?.border
+                            } else {
+                                null
+                            }
+                        val focusedScale = if (focused) starFocusStyle?.scale ?: 1f else 1f
+                        val starTint =
+                            when {
+                                focused && starFocusStyle != null -> Color.White
+                                isRated -> FilledStarColor
+                                starFocusStyle != null -> Color(0x99FFC700)
+                                else -> FilledStarColor.copy(alpha = 0.45f)
+                            }
+                        Box(
                             modifier =
-                                if (enabled) {
-                                    Modifier
-                                        .onFocusChanged {
-                                            focused = it.isFocused
-                                            if (it.isFocused) {
-                                                tempRating = i * 20
-                                            } else {
-                                                tempRating = rating100
-                                            }
-                                        }.playSoundOnFocus(playSoundOnFocus)
-                                        .focusRequester(focusRequesters[i - 1])
-                                        .focusProperties {
-                                            left =
-                                                if (i == 1) focusRequesters.last() else FocusRequester.Default
-                                            right =
-                                                if (i == 5) focusRequesters.first() else FocusRequester.Default
-                                        }.selectable(
-                                            selected = isRated,
-                                            onClick = {
-                                                if (playSoundOnFocus) playOnClickSound(context)
-                                                val newRating100 =
-                                                    when (precision) {
-                                                        StarRatingPrecision.FULL -> {
-                                                            if (i == 1 && rating100 > 0 && rating100 <= 20) 0 else i * 20
-                                                        }
+                                Modifier
+                                    .graphicsLayer {
+                                        scaleX = focusedScale
+                                        scaleY = focusedScale
+                                    }.clip(RoundedCornerShape(8.dp))
+                                    .background(focusedBackground)
+                                    .then(
+                                        if (focusedBorder != null) {
+                                            Modifier.border(
+                                                starFocusStyle!!.borderWidth,
+                                                focusedBorder,
+                                                RoundedCornerShape(8.dp),
+                                            )
+                                        } else {
+                                            Modifier
+                                        },
+                                    ),
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                tint = starTint,
+                                contentDescription = null,
+                                modifier =
+                                    if (enabled) {
+                                        Modifier
+                                            .onFocusChanged {
+                                                focused = it.isFocused
+                                                if (it.isFocused) {
+                                                    tempRating = i * 20
+                                                } else {
+                                                    tempRating = rating100
+                                                }
+                                            }.playSoundOnFocus(playSoundOnFocus)
+                                            .focusRequester(focusRequesters[i - 1])
+                                            .focusProperties {
+                                                left =
+                                                    if (i == 1) focusRequesters.last() else FocusRequester.Default
+                                                right =
+                                                    if (i == 5) focusRequesters.first() else FocusRequester.Default
+                                            }.selectable(
+                                                selected = isRated,
+                                                onClick = {
+                                                    if (playSoundOnFocus) playOnClickSound(context)
+                                                    val newRating100 =
+                                                        when (precision) {
+                                                            StarRatingPrecision.FULL -> {
+                                                                if (i == 1 && rating100 > 0 && rating100 <= 20) 0 else i * 20
+                                                            }
 
-                                                        StarRatingPrecision.HALF -> {
-                                                            if (rating100 > i * 20) {
-                                                                i * 20
-                                                            } else if (rating100 == i * 20) {
-                                                                i * 20 - 10
-                                                            } else if (rating100 == i * 20 - 10) {
-                                                                (i - 1) * 20
-                                                            } else if (i == 1 && rating100 == 0) {
-                                                                20
-                                                            } else if (i == 1 && rating100 > 10) {
-                                                                10
-                                                            } else if (i == 1 && rating100 <= 10) {
-                                                                0
-                                                            } else {
-                                                                (i) * 20
+                                                            StarRatingPrecision.HALF -> {
+                                                                if (rating100 > i * 20) {
+                                                                    i * 20
+                                                                } else if (rating100 == i * 20) {
+                                                                    i * 20 - 10
+                                                                } else if (rating100 == i * 20 - 10) {
+                                                                    (i - 1) * 20
+                                                                } else if (i == 1 && rating100 == 0) {
+                                                                    20
+                                                                } else if (i == 1 && rating100 > 10) {
+                                                                    10
+                                                                } else if (i == 1 && rating100 <= 10) {
+                                                                    0
+                                                                } else {
+                                                                    (i) * 20
+                                                                }
+                                                            }
+
+                                                            StarRatingPrecision.QUARTER -> {
+                                                                // TODO
+                                                                null
                                                             }
                                                         }
-
-                                                        StarRatingPrecision.QUARTER -> {
-                                                            // TODO
-                                                            null
-                                                        }
+                                                    if (newRating100 != null) {
+                                                        tempRating = newRating100
+                                                        onRatingChange(newRating100)
                                                     }
-                                                if (newRating100 != null) {
-                                                    tempRating = newRating100
-                                                    onRatingChange(newRating100)
-                                                }
-                                            },
-                                        )
-                                } else {
-                                    Modifier
-                                }.fillMaxHeight()
-                                    .aspectRatio(1f),
-                        )
+                                                },
+                                            )
+                                    } else {
+                                        Modifier
+                                    }.fillMaxHeight()
+                                        .aspectRatio(1f),
+                            )
+                        }
                     }
                 }
             }
+        }
+        if (starFocusStyle != null && enabled) {
+            Text(
+                text = "${getRatingAsDecimalString(previewRating, false)} / 10",
+                color = starFocusStyle.labelColor,
+                style = MaterialTheme.typography.titleMedium,
+            )
         }
     }
 }

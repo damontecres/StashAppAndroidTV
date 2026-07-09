@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -20,6 +23,7 @@ import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
+import com.github.damontecres.stashapp.ui.filterArgsSaver
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.CreateFilter
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
@@ -42,11 +46,11 @@ fun FilterPage(
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: FilterViewModel = viewModel(),
 ) {
-    if (viewModel.currentFilter == null) {
-        // If the view model is populated, don't do it again
-        LaunchedEffect(server, initialFilter) {
-            viewModel.setFilter(server, initialFilter, uiConfig.cardSettings.columns)
-        }
+    var filter by rememberSaveable(saver = filterArgsSaver) {
+        mutableStateOf(initialFilter)
+    }
+    LaunchedEffect(server, filter) {
+        viewModel.setFilter(server, filter, uiConfig.cardSettings.columns)
     }
     val pager by viewModel.pager.observeAsState()
 
@@ -62,7 +66,7 @@ fun FilterPage(
     Column(
         modifier = modifier,
     ) {
-        val title = pager?.filter?.name ?: stringResource(initialFilter.dataType.pluralStringId)
+        val title = pager?.filter?.name ?: stringResource(filter.dataType.pluralStringId)
         if (onUpdateTitle == null) {
             ProvideTextStyle(MaterialTheme.typography.displayMedium) {
                 Text(
@@ -83,8 +87,8 @@ fun FilterPage(
                 pager = pager!!,
                 filterUiMode = FilterUiMode.SAVED_FILTERS,
                 createFilter = {
-                    val dataType = initialFilter.dataType
-                    val currentFilter = viewModel.currentFilter
+                    val dataType = filter.dataType
+                    val currentFilter = filter
                     when (it) {
                         CreateFilter.FROM_CURRENT -> {
                             navigationManager.navigate(
@@ -108,9 +112,7 @@ fun FilterPage(
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 initialPosition = startPosition,
-                updateFilter = {
-                    viewModel.setFilter(server, it, uiConfig.cardSettings.columns)
-                },
+                updateFilter = { filter = it },
                 letterPosition = viewModel::findLetterPosition,
                 requestFocus = true,
             )

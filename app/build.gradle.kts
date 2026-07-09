@@ -91,7 +91,7 @@ configure<ApplicationExtension> {
         targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = gitTags.trim().lines().size + 1
-        versionName = "9.1"
+        versionName = "9.2"
         vectorDrawables.useSupportLibrary = true
     }
     signingConfigs {

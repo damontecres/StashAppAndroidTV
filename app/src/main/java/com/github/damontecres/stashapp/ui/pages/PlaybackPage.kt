@@ -199,8 +199,8 @@ fun PlaylistPlaybackPage(
     itemOnClick: ItemOnClicker<Any>,
     modifier: Modifier = Modifier,
     clipDuration: Duration = 30.seconds,
-    viewModel: FilterViewModel = viewModel(key = "main"),
-    playlistViewModel: FilterViewModel = viewModel(key = "playlist"),
+    viewModel: FilterViewModel = viewModel(key = "playlistData"),
+    playlistViewModel: FilterViewModel = viewModel(key = "playlistUi"),
 ) {
     val globalContext = LocalGlobalContext.current
     val navManager = globalContext.navigationManager as? NavigationManagerCompose
@@ -371,7 +371,10 @@ fun PlaylistPlaybackPage(
                                         }
                                     }
                                     is Destination.Filter -> {
-                                        dest.copy(position = currentAbsoluteIndex)
+                                        dest.copy(
+                                            position = currentAbsoluteIndex,
+                                            filterArgs = filterArgs,
+                                        )
                                     }
                                     else -> dest
                                 }

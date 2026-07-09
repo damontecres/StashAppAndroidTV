@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
@@ -18,6 +19,7 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.StarRatingFocusStyle
 import com.github.damontecres.stashapp.ui.components.scene.SceneDescriptionDialog
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsFooter
 import com.github.damontecres.stashapp.ui.components.scene.SceneDetailsHeaderInfo
@@ -55,6 +57,9 @@ fun SceneDetailsOverlay(
                 onRatingChange = onRatingChange,
                 bringIntoViewRequester = bringIntoViewRequester,
                 removeLongClicker = { _, _ -> },
+                starFocusStyle = StarRatingFocusStyle.Playback,
+                ratingBackgroundColor = Color(0xFF2A2A2A),
+                dimContent = false,
                 modifier = Modifier.padding(bottom = 80.dp),
             )
         }

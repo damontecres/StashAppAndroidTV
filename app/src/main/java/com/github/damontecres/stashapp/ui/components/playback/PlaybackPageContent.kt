@@ -7,6 +7,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +23,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import com.github.damontecres.stashapp.ui.compat.Button
 import androidx.compose.material3.MaterialTheme as Material3Theme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -120,6 +121,7 @@ import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.Rating100
+import com.github.damontecres.stashapp.ui.components.StarRatingFocusStyle
 import com.github.damontecres.stashapp.ui.components.ratingBarHeight
 import com.github.damontecres.stashapp.ui.components.image.DRAG_THROTTLE_DELAY
 import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
@@ -689,7 +691,11 @@ data class PlaybackInfo(
     val audioOptions: List<String> = emptyList(),
 )
 
-@OptIn(UnstableApi::class)
+private val PlaybackRatingDialogScrim = Color.Black.copy(alpha = 0.88f)
+private val PlaybackRatingDialogBackground = Color(0xFF121212)
+private val PlaybackRatingDialogBorder = Color.White.copy(alpha = 0.12f)
+private val PlaybackRatingStarsBackground = Color(0xFF2A2A2A)
+
 @Composable
 fun PlaybackPageContent(
     server: StashServer,
@@ -1386,7 +1392,7 @@ fun PlaybackPageContent(
                         modifier =
                             Modifier
                                 .fillMaxSize()
-                                .background(Material3Theme.colorScheme.background.copy(alpha = 0.75f)),
+                                .background(Color.Black.copy(alpha = 0.88f)),
                         server = server,
                         scene = scene,
                         performers = performers,
@@ -1425,21 +1431,22 @@ fun PlaybackPageContent(
                                     player.play()
                                 }
                             }
-                            .background(Color.Black.copy(alpha = 0.5f)),
+                            .background(PlaybackRatingDialogScrim),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
                             modifier = Modifier
                                 .clickable(enabled = false) {}
-                                .background(Material3Theme.colorScheme.surface, shape = RoundedCornerShape(16.dp))
-                                .padding(24.dp),
+                                .border(1.dp, PlaybackRatingDialogBorder, RoundedCornerShape(16.dp))
+                                .background(PlaybackRatingDialogBackground, shape = RoundedCornerShape(16.dp))
+                                .padding(horizontal = 32.dp, vertical = 24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                            verticalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
                             Text(
                                 text = stringResource(R.string.set_rating),
-                                style = Material3Theme.typography.titleMedium,
-                                color = Material3Theme.colorScheme.onSurface
+                                style = Material3Theme.typography.titleLarge,
+                                color = Color.White,
                             )
                             Rating100(
                                 rating100 = rating100,
@@ -1452,8 +1459,10 @@ fun PlaybackPageContent(
                                 },
                                 uiConfig = uiConfig,
                                 enabled = true,
-                                modifier = Modifier.height(ratingBarHeight),
-                                focusRequester = ratingFocusRequester
+                                modifier = Modifier.height(if (isTvDevice) 40.dp else ratingBarHeight),
+                                bgColor = PlaybackRatingStarsBackground,
+                                focusRequester = ratingFocusRequester,
+                                starFocusStyle = StarRatingFocusStyle.Playback,
                             )
                             Button(
                                 onClick = {
@@ -1463,7 +1472,10 @@ fun PlaybackPageContent(
                                     }
                                 }
                             ) {
-                                Text(text = "Cancel")
+                                Text(
+                                    text = "Cancel",
+                                    color = Color.White,
+                                )
                             }
                         }
                     }
