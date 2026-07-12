@@ -1,0 +1,53 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests",
+    ":disableDependencyDashboard",
+    ":enableVulnerabilityAlertsWithLabel(security)",
+    "group:kotlinMonorepo",
+    "group:kotlinx-coroutinesMonorepo",
+    "group:kspMonorepo"
+  ],
+  "addLabels": [
+    "dependencies"
+  ],
+  "timezone": "Europe/Berlin",
+  "rebaseWhen": "conflicted",
+  "prHourlyLimit": 2,
+  "prConcurrentLimit": 10,
+  "packageRules": [
+    {
+      "description": "Add the dependency GitHub label to dependency bump PRs",
+      "matchManagers": [
+        "gradle",
+        "gradle-wrapper"
+      ],
+      "addLabels": [
+        "dependency"
+      ]
+    },
+    {
+      "description": "Add the major GitHub label to major dependency bump PRs",
+      "addLabels": [
+        "major"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ]
+    },
+    {
+      "description": "Automerge patch and minor dependencies",
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Packages must wait 7 days after release before update",
+      "minimumReleaseAge": "7 days"
+    }
+  ]
+}
