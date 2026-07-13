@@ -6,7 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -23,6 +25,7 @@ import com.github.damontecres.stashapp.ui.components.FilterUiMode
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridControls
+import com.github.damontecres.stashapp.ui.tryRequestFocus
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -67,6 +70,10 @@ fun FilterPage(
             LaunchedEffect(title) { onUpdateTitle.invoke(AnnotatedString(title)) }
         }
         if (pager != null) {
+            val gridFocusRequester = remember { FocusRequester() }
+            LaunchedEffect(Unit) {
+                gridFocusRequester.tryRequestFocus()
+            }
             StashGridControls(
                 modifier = Modifier,
                 uiConfig = uiConfig,
@@ -102,7 +109,7 @@ fun FilterPage(
                     viewModel.setFilter(it, uiConfig.cardSettings.columns)
                 },
                 letterPosition = viewModel::findLetterPosition,
-                requestFocus = true,
+                gridFocusRequester = gridFocusRequester,
             )
         } else {
             CircularProgress()

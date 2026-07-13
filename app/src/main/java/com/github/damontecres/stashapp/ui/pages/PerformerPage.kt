@@ -319,7 +319,10 @@ fun PerformerDetailsPage(
     val createTab = createTabFunc(itemOnClick, longClicker, uiConfig)
     val tabs =
         listOf(
-            TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
+            TabProvider(
+                stringResource(R.string.stashapp_details),
+                TabType.DETAILS,
+            ) { positionCallback, focusRequester, modifier ->
                 PerformerDetails(
                     perf = perf,
                     tags = tags,
@@ -333,7 +336,7 @@ fun PerformerDetailsPage(
                     longClicker = longClicker,
                     onShowDialog = { dialogParams = it },
                     onEdit = onEdit,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = modifier,
                 )
             },
             createTab(
@@ -378,7 +381,7 @@ fun PerformerDetailsPage(
             TabProvider(
                 stringResource(R.string.stashapp_appears_with),
                 TabType.APPEARS_WITH,
-            ) {
+            ) { positionCallback, focusRequester, modifier ->
                 val context = LocalContext.current
                 val navigationManager = LocalGlobalContext.current.navigationManager
                 StashGridTab(
@@ -437,7 +440,8 @@ fun PerformerDetailsPage(
                     },
                     composeUiConfig = uiConfig,
                     onFilterChange = {},
-                    modifier = Modifier,
+                    gridFocusRequester = focusRequester,
+                    modifier = modifier,
                 )
             },
         ).filter { it.type in uiTabs }

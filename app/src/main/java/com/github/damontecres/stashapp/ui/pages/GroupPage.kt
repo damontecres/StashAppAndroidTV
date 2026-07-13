@@ -192,9 +192,12 @@ fun GroupPage(
             }
 
             val detailsTab =
-                TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
+                TabProvider(
+                    stringResource(R.string.stashapp_details),
+                    TabType.DETAILS,
+                ) { positionCallback, focusRequester, modifier ->
                     GroupDetails(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = modifier,
                         uiConfig = uiConfig,
                         group = group,
                         tags = tags,
@@ -246,13 +249,13 @@ fun GroupPage(
                     TabProvider(
                         context.getString(R.string.stashapp_scenes),
                         TabType.SCENES,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_scenes),
                             initialFilter = scenesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { scenesSubTags = it },
@@ -260,6 +263,7 @@ fun GroupPage(
                             composeUiConfig = uiConfig,
                             onFilterChange = { scenesFilter = it },
                             cardContext = { _, _ -> cardContext },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -284,19 +288,20 @@ fun GroupPage(
                     TabProvider(
                         context.getString(R.string.stashapp_performers),
                         TabType.PERFORMERS,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_performers),
                             initialFilter = performerFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { performersSubTags = it },
                             subToggleChecked = performersSubTags,
                             composeUiConfig = uiConfig,
                             onFilterChange = { performerFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -323,19 +328,20 @@ fun GroupPage(
                     TabProvider(
                         context.getString(R.string.stashapp_markers),
                         TabType.MARKERS,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_markers),
                             initialFilter = markersFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { markersSubTags = it },
                             subToggleChecked = markersSubTags,
                             composeUiConfig = uiConfig,
                             onFilterChange = { markersFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -345,7 +351,7 @@ fun GroupPage(
                 TabProvider(
                     stringResource(R.string.stashapp_containing_groups),
                     TabType.CONTAINING_GROUPS,
-                ) { positionCallback ->
+                ) { positionCallback, focusRequester, modifier ->
                     var filter by rememberSaveable(saver = filterArgsSaver) {
                         mutableStateOf(
                             FilterArgs(
@@ -363,11 +369,12 @@ fun GroupPage(
                         initialFilter = filter,
                         itemOnClick = viewModel.itemClicker,
                         longClicker = longClicker,
-                        modifier = Modifier,
+                        modifier = modifier,
                         positionCallback = positionCallback,
                         composeUiConfig = uiConfig,
                         subToggleLabel = null,
                         onFilterChange = { filter = it },
+                        gridFocusRequester = focusRequester,
                     )
                 }
 
@@ -376,7 +383,7 @@ fun GroupPage(
                 TabProvider(
                     stringResource(R.string.stashapp_sub_groups),
                     TabType.SUB_GROUPS,
-                ) { positionCallback ->
+                ) { positionCallback, focusRequester, modifier ->
                     var filter by rememberSaveable(saver = filterArgsSaver) {
                         mutableStateOf(
                             FilterArgs(
@@ -400,7 +407,7 @@ fun GroupPage(
                         itemOnClick = viewModel.itemClicker,
                         longClicker = longClicker,
                         composeUiConfig = uiConfig,
-                        modifier = Modifier,
+                        modifier = modifier,
                         positionCallback = positionCallback,
                         subToggleLabel =
                             if (group.sub_group_count > 0) {
@@ -409,6 +416,7 @@ fun GroupPage(
                                 null
                             },
                         onFilterChange = { filter = it },
+                        gridFocusRequester = focusRequester,
                     )
                 }
 

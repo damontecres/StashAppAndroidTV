@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
@@ -95,6 +96,7 @@ fun TabPage(
             preferences.edit { putInt(rememberTabKey, resolvedTabIndex) }
         }
     }
+    var tabRowFocused by rememberSaveable { mutableStateOf(false) }
 
     OneTimeLaunchedEffect {
         tabRowFocusRequester.tryRequestFocus()
@@ -122,7 +124,10 @@ fun TabPage(
                     modifier =
                         Modifier
                             .focusRestorer(focusRequesters[selectedTabIndex])
-                            .focusRequester(tabRowFocusRequester),
+                            .focusRequester(tabRowFocusRequester)
+                            .onFocusChanged {
+                                tabRowFocused = it.hasFocus
+                            },
                 ) {
                     tabs.forEachIndexed { index, tab ->
                         key(index) {
@@ -184,9 +189,20 @@ fun TabPage(
         }
         if (tabs.isNotEmpty()) {
 //            Log.i("Tabs", "resolvedTabIndex=$resolvedTabIndex")
-            tabs[resolvedTabIndex].content(this) { columns, position ->
-                showTabRowRaw = position < columns
+            val focusRequester = remember { FocusRequester() }
+            LaunchedEffect(Unit) {
+                if (!tabRowFocused) {
+                    focusRequester.tryRequestFocus()
+                }
             }
+            tabs[resolvedTabIndex].content(
+                this,
+                { columns, position ->
+                    showTabRowRaw = position < columns
+                },
+                focusRequester,
+                Modifier.fillMaxSize(),
+            )
         }
     }
 }
@@ -199,6 +215,8 @@ data class TabProvider(
          * Callback when grid position changes, passed to [StashGrid]. None-StashGrid can probably ignore this
          */
         positionCallback: (columns: Int, position: Int) -> Unit,
+        focusRequester: FocusRequester,
+        modifier: Modifier,
     ) -> Unit,
 )
 
@@ -221,7 +239,7 @@ fun createTabFunc(
                 DataType.IMAGE -> TabType.IMAGES
                 DataType.GALLERY -> TabType.GALLERIES
             }
-        TabProvider(name, type) { positionCallback ->
+        TabProvider(name, type) { positionCallback, focusRequester, modifier ->
             var filter by rememberSaveable(name, saver = filterArgsSaver) {
                 mutableStateOf(
                     initialFilter,
@@ -232,12 +250,13 @@ fun createTabFunc(
                 initialFilter = filter,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
-                modifier = Modifier,
+                modifier = modifier,
                 positionCallback = positionCallback,
                 composeUiConfig = composeUiConfig,
                 onFilterChange = {
                     filter = it
                 },
+                gridFocusRequester = focusRequester,
             )
         }
     }
@@ -250,6 +269,7 @@ fun StashGridTab(
     longClicker: LongClicker<Any>,
     composeUiConfig: ComposeUiConfig,
     onFilterChange: (FilterArgs) -> Unit,
+    gridFocusRequester: FocusRequester,
     modifier: Modifier = Modifier,
     viewModel: FilterViewModel = koinViewModel(key = name),
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
@@ -267,7 +287,7 @@ fun StashGridTab(
     pager?.let { newPager ->
         StashGridControls(
             pager = newPager,
-            initialPosition = -1,
+            initialPosition = 0,
             itemOnClick = itemOnClick,
             longClicker = longClicker,
             filterUiMode = FilterUiMode.CREATE_FILTER,
@@ -288,7 +308,7 @@ fun StashGridTab(
             onSubToggleCheck = onSubToggleCheck,
             subToggleChecked = subToggleChecked,
             subToggleEnabled = subToggleEnabled,
-            requestFocus = false,
+            gridFocusRequester = gridFocusRequester,
             cardContext = cardContext,
         )
     }

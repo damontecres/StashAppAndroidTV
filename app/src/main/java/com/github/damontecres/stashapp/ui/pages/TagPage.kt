@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp.ui.pages
 import android.app.Application
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,6 +14,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -187,9 +187,9 @@ fun TagPage(
                     TabProvider(
                         context.getString(R.string.stashapp_details),
                         TabType.DETAILS,
-                    ) {
+                    ) { positionCallback, focusRequester, modifier ->
                         TagDetails(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = modifier.focusRequester(focusRequester),
                             uiConfig = uiConfig,
                             tag = tag,
                             parentTags = state.parentTags,
@@ -246,13 +246,13 @@ fun TagPage(
                     TabProvider(
                         context.getString(R.string.stashapp_scenes),
                         TabType.SCENES,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_scenes),
                             initialFilter = scenesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { scenesSubTags = it },
@@ -260,6 +260,7 @@ fun TagPage(
                             subToggleEnabled = subToggleEnabled,
                             composeUiConfig = uiConfig,
                             onFilterChange = { scenesFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -280,13 +281,13 @@ fun TagPage(
                     TabProvider(
                         context.getString(R.string.stashapp_galleries),
                         TabType.GALLERIES,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_galleries),
                             initialFilter = galleriesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { galleriesSubTags = it },
@@ -294,6 +295,7 @@ fun TagPage(
                             subToggleEnabled = subToggleEnabled,
                             composeUiConfig = uiConfig,
                             onFilterChange = { galleriesFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -313,13 +315,13 @@ fun TagPage(
                     TabProvider(
                         context.getString(R.string.stashapp_images),
                         TabType.IMAGES,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_images),
                             initialFilter = imagesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { imagesSubTags = it },
@@ -327,6 +329,7 @@ fun TagPage(
                             subToggleEnabled = subToggleEnabled,
                             composeUiConfig = uiConfig,
                             onFilterChange = { imagesFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -346,13 +349,13 @@ fun TagPage(
                     TabProvider(
                         context.getString(R.string.stashapp_markers),
                         TabType.MARKERS,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_markers),
                             initialFilter = markersFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { markersSubTags = it },
@@ -360,6 +363,7 @@ fun TagPage(
                             subToggleEnabled = subToggleEnabled,
                             composeUiConfig = uiConfig,
                             onFilterChange = { markersFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -380,13 +384,13 @@ fun TagPage(
                     TabProvider(
                         context.getString(R.string.stashapp_performers),
                         TabType.PERFORMERS,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_performers),
                             initialFilter = performersFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { performersSubTags = it },
@@ -394,6 +398,7 @@ fun TagPage(
                             subToggleEnabled = subToggleEnabled,
                             composeUiConfig = uiConfig,
                             onFilterChange = { performersFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -414,13 +419,13 @@ fun TagPage(
                     TabProvider(
                         context.getString(R.string.stashapp_studios),
                         TabType.STUDIOS,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_studios),
                             initialFilter = studiosFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { studiosSubTags = it },
@@ -428,6 +433,7 @@ fun TagPage(
                             subToggleEnabled = subToggleEnabled,
                             composeUiConfig = uiConfig,
                             onFilterChange = { studiosFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }

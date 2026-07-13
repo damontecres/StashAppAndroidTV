@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp.ui.pages
 import android.app.Application
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -189,7 +188,10 @@ fun StudioPage(
             }
 
             val detailsTab =
-                TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
+                TabProvider(
+                    stringResource(R.string.stashapp_details),
+                    TabType.DETAILS,
+                ) { positionCallback, focusRequester, modifier ->
                     StudioDetails(
                         studio = studio,
                         parentStudio = parentStudio,
@@ -270,7 +272,7 @@ fun StudioPage(
                         },
                         itemOnClick = viewModel.itemClicker,
                         longClicker = longClicker,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = modifier,
                     )
                 }
 
@@ -290,13 +292,13 @@ fun StudioPage(
                     TabProvider(
                         context.getString(R.string.stashapp_scenes),
                         TabType.SCENES,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_scenes),
                             initialFilter = scenesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { scenesSubTags = it },
@@ -304,6 +306,7 @@ fun StudioPage(
                             subToggleEnabled = subToggleEnabled,
                             composeUiConfig = uiConfig,
                             onFilterChange = { scenesFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -328,13 +331,13 @@ fun StudioPage(
                     TabProvider(
                         context.getString(R.string.stashapp_galleries),
                         TabType.GALLERIES,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_galleries),
                             initialFilter = galleriesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { galleriesSubTags = it },
@@ -342,6 +345,7 @@ fun StudioPage(
                             subToggleEnabled = subToggleEnabled,
                             composeUiConfig = uiConfig,
                             onFilterChange = { galleriesFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -361,13 +365,13 @@ fun StudioPage(
                     TabProvider(
                         context.getString(R.string.stashapp_images),
                         TabType.IMAGES,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_images),
                             initialFilter = imagesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { imagesSubTags = it },
@@ -375,6 +379,7 @@ fun StudioPage(
                             subToggleEnabled = subToggleEnabled,
                             composeUiConfig = uiConfig,
                             onFilterChange = { imagesFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -400,13 +405,13 @@ fun StudioPage(
                     TabProvider(
                         context.getString(R.string.stashapp_markers),
                         TabType.MARKERS,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_markers),
                             initialFilter = markersFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { markersSubTags = it },
@@ -414,6 +419,7 @@ fun StudioPage(
                             subToggleEnabled = subToggleEnabled,
                             composeUiConfig = uiConfig,
                             onFilterChange = { markersFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -438,13 +444,13 @@ fun StudioPage(
                     TabProvider(
                         context.getString(R.string.stashapp_performers),
                         TabType.PERFORMERS,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_performers),
                             initialFilter = performersFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { performersSubTags = it },
@@ -452,6 +458,7 @@ fun StudioPage(
                             subToggleEnabled = subToggleEnabled,
                             composeUiConfig = uiConfig,
                             onFilterChange = { performersFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -472,13 +479,13 @@ fun StudioPage(
                     TabProvider(
                         context.getString(R.string.stashapp_groups),
                         TabType.GROUPS,
-                    ) { positionCallback ->
+                    ) { positionCallback, focusRequester, modifier ->
                         StashGridTab(
                             name = context.getString(R.string.stashapp_groups),
                             initialFilter = groupsFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
-                            modifier = Modifier,
+                            modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { groupsSubTags = it },
@@ -486,6 +493,7 @@ fun StudioPage(
                             subToggleEnabled = subToggleEnabled,
                             composeUiConfig = uiConfig,
                             onFilterChange = { groupsFilter = it },
+                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -516,17 +524,18 @@ fun StudioPage(
                 TabProvider(
                     stringResource(R.string.stashapp_subsidiary_studios),
                     TabType.SUBSIDIARY_STUDIOS,
-                ) { positionCallback ->
+                ) { positionCallback, focusRequester, modifier ->
                     StashGridTab(
                         name = stringResource(R.string.stashapp_subsidiary_studios),
                         initialFilter = subStudioFilter,
                         itemOnClick = viewModel.itemClicker,
                         longClicker = longClicker,
-                        modifier = Modifier,
+                        modifier = modifier,
                         positionCallback = positionCallback,
                         composeUiConfig = uiConfig,
                         subToggleLabel = null, // TODO
                         onFilterChange = { subStudioFilter = it },
+                        gridFocusRequester = focusRequester,
                     )
                 }
 

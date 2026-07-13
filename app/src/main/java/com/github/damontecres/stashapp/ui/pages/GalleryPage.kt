@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp.ui.pages
 import android.app.Application
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -14,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -183,9 +183,12 @@ fun GalleryPage(
                 )
             val tabs =
                 listOf(
-                    TabProvider(stringResource(R.string.stashapp_details), TabType.DETAILS) {
+                    TabProvider(
+                        stringResource(R.string.stashapp_details),
+                        TabType.DETAILS,
+                    ) { positionCallback, focusRequester, modifier ->
                         GalleryDetails(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = modifier.focusRequester(focusRequester),
                             uiConfig = uiConfig,
                             gallery = gallery,
                             studio = studio,

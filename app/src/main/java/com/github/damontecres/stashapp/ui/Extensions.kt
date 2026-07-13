@@ -51,6 +51,7 @@ import com.github.damontecres.stashapp.util.preferences
 import com.github.damontecres.stashapp.util.putFilterArgs
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 import kotlin.time.Duration.Companion.seconds
 
 data class GlobalContext(
@@ -86,8 +87,9 @@ fun Modifier.enableMarquee(focused: Boolean) =
 /**
  * Try to call [FocusRequester.requestFocus], but catch & log the exception if something is not configured properly
  */
-fun FocusRequester.tryRequestFocus(): Boolean =
+fun FocusRequester.tryRequestFocus(tag: String? = null): Boolean =
     try {
+        tag?.let { Timber.v("tryRequestFocus: %s", tag) }
         requestFocus()
         true
     } catch (ex: IllegalStateException) {
