@@ -6,6 +6,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.CircumcisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import java.time.LocalDate
@@ -198,4 +199,13 @@ val MarkerData.formatSeconds: String
                 end_seconds.toInt().seconds.toString()
         } else {
             seconds.toInt().seconds.toString()
+        }
+
+val PerformerData.careerString: String?
+    get() =
+        when {
+            career_start != null && career_end != null -> "$career_start - $career_end"
+            career_start != null -> "$career_start - "
+            career_end != null -> "- $career_end"
+            else -> null
         }
