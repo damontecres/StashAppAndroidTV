@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.ui
 import android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -228,4 +229,31 @@ val imagePreview =
                         ),
                 ),
             ),
+    )
+
+val groupPreview =
+    GroupData(
+        id = "1234",
+        name = " Test Group",
+        aliases = "Alias1,Alias2",
+        date = "2026-01-01",
+        duration = 30_000,
+        rating100 = 75,
+        synopsis = "This is the group synopsis",
+        director = "Director name",
+        studio =
+            GroupData.Studio(
+                id = "123",
+                name = "Group studio",
+            ),
+        tags = listOf(),
+        sub_group_count = 1,
+        containing_groups = listOf(),
+        scene_count = 3,
+        performer_count = 3,
+        o_counter = 0,
+        front_image_path = null,
+        back_image_path = null,
+        created_at = "",
+        updated_at = "",
     )

@@ -25,7 +25,7 @@ fun dataTypeImageWidth(dataType: DataType) =
         DataType.IMAGE -> 345
         DataType.MARKER -> 345
         DataType.GROUP -> 250
-        DataType.PERFORMER -> 254
+        DataType.PERFORMER -> 200
         DataType.SCENE -> 345
         DataType.STUDIO -> 345
         DataType.TAG -> 250
@@ -37,7 +37,7 @@ fun dataTypeImageHeight(dataType: DataType) =
         DataType.IMAGE -> 145
         DataType.MARKER -> 194
         DataType.GROUP -> 250
-        DataType.PERFORMER -> 381
+        DataType.PERFORMER -> 300
         DataType.SCENE -> 194
         DataType.STUDIO -> 194
         DataType.TAG -> 250

@@ -1,10 +1,5 @@
 package com.github.damontecres.stashapp.ui.components.main
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,75 +13,79 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.api.fragment.StashData
-import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.enableMarquee
 
 @Composable
 fun MainPageHeader(
-    item: Any,
+    item: Any?,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
-    val dataType =
-        when (item) {
-            is StashData -> Destination.getDataType(item)
-            is FilterArgs -> item.dataType
-            else -> null
-        }
-    val height =
-        when (dataType) {
-            DataType.SCENE -> 200.dp
-            DataType.PERFORMER -> 160.dp
-            DataType.IMAGE -> 200.dp
-            else -> 0.dp
-        }
-
-    AnimatedVisibility(
-        visible = height != 0.dp,
-        enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
-        exit = fadeOut() + slideOutVertically(targetOffsetY = { -it }),
+    Box(
+        modifier =
+            modifier
+                .padding(bottom = 4.dp)
+                .height(200.dp),
     ) {
-        Box(
-            modifier =
-                modifier
-                    .padding(bottom = 4.dp),
-        ) {
-            if (item is SlimSceneData) {
+        val headerModifier =
+            Modifier.fillMaxWidth()
+        when (item) {
+            is SlimSceneData -> {
                 MainPageSceneDetails(
                     scene = item,
                     uiConfig = uiConfig,
-                    modifier =
-                        Modifier
-                            .height(height)
-                            .fillMaxWidth(),
+                    modifier = headerModifier,
                 )
-            } else if (item is PerformerData) {
+            }
+
+            is PerformerData -> {
                 MainPagePerformerDetails(
                     perf = item,
                     uiConfig = uiConfig,
-                    modifier =
-                        Modifier
-                            .height(height)
-                            .fillMaxWidth(),
+                    modifier = headerModifier,
                 )
-            } else if (item is ImageData) {
+            }
+
+            is ImageData -> {
                 MainPageImageDetails(
                     image = item,
                     uiConfig = uiConfig,
-                    modifier =
-                        Modifier
-                            .height(height)
-                            .fillMaxWidth(),
+                    modifier = headerModifier,
                 )
-            } else if (item is FilterArgs) {
-                FilterHeader(item, Modifier.height(height))
+            }
+
+            is GroupData -> {
+                MainPageGroupDetails(item, uiConfig, headerModifier)
+            }
+
+            is TagData -> {
+                MainPageTagDetails(item, uiConfig, headerModifier)
+            }
+
+            is MarkerData -> {
+                MainPageMarkerDetails(item, uiConfig, headerModifier)
+            }
+
+            is GalleryData -> {
+                MainPageGalleryDetails(item, uiConfig, headerModifier)
+            }
+
+            is StudioData -> {
+                MainPageStudioDetails(item, uiConfig, headerModifier)
+            }
+
+            is FilterArgs -> {
+                FilterHeader(item, headerModifier)
             }
         }
     }
