@@ -5,7 +5,9 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOut
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
@@ -24,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -40,6 +43,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -49,6 +53,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Format
@@ -83,6 +88,7 @@ import com.github.damontecres.stashapp.ui.cards.RootCard
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
 import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
+import com.github.damontecres.stashapp.ui.isDefaultUrl
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.CoilPreviewTransformation
 import com.github.damontecres.stashapp.util.defaultCardHeight
@@ -205,7 +211,68 @@ fun PlaybackOverlay(
     Box(
         modifier,
     ) {
-        if (showDebugInfo && streamDecision != null) {
+        AnimatedVisibility(
+            visible = controllerViewState.controlsVisible && !showDebugInfo,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.matchParentSize(),
+        ) {
+            // Background scrim for OSD readability
+            val scrimBrush =
+                remember {
+                    Brush.verticalGradient(
+                        colors =
+                            listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.5f),
+                                Color.Black.copy(alpha = 0.80f),
+                            ),
+                    )
+                }
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(scrimBrush),
+            )
+        }
+
+        val studioImageUrl =
+            remember(scene) {
+                if (scene.studioImageUrl.isNotNullOrBlank() && !scene.studioImageUrl.isDefaultUrl) {
+                    scene.studioImageUrl
+                } else {
+                    null
+                }
+            }
+        AnimatedVisibility(
+            visible = !showDebugInfo && studioImageUrl != null && controllerViewState.controlsVisible,
+            enter = slideIn { IntOffset(x = -it.width / 2, y = -it.height / 2) } + fadeIn(),
+            exit = slideOut { IntOffset(x = -it.width / 2, y = -it.height / 2) } + fadeOut(),
+            modifier =
+                Modifier
+                    .align(Alignment.TopStart),
+        ) {
+            AsyncImage(
+                model = scene.studioImageUrl,
+                contentDescription = "studio",
+                alignment = Alignment.TopStart,
+                contentScale = ContentScale.Fit,
+                modifier =
+                    Modifier
+                        .size(width = 240.dp, height = 120.dp)
+                        .padding(16.dp),
+            )
+        }
+
+        AnimatedVisibility(
+            visible = controllerViewState.controlsVisible && showDebugInfo && streamDecision != null,
+            enter = fadeIn() + slideInVertically { -it / 2 },
+            exit = fadeOut() + slideOutVertically { -it / 2 },
+            modifier =
+                Modifier
+                    .align(Alignment.TopStart),
+        ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier =
@@ -213,16 +280,18 @@ fun PlaybackOverlay(
                         .align(Alignment.TopStart)
                         .padding(8.dp),
             ) {
-                PlaybackDebugInfo(
-                    scene = scene,
-                    streamDecision = streamDecision,
-                    playlistInfo = playlistInfo,
-                    modifier =
-                        Modifier
-                            .background(AppColors.TransparentBlack50)
-                            // TODO the width isn't be used correctly
-                            .width(248.dp),
-                )
+                streamDecision?.let {
+                    PlaybackDebugInfo(
+                        scene = scene,
+                        streamDecision = streamDecision,
+                        playlistInfo = playlistInfo,
+                        modifier =
+                            Modifier
+                                .background(AppColors.TransparentBlack50)
+                                // TODO the width isn't be used correctly
+                                .width(248.dp),
+                    )
+                }
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -259,15 +328,20 @@ fun PlaybackOverlay(
             }
         }
         var showControls by remember { mutableStateOf(true) }
+        var state by remember(controllerViewState.controlsVisible) {
+            mutableStateOf(
+                if (controllerViewState.controlsVisible) PlaybackControlsState.CONTROLS else PlaybackControlsState.HIDDEN,
+            )
+        }
         AnimatedContent(
-            targetState = showControls,
+            targetState = state,
             transitionSpec = {
-                if (targetState) {
-                    // Moving up to show controls
-                    (slideInVertically { -it / 2 } + fadeIn()).togetherWith(slideOutVertically { it / 2 } + fadeOut())
-                } else {
-                    // Moving down to show markers
+                if (targetState.ordinal > initialState.ordinal) {
+                    // Moving down, so move content up
                     (slideInVertically { it / 2 } + fadeIn()).togetherWith(slideOutVertically { -it / 2 } + fadeOut())
+                } else {
+                    // Moving up
+                    (slideInVertically { -it / 2 } + fadeIn()).togetherWith(slideOutVertically { it / 2 } + fadeOut())
                 }
             },
             modifier =
@@ -275,115 +349,123 @@ fun PlaybackOverlay(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth(),
         ) { targetState ->
-            if (targetState) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    if (uiConfig.showTitleDuringPlayback) {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier =
-                                Modifier
-                                    .padding(start = 8.dp)
-                                    .fillMaxWidth(.7f),
-                        ) {
-                            if (scene.title.isNotNullOrBlank()) {
-                                Text(
-                                    text = scene.title,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    fontSize = 24.sp,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                            if (scene.subtitle.isNotNullOrBlank()) {
-                                Text(
-                                    text = scene.subtitle,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    fontSize = 16.sp,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+            when (targetState) {
+                PlaybackControlsState.HIDDEN -> {
+                    Box(Modifier.fillMaxWidth())
+                }
+
+                PlaybackControlsState.CONTROLS -> {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        if (uiConfig.showTitleDuringPlayback) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier =
+                                    Modifier
+                                        .padding(start = 8.dp)
+                                        .fillMaxWidth(.7f),
+                            ) {
+                                if (scene.title.isNotNullOrBlank()) {
+                                    Text(
+                                        text = scene.title,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        fontSize = 24.sp,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                                if (scene.subtitle.isNotNullOrBlank()) {
+                                    Text(
+                                        text = scene.subtitle,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        fontSize = 16.sp,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
-                    }
 
-                    PlaybackControls(
-                        modifier = Modifier.fillMaxWidth(),
-                        scene = scene,
-                        captions = captions,
-                        oCounter = oCounter,
-                        playerControls = playerControls,
-                        onPlaybackActionClick = onPlaybackActionClick,
-                        controllerViewState = controllerViewState,
-                        showDebugInfo = showDebugInfo,
-                        onSeekProgress = {
-                            seekProgress = it
-                            onSeekBarChange(it)
-                        },
-                        showPlay = showPlay,
-                        previousEnabled = previousEnabled,
-                        nextEnabled = nextEnabled,
-                        seekEnabled = seekEnabled,
-                        seekBarInteractionSource = seekBarInteractionSource,
-                        moreButtonOptions = moreButtonOptions,
-                        subtitleIndex = subtitleIndex,
-                        audioIndex = audioIndex,
-                        audioOptions = audioOptions,
-                        playbackSpeed = playbackSpeed,
-                        scale = scale,
-                        seekBarIntervals = uiConfig.preferences.playbackPreferences.seekBarSteps,
-                        sfwMode = uiConfig.sfwMode,
-                    )
-                    if (markers.isNotEmpty()) {
+                        PlaybackControls(
+                            modifier = Modifier.fillMaxWidth(),
+                            scene = scene,
+                            captions = captions,
+                            oCounter = oCounter,
+                            playerControls = playerControls,
+                            onPlaybackActionClick = onPlaybackActionClick,
+                            controllerViewState = controllerViewState,
+                            showDebugInfo = showDebugInfo,
+                            onSeekProgress = {
+                                seekProgress = it
+                                onSeekBarChange(it)
+                            },
+                            showPlay = showPlay,
+                            previousEnabled = previousEnabled,
+                            nextEnabled = nextEnabled,
+                            seekEnabled = seekEnabled,
+                            seekBarInteractionSource = seekBarInteractionSource,
+                            moreButtonOptions = moreButtonOptions,
+                            subtitleIndex = subtitleIndex,
+                            audioIndex = audioIndex,
+                            audioOptions = audioOptions,
+                            playbackSpeed = playbackSpeed,
+                            scale = scale,
+                            seekBarIntervals = uiConfig.preferences.playbackPreferences.seekBarSteps,
+                            sfwMode = uiConfig.sfwMode,
+                        )
+                        if (markers.isNotEmpty()) {
+                            Text(
+                                modifier =
+                                    Modifier
+                                        .padding(start = 8.dp)
+                                        .onFocusChanged {
+                                            if (it.isFocused) state = PlaybackControlsState.MARKERS
+                                        }.focusable()
+                                        .clickable { state = PlaybackControlsState.MARKERS },
+                                text = stringResource(DataType.MARKER.pluralStringId),
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.onBackground,
+                            )
+                        }
+                    }
+                }
+
+                PlaybackControlsState.MARKERS -> {
+                    val focusRequester = remember { FocusRequester() }
+                    LaunchedEffect(Unit) { focusRequester.tryRequestFocus() }
+                    Column(
+                        modifier =
+                            Modifier
+                                .padding(start = 8.dp)
+                                .fillMaxWidth(),
+                    ) {
                         Text(
                             modifier =
                                 Modifier
-                                    .padding(start = 8.dp)
                                     .onFocusChanged {
-                                        if (it.isFocused) showControls = false
+                                        if (it.isFocused) state = PlaybackControlsState.CONTROLS
                                     }.focusable()
-                                    .clickable { showControls = false },
+                                    .clickable { state = PlaybackControlsState.CONTROLS },
                             text = stringResource(DataType.MARKER.pluralStringId),
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onBackground,
                         )
-                    }
-                }
-            } else {
-                val focusRequester = remember { FocusRequester() }
-                LaunchedEffect(Unit) { focusRequester.tryRequestFocus() }
-                Column(
-                    modifier =
-                        Modifier
-                            .padding(start = 8.dp)
-                            .fillMaxWidth(),
-                ) {
-                    Text(
-                        modifier =
-                            Modifier
-                                .onFocusChanged {
-                                    if (it.isFocused) showControls = true
-                                }.focusable()
-                                .clickable { showControls = true },
-                        text = stringResource(DataType.MARKER.pluralStringId),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
 
-                    SceneMarkerBar(
-                        modifier =
-                            Modifier
-                                .focusRequester(focusRequester)
-                                .fillMaxWidth(),
-                        markers = markers,
-                        player = playerControls,
-                        controllerViewState = controllerViewState,
-                        uiConfig = uiConfig,
-                        onCardFocus = {},
-                    )
+                        SceneMarkerBar(
+                            modifier =
+                                Modifier
+                                    .focusRequester(focusRequester)
+                                    .fillMaxWidth(),
+                            markers = markers,
+                            player = playerControls,
+                            controllerViewState = controllerViewState,
+                            uiConfig = uiConfig,
+                            onCardFocus = {},
+                        )
+                    }
                 }
             }
         }
@@ -412,7 +494,12 @@ fun PlaybackOverlay(
                 }
             }
         }
-        AnimatedVisibility(seekPreviewEnabled && seekProgress >= 0 && (seekBarFocused || seekBarDragging)) {
+        AnimatedVisibility(
+            controllerViewState.controlsVisible &&
+                seekPreviewEnabled &&
+                seekProgress >= 0 &&
+                (seekBarFocused || seekBarDragging),
+        ) {
             LaunchedEffect(Unit) {
                 seekProgress = playerControls.currentPosition.toFloat() / playerControls.duration
             }
@@ -691,6 +778,7 @@ private fun PlaybackOverlayPreview() {
                     oCounter = 1,
                     captionUrl = "",
                     captions = listOf(),
+                    studioImageUrl = null,
                 ),
             captions = listOf(),
             markers =
@@ -759,4 +847,10 @@ private fun PlaybackOverlayPreview() {
             audioDecoder = "OMX.audio.decoder",
         )
     }
+}
+
+enum class PlaybackControlsState {
+    HIDDEN,
+    CONTROLS,
+    MARKERS,
 }
