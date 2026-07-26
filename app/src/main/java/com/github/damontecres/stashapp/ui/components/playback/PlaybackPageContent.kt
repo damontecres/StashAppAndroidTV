@@ -3,8 +3,6 @@ package com.github.damontecres.stashapp.ui.components.playback
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -944,119 +942,112 @@ fun PlaybackPageContent(
         }
 
         currentScene?.let {
-            AnimatedVisibility(
-                controllerViewState.controlsVisible,
-                Modifier,
-                slideInVertically { it },
-                slideOutVertically { it },
-            ) {
-                PlaybackOverlay(
-                    modifier =
-                        Modifier
-                            .padding(WindowInsets.systemBars.asPaddingValues())
-                            .fillMaxSize()
-                            .background(Color.Transparent),
-                    uiConfig = uiConfig,
-                    scene = currentScene.item,
-                    tracks = currentTracks,
-                    captions = captions,
-                    markers = markers,
-                    streamDecision = currentScene.streamDecision,
-                    oCounter = oCount,
-                    playerControls = PlayerControlsImpl(player),
-                    onPlaybackActionClick = {
-                        when (it) {
-                            PlaybackAction.CreateMarker -> {
-                                if (markersEnabled) {
-                                    playingBeforeDialog = player.isPlaying
-                                    player.pause()
-                                    controllerViewState.hideControls()
-                                    createMarkerPosition = player.currentPosition
-                                }
-                            }
-
-                            PlaybackAction.OCount -> {
-                                viewModel.incrementOCount(currentScene.item.id)
-                            }
-
-                            PlaybackAction.ShowDebug -> {
-                                showDebugInfo = !showDebugInfo
-                            }
-
-                            PlaybackAction.ShowVideoFilterDialog -> {
-                                showFilterDialog = true
-                            }
-
-                            PlaybackAction.ShowPlaylist -> {
-                                if (playlistPager != null && playlistPager.size > 1) {
-                                    showPlaylist = true
-                                    controllerViewState.hideControls()
-                                }
-                            }
-
-                            is PlaybackAction.ToggleCaptions -> {
-                                viewModel.toggleCaptions(it.index)
+            PlaybackOverlay(
+                modifier =
+                    Modifier
+                        .padding(WindowInsets.systemBars.asPaddingValues())
+                        .fillMaxSize()
+                        .background(Color.Transparent),
+                uiConfig = uiConfig,
+                scene = currentScene.item,
+                tracks = currentTracks,
+                captions = captions,
+                markers = markers,
+                streamDecision = currentScene.streamDecision,
+                oCounter = oCount,
+                playerControls = PlayerControlsImpl(player),
+                onPlaybackActionClick = {
+                    when (it) {
+                        PlaybackAction.CreateMarker -> {
+                            if (markersEnabled) {
+                                playingBeforeDialog = player.isPlaying
+                                player.pause()
                                 controllerViewState.hideControls()
-                            }
-
-                            is PlaybackAction.PlaybackSpeed -> {
-                                playbackSpeed = it.value
-                            }
-
-                            is PlaybackAction.Scale -> {
-                                contentScale = it.scale
-                            }
-
-                            is PlaybackAction.ToggleAudio -> {
-                                viewModel.toggleAudion(it.index)
-                            }
-
-                            PlaybackAction.ShowSceneDetails -> {
-                                showSceneDetails = true
+                                createMarkerPosition = player.currentPosition
                             }
                         }
-                    },
-                    onSeekBarChange = seekBarState::onValueChange,
-                    controllerViewState = controllerViewState,
-                    showPlay = playPauseState.showPlay,
-                    previousEnabled = previousState.isEnabled,
-                    nextEnabled = nextState.isEnabled,
-                    seekEnabled = seekBarState.isEnabled,
-                    seekPreviewEnabled = !isMarkerPlaylist,
-                    showDebugInfo = showDebugInfo,
-                    moreButtonOptions =
-                        MoreButtonOptions(
-                            buildMap {
-                                if (markersEnabled) {
-                                    put("Create Marker", PlaybackAction.CreateMarker)
-                                }
-                                if (playlistPager != null && playlistPager.size > 1) {
-                                    put("Show Playlist", PlaybackAction.ShowPlaylist)
-                                }
-                                if (useVideoFilters) {
-                                    put("Set video filters", PlaybackAction.ShowVideoFilterDialog)
-                                }
-                                put("Details", PlaybackAction.ShowSceneDetails)
-                            },
-                        ),
-                    subtitleIndex = subtitleIndex,
-                    audioIndex = audioIndex,
-                    audioOptions = audioOptions,
-                    playbackSpeed = playbackSpeed,
-                    scale = contentScale,
-                    playlistInfo =
-                        playlistPager?.let {
-                            PlaylistInfo(
-                                currentPlaylistIndex,
-                                it.size,
-                                player.mediaItemCount,
-                            )
+
+                        PlaybackAction.OCount -> {
+                            viewModel.incrementOCount(currentScene.item.id)
+                        }
+
+                        PlaybackAction.ShowDebug -> {
+                            showDebugInfo = !showDebugInfo
+                        }
+
+                        PlaybackAction.ShowVideoFilterDialog -> {
+                            showFilterDialog = true
+                        }
+
+                        PlaybackAction.ShowPlaylist -> {
+                            if (playlistPager != null && playlistPager.size > 1) {
+                                showPlaylist = true
+                                controllerViewState.hideControls()
+                            }
+                        }
+
+                        is PlaybackAction.ToggleCaptions -> {
+                            viewModel.toggleCaptions(it.index)
+                            controllerViewState.hideControls()
+                        }
+
+                        is PlaybackAction.PlaybackSpeed -> {
+                            playbackSpeed = it.value
+                        }
+
+                        is PlaybackAction.Scale -> {
+                            contentScale = it.scale
+                        }
+
+                        is PlaybackAction.ToggleAudio -> {
+                            viewModel.toggleAudion(it.index)
+                        }
+
+                        PlaybackAction.ShowSceneDetails -> {
+                            showSceneDetails = true
+                        }
+                    }
+                },
+                onSeekBarChange = seekBarState::onValueChange,
+                controllerViewState = controllerViewState,
+                showPlay = playPauseState.showPlay,
+                previousEnabled = previousState.isEnabled,
+                nextEnabled = nextState.isEnabled,
+                seekEnabled = seekBarState.isEnabled,
+                seekPreviewEnabled = !isMarkerPlaylist,
+                showDebugInfo = showDebugInfo,
+                moreButtonOptions =
+                    MoreButtonOptions(
+                        buildMap {
+                            if (markersEnabled) {
+                                put("Create Marker", PlaybackAction.CreateMarker)
+                            }
+                            if (playlistPager != null && playlistPager.size > 1) {
+                                put("Show Playlist", PlaybackAction.ShowPlaylist)
+                            }
+                            if (useVideoFilters) {
+                                put("Set video filters", PlaybackAction.ShowVideoFilterDialog)
+                            }
+                            put("Details", PlaybackAction.ShowSceneDetails)
                         },
-                    videoDecoder = videoDecoder,
-                    audioDecoder = audioDecoder,
-                    spriteData = spriteImageLoaded,
-                )
-            }
+                    ),
+                subtitleIndex = subtitleIndex,
+                audioIndex = audioIndex,
+                audioOptions = audioOptions,
+                playbackSpeed = playbackSpeed,
+                scale = contentScale,
+                playlistInfo =
+                    playlistPager?.let {
+                        PlaylistInfo(
+                            currentPlaylistIndex,
+                            it.size,
+                            player.mediaItemCount,
+                        )
+                    },
+                videoDecoder = videoDecoder,
+                audioDecoder = audioDecoder,
+                spriteData = spriteImageLoaded,
+            )
         }
         val dismiss = {
             createMarkerPosition = -1

@@ -549,6 +549,12 @@ val FullSceneData.asVideoSceneData: VideoSceneData
             ),
             sceneStreams.map { VideoSceneData.SceneStream(it.url, it.mime_type, it.label) },
             captions?.map { VideoSceneData.Caption("", it.caption) },
+            studio?.let {
+                VideoSceneData.Studio(
+                    studio.studioData.id,
+                    studio.studioData.image_path,
+                )
+            },
         )
 
 val FullSceneData.asMinimalSceneData: MinimalSceneData
