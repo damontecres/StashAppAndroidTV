@@ -1,6 +1,9 @@
 package com.github.damontecres.stashapp.ui.nav
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.animateIntOffsetAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
@@ -10,6 +13,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -17,6 +22,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -25,13 +31,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.NavigationDrawer
-import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import com.github.damontecres.stashapp.R
@@ -91,7 +97,26 @@ fun NavDrawer(
     val serverUrlInteractionSource = remember { MutableInteractionSource() }
     val serverFocused = serverUrlInteractionSource.collectIsFocusedAsState().value
 
-    NavigationDrawer(
+    val density = LocalDensity.current
+    val closedDrawerWidth = CollapsedDrawerItemWidth
+    val openDrawerWidth = ExpandedDrawerItemWidth
+    val offset by animateIntOffsetAsState(
+        targetValue =
+            IntOffset(
+                x =
+                    with(density) {
+                        if (drawerState.currentValue == DrawerValue.Open) (openDrawerWidth - closedDrawerWidth).roundToPx() else 0
+                    },
+                y = 0,
+            ),
+        animationSpec =
+            spring(
+                stiffness = DrawerAnimationStiffness,
+                visibilityThreshold = IntOffset.VisibilityThreshold,
+            ),
+    )
+
+    ModalNavigationDrawer(
         modifier =
             modifier
                 .focusRequester(drawerFocusRequester),
@@ -214,7 +239,9 @@ fun NavDrawer(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background),
+                        .offset {
+                            offset
+                        }.padding(start = closedDrawerWidth, end = 8.dp),
             )
         }
     }
