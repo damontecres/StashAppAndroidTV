@@ -2,7 +2,9 @@ package com.github.damontecres.stashapp.ui.pages
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -40,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
@@ -80,6 +84,7 @@ import com.github.damontecres.stashapp.ui.isPlayKeyUp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.CrossFadeFactory
 import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
+import com.github.damontecres.stashapp.ui.util.ScrollToTopBringIntoViewSpec
 import com.github.damontecres.stashapp.ui.util.getPlayDestinationForItem
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.FilterParser
@@ -220,7 +225,7 @@ fun MainPage(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomePage(
     server: StashServer,
@@ -238,67 +243,136 @@ fun HomePage(
 
     val listState = rememberLazyListState()
 
-    LaunchedEffect(focusedIndex) {
-        listState.animateScrollToItem(focusedRow)
-    }
+//    LaunchedEffect(focusedIndex) {
+//        listState.animateScrollToItem(focusedRow)
+//    }
 
+    val spacingPx = with(LocalDensity.current) { 32.dp.toPx() }
     Box(
         modifier =
             modifier
                 .fillMaxSize(),
     ) {
-        focusedItem?.let { item ->
-            val imageUrl =
-                when (item) {
-                    is SlimSceneData -> item.paths.screenshot
-                    is ImageData -> item.paths.image
-                    is PerformerData -> item.image_path
-                    is StudioData -> item.image_path
-                    is TagData -> item.image_path
-                    is MarkerData -> item.screenshot
-                    is GroupData -> item.front_image_path
-                    is GalleryData -> item.paths.cover
-                    else -> null
-                }
-            if (imageUrl.isNotNullOrBlank()) {
-                val gradientColor = MaterialTheme.colorScheme.background
-                AsyncImage(
-                    model =
-                        ImageRequest
-                            .Builder(LocalContext.current)
-                            .data(imageUrl)
-                            .transitionFactory(CrossFadeFactory(250.milliseconds))
-                            .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    alignment = Alignment.TopEnd,
+        HomePageImage(
+            focusedItem,
+            Modifier
+                .align(Alignment.TopEnd)
+                .fillMaxHeight(.85f),
+        )
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
+        ) {
+            MainPageHeader(
+                item = focusedItem,
+                uiConfig = uiConfig,
+                modifier = Modifier.fillMaxWidth(.7f),
+            )
+            val defaultBringIntoViewSpec = LocalBringIntoViewSpec.current
+            CompositionLocalProvider(
+                LocalBringIntoViewSpec provides
+                    ScrollToTopBringIntoViewSpec(
+                        spacingPx,
+                    ),
+            ) {
+                LazyColumn(
+                    state = listState,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(bottom = 72.dp),
                     modifier =
                         Modifier
-                            .align(Alignment.TopEnd)
-                            .fillMaxHeight(.85f)
-                            .drawWithContent {
-                                drawContent()
-                                drawRect(
-                                    Brush.verticalGradient(
-                                        colorStops =
-                                            arrayOf(
-                                                0f to Color.Transparent,
-                                                .9f to gradientColor,
-                                            ),
-                                        startY = 0f,
+                            .focusGroup()
+                            .focusRestorer(focusRequester),
+                ) {
+                    itemsIndexed(rows) { index, row ->
+                        CompositionLocalProvider(LocalBringIntoViewSpec provides defaultBringIntoViewSpec) {
+                            HomePageRow(
+                                uiConfig,
+                                row,
+                                itemOnClick,
+                                longClicker,
+                                onFocus = { idx, item ->
+                                    focusedIndex = RowColumn(index, idx)
+                                    focusedItem = item
+                                    focusedRow = index
+                                },
+                                rowFocusRequester = if (index == focusedIndex.row) focusRequester else null,
+                                modifier = Modifier,
+                            )
+                        }
+                    }
+                    item {
+                        ServerStatsRow(
+                            server = server,
+                            serverStats = serverStats,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 24.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HomePageImage(
+    item: Any?,
+    modifier: Modifier = Modifier,
+) {
+    val imageUrl =
+        when (item) {
+            is SlimSceneData -> item.paths.screenshot
+            is ImageData -> item.paths.image
+            is PerformerData -> item.image_path
+            is StudioData -> item.image_path
+            is TagData -> item.image_path
+            is MarkerData -> item.screenshot
+            is GroupData -> item.front_image_path
+            is GalleryData -> item.paths.cover
+            else -> null
+        }
+    if (imageUrl.isNotNullOrBlank()) {
+        val gradientColor = MaterialTheme.colorScheme.background
+        AsyncImage(
+            model =
+                ImageRequest
+                    .Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .transitionFactory(CrossFadeFactory(250.milliseconds))
+                    .build(),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.TopEnd,
+            modifier =
+                modifier
+                    .drawWithContent {
+                        drawContent()
+                        drawRect(
+                            Brush.verticalGradient(
+                                colorStops =
+                                    arrayOf(
+                                        0f to Color.Transparent,
+                                        .9f to gradientColor,
                                     ),
-                                )
-                                drawRect(
-                                    Brush.horizontalGradient(
-                                        colorStops =
-                                            arrayOf(
-                                                0f to Color.Transparent,
-                                                .8f to gradientColor,
-                                            ),
-                                        startX = size.width * .33f,
-                                        endX = 0f,
+                                startY = 0f,
+                            ),
+                        )
+                        drawRect(
+                            Brush.horizontalGradient(
+                                colorStops =
+                                    arrayOf(
+                                        0f to Color.Transparent,
+                                        .8f to gradientColor,
                                     ),
-                                )
+                                startX = size.width * .33f,
+                                endX = 0f,
+                            ),
+                        )
 //                                drawLine(
 //                                    color = Color.Red,
 //                                    start = Offset(x = 0f, y = size.height * .5f),
@@ -309,60 +383,8 @@ fun HomePage(
 //                                    start = Offset.Zero,
 //                                    end = Offset(x = size.width, y = size.height),
 //                                )
-                            },
-                )
-            }
-        }
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(12.dp),
-        ) {
-            focusedItem?.let { item ->
-                MainPageHeader(
-                    item = item,
-                    uiConfig = uiConfig,
-                    modifier = Modifier.fillMaxWidth(.7f),
-                )
-            }
-
-            LazyColumn(
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 72.dp),
-                modifier =
-                    Modifier
-                        .focusGroup()
-                        .focusRestorer { focusRequester },
-            ) {
-                itemsIndexed(rows) { index, row ->
-                    HomePageRow(
-                        uiConfig,
-                        row,
-                        itemOnClick,
-                        longClicker,
-                        onFocus = { idx, item ->
-                            focusedIndex = RowColumn(index, idx)
-                            focusedItem = item
-                            focusedRow = index
-                        },
-                        rowFocusRequester = if (index == focusedIndex.row) focusRequester else null,
-                        modifier = Modifier,
-                    )
-                }
-                item {
-                    ServerStatsRow(
-                        server = server,
-                        serverStats = serverStats,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(top = 24.dp),
-                    )
-                }
-            }
-        }
+                    },
+        )
     }
 }
 
