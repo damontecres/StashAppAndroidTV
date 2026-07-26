@@ -33,11 +33,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
@@ -75,17 +78,10 @@ import coil3.request.Disposable
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
-import com.github.damontecres.stashapp.api.fragment.GalleryData
-import com.github.damontecres.stashapp.api.fragment.GroupData
-import com.github.damontecres.stashapp.api.fragment.GroupRelationshipData
 import com.github.damontecres.stashapp.api.fragment.ImageData
-import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
-import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
@@ -105,6 +101,8 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 import kotlinx.coroutines.delay
 import java.util.EnumMap
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun ImageOverlay(
@@ -115,13 +113,14 @@ fun ImageOverlay(
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val showRatings = LocalGlobalContext.current.preferences.interfacePreferences.showRatingOnCards
 
     Box(modifier = modifier.fillMaxSize()) {
         if (showRatings && rating100 != null && rating100 > 0) {
             val ratingText = getRatingAsDecimalString(rating100, ratingsAsStars)
             val text = context.getString(R.string.stashapp_rating) + ": $ratingText"
-            val ratingColors = context.resources.obtainTypedArray(R.array.rating_colors)
+            val ratingColors = resources.obtainTypedArray(R.array.rating_colors)
             val bgColor = ratingColors.getColor(rating100 / 5, android.graphics.Color.WHITE)
             ratingColors.recycle()
 
@@ -256,11 +255,13 @@ fun RootCard(
     extraImageUrls: List<String> = listOf(),
 ) {
     val context = LocalContext.current
-    val videoDelay = uiConfig.preferences.interfacePreferences.cardPreviewDelayMs
+    val videoDelay =
+        remember(uiConfig.preferences.interfacePreferences.cardPreviewDelayMs) {
+            uiConfig.preferences.interfacePreferences.cardPreviewDelayMs.milliseconds
+        }
 
     val focused = interactionSource.collectIsFocusedAsState().value
     var focusedAfterDelay by remember { mutableStateOf(false) }
-    var expanded by remember { mutableStateOf(false) }
 
     val playVideoPreviews = uiConfig.preferences.interfacePreferences.playVideoPreviews
 
@@ -268,11 +269,7 @@ fun RootCard(
         LaunchedEffect(Unit) {
             if (uiConfig.playSoundOnFocus) playOnClickSound(context)
             delay(videoDelay)
-            if (focused) {
-                focusedAfterDelay = true
-            } else {
-                focusedAfterDelay = false
-            }
+            focusedAfterDelay = true
         }
         if (extraImageUrls.isNotEmpty()) {
             val disposable =
@@ -389,7 +386,7 @@ fun RootCard(
                                 context.imageLoader.enqueue(
                                     ImageRequest.Builder(context).data(extraImageUrls[idx]).build(),
                                 )
-                            delay(2000L)
+                            delay(2.seconds)
                         }
                     }
                     DisposableEffect(Unit) {
@@ -492,171 +489,6 @@ fun CardImage(
     }
 }
 
-@Composable
-fun StashCard(
-    uiConfig: ComposeUiConfig,
-    item: Any?,
-    itemOnClick: (item: Any) -> Unit,
-    longClicker: LongClicker<Any>,
-    getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
-    modifier: Modifier = Modifier,
-    cardContext: CardContext = CardContext.None,
-) {
-    when (item) {
-        is SlimSceneData? -> {
-            SceneCard(
-                uiConfig,
-                item,
-                onClick = { item?.let(itemOnClick) },
-                longClicker,
-                getFilterAndPosition,
-                modifier,
-                cardContext = cardContext as? CardContext.SceneCardContext,
-            )
-        }
-
-        is FullSceneData? -> {
-            SceneCard(
-                uiConfig,
-                item?.asSlimeSceneData,
-                onClick = { item?.let(itemOnClick) },
-                longClicker,
-                getFilterAndPosition,
-                modifier,
-                cardContext = cardContext as? CardContext.SceneCardContext,
-            )
-        }
-
-        is PerformerData? -> {
-            PerformerCard(
-                uiConfig,
-                item,
-                onClick = { item?.let(itemOnClick) },
-                longClicker,
-                getFilterAndPosition,
-                modifier,
-            )
-        }
-
-        is ImageData? -> {
-            ImageCard(
-                uiConfig,
-                item,
-                onClick = { item?.let(itemOnClick) },
-                longClicker,
-                getFilterAndPosition,
-                modifier,
-            )
-        }
-
-        is GalleryData? -> {
-            GalleryCard(
-                uiConfig,
-                item,
-                onClick = { item?.let(itemOnClick) },
-                longClicker,
-                getFilterAndPosition,
-                modifier,
-            )
-        }
-
-        is MarkerData? -> {
-            MarkerCard(
-                uiConfig,
-                item,
-                onClick = { item?.let(itemOnClick) },
-                longClicker,
-                getFilterAndPosition,
-                modifier,
-            )
-        }
-
-        is GroupData? -> {
-            GroupCard(
-                uiConfig,
-                item,
-                onClick = { item?.let(itemOnClick) },
-                longClicker,
-                getFilterAndPosition,
-                modifier,
-                cardContext = cardContext as? CardContext.GroupCardContext,
-            )
-        }
-
-        is GroupRelationshipData? -> {
-            GroupCard(
-                uiConfig,
-                item?.group,
-                onClick = { item?.let(itemOnClick) },
-                longClicker,
-                getFilterAndPosition,
-                modifier,
-                subtitle = item?.description,
-            )
-        }
-
-        is StudioData? -> {
-            StudioCard(
-                uiConfig,
-                item,
-                onClick = { item?.let(itemOnClick) },
-                longClicker,
-                getFilterAndPosition,
-                modifier,
-            )
-        }
-
-        is TagData? -> {
-            TagCard(
-                uiConfig,
-                item,
-                onClick = { item?.let(itemOnClick) },
-                longClicker,
-                getFilterAndPosition,
-                modifier,
-            )
-        }
-
-        is FilterArgs -> {
-            ViewAllCard(
-                filter = item,
-                itemOnClick = itemOnClick,
-                longClicker = longClicker,
-                getFilterAndPosition = getFilterAndPosition,
-                uiConfig = uiConfig,
-                modifier = modifier,
-            )
-        }
-
-        is CreateNew -> {
-            RootCard(
-                item = item,
-                title = AnnotatedString(StashAction.CREATE_NEW.actionName),
-                subtitle = {
-                    Text(text = item.name.replaceFirstChar(Char::titlecase))
-                },
-                uiConfig = uiConfig,
-                imageWidth = dataTypeImageWidth(item.dataType).dp / 2,
-                imageHeight = dataTypeImageHeight(item.dataType).dp / 2,
-                imageContent = {
-                    Image(
-                        painter = painterResource(id = R.drawable.baseline_add_box_24),
-                        contentDescription = null,
-                    )
-                },
-                onClick = { itemOnClick.invoke(item) },
-                longClicker = longClicker,
-                getFilterAndPosition = getFilterAndPosition,
-                modifier = modifier,
-            )
-        }
-
-        else -> {
-            throw UnsupportedOperationException("Item with class ${item?.javaClass} not supported.")
-        }
-    }
-}
-
 /**
  * Context about where this card is being shown to alter its display
  */
@@ -672,4 +504,96 @@ interface CardContext {
         // If listing groups that a scene is in, this is the scene's index
         val indexInGroup: Int?,
     ) : CardContext
+
+    data class PerformerCardContext(
+        val ageOnDate: String?,
+    ) : CardContext
+}
+
+@Composable
+fun StashCard(
+    uiConfig: ComposeUiConfig,
+    item: Any?,
+    itemOnClick: (item: Any) -> Unit,
+    longClicker: LongClicker<Any>,
+    getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
+    modifier: Modifier = Modifier,
+    cardContext: CardContext = CardContext.None,
+) {
+    val res = LocalResources.current
+
+    val item =
+        remember(item) {
+            when (item) {
+                is FullSceneData -> item.asSlimeSceneData
+                else -> item
+            }
+        }
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val focused by interactionSource.collectIsFocusedAsState()
+
+    val imageSize = remember(item, cardContext) { imageSize(item, cardContext) }
+
+    RootCard(
+        item = item,
+        title = remember(res, item, cardContext) { cardTitle(res, item, cardContext) },
+        subtitle = {
+            CardSubtitle(
+                item = item,
+                focused = focused,
+                modifier = Modifier,
+                cardContext = cardContext,
+            )
+        },
+        description = { focused ->
+            CardDescription(item, uiConfig, focused, Modifier, cardContext)
+        },
+        uiConfig = uiConfig,
+        imageWidth = imageSize.width,
+        imageHeight = imageSize.height,
+        imageUrl = remember(item) { imageUrl(item) },
+        videoUrl =
+            when (item) {
+                is SlimSceneData -> item.paths.preview
+                is FullSceneData -> item.paths.preview
+                is ImageData -> item.paths.preview
+                else -> null
+            },
+        imageContent =
+            when (item) {
+                is FilterArgs -> {
+                    {
+                        Image(
+                            imageVector = ImageVector.vectorResource(id = R.drawable.baseline_camera_indoor_48),
+                            contentDescription = "",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+
+                is CreateNew -> {
+                    {
+                        Image(
+                            painter = painterResource(id = R.drawable.baseline_add_box_24),
+                            contentDescription = null,
+                        )
+                    }
+                }
+
+                else -> {
+                    null
+                }
+            },
+        imageOverlay = {
+            CardImageOverlay(item, uiConfig, Modifier, cardContext)
+        },
+        onClick = { if (item != null) itemOnClick.invoke(item) },
+        longClicker = longClicker,
+        getFilterAndPosition = getFilterAndPosition,
+        interactionSource = interactionSource,
+        contentPadding = if (item is StudioData) PaddingValues(8.dp) else PaddingValues(),
+        modifier = modifier,
+    )
 }

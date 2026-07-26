@@ -338,7 +338,6 @@ fun StashGrid(
                 if (isNotTvDevice && orientation == Configuration.ORIENTATION_LANDSCAPE) 1 else 0
         ).toInt()
 
-    val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
     val filterArgs = pager.filter
     val firstFocus = remember { FocusRequester() }
@@ -346,6 +345,10 @@ fun StashGrid(
     var previouslyFocusedIndex by rememberSaveable { mutableIntStateOf(0) }
     var focusedIndex by rememberSaveable { mutableIntStateOf(initialPosition) }
     val currentFocusedIndex by rememberUpdatedState(focusedIndex)
+    val gridState =
+        rememberLazyGridState(
+            initialFirstVisibleItemIndex = focusedIndex,
+        )
 
     // Tracks whether the very first requestFocus has run, if the caller isn't requesting focus,
     // then the first time will never run

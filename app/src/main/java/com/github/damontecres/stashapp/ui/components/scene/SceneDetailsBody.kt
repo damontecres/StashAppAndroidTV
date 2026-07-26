@@ -15,8 +15,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.CardContext
-import com.github.damontecres.stashapp.ui.cards.GroupCard
-import com.github.damontecres.stashapp.ui.cards.PerformerCard
+import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.FocusPair
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
@@ -76,10 +75,10 @@ fun LazyListScope.sceneDetailsBody(
                 itemContent = { uiConfig, item, itemOnClick, longClicker, getFilterAndPosition, cardModifier ->
                     val index =
                         remember { scene.groups.firstOrNull { it.group.groupData.id == item.id }?.scene_index }
-                    GroupCard(
+                    StashCard(
                         uiConfig = uiConfig,
                         item = item,
-                        onClick = {
+                        itemOnClick = {
                             itemOnClick.onClick(
                                 item,
                                 getFilterAndPosition?.invoke(item),
@@ -110,10 +109,10 @@ fun LazyListScope.sceneDetailsBody(
                 },
                 focusPair = createFocusPair(2),
                 itemContent = { uiConfig, item, itemOnClick, longClicker, getFilterAndPosition, cardModifier ->
-                    PerformerCard(
+                    StashCard(
                         uiConfig = uiConfig,
                         item = item,
-                        onClick = {
+                        itemOnClick = {
                             itemOnClick.onClick(
                                 item,
                                 getFilterAndPosition?.invoke(item),
@@ -121,7 +120,7 @@ fun LazyListScope.sceneDetailsBody(
                         },
                         longClicker = longClicker,
                         getFilterAndPosition = getFilterAndPosition,
-                        ageOnDate = scene.date,
+                        cardContext = CardContext.PerformerCardContext(scene.date),
                         modifier = cardModifier,
                     )
                 },
