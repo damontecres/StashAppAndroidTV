@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
@@ -533,10 +534,12 @@ fun SceneDetails(
                                     navigationManager = navigationManager,
                                     scene = scene,
                                     markers = markers,
+                                    studio = studio,
                                     playOnClick = playOnClick,
                                     showDurationDialog = { showMarkerDurationDialog = true },
                                     detailsOnClick = { showDetailsDialog = true },
                                     streamChoice = uiConfig.preferences.playbackPreferences.streamChoice,
+                                    onNavigateTo = navigationManager::navigate,
                                 ),
                         )
                 },
@@ -655,10 +658,12 @@ fun moreOptionsItems(
     navigationManager: NavigationManager,
     scene: FullSceneData,
     markers: List<MarkerData>,
+    studio: StudioData?,
     streamChoice: StreamChoice,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     showDurationDialog: () -> Unit,
     detailsOnClick: () -> Unit,
+    onNavigateTo: (Destination) -> Unit,
 ): List<DialogItem> =
     buildList {
         add(
@@ -711,6 +716,16 @@ fun moreOptionsItems(
                     } else {
                         playAllMarkers(navigationManager, scene.id, 0)
                     }
+                },
+            )
+        }
+        if (studio != null) {
+            add(
+                DialogItem(
+                    context.getString(R.string.go_to_studio),
+                    Icons.Default.ArrowForward,
+                ) {
+                    onNavigateTo(Destination.Item(DataType.STUDIO, studio.id))
                 },
             )
         }
