@@ -84,6 +84,7 @@ import java.time.format.DateTimeParseException
 import java.util.Locale
 import javax.net.ssl.SSLHandshakeException
 import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -416,6 +417,14 @@ fun CharSequence?.isNotNullOrBlank(): Boolean {
         returns(true) implies (this@isNotNullOrBlank != null)
     }
     return !this.isNullOrBlank()
+}
+
+@OptIn(ExperimentalContracts::class)
+inline fun <R> CharSequence?.letIfNotBlank(block: (CharSequence) -> R): R? {
+    contract {
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+    }
+    return if (this.isNotNullOrBlank()) block(this) else null
 }
 
 /**
