@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.BuildConfig
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.di.StandardHttpClient
 import com.github.damontecres.stashapp.ui.pages.DownloadCallback
@@ -26,6 +27,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -93,16 +96,6 @@ class UpdateChecker(
 
     suspend fun getLatestRelease(updateUrl: String): Release? {
         return withContext(Dispatchers.IO) {
-            val preferredAsset =
-                if (PreferenceManager
-                        .getDefaultSharedPreferences(context)
-                        .getBoolean("updatePreferRelease", true)
-                ) {
-                    RELEASE_ASSET_NAME
-                } else {
-                    DEBUG_ASSET_NAME
-                }
-
             val request =
                 Request
                     .Builder()
@@ -120,14 +113,7 @@ class UpdateChecker(
                     val downloadUrl =
                         result.jsonObject["assets"]
                             ?.jsonArray
-                            ?.firstOrNull { asset ->
-                                val assetName =
-                                    asset.jsonObject["name"]?.jsonPrimitive?.contentOrNull
-                                assetName == ASSET_NAME || assetName == preferredAsset
-                            }?.jsonObject
-                            ?.get("browser_download_url")
-                            ?.jsonPrimitive
-                            ?.contentOrNull
+                            ?.let { assets -> getDownloadUrl(assets, BuildConfig.DEBUG) }
                     if (version != null) {
                         val notes =
                             if (body.isNotNullOrBlank()) {
@@ -262,9 +248,7 @@ class UpdateChecker(
     }
 
     companion object {
-        private const val ASSET_NAME = "StashAppAndroidTV.apk"
-        private const val DEBUG_ASSET_NAME = "StashAppAndroidTV-debug.apk"
-        private const val RELEASE_ASSET_NAME = "StashAppAndroidTV-release.apk"
+        private const val ASSET_NAME = "StashAppAndroidTV"
 
         private const val APK_MIME_TYPE = "application/vnd.android.package-archive"
 
@@ -334,6 +318,37 @@ class UpdateChecker(
                             Manifest.permission.READ_EXTERNAL_STORAGE,
                         ) == PackageManager.PERMISSION_GRANTED
                 )
+
+        fun getDownloadUrl(
+            assets: JsonArray,
+            debug: Boolean,
+            supportedAbis: List<String> = Build.SUPPORTED_ABIS.toList(),
+        ): String? {
+            val abiSuffix = supportedAbis.firstOrNull().let { if (it != null) "-$it" else "" }
+            val releaseSuffix = if (debug) "-debug" else "-release"
+            val preferredNames =
+                buildList {
+                    add("$ASSET_NAME${releaseSuffix}$abiSuffix.apk")
+                    add("$ASSET_NAME$releaseSuffix.apk")
+                    if (!debug) add("$ASSET_NAME$abiSuffix.apk")
+                    if (!debug) add("$ASSET_NAME.apk")
+                }
+            var preferredAsset: JsonObject? = null
+            outer@ for (name in preferredNames) {
+                for (asset in assets) {
+                    val assetName =
+                        asset.jsonObject["name"]?.jsonPrimitive?.contentOrNull
+                    if (name == assetName) {
+                        preferredAsset = asset.jsonObject
+                        break@outer
+                    }
+                }
+            }
+            return preferredAsset
+                ?.get("browser_download_url")
+                ?.jsonPrimitive
+                ?.contentOrNull
+        }
     }
 }
 
