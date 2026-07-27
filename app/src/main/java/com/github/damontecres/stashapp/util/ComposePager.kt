@@ -32,7 +32,9 @@ class ComposePager<T : StashData>(
 
     suspend fun init() {
         totalCount = source.getCount()
-        getBlocking(0)
+        if (totalCount > 0) {
+            getBlocking(0)
+        }
     }
 
     override operator fun get(index: Int): T? {

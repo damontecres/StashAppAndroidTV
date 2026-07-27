@@ -12,7 +12,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
@@ -59,14 +58,13 @@ fun FilterPage(
     ) {
         val title = pager?.filter?.name ?: stringResource(initialFilter.dataType.pluralStringId)
         if (onUpdateTitle == null) {
-            ProvideTextStyle(MaterialTheme.typography.displayMedium) {
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = title,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-            }
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = title,
+                style = MaterialTheme.typography.displaySmall,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
         } else {
             LaunchedEffect(title) { onUpdateTitle.invoke(AnnotatedString(title)) }
         }
