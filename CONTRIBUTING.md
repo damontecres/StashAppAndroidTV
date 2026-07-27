@@ -27,3 +27,13 @@ If you get compile errors such as `java.nio.file.NoSuchFileException: .../StashA
 ### Development
 
 See [Development](DEVELOPMENT.md) for more information on the app's architecture.
+
+## AI/LLM Policy
+
+Use AI or LLM is prohibited for any direct communications such as creating bug reports or feature requests, commenting on issues/PRS, and pull request descriptions. Please use your own words for this! An exception is made for LLM assisted translations into English, but this must be disclosed.
+
+AI/LLM assisted code contributions are permitted, but the author must understand and be able to explain the code changes in their own words. PR authors must
+
+Code contributions must disclose the usage any of AI/LLM assistance and as stated above, the pull request description must be written _without_ AI assistance.
+
+The project maintainers always have the final say to accept or reject any issues and/or pull requests, regardless of AI/LLM usage or not.
