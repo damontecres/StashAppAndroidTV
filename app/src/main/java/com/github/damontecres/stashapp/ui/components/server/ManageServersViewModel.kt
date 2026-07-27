@@ -21,6 +21,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.TRUST_ALL_CERTS
 import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.launchDefault
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.models.EqualityMutableLiveData
@@ -291,7 +292,7 @@ class ManageServersViewModel(
     }
 
     fun switchServer(server: StashServer) {
-        viewModelScope.launch {
+        viewModelScope.launchDefault {
             serverRepository.setCurrentStashServer(server)
             navigationManager.reloadMain()
         }

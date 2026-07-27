@@ -75,6 +75,7 @@ import com.github.damontecres.stashapp.di.server.ServerPreferences
 import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.services.ItemClicker
 import com.github.damontecres.stashapp.di.services.ServerLogger
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -195,10 +196,11 @@ class MainPageViewModel(
 
 @Composable
 fun MainPage(
+    destination: Destination.Main,
     uiConfig: ComposeUiConfig,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
-    viewModel: MainPageViewModel = koinViewModel(),
+    viewModel: MainPageViewModel = koinViewModel(key = destination.id.toString()),
 ) {
     val context = LocalContext.current
 

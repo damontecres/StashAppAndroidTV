@@ -1,6 +1,10 @@
 package com.github.damontecres.stashapp.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -115,7 +119,9 @@ fun TabPage(
             )
         }
         AnimatedVisibility(
-            showTabRow,
+            visible = showTabRow,
+            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
             modifier = Modifier.align(Alignment.CenterHorizontally),
         ) {
             if (isTvDevice) {

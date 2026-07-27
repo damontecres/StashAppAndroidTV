@@ -231,7 +231,7 @@ fun ApplicationContent(
 
                                     is DrawerPage.DataTypePage -> {
                                         Destination.Filter(
-                                            currentServer.serverPreferences.defaultFilters[page.dataType]!!,
+                                            currentServer.serverPreferences.defaultFilters[page.dataType]!!.withResolvedRandom(),
                                         )
                                     }
                                 }

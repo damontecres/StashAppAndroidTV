@@ -161,6 +161,7 @@ fun DestinationContent(
 
         is Destination.Main -> {
             MainPage(
+                destination = destination,
                 uiConfig = composeUiConfig,
                 longClicker = longClicker,
                 modifier = modifier,
