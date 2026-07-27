@@ -36,7 +36,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -366,6 +365,7 @@ fun StashGrid(
                 if (isNotTvDevice && orientation == Configuration.ORIENTATION_LANDSCAPE) 1 else 0
         ).toInt()
 
+    val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
     val filterArgs = pager.filter
     val firstFocus = remember { FocusRequester() }
@@ -373,11 +373,6 @@ fun StashGrid(
     var previouslyFocusedIndex by rememberSaveable { mutableIntStateOf(0) }
     var focusedIndex by rememberSaveable { mutableIntStateOf(initialPosition) }
     var focusedIndexOnExit by rememberSaveable { mutableIntStateOf(-1) }
-    val currentFocusedIndex by rememberUpdatedState(focusedIndex)
-    val gridState =
-        rememberLazyGridState(
-            initialFirstVisibleItemIndex = focusedIndex,
-        )
 
     // Tracks whether the very first requestFocus has run, if the caller isn't requesting focus,
     // then the first time will never run
@@ -590,9 +585,17 @@ fun StashGrid(
                         Modifier
                             .fillMaxSize()
                             .focusGroup()
+                            .focusRequester(gridFocusRequester)
                             .focusProperties {
+                                onExit = {
+                                    // Leaving the grid, so "forget" the position
+                                    focusedIndexOnExit = focusedIndex
+                                    focusedIndex = -1
+                                    savedFocusedIndex = -1
+                                }
                                 onEnter = {
-                                    if (currentFocusedIndex < 0 && gridState.firstVisibleItemIndex <= startPosition) {
+                                    focusedIndexOnExit = -1
+                                    if (focusedIndex < 0 && gridState.firstVisibleItemIndex <= startPosition) {
                                         focusedIndex = startPosition
                                         firstFocus.tryRequestFocus()
                                     }
@@ -601,15 +604,36 @@ fun StashGrid(
                 ) {
                     items(pager.size) { index ->
                         val mod =
-                            if ((index == currentFocusedIndex) or (currentFocusedIndex < 0 && index == 0)) {
+                            if (index == savedFocusedIndex) {
+                                if (DEBUG) {
+                                    Log.d(
+                                        TAG,
+                                        "Adding firstFocus to itemClickedIndex $index",
+                                    )
+                                }
+                                Modifier.focusRequester(firstFocus)
+                            } else if ((index == focusedIndex) or (focusedIndex < 0 && index == 0)) {
                                 if (DEBUG) Log.d(TAG, "Adding firstFocus to focusedIndex $index")
-                                Modifier
-                                    .focusRequester(firstFocus)
-                                    .focusRequester(gridFocusRequester)
+                                Modifier.focusRequester(firstFocus)
                             } else {
                                 Modifier
                             }
                         val item = pager[index]
+                        if (!hasRequestFocusRun && requestFocus && initialPosition >= 0) {
+                            // On very first composition, if parent wants to focus on the grid, do so
+                            LaunchedEffect(Unit) {
+                                if (DEBUG) {
+                                    Log.d(
+                                        TAG,
+                                        "non-null focus on startPosition=$startPosition, from initialPosition=$initialPosition",
+                                    )
+                                }
+                                // focus on startPosition
+                                gridState.scrollToItem(startPosition, 0)
+                                firstFocus.tryRequestFocus()
+                                hasRequestFocusRun = true
+                            }
+                        }
                         StashCard(
                             modifier =
                                 mod
@@ -625,12 +649,15 @@ fun StashGrid(
                                             // Focused, so set that up
                                             focusOn(index)
                                             positionCallback?.invoke(columns, index)
+                                        } else if (focusedIndex == index) {
+                                            savedFocusedIndex = index
+                                            // Was focused on this, so mark unfocused
+                                            focusedIndex = -1
                                         }
                                     },
                             uiConfig = uiConfig,
                             item = item,
                             itemOnClick = {
-                                focusOn(index)
                                 itemOnClick.onClick(
                                     it,
                                     FilterAndPosition(filterArgs, index),
