@@ -1,0 +1,49 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "groupName": "Dependencies",
+      "matchDepTypes": ["dependencies"],
+      "separateMultipleMajor": true
+    },
+    {
+      "groupName": "Github Actions",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true
+    },
+    {
+      "groupName": "Android TV Dependencies",
+      "matchPackageNames": [
+        "androidx.tv:**"
+      ]
+    },
+    {
+      "groupName": "Androidx Media3",
+      "matchPackageNames": [
+        "androidx.media3:**"
+      ]
+    },
+    {
+      "groupName": "AGP",
+      "matchPackageNames": [
+        "com.android.application**"
+      ]
+    },
+    {
+      "groupName": "Kotlin",
+      "matchPackageNames": [
+        "org.jetbrains.kotlin**"
+      ]
+    },
+    {
+      "groupName": "Internal dependencies",
+      "matchPackageNames": [
+        "com.github.damontecres.wholphin**"
+      ],
+      "enabled": true
+    }
+  ]
+}
