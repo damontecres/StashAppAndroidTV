@@ -43,7 +43,7 @@
       "matchPackageNames": [
         "com.github.damontecres.wholphin**"
       ],
-      "enabled": true
+      "enabled": false
     }
   ]
 }
