@@ -77,6 +77,7 @@ import com.github.damontecres.stashapp.playback.TrackSupport
 import com.github.damontecres.stashapp.playback.TrackSupportReason
 import com.github.damontecres.stashapp.playback.TrackType
 import com.github.damontecres.stashapp.playback.TranscodeDecision
+import com.github.damontecres.stashapp.presenters.StashPresenter.Companion.isDefaultUrl
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.ui.AppColors
@@ -88,7 +89,6 @@ import com.github.damontecres.stashapp.ui.cards.RootCard
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
 import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
-import com.github.damontecres.stashapp.ui.isDefaultUrl
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.CoilPreviewTransformation
 import com.github.damontecres.stashapp.util.defaultCardHeight
