@@ -345,6 +345,7 @@ dependencies {
         implementation(libs.wholphin.extensions.mpv)
     } else {
         logger.warn("libMPV was NOT found")
+        implementation(project(":app:mpv-stub"))
     }
 
     testImplementation(libs.androidx.test.core.ktx)

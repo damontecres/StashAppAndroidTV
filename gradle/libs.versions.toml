@@ -54,6 +54,8 @@ zoomlayout = "1.9.0"
 slf4j2Timber = "1.2"
 timber = "5.0.1"
 wholphin-extensions = "0.2.1"
+espressoCore = "3.7.0"
+appcompat = "1.7.1"
 
 [libraries]
 acra-dialog = { module = "ch.acra:acra-dialog", version.ref = "acra" }
@@ -82,6 +84,7 @@ androidx-leanback-tab = { module = "androidx.leanback:leanback-tab", version.ref
 androidx-leanback-grid = { module = "androidx.leanback:leanback-grid", version.ref = "leanback-grid" }
 androidx-media3-effect = { module = "androidx.media3:media3-effect", version.ref = "androidx-media3" }
 androidx-media3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "androidx-media3" }
+androidx-media3-common = { module = "androidx.media3:media3-common", version.ref = "androidx-media3" }
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "androidx-media3" }
 androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "androidx-media3" }
 androidx-media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "androidx-media3" }
@@ -156,3 +159,4 @@ kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization"
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobuf" }
+android-library = { id = "com.android.library", version.ref = "android-application" }
