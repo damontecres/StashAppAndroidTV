@@ -89,7 +89,7 @@ Issues and pull requests are always welcome! UI/UX improvements are especially d
 
 Please check before submitting that your issue or pull request is not a duplicate.
 
-If you plan to submit a pull request, please read the [contributing guide](CONTRIBUTING.md) before submitting!
+If you plan to submit a pull request, please read the [contributing guide](CONTRIBUTING.md), including the AI/LLM policy, before submitting!
 
 ### Contributors
 

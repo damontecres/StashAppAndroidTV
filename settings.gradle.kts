@@ -28,3 +28,4 @@ include(":app")
 
 gradle.startParameter.excludedTaskNames.addAll(listOf(":buildSrc:testClasses"))
 include(":apollo-compiler")
+include(":app:mpv-stub")

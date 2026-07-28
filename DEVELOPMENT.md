@@ -78,6 +78,16 @@ The app uses [media3's `ExoPlayer`](https://github.com/androidx/media) for playb
 
 In the legacy UI, the `PlaybackFragment` abstract class handles most of the playback logic.
 
+#### Extensions
+
+There are several native components for extra playback compatibility. This includes Media3 ffmpeg/av1 decoders and `libmpv`. These extensions are not required to build the app, but without them some functionality will not work.
+
+If you want to include these in a local build, see the [instructions here](https://github.com/damontecres/wholphin-extensions?tab=readme-ov-file#usage) for configuring the repository.
+
+You can also build the extensions locally from https://github.com/damontecres/wholphin-extensions and include them in `app/libs`. The gradle build dependency resolution prefers these local files over fetching from the remote maven registry.
+
+Finally, if no `wholphin-mpv` implementation is found, `:app:mpv-stub` will be used. This allows the app to compile, but any runtime usage of MPV will throw an exception.
+
 ### Image loading
 
 The app uses [Coil](https://coil-kt.github.io/coil/) for image loading for composables.

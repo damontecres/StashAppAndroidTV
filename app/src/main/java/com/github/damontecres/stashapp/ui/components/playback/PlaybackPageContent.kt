@@ -1194,7 +1194,7 @@ class PlaybackKeyHandler(
         var result = true
         if (!controlsEnabled) {
             result = false
-        } else if (it.type == KeyEventType.KeyDown) {
+        } else if (it.type == KeyEventType.KeyDown && !controllerViewState.controlsVisible) {
             if (nextWithUpDown && (it.key == Key.DirectionUp || it.key == Key.DirectionDown)) {
                 val repeatCount = it.nativeKeyEvent.repeatCount
                 if (keyDownKey == null) {

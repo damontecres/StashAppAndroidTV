@@ -20,7 +20,7 @@ kermit = "2.1.0"
 markwon-core = "4.6.2"
 core-ktx = "1.18.0"
 junit = "4.13.2"
-kotlin = "2.4.0"
+kotlin = "2.4.10"
 kotlinx-coroutines-android = "1.11.0"
 kotlinx-serialization = "1.11.0"
 ksp = "2.3.9"
@@ -79,6 +79,7 @@ androidx-test-ext-truth = { module = "androidx.test.ext:truth", version.ref = "a
 androidx-leanback = { module = "androidx.leanback:leanback", version.ref = "leanback" }
 androidx-media3-effect = { module = "androidx.media3:media3-effect", version.ref = "androidx-media3" }
 androidx-media3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "androidx-media3" }
+androidx-media3-common = { module = "androidx.media3:media3-common", version.ref = "androidx-media3" }
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "androidx-media3" }
 androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "androidx-media3" }
 androidx-media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "androidx-media3" }
@@ -161,5 +162,6 @@ kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization"
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobuf" }
+android-library = { id = "com.android.library", version.ref = "android-application" }
 koin-compiler = { id = "io.insert-koin.compiler.plugin", version.ref = "koin-plugin" }
 aboutLibraries = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutLibraries" }
