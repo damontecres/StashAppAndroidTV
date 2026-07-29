@@ -18,9 +18,6 @@ class SetupNavigationManager(
     fun navigateTo(destination: SetupDestination) {
         backStack[0] = destination
         log()
-        if (destination !is SetupDestination.AppContent) {
-            navigationManager.reloadMain()
-        }
     }
 
     private fun log() {

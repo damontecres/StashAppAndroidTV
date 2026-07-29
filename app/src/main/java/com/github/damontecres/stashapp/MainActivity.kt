@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -40,7 +41,10 @@ import com.github.damontecres.stashapp.ui.nav.SetupContent
 import com.github.damontecres.stashapp.ui.readThemeJson
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchDefault
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import org.koin.android.ext.android.get
@@ -58,6 +62,8 @@ class MainActivity : AppCompatActivity() {
     private val preferences: DataStore<StashPreferences> by inject()
 
     private val httpClient: OkHttpClient = get(qualifier<AuthHttpClient>())
+
+    private var hasPin: Boolean = false
 
     private val json =
         Json {
@@ -81,6 +87,11 @@ class MainActivity : AppCompatActivity() {
         } else {
             navigationManager.backStack = NavBackStack(Destination.Main())
         }
+        lifecycleScope.launch {
+            preferences.data
+                .map { it.pinPreferences.pin.isNotNullOrBlank() }
+                .collectLatest { hasPin = it }
+        }
         showContent()
     }
 
@@ -88,6 +99,12 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         Logger.i { "onResume" }
         viewModel.appStart(true)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Logger.i { "onPause" }
+        if (hasPin) setupNavigationManager.navigateTo(SetupDestination.PinRequired)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
