@@ -18,10 +18,10 @@ import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
-import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.CreateFilter
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.LoadingPage
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridControls
 import com.github.damontecres.stashapp.ui.tryRequestFocus
@@ -110,7 +110,7 @@ fun FilterPage(
                 gridFocusRequester = gridFocusRequester,
             )
         } else {
-            CircularProgress()
+            LoadingPage(modifier)
         }
     }
 }

@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.ui.nav
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,6 +17,8 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import androidx.tv.material3.DrawerValue
+import androidx.tv.material3.rememberDrawerState
 import co.touchlab.kermit.Logger
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
@@ -114,18 +117,22 @@ fun ApplicationContent(
         }
 
     val pages =
-        buildList {
-            add(DrawerPage.SearchPage)
-            add(DrawerPage.HomePage)
-            addAll(
-                DataType.entries
-                    .filter { it in currentServer.serverPreferences.menuItems }
-                    .map { DrawerPage.DataTypePage(it) },
-            )
-            add(DrawerPage.SettingPage)
+        remember(currentServer.serverPreferences.menuItems) {
+            buildList {
+                add(DrawerPage.SearchPage)
+                add(DrawerPage.HomePage)
+                addAll(
+                    DataType.entries
+                        .filter { it in currentServer.serverPreferences.menuItems }
+                        .map { DrawerPage.DataTypePage(it) },
+                )
+                add(DrawerPage.SettingPage)
+            }
         }
     val defaultSelection: DrawerPage = DrawerPage.HomePage
     var selectedScreen by rememberSaveable { mutableStateOf<DrawerPage?>(defaultSelection) }
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val navDrawerListState = rememberLazyListState()
 
     NavDisplay(
         backStack = navigationManager.backStack,
@@ -160,41 +167,43 @@ fun ApplicationContent(
                 } else {
                     // Highlight on the nav drawer as user navigates around the app
                     selectedScreen =
-                        when (destination) {
-                            is Destination.Main -> {
-                                DrawerPage.HomePage
-                            }
-
-                            Destination.Search -> {
-                                DrawerPage.SearchPage
-                            }
-
-                            Destination.SettingsPin,
-                            is Destination.Settings,
-                            -> {
-                                DrawerPage.SettingPage
-                            }
-
-                            is Destination.Item -> {
-                                pages.firstOrNull {
-                                    it is DrawerPage.DataTypePage && it.dataType == destination.dataType
+                        remember(destination, pages) {
+                            when (destination) {
+                                is Destination.Main -> {
+                                    DrawerPage.HomePage
                                 }
-                            }
 
-                            is Destination.MarkerDetails -> {
-                                pages.firstOrNull {
-                                    it is DrawerPage.DataTypePage && it.dataType == DataType.MARKER
+                                Destination.Search -> {
+                                    DrawerPage.SearchPage
                                 }
-                            }
 
-                            is Destination.Filter -> {
-                                pages.firstOrNull {
-                                    it is DrawerPage.DataTypePage && it.dataType == destination.filterArgs.dataType
+                                Destination.SettingsPin,
+                                is Destination.Settings,
+                                -> {
+                                    DrawerPage.SettingPage
                                 }
-                            }
 
-                            else -> {
-                                null
+                                is Destination.Item -> {
+                                    pages.firstOrNull {
+                                        it is DrawerPage.DataTypePage && it.dataType == destination.dataType
+                                    }
+                                }
+
+                                is Destination.MarkerDetails -> {
+                                    pages.firstOrNull {
+                                        it is DrawerPage.DataTypePage && it.dataType == DataType.MARKER
+                                    }
+                                }
+
+                                is Destination.Filter -> {
+                                    pages.firstOrNull {
+                                        it is DrawerPage.DataTypePage && it.dataType == destination.filterArgs.dataType
+                                    }
+                                }
+
+                                else -> {
+                                    null
+                                }
                             }
                         }
 
@@ -204,15 +213,14 @@ fun ApplicationContent(
                         Logger.v { "Navigating to $page" }
                         selectedScreen = page
                         if (refreshMain) {
-                            navigationManager.goToMain()
+                            Logger.v { "Reload main" }
+                            navigationManager.reloadMain()
                         } else {
                             val pageDest =
                                 when (page) {
                                     DrawerPage.HomePage -> {
-                                        val id =
-                                            (navigationManager.backStack.firstOrNull() as? Destination.Main)?.id
-                                                ?: 0
-                                        Destination.Main(id + 1)
+                                        navigationManager.backStack.firstOrNull()
+                                            ?: Destination.Main()
                                     }
 
                                     DrawerPage.SearchPage -> {
@@ -252,6 +260,8 @@ fun ApplicationContent(
                             longClicker = longClicker,
                             onSelectScreen = onSelectScreen,
                             onChangeTheme = onChangeTheme,
+                            drawerState = drawerState,
+                            navDrawerListState = navDrawerListState,
                             modifier = Modifier,
                         )
                     } else {

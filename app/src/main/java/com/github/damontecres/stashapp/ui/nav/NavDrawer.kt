@@ -16,12 +16,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -37,12 +36,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.tv.material3.DrawerState
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import androidx.tv.material3.rememberDrawerState
-import co.touchlab.kermit.Logger
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.server.ServerRepository
@@ -61,10 +59,8 @@ import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.ui.util.playOnClickSound
 import com.github.damontecres.stashapp.ui.util.playSoundOnFocus
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.annotation.KoinViewModel
 
@@ -89,6 +85,8 @@ fun NavDrawer(
     destination: Destination,
     selectedScreen: DrawerPage?,
     pages: List<DrawerPage>,
+    drawerState: DrawerState,
+    navDrawerListState: LazyListState,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     onSelectScreen: (DrawerPage) -> Unit,
@@ -96,20 +94,13 @@ fun NavDrawer(
     modifier: Modifier = Modifier,
     viewModel: NavDrawerViewModel = koinViewModel(),
 ) {
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val listState = rememberLazyListState()
+    val selectedIndex =
+        remember(pages, selectedScreen) { pages.indexOf(selectedScreen).coerceAtLeast(0) + 1 }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
     val visiblePages = remember { mutableMapOf<DrawerPage, Boolean>() }
     val initialFocus = remember { FocusRequester() }
-
-    // If the page is not currently visible, scroll the list so that it is
-    LaunchedEffect(selectedScreen) {
-        if (visiblePages[selectedScreen] == false) {
-            listState.animateScrollToItem(pages.indexOf(selectedScreen))
-        }
-    }
 
     val drawerFocusRequester = remember { FocusRequester() }
     BackHandler(enabled = (drawerState.currentValue == DrawerValue.Closed && destination == Destination.Main)) {
@@ -151,7 +142,7 @@ fun NavDrawer(
             drawerState = drawerState,
             drawerContent = {
                 LazyColumn(
-                    state = listState,
+                    state = navDrawerListState,
                     contentPadding = PaddingValues(0.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween,
@@ -161,17 +152,6 @@ fun NavDrawer(
                             .background(MaterialTheme.colorScheme.background)
                             .focusGroup()
                             .focusProperties {
-                                onExit = {
-                                    Logger.v { "onExit: selectedScreen=$selectedScreen, pages=$pages" }
-                                    val selectedIndex = pages.indexOf(selectedScreen)
-                                    if (selectedIndex >= 0 &&
-                                        selectedIndex !in listState.layoutInfo.visibleItemsInfo.map { it.index }
-                                    ) {
-                                        scope.launch(StashCoroutineExceptionHandler()) {
-                                            listState.animateScrollToItem(selectedIndex)
-                                        }
-                                    }
-                                }
                                 onEnter = {
                                     initialFocus.tryRequestFocus()
                                 }
