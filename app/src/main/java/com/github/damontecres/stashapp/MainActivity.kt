@@ -8,37 +8,35 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.datastore.core.DataStore
-import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
 import androidx.tv.material3.MaterialTheme
 import co.touchlab.kermit.Logger
 import com.github.damontecres.stashapp.di.AuthHttpClient
-import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.SetupNavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.SetupDestination
 import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.AppTheme
-import com.github.damontecres.stashapp.ui.GlobalContext
-import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.chooseColorScheme
 import com.github.damontecres.stashapp.ui.components.LoadingPage
-import com.github.damontecres.stashapp.ui.components.server.InitialSetup
 import com.github.damontecres.stashapp.ui.defaultColorSchemeSet
-import com.github.damontecres.stashapp.ui.nav.ApplicationContent
 import com.github.damontecres.stashapp.ui.nav.CoilConfig
-import com.github.damontecres.stashapp.ui.pages.PinEntryPage
+import com.github.damontecres.stashapp.ui.nav.SetupContent
 import com.github.damontecres.stashapp.ui.readThemeJson
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchDefault
@@ -47,10 +45,14 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.annotation.KoinViewModel
 import org.koin.core.qualifier.qualifier
 import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
+    private val viewModel: MainViewModel by viewModel()
+    private val setupNavigationManager: SetupNavigationManager by inject()
     private val navigationManager: NavigationManager by inject()
     private val serverRepository: ServerRepository by inject()
     private val preferences: DataStore<StashPreferences> by inject()
@@ -79,21 +81,13 @@ class MainActivity : AppCompatActivity() {
         } else {
             navigationManager.backStack = NavBackStack(Destination.Main())
         }
+        showContent()
     }
 
     override fun onResume() {
         super.onResume()
         Logger.i { "onResume" }
-        setContent {
-            LoadingPage(Modifier.fillMaxSize())
-        }
-
-        lifecycleScope.launchDefault {
-            val prefs = preferences.data.first()
-            val hasPin = prefs.pinPreferences.pin.isNotNullOrBlank()
-            serverRepository.restore()
-            showContent(hasPin)
-        }
+        viewModel.appStart(true)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -103,89 +97,80 @@ class MainActivity : AppCompatActivity() {
         outState.putString(KEY_BACK_STACK, str)
     }
 
-    fun showContent(hasPin: Boolean) {
-        Logger.i { "showContent: hasPin=$hasPin" }
+    fun showContent() {
+        Logger.i { "showContent" }
         setContent {
             val preferences by preferences.data.collectAsState(null)
-            preferences?.let { preferences ->
-                var pinActive by remember(hasPin) { mutableStateOf(hasPin) }
-                val isSystemInDarkTheme = isSystemInDarkTheme()
-                CoilConfig(httpClient, preferences)
-                var colorScheme by
-                    remember {
-                        mutableStateOf(
-                            com.github.damontecres.stashapp.ui.getTheme(
-                                this@MainActivity,
-                                preferences.interfacePreferences.themeStyle,
-                                preferences.interfacePreferences.theme,
-                                isSystemInDarkTheme,
-                            ),
-                        )
-                    }
-                AppTheme(colorScheme = colorScheme) {
-                    if (pinActive) {
-                        PinEntryPage(
-                            requiredPin = preferences.pinPreferences.pin,
-                            title = stringResource(R.string.enter_pin),
-                            onCorrectPin = { pinActive = false },
-                            preventBack = true,
-                            autoSubmit = preferences.pinPreferences.autoSubmit,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    } else {
-                        val currentServer by serverRepository.currentServer.collectAsState()
-                        LaunchedEffect(currentServer) {
-                            Logger.i { "Switched server to ${currentServer.server.url}" }
+            if (preferences == null) {
+                LoadingPage(Modifier.fillMaxSize())
+            } else {
+                preferences?.let { preferences ->
+                    CoilConfig(httpClient, preferences)
+                    val isSystemInDarkTheme = isSystemInDarkTheme()
+                    var colorScheme by
+                        remember {
+                            mutableStateOf(
+                                com.github.damontecres.stashapp.ui.getTheme(
+                                    this@MainActivity,
+                                    preferences.interfacePreferences.themeStyle,
+                                    preferences.interfacePreferences.theme,
+                                    isSystemInDarkTheme,
+                                ),
+                            )
                         }
-                        if (currentServer != CurrentServer.UNSET) {
-                            key(currentServer) {
-                                CompositionLocalProvider(
-                                    LocalGlobalContext provides
-                                        GlobalContext(
-                                            currentServer,
-                                            navigationManager,
-                                            preferences,
-                                        ),
-                                ) {
-                                    ApplicationContent(
-                                        currentServer = currentServer,
+                    val onChangeTheme = { name: String? ->
+                        try {
+                            colorScheme =
+                                chooseColorScheme(
+                                    preferences.interfacePreferences.themeStyle,
+                                    isSystemInDarkTheme,
+                                    if (name.isNullOrBlank() || name == "default") {
+                                        defaultColorSchemeSet
+                                    } else {
+                                        readThemeJson(
+                                            this@MainActivity,
+                                            name,
+                                        )
+                                    },
+                                )
+                            Logger.i { "Updated theme" }
+                        } catch (ex: Exception) {
+                            Logger.e(ex) { "Exception changing theme" }
+                            Toast
+                                .makeText(
+                                    this@MainActivity,
+                                    "Error changing theme: ${ex.localizedMessage}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                        }
+                    }
+
+                    AppTheme(colorScheme = colorScheme) {
+                        NavDisplay(
+                            backStack = setupNavigationManager.backStack,
+                            onBack = { setupNavigationManager.backStack.removeLastOrNull() },
+                            entryDecorators =
+                                listOf(
+                                    rememberSaveableStateHolderNavEntryDecorator(),
+                                    rememberViewModelStoreNavEntryDecorator(),
+                                ),
+                            entryProvider = { key ->
+                                NavEntry(key) {
+                                    SetupContent(
+                                        destination = key,
                                         preferences = preferences,
                                         navigationManager = navigationManager,
-                                        onChangeTheme = { name ->
-                                            try {
-                                                colorScheme =
-                                                    chooseColorScheme(
-                                                        preferences.interfacePreferences.themeStyle,
-                                                        isSystemInDarkTheme,
-                                                        if (name.isNullOrBlank() || name == "default") {
-                                                            defaultColorSchemeSet
-                                                        } else {
-                                                            readThemeJson(
-                                                                this@MainActivity,
-                                                                name,
-                                                            )
-                                                        },
-                                                    )
-                                                Logger.i { "Updated theme" }
-                                            } catch (ex: Exception) {
-                                                Logger.e(ex) { "Exception changing theme" }
-                                                Toast
-                                                    .makeText(
-                                                        this@MainActivity,
-                                                        "Error changing theme: ${ex.localizedMessage}",
-                                                        Toast.LENGTH_LONG,
-                                                    ).show()
-                                            }
-                                        },
-                                        modifier = Modifier.background(MaterialTheme.colorScheme.background),
-                                        // TODO could use onKeyEvent here to make focus/movement sounds everywhere
-                                        // But it wouldn't know if the focus would actually change
+                                        serverRepository = serverRepository,
+                                        onChangeTheme = onChangeTheme,
+                                        onCorrectPin = { viewModel.appStart(false) },
+                                        modifier =
+                                            Modifier
+                                                .fillMaxSize()
+                                                .background(MaterialTheme.colorScheme.background),
                                     )
                                 }
-                            }
-                        } else {
-                            InitialSetup(Modifier.fillMaxSize())
-                        }
+                            },
+                        )
                     }
                 }
             }
@@ -194,5 +179,44 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val KEY_BACK_STACK = "backStack"
+    }
+}
+
+@KoinViewModel
+class MainViewModel(
+    private val serverRepository: ServerRepository,
+    private val setupNavigationManager: SetupNavigationManager,
+    private val navigationManager: NavigationManager,
+    private val preferences: DataStore<StashPreferences>,
+) : ViewModel() {
+    fun appStart(enforcePin: Boolean) {
+        viewModelScope.launchDefault {
+            Logger.d { "appState: enforcePin=$enforcePin" }
+            val prefs = preferences.data.first()
+            val hasPin = prefs.pinPreferences.pin.isNotNullOrBlank()
+            val destination =
+                if (hasPin && enforcePin) {
+                    Logger.v { "Pin Required" }
+                    SetupDestination.PinRequired
+                } else {
+                    val currentServer = serverRepository.currentServer.first().server
+                    val restoredServer = serverRepository.restore()
+                    if (currentServer != restoredServer) {
+                        Logger.v { "A different server was restored" }
+                        navigationManager.reloadMain()
+                    }
+                    if (restoredServer != null) {
+                        Logger.v { "App content" }
+                        SetupDestination.AppContent(restoredServer)
+                    } else if (serverRepository.getAll().isEmpty()) {
+                        Logger.v { "No servers found, starting initial setup" }
+                        SetupDestination.InitialSetup
+                    } else {
+                        Logger.v { "Server list" }
+                        SetupDestination.ServerList
+                    }
+                }
+            setupNavigationManager.navigateTo(destination)
+        }
     }
 }

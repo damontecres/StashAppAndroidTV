@@ -23,15 +23,16 @@ class ServerRepository(
 
     private val servers = ConcurrentHashMap<String, StashServer>()
 
-    suspend fun restore(): Boolean {
+    suspend fun restore(): StashServer? {
         val manager = PreferenceManager.getDefaultSharedPreferences(context)
         val url = manager.getString(PREF_STASH_URL, null)
         val apiKey = manager.getString(PREF_STASH_API_KEY, null)
         return if (url.isNotNullOrBlank()) {
-            addAndSwitchServer(StashServer(url, apiKey))
-            true
+            val server = StashServer(url, apiKey)
+            addAndSwitchServer(server)
+            server
         } else {
-            false
+            null
         }
     }
 

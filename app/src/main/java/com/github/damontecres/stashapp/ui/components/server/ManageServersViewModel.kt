@@ -16,6 +16,8 @@ import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.server.StashApi
 import com.github.damontecres.stashapp.di.server.StashServer
 import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.SetupNavigationManager
+import com.github.damontecres.stashapp.navigation.SetupDestination
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.TRUST_ALL_CERTS
@@ -49,6 +51,7 @@ class ManageServersViewModel(
     @param:StandardHttpClient private val httpClient: OkHttpClient,
     private val serverRepository: ServerRepository,
     private val navigationManager: NavigationManager,
+    private val setupNavigationManager: SetupNavigationManager,
 ) : ViewModel() {
     val currentServer get() = serverRepository.currentServer
     val allServers = MutableLiveData<List<StashServer>>(listOf())
@@ -295,6 +298,7 @@ class ManageServersViewModel(
         viewModelScope.launchDefault {
             serverRepository.setCurrentStashServer(server)
             navigationManager.reloadMain()
+            setupNavigationManager.navigateTo(SetupDestination.AppContent(server))
         }
     }
 

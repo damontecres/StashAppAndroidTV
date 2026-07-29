@@ -2,10 +2,12 @@ package com.github.damontecres.stashapp.di.server
 
 import androidx.core.net.toUri
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import kotlinx.serialization.Serializable
 
 /**
  * Represents a server
  */
+@Serializable
 data class StashServer(
     val url: String,
     val apiKey: String?,
