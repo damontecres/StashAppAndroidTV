@@ -80,6 +80,7 @@ import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.data.DataType
@@ -558,6 +559,7 @@ fun StashCard(
                 is SlimSceneData -> item.paths.preview
                 is FullSceneData -> item.paths.preview
                 is ImageData -> item.paths.preview
+                is MarkerData -> item.stream
                 else -> null
             },
         imageContent =
