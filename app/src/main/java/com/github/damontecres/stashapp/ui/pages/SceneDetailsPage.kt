@@ -562,7 +562,7 @@ fun SceneDetails(
                 },
             )
         }
-        val startPadding = 24.dp
+        val startPadding = 0.dp
         val bottomPadding = 16.dp
 
         sceneDetailsBody(
