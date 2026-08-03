@@ -6,9 +6,18 @@ See also the [Contributing](CONTRIBUTING.md) guide for general information on co
 
 This project is an Android TV client for Stash. It is written in Kotlin and uses the Apollo GraphQL client to interact with the server.
 
-The app uses Android's [JetPack Compose](https://developer.android.com/jetpack/compose) for the UI, but it also has a legacy UI that uses Android's [Leanback](https://developer.android.com/training/tv/playback/leanback/) library. There are custom implementations for paging and navigation.
+### Tech stack
 
-The app uses a single Activity (`RootActivity`). On the legacy UI, each page is a `Fragment` that may contain other fragments. The app generally uses a MVVM architecture.
+* [JetPack Compose](https://developer.android.com/jetpack/compose) for the UI
+* [Koin](https://insert-koin.io/) for dependency injection
+* [Navigation 3](https://developer.android.com/guide/navigation/navigation-3) for displaying app pages
+* [Room](https://developer.android.com/training/data-storage/room) & [DataStore](https://developer.android.com/topic/libraries/architecture/datastore) for local data storage
+* [Media3/ExoPlayer](https://developer.android.com/media/media3/exoplayer) for media playback
+* [MPV/libmpv](https://github.com/mpv-player/mpv) for media playback
+* [Coil](https://coil-kt.github.io/coil/) for image loading
+* [OkHttp](https://square.github.io/okhttp/) for HTTP requests
+
+There is a single Activity, `MainActivity`. The app generally uses a MVVM architecture.
 
 ### Modules
 
@@ -32,17 +41,13 @@ The app uses [Apollo Kotlin](https://www.apollographql.com/docs/kotlin) to autom
 
 All interactions with the server are done via GraphQL using one of the `StashEngine` subclasses: `QueryEngine`, `MutationEngine`, or `SubscriptionEngine`. Each query/mutation/subscription roughly translates to a function in one of those classes.
 
-If lower level network access is needed, the `StashServer` has fields for an `ApolloClient` for graphql and an `OkHttpClient` for other requests. `StashClient` can used to create new clients if further customization is needed.
+If lower level network access is needed, the `StashApi` has an `ApolloClient` for graphql. For general HTTP requests an `OkHttpClient` (with or without authentication) can be injected.
 
 Tips:
 - Install the Apollo plugin in Android Studio
 - Don't over-fetch data
 - Use or create "slim" versions of types when possible
 - Avoid fetching counts or getting lists unless necessary for the UI
-
-### Navigation
-
-Navigating the app is handled by the `NavigationManager` class. This class takes a `Destination` object and creates/displays the appropriate content. Destinations can have arguments that are passed to the destination's `Composable` or `Fragment` (retrieved via `requireArguments().getDestination<DestinationClassName>()`).
 
 ### Paging
 
@@ -64,19 +69,11 @@ In order to support both TV and phone/tablet UIs, there are a few compatibility 
 
 The UI is contained in the `com.github.damontecres.stashapp.ui` package.
 
-#### Legacy UI
-
-The UI is built using Leanback's `Presenters` to create cards or "full width" displays.
-
-`StashPresenter` is main abstract class for card presenters and implementations are responsible for binding data to views. The `StashPresenter.defaultClassPresenterSelector()` function returns a `Presenter` that can used for most types of data displayed as Cards.
-
 ### Playback
 
-The app uses [media3's `ExoPlayer`](https://github.com/androidx/media) for playback. The composbles for playback are in the `com.github.damontecres.stashapp.ui.components.playback` package with most logic in `PlaybackPageContent` and `PlaybackViewModel`.
+The app uses [media3's `ExoPlayer`](https://github.com/androidx/media) for playback. The composables for playback are in the `com.github.damontecres.stashapp.ui.components.playback` package with most logic in `PlaybackPageContent` and `PlaybackViewModel`.
 
 `CodecSupport` determines which codecs are supported by the device. `StreamUtils` uses that information to determine if the stream from the server can be directly played or if it needs to be transcoded.
-
-In the legacy UI, the `PlaybackFragment` abstract class handles most of the playback logic.
 
 #### Extensions
 
