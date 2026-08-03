@@ -3,6 +3,11 @@ package com.github.damontecres.stashapp.ui.components
 import android.content.res.Configuration
 import android.util.Log
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
@@ -12,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,6 +36,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -60,7 +67,6 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -68,6 +74,7 @@ import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.cards.CardContext
 import com.github.damontecres.stashapp.ui.cards.StashCard
+import com.github.damontecres.stashapp.ui.cards.dataTypeImageWidth
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.playback.isBackwardButton
@@ -79,12 +86,10 @@ import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.defaultCardWidth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.max
 
 private const val TAG = "StashGrid"
 private const val DEBUG = false
@@ -102,7 +107,6 @@ enum class CreateFilter {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun StashGridControls(
-    server: StashServer,
     pager: ComposePager<StashData>,
     updateFilter: (FilterArgs) -> Unit,
     itemOnClick: ItemOnClicker<Any>,
@@ -111,7 +115,7 @@ fun StashGridControls(
     filterUiMode: FilterUiMode,
     createFilter: (CreateFilter) -> Unit,
     letterPosition: suspend (Char) -> Int,
-    requestFocus: Boolean,
+    gridFocusRequester: FocusRequester,
     modifier: Modifier = Modifier,
     initialPosition: Int = 0,
     itemOnLongClick: ((Any) -> Unit)? = null,
@@ -134,37 +138,29 @@ fun StashGridControls(
             filterArgs.findFilter?.q ?: "",
         )
     }
-    var shouldRequestFocus by remember { mutableStateOf(requestFocus) }
-    val gridFocusRequester = remember { FocusRequester() }
-//    LaunchedEffect(Unit) {
-//        gridFocusRequester.tryRequestFocus()
-//    }
 
     val navManager = LocalGlobalContext.current.navigationManager
     val rowFocusRequester = remember { FocusRequester() }
-
-//    LaunchedEffect(Unit) {
-//        if (requestFocus && showTopRowRaw) {
-//            rowFocusRequester.tryRequestFocus()
-//        } else if (requestFocus) {
-//            gridFocusRequester.tryRequestFocus()
-//        }
-//    }
     var showMarkerDialog by rememberSaveable { mutableStateOf(false) }
 
     Column(modifier = modifier) {
-        if (showTopRow) {
+        AnimatedVisibility(
+            visible = showTopRow,
+            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             ProvideTextStyle(MaterialTheme.typography.titleMedium) {
                 LazyRow(
                     modifier =
                         Modifier
-                            .padding(8.dp)
                             .focusGroup()
                             .onFocusChanged {
                                 if (it.isFocused) rowFocusRequester.tryRequestFocus()
                             }.focusable(true),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
+                    contentPadding = PaddingValues(8.dp),
                 ) {
                     if (filterUiMode == FilterUiMode.SAVED_FILTERS) {
                         item {
@@ -266,7 +262,6 @@ fun StashGridControls(
                                 Modifier.focusProperties { down = gridFocusRequester },
                             value = searchQuery,
                             onValueChange = { newQuery ->
-                                shouldRequestFocus = false
                                 searchQuery = newQuery
                                 job?.cancel()
                                 job =
@@ -278,7 +273,6 @@ fun StashGridControls(
                                     }
                             },
                             onSearchClick = {
-                                shouldRequestFocus = true
                                 job?.cancel()
                                 if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
                                     updateFilter(filterArgs.withQuery(searchQuery))
@@ -295,7 +289,6 @@ fun StashGridControls(
             uiConfig,
             itemOnClick,
             longClicker,
-            requestFocus = shouldRequestFocus,
             letterPosition = letterPosition,
             initialPosition = initialPosition,
             positionCallback = { columns, position ->
@@ -337,7 +330,6 @@ fun StashGrid(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     letterPosition: suspend (Char) -> Int,
-    requestFocus: Boolean,
     gridFocusRequester: FocusRequester,
     modifier: Modifier = Modifier,
     initialPosition: Int = 0,
@@ -346,61 +338,38 @@ fun StashGrid(
 ) {
     val orientation = LocalConfiguration.current.orientation
     val navigationManager = LocalGlobalContext.current.navigationManager
-    val startPosition = initialPosition.coerceIn(0, (pager.size - 1).coerceAtLeast(0))
+    val startPosition =
+        remember(initialPosition, pager.size) {
+            initialPosition.coerceIn(0, (pager.size - 1).coerceAtLeast(0))
+        }
     val columns =
         (
-            uiConfig.cardSettings.columns * (ScenePresenter.CARD_WIDTH.toDouble() / pager.filter.dataType.defaultCardWidth) +
+            uiConfig.cardSettings.columns * (dataTypeImageWidth(DataType.SCENE).toDouble() / pager.filter.dataType.defaultCardWidth) +
                 // TODO better sizing
                 if (isNotTvDevice && orientation == Configuration.ORIENTATION_LANDSCAPE) 1 else 0
         ).toInt()
 
-    val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
     val filterArgs = pager.filter
     val firstFocus = remember { FocusRequester() }
     val zeroFocus = remember { FocusRequester() }
     var previouslyFocusedIndex by rememberSaveable { mutableIntStateOf(0) }
     var focusedIndex by rememberSaveable { mutableIntStateOf(initialPosition) }
-    var focusedIndexOnExit by rememberSaveable { mutableIntStateOf(-1) }
+    val currentFocusedIndex by rememberUpdatedState(focusedIndex)
+    val gridState =
+        rememberLazyGridState(
+            initialFirstVisibleItemIndex = focusedIndex,
+        )
 
     // Tracks whether the very first requestFocus has run, if the caller isn't requesting focus,
     // then the first time will never run
-    var hasRequestFocusRun by rememberSaveable { mutableStateOf(!requestFocus) }
-    var savedFocusedIndex by rememberSaveable { mutableIntStateOf(-1) }
+//    var savedFocusedIndex by rememberSaveable { mutableIntStateOf(-1) }
 
     if (DEBUG) {
         Log.d(
             TAG,
-            "StashGrid: hasRun=$hasRequestFocusRun, requestFocus=$requestFocus, initialPosition=$initialPosition, focusedIndex=$focusedIndex",
+            "StashGrid: initialPosition=$initialPosition, focusedIndex=$focusedIndex, currentFocusedIndex=$currentFocusedIndex",
         )
-    }
-
-    LaunchedEffect(Unit) {
-        if (!hasRequestFocusRun) {
-            // On very first composition, if parent wants to focus on the grid, scroll to the item
-            if (requestFocus && initialPosition >= 0) {
-                if (DEBUG) {
-                    Log.d(
-                        TAG,
-                        "focus on startPosition=$startPosition, from initialPosition=$initialPosition",
-                    )
-                }
-                focusedIndex = startPosition
-                gridState.scrollToItem(startPosition, 0)
-                firstFocus.tryRequestFocus()
-            }
-        } else {
-            val index = savedFocusedIndex
-            if (DEBUG) Log.d(TAG, "savedFocusedIndex=$index")
-            if (index in 0..<pager.size) {
-                // If this is a recomposition, but not the first
-                // focus on the restored index
-                // gridState.scrollToItem(index, -columns)
-                firstFocus.tryRequestFocus()
-            }
-            savedFocusedIndex = -1
-        }
-//        hasRun = true
     }
 
     val context = LocalContext.current
@@ -409,8 +378,8 @@ fun StashGrid(
     var alphabetFocus by remember { mutableStateOf(false) }
     val focusOn = { index: Int ->
         if (DEBUG) Log.v(TAG, "focusOn: focusedIndex=$focusedIndex, index=$index")
-        if (index != focusedIndex) {
-            previouslyFocusedIndex = focusedIndex
+        if (index != currentFocusedIndex) {
+            previouslyFocusedIndex = currentFocusedIndex
         }
         focusedIndex = index
     }
@@ -468,7 +437,6 @@ fun StashGrid(
             val newPosition =
                 (gridState.firstVisibleItemIndex + jump).coerceIn(0..<pager.size)
             if (DEBUG) Log.d(TAG, "newPosition=$newPosition")
-            savedFocusedIndex = newPosition
             focusOn(newPosition)
             gridState.scrollToItem(newPosition, 0)
         }
@@ -485,8 +453,7 @@ fun StashGrid(
             zeroFocus.tryRequestFocus()
         }
     }
-    val server = LocalGlobalContext.current.server
-
+    val jumpButtonFocusRequester = remember { FocusRequester() }
     var longPressing by remember { mutableStateOf(false) }
     Row(
 //        horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -522,9 +489,9 @@ fun StashGrid(
                     } else if (isPlayKeyUp(it)) {
                         val destination =
                             getPlayDestinationForItem(
-                                server,
                                 pager[focusedIndex],
                                 FilterAndPosition(pager.filter, focusedIndex),
+                                uiConfig.alwaysStartFromBeginning,
                             )
                         return@onKeyEvent if (destination != null) {
                             navigationManager.navigate(destination)
@@ -541,6 +508,14 @@ fun StashGrid(
                     } else {
                         return@onKeyEvent false
                     }
+                }.focusProperties {
+                    onEnter = {
+                        if (!showJumpButtons || currentFocusedIndex in pager.indices) {
+                            gridFocusRequester.tryRequestFocus()
+                        } else {
+                            jumpButtonFocusRequester.tryRequestFocus()
+                        }
+                    }
                 },
     ) {
         if (showJumpButtons && pager.size > 0) {
@@ -548,109 +523,16 @@ fun StashGrid(
                 jump1 = jump1,
                 jump2 = jump2,
                 jumpClick = { jump(it) },
-                modifier = Modifier.align(Alignment.CenterVertically),
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterVertically)
+                        .focusRequester(jumpButtonFocusRequester),
             )
         }
         Box(
             modifier = Modifier.weight(1f),
         ) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(columns),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                state = gridState,
-                contentPadding = PaddingValues(16.dp),
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .focusGroup()
-                        .focusRequester(gridFocusRequester)
-                        .focusProperties {
-                            onExit = {
-                                // Leaving the grid, so "forget" the position
-                                focusedIndexOnExit = focusedIndex
-                                focusedIndex = -1
-                                savedFocusedIndex = -1
-                            }
-                            onEnter = {
-                                focusedIndexOnExit = -1
-                                if (focusedIndex < 0 && gridState.firstVisibleItemIndex <= startPosition) {
-                                    focusedIndex = startPosition
-                                    firstFocus.tryRequestFocus()
-                                }
-                            }
-                        },
-            ) {
-                items(pager.size) { index ->
-                    val mod =
-                        if (index == savedFocusedIndex) {
-                            if (DEBUG) Log.d(TAG, "Adding firstFocus to itemClickedIndex $index")
-                            Modifier.focusRequester(firstFocus)
-                        } else if ((index == focusedIndex) or (focusedIndex < 0 && index == 0)) {
-                            if (DEBUG) Log.d(TAG, "Adding firstFocus to focusedIndex $index")
-                            Modifier.focusRequester(firstFocus)
-                        } else {
-                            Modifier
-                        }
-                    val item = pager[index]
-                    if (!hasRequestFocusRun && requestFocus && initialPosition >= 0) {
-                        // On very first composition, if parent wants to focus on the grid, do so
-                        LaunchedEffect(Unit) {
-                            if (DEBUG) {
-                                Log.d(
-                                    TAG,
-                                    "non-null focus on startPosition=$startPosition, from initialPosition=$initialPosition",
-                                )
-                            }
-                            // focus on startPosition
-                            gridState.scrollToItem(startPosition, 0)
-                            firstFocus.tryRequestFocus()
-                            hasRequestFocusRun = true
-                        }
-                    }
-                    StashCard(
-                        modifier =
-                            mod
-                                .ifElse(index == 0, Modifier.focusRequester(zeroFocus))
-                                .onFocusChanged { focusState ->
-                                    if (DEBUG) {
-                                        Log.v(
-                                            TAG,
-                                            "$index isFocused=${focusState.isFocused}",
-                                        )
-                                    }
-                                    if (focusState.isFocused) {
-                                        // Focused, so set that up
-                                        focusOn(index)
-                                        positionCallback?.invoke(columns, index)
-                                    } else if (focusedIndex == index) {
-                                        savedFocusedIndex = index
-                                        // Was focused on this, so mark unfocused
-                                        focusedIndex = -1
-                                    }
-                                },
-                        uiConfig = uiConfig,
-                        item = item,
-                        itemOnClick = {
-                            itemOnClick.onClick(
-                                it,
-                                FilterAndPosition(filterArgs, index),
-                            )
-                        },
-                        longClicker = longClicker,
-                        getFilterAndPosition = {
-                            FilterAndPosition(
-                                filterArgs,
-                                index,
-                            )
-                        },
-                        cardContext =
-                            item?.let { cardContext?.invoke(index, item) }
-                                ?: CardContext.None,
-                    )
-                }
-            }
-            if (pager.size == 0) {
+            if (pager.isEmpty()) {
 //                focusedIndex = -1
                 Box(modifier = Modifier.fillMaxSize()) {
                     Text(
@@ -658,6 +540,76 @@ fun StashGrid(
                         color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.align(Alignment.Center),
                     )
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(columns),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    state = gridState,
+                    contentPadding = PaddingValues(16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .focusGroup()
+                            .focusProperties {
+                                onEnter = {
+                                    if (currentFocusedIndex < 0 && gridState.firstVisibleItemIndex <= startPosition) {
+                                        focusedIndex = startPosition
+                                        firstFocus.tryRequestFocus()
+                                    }
+                                }
+                            },
+                ) {
+                    items(pager.size) { index ->
+                        val mod =
+                            if ((index == currentFocusedIndex) or (currentFocusedIndex < 0 && index == 0)) {
+                                if (DEBUG) Log.d(TAG, "Adding firstFocus to focusedIndex $index")
+                                Modifier
+                                    .focusRequester(firstFocus)
+                                    .focusRequester(gridFocusRequester)
+                            } else {
+                                Modifier
+                            }
+                        val item = pager[index]
+                        StashCard(
+                            modifier =
+                                mod
+                                    .ifElse(index == 0, Modifier.focusRequester(zeroFocus))
+                                    .onFocusChanged { focusState ->
+                                        if (DEBUG) {
+                                            Log.v(
+                                                TAG,
+                                                "$index isFocused=${focusState.isFocused}",
+                                            )
+                                        }
+                                        if (focusState.isFocused) {
+                                            // Focused, so set that up
+                                            focusOn(index)
+                                            positionCallback?.invoke(columns, index)
+                                        }
+                                    },
+                            uiConfig = uiConfig,
+                            item = item,
+                            itemOnClick = {
+                                focusOn(index)
+                                itemOnClick.onClick(
+                                    it,
+                                    FilterAndPosition(filterArgs, index),
+                                )
+                            },
+                            longClicker = longClicker,
+                            getFilterAndPosition = {
+                                FilterAndPosition(
+                                    filterArgs,
+                                    index,
+                                )
+                            },
+                            cardContext =
+                                item?.let { cardContext?.invoke(index, item) }
+                                    ?: CardContext.None,
+                        )
+                    }
                 }
             }
             if (showFooter) {
@@ -669,10 +621,10 @@ fun StashGrid(
                             .background(AppColors.TransparentBlack50),
                 ) {
                     val index =
-                        if (focusedIndex >= 0) {
-                            focusedIndex + 1
+                        if (currentFocusedIndex >= 0) {
+                            currentFocusedIndex + 1
                         } else {
-                            max(savedFocusedIndex, focusedIndexOnExit) + 1
+                            0
                         }
                     Text(
                         modifier = Modifier.padding(4.dp),
@@ -683,7 +635,7 @@ fun StashGrid(
             }
             if (isNotTvDevice) {
                 androidx.compose.animation.AnimatedVisibility(
-                    focusedIndex > columns,
+                    currentFocusedIndex > columns,
                     modifier = Modifier.align(Alignment.BottomEnd),
                 ) {
                     // Can use material3 here since it's only for non-TV

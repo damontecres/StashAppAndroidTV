@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -43,7 +44,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.apollographql.apollo.api.Optional
@@ -58,15 +58,15 @@ import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.filter.filterSummary
 import com.github.damontecres.stashapp.filter.getFilterOptions
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.reflect.full.createInstance
 
 internal const val TAG = "CreateFilter"
@@ -76,12 +76,14 @@ fun CreateFilterScreen(
     uiConfig: ComposeUiConfig,
     dataType: DataType,
     initialFilter: FilterArgs?,
-    navigationManager: NavigationManager,
     modifier: Modifier = Modifier,
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
-    viewModel: CreateFilterViewModel = viewModel(),
+    viewModel: CreateFilterViewModel =
+        koinViewModel {
+            parametersOf(dataType, initialFilter)
+        },
 ) {
-    val server = LocalGlobalContext.current.server
+    val currentServer by viewModel.currentServer.collectAsState()
     val scope = rememberCoroutineScope()
     CreateFilterContent(
         uiConfig = uiConfig,
@@ -92,18 +94,18 @@ fun CreateFilterScreen(
             if (save) {
                 scope.launch(
                     LoggingCoroutineExceptionHandler(
-                        server,
+                        currentServer,
                         scope,
                         toastMessage = "Error saving filter",
                     ),
                 ) {
                     viewModel.saveFilter()
-                    navigationManager.goBack()
-                    navigationManager.navigate(Destination.Filter(filterArgs))
+                    viewModel.navigationManager.goBack()
+                    viewModel.navigationManager.navigate(Destination.Filter(filterArgs))
                 }
             } else {
-                navigationManager.goBack()
-                navigationManager.navigate(Destination.Filter(filterArgs))
+                viewModel.navigationManager.goBack()
+                viewModel.navigationManager.navigate(Destination.Filter(filterArgs))
             }
         },
         modifier = modifier,
@@ -121,7 +123,10 @@ fun CreateFilterContent(
     onSubmit: (save: Boolean, filter: FilterArgs) -> Unit,
     modifier: Modifier = Modifier,
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
-    viewModel: CreateFilterViewModel = viewModel(),
+    viewModel: CreateFilterViewModel =
+        koinViewModel {
+            parametersOf(dataType, initialFilter)
+        },
 ) {
     val context = LocalContext.current
 
@@ -135,7 +140,7 @@ fun CreateFilterContent(
     LaunchedEffect(title) { onUpdateTitle?.invoke(AnnotatedString(title)) }
 
     LaunchedEffect(initialFilter) {
-        viewModel.initialize(dataType, initialFilter)
+        viewModel.initialize()
         viewModel.updateCount()
     }
 
@@ -251,6 +256,7 @@ fun CreateFilterColumns(
 
     val filterSummaries =
         filterSummary(
+            uiConfig = uiConfig,
             context = context,
             dataType = dataType,
             type = dataType.filterType,
@@ -463,6 +469,7 @@ fun CreateFilterColumns(
                     objectFilterFocused = false
                 }
                 ObjectFilterList(
+                    uiConfig = uiConfig,
                     dataType = dataType,
                     current = objectFilter,
                     onObjectFilterClick = { selectedFilterOption = it },

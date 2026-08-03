@@ -31,7 +31,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.asFlow
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
@@ -43,11 +42,9 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.buildMediaItem
@@ -59,9 +56,7 @@ import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.SwitchWithLabel
 import com.github.damontecres.stashapp.ui.components.TimestampPicker
 import com.github.damontecres.stashapp.ui.tryRequestFocus
-import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import com.github.damontecres.stashapp.util.toSeconds
@@ -70,6 +65,8 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -80,14 +77,15 @@ private const val TAG = "MarkerTimestampPage"
 @OptIn(FlowPreview::class)
 @Composable
 fun MarkerTimestampPage(
-    server: StashServer,
-    navigationManager: NavigationManager,
     uiConfig: ComposeUiConfig,
     markerId: String,
     modifier: Modifier = Modifier,
-    viewModel: MarkerDetailsViewModel = viewModel(),
+    viewModel: MarkerDetailsViewModel =
+        koinViewModel {
+            parametersOf(markerId)
+        },
 ) {
-    LaunchedEffect(markerId) { viewModel.init(server, markerId) }
+    LaunchedEffect(markerId) { viewModel.init() }
 
     val scope = rememberCoroutineScope()
     val marker by viewModel.item.observeAsState()
@@ -126,12 +124,9 @@ fun MarkerTimestampPage(
 
             val player =
                 remember {
-                    StashExoPlayer
-                        .getInstance(
-                            context,
-                            server,
-                            uiConfig.preferences.playbackPreferences,
-                        ).apply {
+                    viewModel.playerFactory
+                        .createPlayer(uiConfig.preferences.playbackPreferences)
+                        .apply {
                             playWhenReady = false
                         }
                 }
@@ -268,7 +263,7 @@ fun MarkerTimestampPage(
                                         ),
                                     ) {
                                         try {
-                                            val mutationEngine = MutationEngine(server)
+                                            val mutationEngine = viewModel.mutationEngine
                                             val newEnd =
                                                 if (setEndTimestamp) {
                                                     Optional.present(end.inWholeMilliseconds.toSeconds)
@@ -293,7 +288,7 @@ fun MarkerTimestampPage(
                                                 "newSeconds=${result?.seconds}, newEnd=${result?.end_seconds}",
                                             )
 
-                                            navigationManager.goBack()
+                                            viewModel.navigationManager.goBack()
                                         } finally {
                                             saving = false
                                         }

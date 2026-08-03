@@ -50,7 +50,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -65,11 +64,10 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.size.Size
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.VideoFilter
-import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
+import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.AppColors
@@ -88,12 +86,13 @@ import com.github.damontecres.stashapp.ui.components.playback.isDpad
 import com.github.damontecres.stashapp.ui.components.playback.isEnterKey
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.findActivity
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.keepScreenOn
 import com.github.damontecres.stashapp.util.maxFileSize
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.math.abs
 
 private const val TAG = "ImagePage"
@@ -103,8 +102,7 @@ private const val DEBUG = false
 @OptIn(UnstableApi::class)
 @Composable
 fun ImagePage(
-    server: StashServer,
-    navigationManager: NavigationManagerCompose,
+    currentServer: CurrentServer,
     filter: FilterArgs,
     startPosition: Int,
     startSlideshow: Boolean,
@@ -112,17 +110,17 @@ fun ImagePage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
-    viewModel: ImageDetailsViewModel = viewModel(),
+    viewModel: ImageDetailsViewModel =
+        koinViewModel {
+            parametersOf(filter, startPosition)
+        },
 ) {
     val context = LocalContext.current
     val isNotTvDevice = isNotTvDevice
-    LaunchedEffect(server, filter) {
+    LaunchedEffect(currentServer, filter) {
         val slideshowDelay = uiConfig.preferences.interfacePreferences.slideShowIntervalMs
 
         viewModel.init(
-            server,
-            filter,
-            startPosition,
             startSlideshow,
             slideshowDelay,
             uiConfig.persistVideoFilters,
@@ -260,33 +258,33 @@ fun ImagePage(
     }
     val player =
         remember {
-            StashExoPlayer
-                .getInstance(context, server, uiConfig.preferences.playbackPreferences)
+            viewModel.playerFactory
+                .createPlayer(uiConfig.preferences.playbackPreferences)
                 .apply {
                     maybeMuteAudio(uiConfig.preferences, false, this)
                     repeatMode = Player.REPEAT_MODE_OFF
                     playWhenReady = true
                 }
         }
-    LifecycleStartEffect(Unit) {
-        onStopOrDispose {
-            StashExoPlayer.releasePlayer()
-        }
-    }
-
     val playSlideshowDelay = uiConfig.preferences.interfacePreferences.slideShowIntervalMs
-    val presentationState = rememberPresentationState(player)
-    LaunchedEffect(player) {
-        StashExoPlayer.addListener(
+    LifecycleStartEffect(Unit) {
+        val listener =
             object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_ENDED) {
                         viewModel.pulseSlideshow(playSlideshowDelay)
                     }
                 }
-            },
-        )
+            }
+        player.addListener(listener)
+        onStopOrDispose {
+            player.removeListener(listener)
+            player.release()
+        }
     }
+
+    val presentationState = rememberPresentationState(player)
+
     LaunchedEffect(slideshowActive) {
         player.repeatMode = if (slideshowEnabled) Player.REPEAT_MODE_OFF else Player.REPEAT_MODE_ONE
         context.findActivity()?.keepScreenOn(slideshowActive)
@@ -589,7 +587,6 @@ fun ImagePage(
                         contentModifier
                             .fillMaxSize()
                             .background(AppColors.TransparentBlack50),
-                    server = server,
                     player = player,
                     slideshowControls = slideshowControls,
                     slideshowEnabled = slideshowEnabled,

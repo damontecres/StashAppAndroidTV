@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.StashApplication
@@ -38,8 +37,12 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
@@ -52,15 +55,21 @@ import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.annotation.KoinViewModel
 
-class SearchViewModel : ViewModel() {
-    private lateinit var server: StashServer
+@KoinViewModel
+class SearchViewModel(
+    private val serverRepository: ServerRepository,
+    private val serverLogger: ServerLogger,
+    private val queryEngine: QueryEngine,
+    private val mutationEngine: MutationEngine,
+    val navigationManager: NavigationManager,
+) : ViewModel() {
     private var currentQuery = ""
 
     val scenes = MutableLiveData<List<Any>>(listOf())
@@ -85,11 +94,9 @@ class SearchViewModel : ViewModel() {
         )
 
     fun init(
-        server: StashServer,
         initialQuery: String,
         perPage: Int,
     ) {
-        this.server = server
         search(initialQuery, perPage)
     }
 
@@ -99,7 +106,6 @@ class SearchViewModel : ViewModel() {
     ) {
         if (query.isNotBlank() && query != this.currentQuery) {
             this.currentQuery = query
-            val queryEngine = QueryEngine(server)
             DataType.entries.forEach {
                 val data = mapping[it]!!
                 data.value = listOf()
@@ -121,7 +127,7 @@ class SearchViewModel : ViewModel() {
 
                 viewModelScope.launch(
                     LoggingCoroutineExceptionHandler(
-                        server,
+                        serverRepository.currentServer.value,
                         viewModelScope,
                         toastMessage = "Search for ${
                             StashApplication.getApplication().getString(it.pluralStringId)
@@ -142,14 +148,12 @@ class SearchViewModel : ViewModel() {
 
 @Composable
 fun SearchPage(
-    server: StashServer,
-    navigationManager: NavigationManager,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
     initialQuery: String = "",
-    viewModel: SearchViewModel = viewModel(),
+    viewModel: SearchViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -180,7 +184,7 @@ fun SearchPage(
         )
 
     OneTimeLaunchedEffect {
-        viewModel.init(server, initialQuery, perPage)
+        viewModel.init(initialQuery, perPage)
 //        focusRequester.tryRequestFocus()
     }
 

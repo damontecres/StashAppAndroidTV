@@ -1,8 +1,10 @@
 package com.github.damontecres.stashapp.ui.pages
 
-import android.content.Context
+import android.app.Application
 import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +20,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
@@ -40,16 +44,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.datastore.core.DataStore
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
+import co.touchlab.kermit.Logger
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.transitionFactory
@@ -63,9 +69,15 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.di.server.CurrentServer
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerPreferences
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.ItemClicker
+import com.github.damontecres.stashapp.di.services.ServerLogger
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.proto.StashPreferences
-import com.github.damontecres.stashapp.proto.UpdatePreferences
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.cards.StashCard
@@ -79,83 +91,93 @@ import com.github.damontecres.stashapp.ui.components.main.MainPageHeader
 import com.github.damontecres.stashapp.ui.isPlayKeyUp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.CrossFadeFactory
-import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
+import com.github.damontecres.stashapp.ui.util.ScrollToTopBringIntoViewSpec
 import com.github.damontecres.stashapp.ui.util.getPlayDestinationForItem
 import com.github.damontecres.stashapp.ui.util.ifElse
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
-import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
-import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchDefault
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.views.formatBytes
 import com.github.damontecres.stashapp.views.formatNumber
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinViewModel
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "MainPage"
 
-class MainPageViewModel : ViewModel() {
-    private lateinit var server: StashServer
-
+@KoinViewModel
+class MainPageViewModel(
+    private val context: Application,
+    private val serverLogger: ServerLogger,
+    private val queryEngine: QueryEngine,
+    private val serverRepository: ServerRepository,
+    private val preferences: DataStore<StashPreferences>,
+    val itemClicker: ItemClicker,
+    val updateChecker: UpdateChecker,
+) : ViewModel() {
     val frontPageRows = mutableStateListOf<FrontPageParser.FrontPageRow.Success>()
 
     private val _serverStats = MutableLiveData<StatisticsQuery.Stats?>()
     val serverStats: LiveData<StatisticsQuery.Stats?> = _serverStats
 
-    fun init(
-        context: Context,
-        server: StashServer,
-        prefs: StashPreferences,
-    ) {
-        this.server = server
-        viewModelScope.launchDefault(LoggingCoroutineExceptionHandler(server, viewModelScope)) {
-            val queryEngine = QueryEngine(server)
-            val filterParser = FilterParser(server.version)
-            val frontPageContent =
-                server.serverPreferences.uiConfiguration?.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
-            if (frontPageContent != null) {
-                Log.d(TAG, "${frontPageContent.size} front page rows")
-                val frontPageParser =
-                    FrontPageParser(
-                        context,
-                        queryEngine,
-                        filterParser,
-                        prefs.searchPreferences.maxResults,
-                    )
-                val jobs = frontPageParser.parse(frontPageContent)
+    val currentServer get() = serverRepository.currentServer
 
-                jobs.forEach { job ->
-                    try {
-                        job.await().let { row ->
-                            if (row is FrontPageParser.FrontPageRow.Success) {
-                                frontPageRows.add(row)
+    init {
+        viewModelScope.launchDefault {
+            try {
+                val current = serverRepository.currentServer.value
+                val filterParser = FilterParser(current.serverPreferences.version)
+                val frontPageContent = current.serverPreferences.frontPageContent
+                if (frontPageContent.isNotEmpty()) {
+                    Log.d(TAG, "${frontPageContent.size} front page rows")
+                    val pageSize =
+                        preferences.data
+                            .first()
+                            .searchPreferences.maxResults
+                    val frontPageParser =
+                        FrontPageParser(
+                            context,
+                            queryEngine,
+                            filterParser,
+                            pageSize,
+                        )
+                    val jobs = frontPageParser.parse(frontPageContent)
+
+                    jobs.forEach { job ->
+                        try {
+                            job.await().let { row ->
+                                if (row is FrontPageParser.FrontPageRow.Success) {
+                                    frontPageRows.add(row)
+                                }
                             }
+                        } catch (ex: Exception) {
+                            Log.e(TAG, "Error fetching row data", ex)
                         }
-                    } catch (ex: Exception) {
-                        Log.e(TAG, "Error fetching row data", ex)
                     }
+                } else {
+                    Logger.w { "No front page content!" }
                 }
+            } catch (ex: Exception) {
+                Logger.e(ex) { "" }
+                serverLogger.logException(ex, null)
             }
         }
     }
 
-    fun checkForUpdate(
-        context: Context,
-        prefs: UpdatePreferences,
-    ) {
-        if (prefs.checkForUpdates) {
-            viewModelScope.launchIO {
+    fun checkForUpdate() {
+        viewModelScope.launchIO {
+            val updatePrefs = preferences.data.first().updatePreferences
+            if (updatePrefs.checkForUpdates) {
                 try {
-                    UpdateChecker.maybeShowUpdateToast(
-                        context,
-                        prefs.updateUrl,
+                    updateChecker.maybeShowUpdateToast(
+                        updatePrefs.updateUrl,
                         false,
                     )
                 } catch (ex: Exception) {
@@ -167,7 +189,6 @@ class MainPageViewModel : ViewModel() {
 
     fun updateStatistics() {
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
-            val queryEngine = QueryEngine(server)
             _serverStats.value = queryEngine.executeQuery(StatisticsQuery()).data?.stats
         }
     }
@@ -175,24 +196,21 @@ class MainPageViewModel : ViewModel() {
 
 @Composable
 fun MainPage(
-    server: StashServer,
+    destination: Destination.Main,
     uiConfig: ComposeUiConfig,
-    itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
-    viewModel: MainPageViewModel = viewModel(),
+    viewModel: MainPageViewModel = koinViewModel(key = destination.id.toString()),
 ) {
     val context = LocalContext.current
-    OneTimeLaunchedEffect {
-        viewModel.init(context, server, uiConfig.preferences)
-    }
 
     val frontPageRows = viewModel.frontPageRows // .observeAsState(listOf())
     val serverStats by viewModel.serverStats.observeAsState()
+    val currentServer by viewModel.currentServer.collectAsState()
 
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
-        viewModel.checkForUpdate(context, uiConfig.preferences.updatePreferences)
+        viewModel.checkForUpdate()
         viewModel.updateStatistics()
     }
     if (frontPageRows.isEmpty()) {
@@ -205,25 +223,25 @@ fun MainPage(
             )
         }
     } else {
-        LaunchedEffect(server, frontPageRows) {
+        LaunchedEffect(currentServer, frontPageRows) {
             focusRequester.tryRequestFocus()
         }
         HomePage(
             modifier = modifier.focusRequester(focusRequester),
-            server = server,
+            server = currentServer,
             serverStats = serverStats,
             uiConfig = uiConfig,
             rows = frontPageRows,
-            itemOnClick = itemOnClick,
+            itemOnClick = viewModel.itemClicker::onClick,
             longClicker = longClicker,
         )
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomePage(
-    server: StashServer,
+    server: CurrentServer,
     serverStats: StatisticsQuery.Stats?,
     uiConfig: ComposeUiConfig,
     rows: List<FrontPageParser.FrontPageRow.Success>,
@@ -238,67 +256,136 @@ fun HomePage(
 
     val listState = rememberLazyListState()
 
-    LaunchedEffect(focusedIndex) {
-        listState.animateScrollToItem(focusedRow)
-    }
+//    LaunchedEffect(focusedIndex) {
+//        listState.animateScrollToItem(focusedRow)
+//    }
 
+    val spacingPx = with(LocalDensity.current) { 32.dp.toPx() }
     Box(
         modifier =
             modifier
                 .fillMaxSize(),
     ) {
-        focusedItem?.let { item ->
-            val imageUrl =
-                when (item) {
-                    is SlimSceneData -> item.paths.screenshot
-                    is ImageData -> item.paths.image
-                    is PerformerData -> item.image_path
-                    is StudioData -> item.image_path
-                    is TagData -> item.image_path
-                    is MarkerData -> item.screenshot
-                    is GroupData -> item.front_image_path
-                    is GalleryData -> item.paths.cover
-                    else -> null
-                }
-            if (imageUrl.isNotNullOrBlank()) {
-                val gradientColor = MaterialTheme.colorScheme.background
-                AsyncImage(
-                    model =
-                        ImageRequest
-                            .Builder(LocalContext.current)
-                            .data(imageUrl)
-                            .transitionFactory(CrossFadeFactory(250.milliseconds))
-                            .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    alignment = Alignment.TopEnd,
+        HomePageImage(
+            focusedItem,
+            Modifier
+                .align(Alignment.TopEnd)
+                .fillMaxHeight(.85f),
+        )
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
+        ) {
+            MainPageHeader(
+                item = focusedItem,
+                uiConfig = uiConfig,
+                modifier = Modifier.fillMaxWidth(.7f),
+            )
+            val defaultBringIntoViewSpec = LocalBringIntoViewSpec.current
+            CompositionLocalProvider(
+                LocalBringIntoViewSpec provides
+                    ScrollToTopBringIntoViewSpec(
+                        spacingPx,
+                    ),
+            ) {
+                LazyColumn(
+                    state = listState,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(bottom = 72.dp),
                     modifier =
                         Modifier
-                            .align(Alignment.TopEnd)
-                            .fillMaxHeight(.85f)
-                            .drawWithContent {
-                                drawContent()
-                                drawRect(
-                                    Brush.verticalGradient(
-                                        colorStops =
-                                            arrayOf(
-                                                0f to Color.Transparent,
-                                                .9f to gradientColor,
-                                            ),
-                                        startY = 0f,
+                            .focusGroup()
+                            .focusRestorer(focusRequester),
+                ) {
+                    itemsIndexed(rows) { index, row ->
+                        CompositionLocalProvider(LocalBringIntoViewSpec provides defaultBringIntoViewSpec) {
+                            HomePageRow(
+                                uiConfig,
+                                row,
+                                itemOnClick,
+                                longClicker,
+                                onFocus = { idx, item ->
+                                    focusedIndex = RowColumn(index, idx)
+                                    focusedItem = item
+                                    focusedRow = index
+                                },
+                                rowFocusRequester = if (index == focusedIndex.row) focusRequester else null,
+                                modifier = Modifier,
+                            )
+                        }
+                    }
+                    item {
+                        ServerStatsRow(
+                            serverPreferences = server.serverPreferences,
+                            serverStats = serverStats,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 24.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HomePageImage(
+    item: Any?,
+    modifier: Modifier = Modifier,
+) {
+    val imageUrl =
+        when (item) {
+            is SlimSceneData -> item.paths.screenshot
+            is ImageData -> item.paths.image
+            is PerformerData -> item.image_path
+            is StudioData -> item.image_path
+            is TagData -> item.image_path
+            is MarkerData -> item.screenshot
+            is GroupData -> item.front_image_path
+            is GalleryData -> item.paths.cover
+            else -> null
+        }
+    if (imageUrl.isNotNullOrBlank()) {
+        val gradientColor = MaterialTheme.colorScheme.background
+        AsyncImage(
+            model =
+                ImageRequest
+                    .Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .transitionFactory(CrossFadeFactory(250.milliseconds))
+                    .build(),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.TopEnd,
+            modifier =
+                modifier
+                    .drawWithContent {
+                        drawContent()
+                        drawRect(
+                            Brush.verticalGradient(
+                                colorStops =
+                                    arrayOf(
+                                        0f to Color.Transparent,
+                                        .9f to gradientColor,
                                     ),
-                                )
-                                drawRect(
-                                    Brush.horizontalGradient(
-                                        colorStops =
-                                            arrayOf(
-                                                0f to Color.Transparent,
-                                                .8f to gradientColor,
-                                            ),
-                                        startX = size.width * .33f,
-                                        endX = 0f,
+                                startY = 0f,
+                            ),
+                        )
+                        drawRect(
+                            Brush.horizontalGradient(
+                                colorStops =
+                                    arrayOf(
+                                        0f to Color.Transparent,
+                                        .8f to gradientColor,
                                     ),
-                                )
+                                startX = size.width * .33f,
+                                endX = 0f,
+                            ),
+                        )
 //                                drawLine(
 //                                    color = Color.Red,
 //                                    start = Offset(x = 0f, y = size.height * .5f),
@@ -309,60 +396,8 @@ fun HomePage(
 //                                    start = Offset.Zero,
 //                                    end = Offset(x = size.width, y = size.height),
 //                                )
-                            },
-                )
-            }
-        }
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(12.dp),
-        ) {
-            focusedItem?.let { item ->
-                MainPageHeader(
-                    item = item,
-                    uiConfig = uiConfig,
-                    modifier = Modifier.fillMaxWidth(.7f),
-                )
-            }
-
-            LazyColumn(
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 72.dp),
-                modifier =
-                    Modifier
-                        .focusGroup()
-                        .focusRestorer { focusRequester },
-            ) {
-                itemsIndexed(rows) { index, row ->
-                    HomePageRow(
-                        uiConfig,
-                        row,
-                        itemOnClick,
-                        longClicker,
-                        onFocus = { idx, item ->
-                            focusedIndex = RowColumn(index, idx)
-                            focusedItem = item
-                            focusedRow = index
-                        },
-                        rowFocusRequester = if (index == focusedIndex.row) focusRequester else null,
-                        modifier = Modifier,
-                    )
-                }
-                item {
-                    ServerStatsRow(
-                        server = server,
-                        serverStats = serverStats,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(top = 24.dp),
-                    )
-                }
-            }
-        }
+                    },
+        )
     }
 }
 
@@ -388,7 +423,7 @@ fun HomePageRow(
         var focusedIndex by rememberSaveable { mutableIntStateOf(0) }
         val rowModifier =
             if (rowFocusRequester != null) Modifier.focusRequester(rowFocusRequester) else Modifier
-        val server = LocalGlobalContext.current.server
+        val server = LocalGlobalContext.current.current.server
         LazyRow(
             modifier =
                 rowModifier
@@ -403,9 +438,9 @@ fun HomePageRow(
                         if (isPlayKeyUp(it)) {
                             val destination =
                                 getPlayDestinationForItem(
-                                    server,
                                     row.data[focusedIndex],
                                     FilterAndPosition(row.filter, focusedIndex),
+                                    uiConfig.alwaysStartFromBeginning,
                                 )
                             return@onKeyEvent if (destination != null) {
                                 navigationManager.navigate(destination)
@@ -480,7 +515,7 @@ fun HomePageRow(
 
 @Composable
 fun ServerStatsRow(
-    server: StashServer,
+    serverPreferences: ServerPreferences,
     serverStats: StatisticsQuery.Stats?,
     modifier: Modifier = Modifier,
 ) {
@@ -491,7 +526,7 @@ fun ServerStatsRow(
         ) {
             TitleValueText(
                 stringResource(R.string.stashapp_scenes),
-                formatNumber(stats.scene_count, server.serverPreferences.abbreviateCounters),
+                formatNumber(stats.scene_count, serverPreferences.abbreviateCounters),
             )
             TitleValueText(
                 stringResource(R.string.stashapp_stats_scenes_size),
@@ -499,7 +534,7 @@ fun ServerStatsRow(
             )
             TitleValueText(
                 stringResource(R.string.stashapp_images),
-                formatNumber(stats.image_count, server.serverPreferences.abbreviateCounters),
+                formatNumber(stats.image_count, serverPreferences.abbreviateCounters),
             )
             TitleValueText(
                 stringResource(R.string.stashapp_stats_image_size),
@@ -507,7 +542,7 @@ fun ServerStatsRow(
             )
             TitleValueText(
                 stringResource(R.string.stashapp_stats_total_play_count),
-                formatNumber(stats.total_play_count, server.serverPreferences.abbreviateCounters),
+                formatNumber(stats.total_play_count, serverPreferences.abbreviateCounters),
             )
             TitleValueText(
                 stringResource(R.string.stashapp_stats_total_play_duration),
@@ -518,7 +553,7 @@ fun ServerStatsRow(
             )
             TitleValueText(
                 stringResource(R.string.stashapp_stats_total_o_count),
-                formatNumber(stats.total_o_count, server.serverPreferences.abbreviateCounters),
+                formatNumber(stats.total_o_count, serverPreferences.abbreviateCounters),
             )
         }
     }

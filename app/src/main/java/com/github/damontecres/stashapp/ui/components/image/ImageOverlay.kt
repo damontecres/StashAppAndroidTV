@@ -32,6 +32,7 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
+import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
@@ -44,13 +45,10 @@ import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.ui.pages.SearchForParams
 import com.github.damontecres.stashapp.ui.titleCount
-import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.StashServer
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun ImageOverlay(
-    server: StashServer,
     player: Player,
     slideshowControls: SlideshowControls,
     slideshowEnabled: Boolean,

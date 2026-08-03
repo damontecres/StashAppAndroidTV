@@ -1,6 +1,8 @@
 package com.github.damontecres.stashapp.ui.nav
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import coil3.ImageLoader
 import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.setSingletonImageLoaderFactory
@@ -11,16 +13,17 @@ import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.github.damontecres.stashapp.proto.StashPreferences
-import com.github.damontecres.stashapp.views.models.ServerViewModel
 import okhttp3.Call
+import okhttp3.OkHttpClient
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class, ExperimentalCoilApi::class)
 @Composable
 fun CoilConfig(
-    serverViewModel: ServerViewModel,
+    httpClient: OkHttpClient,
     preferences: StashPreferences,
 ) {
+    val currentHttpClient by rememberUpdatedState(httpClient)
     setSingletonImageLoaderFactory { ctx ->
         val cacheLogging = preferences.cachePreferences.logCacheHits
         val diskCacheSize =
@@ -42,10 +45,7 @@ fun CoilConfig(
                         cacheStrategy = { CacheControlCacheStrategy() },
                         callFactory = {
                             Call.Factory { request ->
-                                // TODO this seems hacky?
-                                serverViewModel.requireServer().okHttpClient.newCall(
-                                    request,
-                                )
+                                currentHttpClient.newCall(request)
                             }
                         },
                     ),

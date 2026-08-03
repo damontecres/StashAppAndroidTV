@@ -43,7 +43,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
@@ -69,25 +68,27 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.ui.components.UpdatedTimestamp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun MarkerPage(
-    server: StashServer,
     markerId: String,
-    itemOnClick: ItemOnClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
     onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
-    viewModel: MarkerDetailsViewModel = viewModel(),
+    viewModel: MarkerDetailsViewModel =
+        koinViewModel {
+            parametersOf(markerId)
+        },
 ) {
     LaunchedEffect(Unit) {
-        viewModel.init(server, markerId)
+        viewModel.init()
     }
 
     val marker by viewModel.item.observeAsState()
@@ -106,7 +107,7 @@ fun MarkerPage(
                         buildList {
                             add(
                                 DialogItem("Go to", Icons.Default.PlayArrow) {
-                                    itemOnClick.onClick(
+                                    viewModel.itemClicker.onClick(
                                         item,
                                         filterAndPosition,
                                     )
@@ -140,12 +141,11 @@ fun MarkerPage(
             }
         onUpdateTitle?.invoke(AnnotatedString(title))
         MarkerPageContent(
-            server = server,
             marker = marker!!,
             markerTitle = if (onUpdateTitle == null) title else null,
             primaryTag = primaryTag!!,
             tags = tags,
-            itemOnClick = itemOnClick,
+            itemOnClick = viewModel.itemClicker::onClick,
             longClicker = removeLongClicker,
             uiConfig = uiConfig,
             setPrimaryTag = viewModel::setPrimaryTag,
@@ -167,7 +167,6 @@ fun MarkerPage(
 
 @Composable
 fun MarkerPageContent(
-    server: StashServer,
     marker: FullMarkerData,
     markerTitle: String?,
     primaryTag: TagData,
