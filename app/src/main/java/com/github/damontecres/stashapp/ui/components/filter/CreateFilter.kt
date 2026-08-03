@@ -77,7 +77,6 @@ fun CreateFilterScreen(
     dataType: DataType,
     initialFilter: FilterArgs?,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: CreateFilterViewModel =
         koinViewModel {
             parametersOf(dataType, initialFilter)
@@ -122,7 +121,6 @@ fun CreateFilterContent(
     saveEnabled: Boolean,
     onSubmit: (save: Boolean, filter: FilterArgs) -> Unit,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: CreateFilterViewModel =
         koinViewModel {
             parametersOf(dataType, initialFilter)

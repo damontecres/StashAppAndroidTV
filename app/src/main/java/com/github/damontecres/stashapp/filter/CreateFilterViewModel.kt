@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.InterfaceService
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.filter.output.FilterWriter
@@ -40,6 +41,7 @@ class CreateFilterViewModel(
     private val queryEngine: QueryEngine,
     private val mutationEngine: MutationEngine,
     val navigationManager: NavigationManager,
+    private val interfaceService: InterfaceService,
     @InjectedParam private val dataType: DataType,
     @InjectedParam private val initialFilter: FilterArgs?,
 ) : ViewModel() {
@@ -62,6 +64,7 @@ class CreateFilterViewModel(
      * Initialize the state
      */
     fun initialize() {
+        interfaceService.setTitle()
         ready.value = false
 
         this.objectFilter.value =

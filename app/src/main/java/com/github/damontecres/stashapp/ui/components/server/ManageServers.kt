@@ -35,7 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -48,6 +47,7 @@ import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.di.server.StashServer
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -59,7 +59,6 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun ManageServers(
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: ManageServersViewModel = koinViewModel(),
 ) {
     val currentServer by viewModel.currentServer.collectAsState()
@@ -74,10 +73,8 @@ fun ManageServers(
     var showServerDialog by remember { mutableStateOf<StashServer?>(null) }
 
     val focusRequester = remember { FocusRequester() }
-    val title = stringResource(R.string.manage_servers)
     LaunchedEffect(Unit) {
         focusRequester.tryRequestFocus()
-        onUpdateTitle?.invoke(AnnotatedString(title))
     }
 
     fun switchServer(server: StashServer) {
@@ -103,9 +100,9 @@ fun ManageServers(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (onUpdateTitle == null) {
+        if (isTvDevice) {
             Text(
-                text = title,
+                text = stringResource(R.string.manage_servers),
                 style = MaterialTheme.typography.displaySmall,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,

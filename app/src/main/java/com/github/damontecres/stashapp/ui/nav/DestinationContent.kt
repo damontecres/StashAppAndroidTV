@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.ui.nav
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.AnnotatedString
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.di.services.NavigationManager
@@ -50,7 +49,6 @@ fun DestinationContent(
     longClicker: LongClicker<Any>,
     onChangeTheme: (String?) -> Unit,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     when (destination) {
         is Destination.SettingsPin -> {
@@ -73,14 +71,12 @@ fun DestinationContent(
             SettingsPage(
                 preferenceScreenOption = destination.screenOption,
                 uiConfig = composeUiConfig,
-                onUpdateTitle = onUpdateTitle,
                 modifier = modifier,
             )
         }
 
         is Destination.ManageServers -> {
             ManageServers(
-                onUpdateTitle = onUpdateTitle,
                 modifier = modifier,
             )
         }
@@ -137,7 +133,6 @@ fun DestinationContent(
                 uiConfig = composeUiConfig,
                 dataType = destination.dataType,
                 initialFilter = destination.startingFilter,
-                onUpdateTitle = onUpdateTitle,
                 modifier = modifier,
             )
         }

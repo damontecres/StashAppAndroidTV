@@ -3,12 +3,21 @@ package com.github.damontecres.stashapp.di.services
 import androidx.navigation3.runtime.NavBackStack
 import co.touchlab.kermit.Logger
 import com.github.damontecres.stashapp.navigation.Destination
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.acra.ACRA
 import org.koin.core.annotation.Single
 
 @Single
 class NavigationManager {
     var backStack: MutableList<Destination> = NavBackStack(Destination.Main())
+
+    private val _destinations = MutableStateFlow<List<Destination>>(backStack)
+
+    /**
+     * A flow of the current navigation backstack
+     */
+    val destinations: StateFlow<List<Destination>> = _destinations
 
     /**
      * Go to the specified [Destination]
@@ -78,6 +87,7 @@ class NavigationManager {
     }
 
     private fun log() {
+        _destinations.tryEmit(backStack)
         val dest = backStack.lastOrNull().toString()
         Logger.i { "Current Destination: $dest" }
         ACRA.errorReporter.putCustomData("destination", dest)

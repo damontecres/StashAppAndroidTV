@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo.ApolloClient
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.CredentialsQuery
 import com.github.damontecres.stashapp.api.GenerateApiKeyMutation
@@ -15,6 +16,7 @@ import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.server.StashApi
 import com.github.damontecres.stashapp.di.server.StashServer
+import com.github.damontecres.stashapp.di.services.InterfaceService
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.di.services.SetupNavigationManager
 import com.github.damontecres.stashapp.navigation.SetupDestination
@@ -52,6 +54,7 @@ class ManageServersViewModel(
     private val serverRepository: ServerRepository,
     private val navigationManager: NavigationManager,
     private val setupNavigationManager: SetupNavigationManager,
+    private val interfaceService: InterfaceService,
 ) : ViewModel() {
     val currentServer get() = serverRepository.currentServer
     val allServers = MutableLiveData<List<StashServer>>(listOf())
@@ -61,6 +64,7 @@ class ManageServersViewModel(
 
     init {
         viewModelScope.launchIO {
+            interfaceService.setTitle(context.getString(R.string.manage_servers))
             val servers = serverRepository.getAll()
             withContext(Dispatchers.Main) {
                 allServers.value = servers

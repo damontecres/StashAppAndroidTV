@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.imageLoader
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.JobQueueQuery
 import com.github.damontecres.stashapp.api.fragment.StashJob
 import com.github.damontecres.stashapp.api.type.JobStatusUpdateType
@@ -14,6 +15,7 @@ import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.server.SubscriptionEngine
+import com.github.damontecres.stashapp.di.services.InterfaceService
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.ui.indexOfFirstOrNull
 import com.github.damontecres.stashapp.util.Constants
@@ -39,6 +41,7 @@ class PreferencesViewModel(
     val navigationManager: NavigationManager,
     val serverRepository: ServerRepository,
     val updateChecker: UpdateChecker,
+    private val interfaceService: InterfaceService,
 ) : ViewModel() {
     private val lock = Mutex()
     val runningJobs = MutableLiveData<List<StashJob>>(listOf())
@@ -53,6 +56,7 @@ class PreferencesViewModel(
         )
 
     fun init() {
+        interfaceService.setTitle(context.getString(R.string.preferences))
         runningJobs.value = listOf()
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
             runningJobs.value =

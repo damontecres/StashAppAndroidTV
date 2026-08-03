@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -13,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
@@ -24,6 +26,7 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.di.server.CurrentServer
+import com.github.damontecres.stashapp.di.services.InterfaceService
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
@@ -37,6 +40,14 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.MarkerDurationDialog
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.util.PreferenceScreenOption
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.annotation.KoinViewModel
+
+@KoinViewModel
+class ApplicationContentViewModel(
+    val interfaceService: InterfaceService,
+    val navigationManager: NavigationManager,
+) : ViewModel()
 
 /**
  * Shows the actual compose content of the application
@@ -47,9 +58,9 @@ import com.github.damontecres.stashapp.util.PreferenceScreenOption
 fun ApplicationContent(
     currentServer: CurrentServer,
     preferences: StashPreferences,
-    navigationManager: NavigationManager,
     onChangeTheme: (String?) -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: ApplicationContentViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
     var composeUiConfig by remember(currentServer, preferences) {
@@ -60,6 +71,8 @@ fun ApplicationContent(
             ),
         )
     }
+    val navigationManager = viewModel.navigationManager
+    val interfaceState by viewModel.interfaceService.state.collectAsState()
 
     val scrollToNextPage = preferences.interfacePreferences.scrollNextViewAll
 
@@ -266,6 +279,7 @@ fun ApplicationContent(
                         )
                     } else {
                         NavScaffold(
+                            title = interfaceState.title,
                             preferences = preferences,
                             currentServer = currentServer,
                             navigationManager = navigationManager,
