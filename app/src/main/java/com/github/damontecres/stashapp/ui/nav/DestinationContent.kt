@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.nav
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
@@ -147,7 +146,7 @@ fun DestinationContent(
             MarkerTimestampPage(
                 uiConfig = composeUiConfig,
                 markerId = destination.markerId,
-                modifier = Modifier.fillMaxSize(),
+                modifier = modifier,
             )
         }
 
@@ -155,7 +154,7 @@ fun DestinationContent(
             DebugPage(
                 currentServer = currentServer,
                 uiConfig = composeUiConfig,
-                modifier = Modifier.fillMaxSize(),
+                modifier = modifier,
             )
         }
 
@@ -194,6 +193,7 @@ fun DestinationContent(
                 uiConfig = composeUiConfig,
                 markerId = destination.markerId,
                 onUpdateTitle = onUpdateTitle,
+                modifier = modifier,
             )
         }
 
@@ -266,6 +266,7 @@ fun DestinationContent(
                         uiConfig = composeUiConfig,
                         markerId = destination.id,
                         onUpdateTitle = onUpdateTitle,
+                        modifier = modifier,
                     )
                 }
 
