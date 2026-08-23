@@ -1,14 +1,12 @@
 package com.github.damontecres.stashapp.ui.pages
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -42,13 +40,19 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
 import com.github.damontecres.stashapp.ui.components.CircularProgress
+import com.github.damontecres.stashapp.ui.components.ErrorMessage
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.LoadingPage
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackPageContent
+import com.github.damontecres.stashapp.ui.util.DataLoadingState
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
+import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration
@@ -179,77 +183,130 @@ fun PlaylistPlaybackPage(
     itemOnClick: ItemOnClicker<Any>,
     modifier: Modifier = Modifier,
     clipDuration: Duration = 30.seconds,
-    viewModel: FilterViewModel = koinViewModel(key = "main"),
-    playlistViewModel: FilterViewModel = koinViewModel(key = "playlist"),
+    viewModel: FilterViewModel =
+        koinViewModel {
+            parametersOf(adjustFilter(filterArgs))
+        },
 ) {
     val scope = rememberCoroutineScope()
-    Log.v("PlaybackPageContent", "startIndex=$startIndex")
     val context = LocalContext.current
+    LaunchedEffect(Unit) { viewModel.init() }
+    val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(currentServer, filterArgs) {
-        // TODO switch to single query
-        viewModel.setFilter(adjustFilter(filterArgs), uiConfig.cardSettings.columns)
-        playlistViewModel.setFilter(filterArgs, uiConfig.cardSettings.columns)
-    }
-    val pager by viewModel.pager.observeAsState()
-//    var playlist by remember(pager) { mutableStateOf<List<MediaItem>>(listOf()) }
-    val playlist = remember(pager) { mutableStateListOf<MediaItem>() }
-    val playlistPager by playlistViewModel.pager.observeAsState()
-    LaunchedEffect(pager) {
-        val items =
-            pager?.let {
-                buildList {
-                    for (i in 0..<(it.size).coerceAtMost(MAX_PLAYLIST_SIZE)) {
-                        it.getBlocking(i)?.let { item ->
-                            add(
-                                convertToMediaItem(
-                                    context,
-                                    uiConfig.preferences.playbackPreferences,
-                                    filterArgs.dataType,
-                                    clipDuration,
-                                    item,
-                                ),
-                            )
+    when (val st = state.pager) {
+        is DataLoadingState.Error -> {
+            ErrorMessage(st, modifier)
+        }
+
+        DataLoadingState.Loading,
+        DataLoadingState.Pending,
+        -> {
+            LoadingPage(modifier)
+        }
+
+        is DataLoadingState.Success<ComposePager<StashData>> -> {
+            val pager = st.data
+            val playlist = remember(pager) { mutableStateListOf<MediaItem>() }
+            LaunchedEffect(pager) {
+                withContext(Dispatchers.Default) {
+                    val items =
+                        buildList {
+                            for (i in 0..<(pager.size).coerceAtMost(MAX_PLAYLIST_SIZE)) {
+                                pager.getBlocking(i)?.let { item ->
+                                    add(
+                                        convertToMediaItem(
+                                            context,
+                                            uiConfig.preferences.playbackPreferences,
+                                            filterArgs.dataType,
+                                            clipDuration,
+                                            item,
+                                        ),
+                                    )
+                                }
+                            }
                         }
+                    playlist.addAll(items)
+                }
+            }
+            if (playlist.isNotEmpty()) {
+                val player =
+                    remember {
+                        viewModel.playerFactory
+                            .createPlayer(preferences.playbackPreferences)
+                            .apply {
+                                repeatMode = Player.REPEAT_MODE_OFF
+                                playWhenReady = true
+                            }
+                    }
+                LifecycleResumeEffect(Unit) {
+                    onPauseOrDispose {
+                        player.release()
                     }
                 }
-            } ?: listOf()
-        playlist.addAll(items)
-    }
-    if (playlist.isNotEmpty()) {
-        val player =
-            remember {
-                viewModel.playerFactory
-                    .createPlayer(preferences.playbackPreferences)
-                    .apply {
-                        repeatMode = Player.REPEAT_MODE_OFF
-                        playWhenReady = true
-                    }
-            }
-        LifecycleResumeEffect(Unit) {
-            onPauseOrDispose {
-                player.release()
-            }
-        }
-        val mutex = remember { Mutex() }
-        LaunchedEffect(Unit) {
-            player.addListener(
-                object : Player.Listener {
-                    override fun onMediaItemTransition(
-                        mediaItem: MediaItem?,
-                        reason: Int,
-                    ) {
-                        scope.launch(LoggingCoroutineExceptionHandler(currentServer, scope)) {
-                            mutex.withLock {
-                                val currentIndex = player.currentMediaItemIndex
-                                val count = player.mediaItemCount
-                                pager?.let { pager ->
-                                    if (count - currentIndex < PLAYLIST_THRESHOLD && pager.size > count) {
-                                        val maxIndex =
-                                            (count + PLAYLIST_PREFETCH)
-                                                .coerceAtMost(pager.size)
+                val mutex = remember { Mutex() }
+                LaunchedEffect(Unit) {
+                    player.addListener(
+                        object : Player.Listener {
+                            override fun onMediaItemTransition(
+                                mediaItem: MediaItem?,
+                                reason: Int,
+                            ) {
+                                scope.launch(
+                                    LoggingCoroutineExceptionHandler(
+                                        currentServer,
+                                        scope,
+                                    ),
+                                ) {
+                                    mutex.withLock {
+                                        val currentIndex = player.currentMediaItemIndex
+                                        val count = player.mediaItemCount
+                                        pager?.let { pager ->
+                                            if (count - currentIndex < PLAYLIST_THRESHOLD && pager.size > count) {
+                                                val maxIndex =
+                                                    (count + PLAYLIST_PREFETCH)
+                                                        .coerceAtMost(pager.size)
+                                                val newMediaItems =
+                                                    (count..<maxIndex).mapNotNull { index ->
+                                                        pager.getBlocking(index)?.let { item ->
+                                                            convertToMediaItem(
+                                                                context,
+                                                                uiConfig.preferences.playbackPreferences,
+                                                                filterArgs.dataType,
+                                                                clipDuration,
+                                                                item,
+                                                            )
+                                                        }
+                                                    }
+                                                playlist.addAll(newMediaItems)
+                                                player.addMediaItems(newMediaItems)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    )
+                }
+
+                PlaybackPageContent(
+                    currentServer = currentServer,
+                    player = player,
+                    playlist = playlist,
+                    startIndex = startIndex,
+                    uiConfig = uiConfig,
+                    markersEnabled = filterArgs.dataType == DataType.SCENE,
+                    playlistPager = pager,
+                    itemOnClick = itemOnClick,
+                    onClickPlaylistItem = { index ->
+                        if (index < player.mediaItemCount) {
+                            player.seekTo(index, C.TIME_UNSET)
+                        } else {
+                            scope.launch(LoggingCoroutineExceptionHandler(currentServer, scope)) {
+                                mutex.withLock {
+                                    val count = player.mediaItemCount
+                                    pager?.let { pager ->
                                         val newMediaItems =
-                                            (count..<maxIndex).mapNotNull { index ->
+                                            (count..<(index + PLAYLIST_PREFETCH).coerceAtMost(pager.size)).mapNotNull { index ->
                                                 pager.getBlocking(index)?.let { item ->
                                                     convertToMediaItem(
                                                         context,
@@ -260,57 +317,19 @@ fun PlaylistPlaybackPage(
                                                     )
                                                 }
                                             }
-                                        playlist.addAll(newMediaItems)
                                         player.addMediaItems(newMediaItems)
+                                        player.seekTo(index, C.TIME_UNSET)
                                     }
                                 }
                             }
                         }
-                    }
-                },
-            )
+                    },
+                    modifier = modifier,
+                )
+            } else {
+                CircularProgress()
+            }
         }
-
-        PlaybackPageContent(
-            currentServer = currentServer,
-            player = player,
-            playlist = playlist,
-            startIndex = startIndex,
-            uiConfig = uiConfig,
-            markersEnabled = filterArgs.dataType == DataType.SCENE,
-            playlistPager = playlistPager,
-            itemOnClick = itemOnClick,
-            onClickPlaylistItem = { index ->
-                if (index < player.mediaItemCount) {
-                    player.seekTo(index, C.TIME_UNSET)
-                } else {
-                    scope.launch(LoggingCoroutineExceptionHandler(currentServer, scope)) {
-                        mutex.withLock {
-                            val count = player.mediaItemCount
-                            pager?.let { pager ->
-                                val newMediaItems =
-                                    (count..<(index + PLAYLIST_PREFETCH).coerceAtMost(pager.size)).mapNotNull { index ->
-                                        pager.getBlocking(index)?.let { item ->
-                                            convertToMediaItem(
-                                                context,
-                                                uiConfig.preferences.playbackPreferences,
-                                                filterArgs.dataType,
-                                                clipDuration,
-                                                item,
-                                            )
-                                        }
-                                    }
-                                player.addMediaItems(newMediaItems)
-                                player.seekTo(index, C.TIME_UNSET)
-                            }
-                        }
-                    }
-                }
-            },
-            modifier = modifier,
-        )
-    } else {
-        CircularProgress()
     }
 }
 

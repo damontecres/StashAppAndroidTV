@@ -1,10 +1,12 @@
 package com.github.damontecres.stashapp.ui
 
-import android.util.Log
 import androidx.datastore.core.DataStore
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.serialization.saved
 import androidx.lifecycle.viewModelScope
+import androidx.savedstate.serialization.SavedStateConfiguration
+import co.touchlab.kermit.Logger
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
@@ -17,12 +19,16 @@ import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.ui.util.DataLoadingState
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
+import com.github.damontecres.stashapp.util.OptionalSerializersModule
 import com.github.damontecres.stashapp.util.launchIO
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
+import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
@@ -34,44 +40,60 @@ class FilterViewModel(
     val preferences: DataStore<StashPreferences>,
     // TODO remove this
     val playerFactory: PlayerFactory,
+    private val savedStateHandle: SavedStateHandle,
+    @InjectedParam initialFilter: FilterArgs,
 ) : ViewModel() {
-    val pager = MutableLiveData<ComposePager<StashData>>()
+    private val _state = MutableStateFlow(FilterPageState())
+    val state: StateFlow<FilterPageState> = _state
 
-    val currentFilter: FilterArgs? get() = pager.value?.filter
-    val dataType: DataType? get() = currentFilter?.dataType
+    //    val pager = MutableLiveData<ComposePager<StashData>>()
+    private val config =
+        SavedStateConfiguration {
+            serializersModule = OptionalSerializersModule
+        }
+    var filter by savedStateHandle.saved(configuration = config) {
+        initialFilter
+    }
 
-    private var job: Job? = null
+    val dataType: DataType get() = filter.dataType
 
-    fun setFilter(
-        filterArgs: FilterArgs,
-        columns: Int,
-    ) {
-        if (pager.value?.filter != filterArgs) {
-            job?.cancel()
-            Log.d("FilterPageViewModel", "filterArgs=$filterArgs, columns=$columns")
-            val dataSupplierFactory = DataSupplierFactory(serverRepository.currentServerVersion)
-            val dataSupplier =
-                dataSupplierFactory.create<Query.Data, StashData, Query.Data>(filterArgs)
-            val pagingSource =
-                StashPagingSource(
-                    queryEngine,
-                    dataSupplier,
-                ) { _, _, item -> item }
-            val pager =
-                ComposePager(filterArgs, pagingSource, viewModelScope, pageSize = columns * 10)
-            job =
-                viewModelScope.launchIO {
-                    pager.init()
-                    withContext(Dispatchers.Main) {
-                        this@FilterViewModel.pager.value = pager
-                    }
-                }
+    fun init() {
+        viewModelScope.launchIO {
+            updateFilter(filter)
         }
     }
 
-    suspend fun findLetterPosition(letter: Char): Int {
-        val filter = this.pager.value!!.filter
+    private var job: Job? = null
 
+    fun updateFilter(filterArgs: FilterArgs) {
+        job?.cancel()
+        _state.update { it.copy(pager = DataLoadingState.Loading) }
+        job =
+            viewModelScope.launchIO {
+                try {
+                    Logger.d { "setFilter: filterArgs=$filterArgs" }
+                    val dataSupplierFactory =
+                        DataSupplierFactory(serverRepository.currentServerVersion)
+                    val dataSupplier =
+                        dataSupplierFactory.create<Query.Data, StashData, Query.Data>(filterArgs)
+                    val pagingSource =
+                        StashPagingSource(
+                            queryEngine,
+                            dataSupplier,
+                        ) { _, _, item -> item }
+                    val pager =
+                        ComposePager(filterArgs, pagingSource, viewModelScope, pageSize = 100)
+
+                    pager.init()
+                    filter = filterArgs
+                    _state.update { it.copy(pager = DataLoadingState.Success(pager)) }
+                } catch (ex: Exception) {
+                    Logger.e(ex) { "Error fetching for $filterArgs" }
+                }
+            }
+    }
+
+    suspend fun findLetterPosition(letter: Char): Int {
         val dataSupplierFactory = DataSupplierFactory(serverRepository.currentServerVersion)
         val letterPosition =
             AlphabetSearchUtils.findPosition(
@@ -83,10 +105,16 @@ class FilterViewModel(
         val jumpPosition =
             if (filter.sortAndDirection.direction == SortDirectionEnum.DESC) {
                 // Reverse if sorting descending
-                pager.value!!.size - letterPosition - 1
+                state.value.pager.successValue?.size?.let {
+                    it - letterPosition - 1
+                } ?: 0
             } else {
                 letterPosition
             }
         return jumpPosition
     }
 }
+
+data class FilterPageState(
+    val pager: DataLoadingState<ComposePager<StashData>> = DataLoadingState.Pending,
+)

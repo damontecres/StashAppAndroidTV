@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.ui.util.DataLoadingState
 
 /**
  * Displays an error message and/or exception
@@ -56,3 +57,9 @@ fun ErrorMessage(
         }
     }
 }
+
+@Composable
+fun ErrorMessage(
+    error: DataLoadingState.Error,
+    modifier: Modifier = Modifier,
+) = ErrorMessage(error.message, error.exception, modifier)

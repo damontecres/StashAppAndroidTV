@@ -13,10 +13,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,10 +54,13 @@ import com.github.damontecres.stashapp.ui.cards.CardContext
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.filterArgsSaver
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.DataLoadingState
 import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
+import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.PageFilterKey
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -277,7 +280,10 @@ fun StashGridTab(
     onFilterChange: (FilterArgs) -> Unit,
     gridFocusRequester: FocusRequester,
     modifier: Modifier = Modifier,
-    viewModel: FilterViewModel = koinViewModel(key = name),
+    viewModel: FilterViewModel =
+        koinViewModel(key = name) {
+            parametersOf(initialFilter)
+        },
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
     subToggleLabel: String? = null,
     onSubToggleCheck: ((Boolean) -> Unit)? = null,
@@ -286,37 +292,49 @@ fun StashGridTab(
     cardContext: ((index: Int, item: StashData) -> CardContext)? = null,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
-    LaunchedEffect(initialFilter) {
-        viewModel.setFilter(initialFilter, composeUiConfig.cardSettings.columns)
+    LaunchedEffect(Unit) {
+        viewModel.init()
     }
-    val pager by viewModel.pager.observeAsState()
-    pager?.let { newPager ->
-        StashGridControls(
-            pager = newPager,
-            initialPosition = 0,
-            itemOnClick = itemOnClick,
-            longClicker = longClicker,
-            filterUiMode = FilterUiMode.CREATE_FILTER,
-            createFilter = {
-                navigationManager.navigate(
-                    Destination.CreateFilter(
-                        dataType = newPager.filter.dataType,
-                        startingFilter = newPager.filter,
-                    ),
-                )
-            },
-            modifier = modifier,
-            positionCallback = positionCallback,
-            uiConfig = composeUiConfig,
-            updateFilter = { onFilterChange?.invoke(it) },
-            letterPosition = viewModel::findLetterPosition,
-            subToggleLabel = subToggleLabel,
-            onSubToggleCheck = onSubToggleCheck,
-            subToggleChecked = subToggleChecked,
-            subToggleEnabled = subToggleEnabled,
-            gridFocusRequester = gridFocusRequester,
-            cardContext = cardContext,
-        )
+    val state by viewModel.state.collectAsState()
+    when (val st = state.pager) {
+        is DataLoadingState.Error -> {
+            ErrorMessage(st, modifier)
+        }
+
+        DataLoadingState.Loading,
+        DataLoadingState.Pending,
+        -> {
+            LoadingPage(modifier)
+        }
+
+        is DataLoadingState.Success<ComposePager<StashData>> -> {
+            StashGridControls(
+                pager = st.data,
+                initialPosition = 0,
+                itemOnClick = itemOnClick,
+                longClicker = longClicker,
+                filterUiMode = FilterUiMode.CREATE_FILTER,
+                createFilter = {
+                    navigationManager.navigate(
+                        Destination.CreateFilter(
+                            dataType = st.data.filter.dataType,
+                            startingFilter = st.data.filter,
+                        ),
+                    )
+                },
+                modifier = modifier,
+                positionCallback = positionCallback,
+                uiConfig = composeUiConfig,
+                updateFilter = { onFilterChange?.invoke(it) },
+                letterPosition = viewModel::findLetterPosition,
+                subToggleLabel = subToggleLabel,
+                onSubToggleCheck = onSubToggleCheck,
+                subToggleChecked = subToggleChecked,
+                subToggleEnabled = subToggleEnabled,
+                gridFocusRequester = gridFocusRequester,
+                cardContext = cardContext,
+            )
+        }
     }
 }
 
