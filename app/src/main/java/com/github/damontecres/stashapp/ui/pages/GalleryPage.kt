@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -29,9 +28,12 @@ import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.InterfaceService
 import com.github.damontecres.stashapp.di.services.ItemClicker
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.TabType
@@ -39,6 +41,7 @@ import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.EditItem
 import com.github.damontecres.stashapp.ui.components.ErrorMessage
@@ -80,9 +83,10 @@ class GalleryDetailsViewModel(
     private val serverRepository: ServerRepository,
     private val serverLogger: ServerLogger,
     val queryEngine: QueryEngine,
-    val mutationEngine: com.github.damontecres.stashapp.di.server.MutationEngine,
+    val mutationEngine: MutationEngine,
     val itemClicker: ItemClicker,
-    val navigationManager: com.github.damontecres.stashapp.di.services.NavigationManager,
+    val navigationManager: NavigationManager,
+    private val interfaceService: InterfaceService,
     @InjectedParam private val id: String,
 ) : ViewModel() {
     val currentServer get() = serverRepository.currentServer
@@ -96,6 +100,7 @@ class GalleryDetailsViewModel(
             try {
                 val gallery = queryEngine.getGallery(id)
                 if (gallery != null) {
+                    interfaceService.setTitle(gallery.name)
                     val tags = queryEngine.getTags(gallery.tags.map { it.slimTagData.id })
                     _state.update {
                         it.copy(
@@ -129,7 +134,6 @@ fun GalleryPage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: GalleryDetailsViewModel =
         koinViewModel {
             parametersOf(id)
@@ -297,14 +301,13 @@ fun GalleryPage(
                     ),
                 ).filter { it.type in uiTabs }
             val title = AnnotatedString(gallery.name ?: "")
-            LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
             TabPage(
                 title,
                 uiConfig.preferences.interfacePreferences.rememberSelectedTab,
                 tabs,
                 DataType.GALLERY,
                 modifier,
-                onUpdateTitle == null,
+                isTvDevice,
             )
         }
     }

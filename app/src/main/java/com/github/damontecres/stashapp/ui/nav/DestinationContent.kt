@@ -169,7 +169,6 @@ fun DestinationContent(
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 uiConfig = composeUiConfig,
-                onUpdateTitle = onUpdateTitle,
                 modifier = modifier,
             )
         }
@@ -187,7 +186,6 @@ fun DestinationContent(
             MarkerPage(
                 uiConfig = composeUiConfig,
                 markerId = destination.markerId,
-                onUpdateTitle = onUpdateTitle,
                 modifier = modifier,
             )
         }
@@ -199,7 +197,6 @@ fun DestinationContent(
                         modifier = modifier,
                         sceneId = destination.id,
                         uiConfig = composeUiConfig,
-                        onUpdateTitle = onUpdateTitle,
                     )
                 }
 
@@ -209,7 +206,6 @@ fun DestinationContent(
                         id = destination.id,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
-                        onUpdateTitle = onUpdateTitle,
                     )
                 }
 
@@ -220,7 +216,6 @@ fun DestinationContent(
                         includeSubTags = false,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
-                        onUpdateTitle = onUpdateTitle,
                     )
                 }
 
@@ -231,7 +226,6 @@ fun DestinationContent(
                         includeSubStudios = false,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
-                        onUpdateTitle = onUpdateTitle,
                     )
                 }
 
@@ -241,7 +235,6 @@ fun DestinationContent(
                         id = destination.id,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
-                        onUpdateTitle = onUpdateTitle,
                     )
                 }
 
@@ -252,7 +245,6 @@ fun DestinationContent(
                         includeSubGroups = false,
                         longClicker = longClicker,
                         uiConfig = composeUiConfig,
-                        onUpdateTitle = onUpdateTitle,
                     )
                 }
 
@@ -260,7 +252,6 @@ fun DestinationContent(
                     MarkerPage(
                         uiConfig = composeUiConfig,
                         markerId = destination.id,
-                        onUpdateTitle = onUpdateTitle,
                         modifier = modifier,
                     )
                 }

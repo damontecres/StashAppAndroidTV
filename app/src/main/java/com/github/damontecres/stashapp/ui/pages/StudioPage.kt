@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -34,15 +33,19 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.InterfaceService
 import com.github.damontecres.stashapp.di.services.ItemClicker
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.EditItem
 import com.github.damontecres.stashapp.ui.components.ErrorMessage
@@ -83,9 +86,10 @@ class StudioDetailsViewModel(
     private val serverRepository: ServerRepository,
     private val serverLogger: ServerLogger,
     val queryEngine: QueryEngine,
-    val mutationEngine: com.github.damontecres.stashapp.di.server.MutationEngine,
+    val mutationEngine: MutationEngine,
     val itemClicker: ItemClicker,
-    val navigationManager: com.github.damontecres.stashapp.di.services.NavigationManager,
+    val navigationManager: NavigationManager,
+    private val interfaceService: InterfaceService,
     @InjectedParam private val id: String,
 ) : ViewModel() {
     val currentServer get() = serverRepository.currentServer
@@ -108,6 +112,7 @@ class StudioDetailsViewModel(
             try {
                 val studio = queryEngine.getStudio(id)
                 if (studio != null) {
+                    interfaceService.setTitle(studio.name)
                     val tags = queryEngine.getTags(studio.tags.map { it.slimTagData.id })
                     _state.update {
                         it.copy(
@@ -143,7 +148,6 @@ fun StudioPage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: StudioDetailsViewModel =
         koinViewModel {
             parametersOf(id)
@@ -553,14 +557,13 @@ fun StudioPage(
                     subStudiosTab,
                 ).filter { it.type in uiTabs }
             val title = AnnotatedString(studio.name)
-            LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
             TabPage(
                 title,
                 uiConfig.preferences.interfacePreferences.rememberSelectedTab,
                 tabs,
                 DataType.STUDIO,
                 modifier,
-                onUpdateTitle == null,
+                isTvDevice,
             )
         }
     }

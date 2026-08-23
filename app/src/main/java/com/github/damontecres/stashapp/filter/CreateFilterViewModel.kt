@@ -1,12 +1,15 @@
 package com.github.damontecres.stashapp.filter
 
+import android.app.Application
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.api.Query
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SaveFilterInput
@@ -36,6 +39,7 @@ import kotlin.reflect.full.createInstance
  */
 @KoinViewModel
 class CreateFilterViewModel(
+    private val application: Application,
     private val serverRepository: ServerRepository,
     private val serverLogger: ServerLogger,
     private val queryEngine: QueryEngine,
@@ -59,12 +63,22 @@ class CreateFilterViewModel(
     private val currentSavedFilters = mutableMapOf<String?, String>()
 
     val ready = MutableLiveData(false)
+    val title = MutableLiveData(AnnotatedString(""))
 
     /**
      * Initialize the state
      */
     fun initialize() {
-        interfaceService.setTitle()
+        val title =
+            AnnotatedString(
+                application.getString(
+                    R.string.create_filter_for_type,
+                    application.getString(dataType.stringId),
+                ),
+            )
+        interfaceService.setTitle(title)
+        this@CreateFilterViewModel.title.value = title
+
         ready.value = false
 
         this.objectFilter.value =

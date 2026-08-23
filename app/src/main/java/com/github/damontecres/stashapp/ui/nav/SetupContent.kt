@@ -40,7 +40,6 @@ fun SetupContent(
 
         SetupDestination.ServerList -> {
             ManageServers(
-                onUpdateTitle = {},
                 modifier = modifier,
             )
         }
@@ -70,7 +69,6 @@ fun SetupContent(
                     ApplicationContent(
                         currentServer = currentServer,
                         preferences = preferences,
-                        navigationManager = navigationManager,
                         onChangeTheme = onChangeTheme,
                         modifier = modifier,
                     )

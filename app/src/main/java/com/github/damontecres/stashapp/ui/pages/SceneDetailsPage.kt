@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
@@ -107,7 +106,6 @@ fun SceneDetailsPage(
     sceneId: String,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: SceneDetailsViewModel =
         koinViewModel(key = sceneId) {
             parametersOf(sceneId)
@@ -143,11 +141,6 @@ fun SceneDetailsPage(
         }
 
         is SceneLoadingState.Success -> {
-            LaunchedEffect(Unit) {
-                state.scene.titleOrFilename?.let {
-                    onUpdateTitle?.invoke(AnnotatedString(it))
-                }
-            }
             val server by viewModel.currentServer.collectAsState()
             SceneDetails(
                 serverPreferences = server.serverPreferences,

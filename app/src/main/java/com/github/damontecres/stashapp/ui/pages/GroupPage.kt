@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -49,9 +48,12 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.InterfaceService
 import com.github.damontecres.stashapp.di.services.ItemClicker
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.TabType
@@ -60,6 +62,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.cards.CardContext
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.ErrorMessage
 import com.github.damontecres.stashapp.ui.components.ItemDetailsFooter
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
@@ -101,9 +104,10 @@ class GroupDetailsViewModel(
     private val serverRepository: ServerRepository,
     private val serverLogger: ServerLogger,
     val queryEngine: QueryEngine,
-    val mutationEngine: com.github.damontecres.stashapp.di.server.MutationEngine,
+    val mutationEngine: MutationEngine,
     val itemClicker: ItemClicker,
-    val navigationManager: com.github.damontecres.stashapp.di.services.NavigationManager,
+    val navigationManager: NavigationManager,
+    private val interfaceService: InterfaceService,
     @InjectedParam private val id: String,
 ) : ViewModel() {
     val currentServer get() = serverRepository.currentServer
@@ -117,6 +121,7 @@ class GroupDetailsViewModel(
             try {
                 val group = queryEngine.getGroup(id)
                 if (group != null) {
+                    interfaceService.setTitle(group.name)
                     val tags = queryEngine.getTags(group.tags.map { it.slimTagData.id })
                     _state.update {
                         it.copy(
@@ -151,7 +156,6 @@ fun GroupPage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: GroupDetailsViewModel =
         koinViewModel {
             parametersOf(id)
@@ -432,14 +436,13 @@ fun GroupPage(
                     subGroupsTab,
                 ).filter { it.type in uiTabs }
             val title = AnnotatedString(group.name)
-            LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
             TabPage(
                 title,
                 uiConfig.preferences.interfacePreferences.rememberSelectedTab,
                 tabs,
                 DataType.GROUP,
                 modifier,
-                onUpdateTitle == null,
+                isTvDevice,
             )
         }
     }

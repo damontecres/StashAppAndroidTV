@@ -13,6 +13,7 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.InterfaceService
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.di.services.PlayerFactory
 import com.github.damontecres.stashapp.proto.StashPreferences
@@ -40,6 +41,7 @@ class FilterViewModel(
     val preferences: DataStore<StashPreferences>,
     // TODO remove this
     val playerFactory: PlayerFactory,
+    private val interfaceService: InterfaceService,
     private val savedStateHandle: SavedStateHandle,
     @InjectedParam initialFilter: FilterArgs,
 ) : ViewModel() {
@@ -70,6 +72,7 @@ class FilterViewModel(
         _state.update { it.copy(pager = DataLoadingState.Loading) }
         job =
             viewModelScope.launchIO {
+                interfaceService.setTitle(filterArgs.name, filterArgs.dataType.pluralStringId)
                 try {
                     Logger.d { "setFilter: filterArgs=$filterArgs" }
                     val dataSupplierFactory =

@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.ui.pages
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -9,11 +8,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.style.TextAlign
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -40,7 +34,6 @@ fun FilterPage(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: FilterViewModel =
         koinViewModel {
             parametersOf(initialFilter)
@@ -71,19 +64,6 @@ fun FilterPage(
             Column(
                 modifier = modifier,
             ) {
-                val title = pager.filter.name ?: stringResource(viewModel.dataType.pluralStringId)
-                if (onUpdateTitle == null) {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = title,
-                        style = MaterialTheme.typography.displaySmall,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                } else {
-                    LaunchedEffect(title) { onUpdateTitle.invoke(AnnotatedString(title)) }
-                }
-
                 val gridFocusRequester = remember { FocusRequester() }
                 LaunchedEffect(Unit) {
                     gridFocusRequester.tryRequestFocus()

@@ -60,6 +60,7 @@ import com.github.damontecres.stashapp.filter.getFilterOptions
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
@@ -108,7 +109,6 @@ fun CreateFilterScreen(
             }
         },
         modifier = modifier,
-        onUpdateTitle = onUpdateTitle,
         viewModel = viewModel,
     )
 }
@@ -133,9 +133,7 @@ fun CreateFilterContent(
     val findFilter by viewModel.findFilter.observeAsState(StashFindFilter(sortAndDirection = dataType.defaultSort))
     val objectFilter by viewModel.objectFilter.observeAsState(dataType.filterType.createInstance())
     val resultCount by viewModel.resultCount.observeAsState(-1)
-
-    val title = remember(dataType) { "Create ${context.getString(dataType.stringId)} Filter" }
-    LaunchedEffect(title) { onUpdateTitle?.invoke(AnnotatedString(title)) }
+    val title by viewModel.title.observeAsState(AnnotatedString(""))
 
     LaunchedEffect(initialFilter) {
         viewModel.initialize()
@@ -143,7 +141,7 @@ fun CreateFilterContent(
     }
 
     Column(modifier = modifier) {
-        if (onUpdateTitle == null) {
+        if (isTvDevice) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.displaySmall,

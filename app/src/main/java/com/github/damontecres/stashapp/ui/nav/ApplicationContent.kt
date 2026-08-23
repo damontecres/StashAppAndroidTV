@@ -175,7 +175,6 @@ fun ApplicationContent(
                         longClicker = longClicker,
                         onChangeTheme = onChangeTheme,
                         modifier = Modifier.fillMaxSize(),
-                        onUpdateTitle = null,
                     )
                 } else {
                     // Highlight on the nav drawer as user navigates around the app

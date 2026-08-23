@@ -11,6 +11,7 @@ import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.InterfaceService
 import com.github.damontecres.stashapp.di.services.ItemClicker
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.di.services.PlayerFactory
@@ -18,6 +19,7 @@ import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.ui.showAddTag
 import com.github.damontecres.stashapp.ui.showShort
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
@@ -33,6 +35,7 @@ class MarkerDetailsViewModel(
     val mutationEngine: MutationEngine,
     val navigationManager: NavigationManager,
     val playerFactory: PlayerFactory,
+    private val interfaceService: InterfaceService,
     @InjectedParam private val id: String,
 ) : ViewModel() {
     val seconds = MutableLiveData<Double>()
@@ -55,6 +58,14 @@ class MarkerDetailsViewModel(
             val marker = queryEngine.getMarker(id)
             _item.value = marker
             if (marker != null) {
+                val title =
+                    if (marker.title.isNotNullOrBlank()) {
+                        marker.title
+                    } else {
+                        marker.primary_tag.tagData.name
+                    }
+                interfaceService.setTitle(title)
+
                 seconds.value = marker.seconds
                 endSeconds.value = marker.end_seconds
                 start.value = marker.seconds.seconds

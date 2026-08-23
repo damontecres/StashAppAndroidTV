@@ -40,7 +40,6 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ButtonDefaults
@@ -59,6 +58,7 @@ import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.compat.Button
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.CreatedTimestamp
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -81,7 +81,6 @@ fun MarkerPage(
     markerId: String,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: MarkerDetailsViewModel =
         koinViewModel {
             parametersOf(markerId)
@@ -139,10 +138,9 @@ fun MarkerPage(
             } else {
                 primaryTag!!.name
             }
-        onUpdateTitle?.invoke(AnnotatedString(title))
         MarkerPageContent(
             marker = marker!!,
-            markerTitle = if (onUpdateTitle == null) title else null,
+            markerTitle = if (isTvDevice) title else null,
             primaryTag = primaryTag!!,
             tags = tags,
             itemOnClick = viewModel.itemClicker::onClick,

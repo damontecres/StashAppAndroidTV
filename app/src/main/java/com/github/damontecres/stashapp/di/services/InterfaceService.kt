@@ -1,7 +1,8 @@
 package com.github.damontecres.stashapp.di.services
 
+import android.app.Application
+import androidx.annotation.StringRes
 import androidx.compose.ui.text.AnnotatedString
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -9,15 +10,26 @@ import org.koin.core.annotation.Single
 
 @Single
 class InterfaceService(
-    private val scope: CoroutineScope,
+    private val application: Application,
 ) {
     private val _state = MutableStateFlow(InterfaceServiceState())
     val state: StateFlow<InterfaceServiceState> = _state
 
-    fun setTitle(title: String?) = title?.let { setTitle(AnnotatedString(it)) }
+    fun setTitle(title: String?) = setTitle(AnnotatedString(title ?: ""))
 
     fun setTitle(title: AnnotatedString?) {
         _state.update { it.copy(title = title) }
+    }
+
+    fun setTitle(
+        title: String?,
+        @StringRes fallback: Int,
+    ) {
+        if (title != null) {
+            setTitle(AnnotatedString(title))
+        } else {
+            setTitle(AnnotatedString(application.getString(fallback)))
+        }
     }
 
     fun setTitleForPerformer(title: AnnotatedString) {

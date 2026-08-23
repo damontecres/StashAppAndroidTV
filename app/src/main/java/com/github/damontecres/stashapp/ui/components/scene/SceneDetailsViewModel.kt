@@ -20,6 +20,7 @@ import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.InterfaceService
 import com.github.damontecres.stashapp.di.services.ItemClicker
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.di.services.ServerLogger
@@ -37,6 +38,7 @@ import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.createSceneSuggestionFilter
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.first
@@ -55,6 +57,7 @@ class SceneDetailsViewModel(
     private val preferences: DataStore<StashPreferences>,
     val navigationManager: NavigationManager,
     val itemClicker: ItemClicker,
+    private val interfaceService: InterfaceService,
     @InjectedParam val sceneId: String,
 ) : ViewModel() {
     private val exceptionHandler =
@@ -101,6 +104,8 @@ class SceneDetailsViewModel(
                     markers.value = scene.scene_markers.map { it.asMarkerData(scene) }
                     studio.value = scene.studio?.studioData
                     this@SceneDetailsViewModel.scene = scene
+
+                    interfaceService.setTitle(scene.titleOrFilename)
 
                     loadingState.value = SceneLoadingState.Success(scene)
                     if (scene.performers.isNotEmpty()) {

@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -56,6 +55,7 @@ import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerPreferences
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.InterfaceService
 import com.github.damontecres.stashapp.di.services.ItemClicker
 import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.navigation.Destination
@@ -64,6 +64,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.PreviewTheme
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -107,6 +108,7 @@ class PerformerDetailsViewModel(
     private val serverLogger: ServerLogger,
     private val queryEngine: QueryEngine,
     private val mutationEngine: MutationEngine,
+    private val interfaceService: InterfaceService,
     val itemClicker: ItemClicker,
     val navigationManager: com.github.damontecres.stashapp.di.services.NavigationManager,
     @InjectedParam private val performerId: String,
@@ -123,6 +125,7 @@ class PerformerDetailsViewModel(
 
     val favorite = MutableLiveData(false)
     val rating100 = MutableLiveData(0)
+    val title = MutableLiveData(AnnotatedString(""))
 
     init {
         viewModelScope.launch(exceptionHandler.with("Error fetching performer")) {
@@ -140,6 +143,20 @@ class PerformerDetailsViewModel(
     }
 
     private suspend fun refresh(performer: PerformerData) {
+        val title =
+            buildAnnotatedString {
+                withStyle(SpanStyle(color = Color.White, fontSize = 40.sp)) {
+                    append(performer.name)
+                }
+                if (performer.disambiguation.isNotNullOrBlank()) {
+                    withStyle(SpanStyle(color = Color.LightGray, fontSize = 24.sp)) {
+                        append(" ")
+                        append(performer.disambiguation)
+                    }
+                }
+            }
+        interfaceService.setTitleForPerformer(title)
+        this@PerformerDetailsViewModel.title.value = title
         rating100.value = performer.rating100 ?: 0
         favorite.value = performer.favorite
         this@PerformerDetailsViewModel.performer = performer
@@ -227,7 +244,6 @@ fun PerformerPage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: PerformerDetailsViewModel =
         koinViewModel {
             parametersOf(id)
@@ -238,6 +254,7 @@ fun PerformerPage(
     val studios by viewModel.studios.observeAsState(listOf())
     val favorite by viewModel.favorite.observeAsState(false)
     val rating100 by viewModel.rating100.observeAsState(0)
+    val title by viewModel.title.observeAsState(AnnotatedString(""))
 
     when (val state = loadingState) {
         PerformerLoadingState.Error -> {
@@ -261,6 +278,7 @@ fun PerformerPage(
             PerformerDetailsPage(
                 serverPreferences = currentServer.serverPreferences,
                 perf = state.performer,
+                title = title,
                 tags = tags,
                 studios = studios,
                 uiConfig = uiConfig,
@@ -270,7 +288,6 @@ fun PerformerPage(
                 onRatingChange = viewModel::updateRating,
                 itemOnClick = viewModel.itemClicker,
                 longClicker = longClicker,
-                onUpdateTitle = onUpdateTitle,
                 onEdit = { edit ->
                     if (edit.dataType == DataType.TAG) {
                         if (edit.action == AddRemove.ADD) {
@@ -292,6 +309,7 @@ fun PerformerPage(
 fun PerformerDetailsPage(
     serverPreferences: ServerPreferences,
     perf: PerformerData,
+    title: AnnotatedString,
     tags: List<TagData>,
     studios: List<StudioData>,
     uiConfig: ComposeUiConfig,
@@ -303,7 +321,6 @@ fun PerformerDetailsPage(
     longClicker: LongClicker<Any>,
     onEdit: (EditItem) -> Unit,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
 
@@ -445,19 +462,6 @@ fun PerformerDetailsPage(
                 )
             },
         ).filter { it.type in uiTabs }
-    val title =
-        buildAnnotatedString {
-            withStyle(SpanStyle(color = Color.White, fontSize = 40.sp)) {
-                append(perf.name)
-            }
-            if (perf.disambiguation.isNotNullOrBlank()) {
-                withStyle(SpanStyle(color = Color.LightGray, fontSize = 24.sp)) {
-                    append(" ")
-                    append(perf.disambiguation)
-                }
-            }
-        }
-    LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
 
     TabPage(
         title,
@@ -465,7 +469,7 @@ fun PerformerDetailsPage(
         tabs,
         DataType.PERFORMER,
         modifier,
-        showTitle = onUpdateTitle == null,
+        showTitle = isTvDevice,
     )
     dialogParams?.let {
         DialogPopup(

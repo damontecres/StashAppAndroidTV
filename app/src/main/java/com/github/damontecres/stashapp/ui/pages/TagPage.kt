@@ -5,7 +5,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,13 +33,17 @@ import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.InterfaceService
 import com.github.damontecres.stashapp.di.services.ItemClicker
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.ErrorMessage
 import com.github.damontecres.stashapp.ui.components.ItemDetails
@@ -76,9 +79,10 @@ class TagDetailsViewModel(
     private val serverRepository: ServerRepository,
     private val serverLogger: ServerLogger,
     private val queryEngine: QueryEngine,
-    val mutationEngine: com.github.damontecres.stashapp.di.server.MutationEngine,
+    val mutationEngine: MutationEngine,
     val itemClicker: ItemClicker,
-    val navigationManager: com.github.damontecres.stashapp.di.services.NavigationManager,
+    val navigationManager: NavigationManager,
+    private val interfaceService: InterfaceService,
     @InjectedParam private val id: String,
 ) : ViewModel() {
     val currentServer get() = serverRepository.currentServer
@@ -101,6 +105,7 @@ class TagDetailsViewModel(
             try {
                 val tag = queryEngine.getTag(id)
                 if (tag != null) {
+                    interfaceService.setTitle(tag.name)
                     val childTags =
                         queryEngine.findTags(tagFilter = TagFilterType(parents = tagsFunc(false)))
                     val parentTags =
@@ -140,7 +145,6 @@ fun TagPage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
     viewModel: TagDetailsViewModel =
         koinViewModel {
             parametersOf(id)
@@ -449,14 +453,13 @@ fun TagPage(
                     studiosTab,
                 ).filter { it.type in uiTabs }
             val title = AnnotatedString(tag.name)
-            LaunchedEffect(title) { onUpdateTitle?.invoke(title) }
             TabPage(
                 title,
                 uiConfig.preferences.interfacePreferences.rememberSelectedTab,
                 tabs,
                 DataType.TAG,
                 modifier,
-                onUpdateTitle == null,
+                isTvDevice,
             )
         }
     }
