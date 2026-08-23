@@ -33,6 +33,7 @@ val StashParcelable =
 val StashJson =
     Json {
         serializersModule = OptionalSerializersModule
+        classDiscriminator = "_type"
     }
 
 /**

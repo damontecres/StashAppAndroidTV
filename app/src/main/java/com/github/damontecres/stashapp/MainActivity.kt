@@ -39,13 +39,13 @@ import com.github.damontecres.stashapp.ui.defaultColorSchemeSet
 import com.github.damontecres.stashapp.ui.nav.CoilConfig
 import com.github.damontecres.stashapp.ui.nav.SetupContent
 import com.github.damontecres.stashapp.ui.readThemeJson
+import com.github.damontecres.stashapp.util.StashJson
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchDefault
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
@@ -65,11 +65,6 @@ class MainActivity : AppCompatActivity() {
 
     private var hasPin: Boolean = false
 
-    private val json =
-        Json {
-            classDiscriminator = "_type"
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window?.setFlags(
@@ -82,7 +77,13 @@ class MainActivity : AppCompatActivity() {
         val backStackStr = savedInstanceState?.getString(KEY_BACK_STACK)
         if (backStackStr != null) {
             Timber.d("Restoring back stack")
-            val backStack = json.decodeFromString<List<Destination>>(backStackStr)
+            val backStack =
+                try {
+                    StashJson.decodeFromString<List<Destination>>(backStackStr)
+                } catch (ex: Exception) {
+                    Logger.e(ex) { "Error deserializing back stack" }
+                    listOf(Destination.Main())
+                }
             navigationManager.backStack = NavBackStack(*backStack.toTypedArray())
         } else {
             navigationManager.backStack = NavBackStack(Destination.Main())
@@ -110,8 +111,12 @@ class MainActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         Logger.i { "onSaveInstanceState" }
-        val str = json.encodeToString(navigationManager.backStack.toList())
-        outState.putString(KEY_BACK_STACK, str)
+        try {
+            val str = StashJson.encodeToString(navigationManager.backStack.toList())
+            outState.putString(KEY_BACK_STACK, str)
+        } catch (ex: Exception) {
+            Logger.e(ex) { "Error serializing back stack" }
+        }
     }
 
     override fun onDestroy() {
