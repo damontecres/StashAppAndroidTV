@@ -57,7 +57,10 @@ kotlin {
 
 configure<ApplicationExtension> {
     namespace = "com.github.damontecres.stashapp"
-    compileSdk = 37
+    compileSdk =
+        libs.versions.compileSdk
+            .get()
+            .toInt()
 
     sourceSets {
         getByName("main") {
@@ -74,8 +77,14 @@ configure<ApplicationExtension> {
 
     defaultConfig {
         applicationId = "com.github.damontecres.stashapp"
-        minSdk = 23
-        targetSdk = 36
+        minSdk =
+            libs.versions.minSdk
+                .get()
+                .toInt()
+        targetSdk =
+            libs.versions.targetSdk
+                .get()
+                .toInt()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = gitTags.trim().lines().size
         versionName = gitDescribe.trim().removePrefix("v").ifBlank { "0.0.0" }

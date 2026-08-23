@@ -52,6 +52,10 @@ appcompat = "1.8.0"
 activityKtx = "1.13.0"
 wholphin-extensions = "0.2.2"
 
+minSdk = "23"
+compileSdk = "37"
+targetSdk = "36"
+
 [libraries]
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutLibraries" }
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutLibraries" }
