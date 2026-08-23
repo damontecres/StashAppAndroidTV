@@ -97,7 +97,7 @@ fun TabPage(
     var resolvedTabIndex by remember { mutableIntStateOf(selectedTabIndex) }
     LaunchedEffect(selectedTabIndex) {
         // Add a slight delay so if scrolling quickly through tabs, can skip rending the skipped tabs
-        delay(200.milliseconds)
+        delay(500.milliseconds)
         resolvedTabIndex = selectedTabIndex
         if (rememberTab) {
             preferences.edit { putInt(rememberTabKey, resolvedTabIndex) }
@@ -204,14 +204,16 @@ fun TabPage(
                     focusRequester.tryRequestFocus()
                 }
             }
-            tabs[resolvedTabIndex].content(
-                this,
-                { columns, position ->
-                    showTabRowRaw = position < columns
-                },
-                focusRequester,
-                Modifier.fillMaxSize(),
-            )
+            key(resolvedTabIndex) {
+                tabs[resolvedTabIndex].content.invoke(
+                    this,
+                    { columns, position ->
+                        showTabRowRaw = position < columns
+                    },
+                    focusRequester,
+                    Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }
@@ -308,6 +310,7 @@ fun StashGridTab(
         }
 
         is DataLoadingState.Success<ComposePager<StashData>> -> {
+            LaunchedEffect(Unit) { gridFocusRequester.tryRequestFocus() }
             StashGridControls(
                 pager = st.data,
                 initialPosition = 0,
