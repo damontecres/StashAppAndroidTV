@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.pages
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -8,11 +9,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.text.style.TextAlign
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.CreateFilter
 import com.github.damontecres.stashapp.ui.components.ErrorMessage
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
@@ -67,6 +72,18 @@ fun FilterPage(
                 val gridFocusRequester = remember { FocusRequester() }
                 LaunchedEffect(Unit) {
                     gridFocusRequester.tryRequestFocus()
+                }
+                if (isTvDevice) {
+                    val interfaceState by viewModel.interfaceState.collectAsState()
+                    interfaceState.title?.let { title ->
+                        Text(
+                            text = title,
+                            modifier = Modifier.fillMaxWidth(),
+                            style = MaterialTheme.typography.displaySmall,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onBackground,
+                        )
+                    }
                 }
                 StashGridControls(
                     modifier = Modifier,

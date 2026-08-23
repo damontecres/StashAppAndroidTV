@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.di.services
 import android.app.Application
 import androidx.annotation.StringRes
 import androidx.compose.ui.text.AnnotatedString
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -25,7 +26,7 @@ class InterfaceService(
         title: String?,
         @StringRes fallback: Int,
     ) {
-        if (title != null) {
+        if (title.isNotNullOrBlank()) {
             setTitle(AnnotatedString(title))
         } else {
             setTitle(AnnotatedString(application.getString(fallback)))

@@ -48,6 +48,8 @@ class FilterViewModel(
     private val _state = MutableStateFlow(FilterPageState())
     val state: StateFlow<FilterPageState> = _state
 
+    val interfaceState get() = interfaceService.state
+
     //    val pager = MutableLiveData<ComposePager<StashData>>()
     private val config =
         SavedStateConfiguration {
