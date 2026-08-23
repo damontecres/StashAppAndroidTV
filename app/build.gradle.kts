@@ -57,7 +57,7 @@ kotlin {
 
 configure<ApplicationExtension> {
     namespace = "com.github.damontecres.stashapp"
-    compileSdk = 36
+    compileSdk = 37
 
     sourceSets {
         getByName("main") {

@@ -109,9 +109,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        Timber.d("onSaveInstanceState")
+        Logger.i { "onSaveInstanceState" }
         val str = json.encodeToString(navigationManager.backStack.toList())
         outState.putString(KEY_BACK_STACK, str)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Logger.i { "onDestroy" }
     }
 
     fun showContent() {
@@ -206,30 +211,32 @@ class MainViewModel(
     private val navigationManager: NavigationManager,
     private val preferences: DataStore<StashPreferences>,
 ) : ViewModel() {
+    private val logger: Logger = Logger.withTag("MainViewModel")
+
     fun appStart(enforcePin: Boolean) {
         viewModelScope.launchDefault {
-            Logger.d { "appState: enforcePin=$enforcePin" }
+            logger.d { "appState: enforcePin=$enforcePin" }
             val prefs = preferences.data.first()
             val hasPin = prefs.pinPreferences.pin.isNotNullOrBlank()
             val destination =
                 if (hasPin && enforcePin) {
-                    Logger.v { "Pin Required" }
+                    logger.v { "Pin Required" }
                     SetupDestination.PinRequired
                 } else {
                     val currentServer = serverRepository.currentServer.first().server
                     val restoredServer = serverRepository.restore()
                     if (currentServer != restoredServer) {
-                        Logger.v { "A different server was restored" }
+                        logger.v { "A different server was restored" }
                         navigationManager.reloadMain()
                     }
                     if (restoredServer != null) {
-                        Logger.v { "App content" }
+                        logger.v { "App content" }
                         SetupDestination.AppContent(restoredServer)
                     } else if (serverRepository.getAll().isEmpty()) {
-                        Logger.v { "No servers found, starting initial setup" }
+                        logger.v { "No servers found, starting initial setup" }
                         SetupDestination.InitialSetup
                     } else {
-                        Logger.v { "Server list" }
+                        logger.v { "Server list" }
                         SetupDestination.ServerList
                     }
                 }
