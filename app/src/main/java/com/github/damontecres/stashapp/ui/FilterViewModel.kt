@@ -61,7 +61,7 @@ class FilterViewModel(
 
     val dataType: DataType get() = filter.dataType
 
-    fun init() {
+    init {
         viewModelScope.launchIO {
             updateFilter(filter)
         }

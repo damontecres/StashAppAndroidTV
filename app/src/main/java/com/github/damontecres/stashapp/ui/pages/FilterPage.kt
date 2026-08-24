@@ -44,7 +44,6 @@ fun FilterPage(
             parametersOf(initialFilter)
         },
 ) {
-    LaunchedEffect(Unit) { viewModel.init() }
     val state by viewModel.state.collectAsState()
 
     when (val st = state.pager) {

@@ -294,9 +294,6 @@ fun StashGridTab(
     cardContext: ((index: Int, item: StashData) -> CardContext)? = null,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
-    LaunchedEffect(Unit) {
-        viewModel.init()
-    }
     val state by viewModel.state.collectAsState()
     when (val st = state.pager) {
         is DataLoadingState.Error -> {

@@ -190,7 +190,6 @@ fun PlaylistPlaybackPage(
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    LaunchedEffect(Unit) { viewModel.init() }
     val state by viewModel.state.collectAsState()
 
     when (val st = state.pager) {
