@@ -54,7 +54,7 @@ class OptionalSerializer<T>(
             dataSerializer.descriptor,
         ) {
             element<Boolean>("exists")
-            element("value", dataSerializer.descriptor, isOptional = true)
+            element("value", dataSerializer.descriptor)
         }
 
     override fun deserialize(decoder: Decoder): Optional<T> =
@@ -83,7 +83,7 @@ class OptionalSerializer<T>(
         encoder.encodeStructure(descriptor) {
             if (value == Optional.Absent) {
                 encodeBooleanElement(descriptor, 0, false)
-//                encodeNullableSerializableElement(descriptor, 1, dataSerializer, null)
+                encodeNullableSerializableElement(descriptor, 1, dataSerializer, null)
             } else {
                 encodeBooleanElement(descriptor, 0, true)
                 encodeSerializableElement(descriptor, 1, dataSerializer, value.getOrNull()!!)
