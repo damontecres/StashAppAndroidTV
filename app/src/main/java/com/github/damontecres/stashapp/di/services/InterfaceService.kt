@@ -3,23 +3,52 @@ package com.github.damontecres.stashapp.di.services
 import android.app.Application
 import androidx.annotation.StringRes
 import androidx.compose.ui.text.AnnotatedString
+import com.github.damontecres.stashapp.di.DefaultCoroutineScope
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.launchDefault
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Single
+import timber.log.Timber
+import java.util.WeakHashMap
 
 @Single
 class InterfaceService(
     private val application: Application,
+    private val navigationManager: NavigationManager,
+    @param:DefaultCoroutineScope private val scope: CoroutineScope,
 ) {
     private val _state = MutableStateFlow(InterfaceServiceState())
     val state: StateFlow<InterfaceServiceState> = _state
 
+    private val titleMap = WeakHashMap<Destination, AnnotatedString?>()
+
+    init {
+        scope.launchDefault {
+            navigationManager.destinations.collectLatest { destinations ->
+                if (destinations.isNotEmpty()) {
+                    val current = destinations.last()
+                    val title = titleMap[current] ?: AnnotatedString("")
+                    setTitle(title)
+                } else {
+                    setTitle("")
+                }
+            }
+        }
+    }
+
     fun setTitle(title: String?) = setTitle(AnnotatedString(title ?: ""))
 
     fun setTitle(title: AnnotatedString?) {
-        _state.update { it.copy(title = title) }
+        navigationManager.current?.let { current ->
+            Timber.v("Setting title for %s", current)
+            titleMap[current] = title
+            _state.update { it.copy(title = title) }
+        }
     }
 
     fun setTitle(

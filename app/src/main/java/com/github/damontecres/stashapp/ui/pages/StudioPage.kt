@@ -531,7 +531,6 @@ fun StudioPage(
                         modifier = modifier,
                         composeUiConfig = uiConfig,
                         subToggleLabel = null, // TODO
-                        onFilterChange = { subStudioFilter = it },
                         gridFocusRequester = focusRequester,
                     )
                 }

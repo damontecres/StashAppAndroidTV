@@ -5,6 +5,7 @@ import co.touchlab.kermit.Logger
 import com.github.damontecres.stashapp.navigation.Destination
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import org.acra.ACRA
 import org.koin.core.annotation.Single
 
@@ -18,6 +19,8 @@ class NavigationManager {
      * A flow of the current navigation backstack
      */
     val destinations: StateFlow<List<Destination>> = _destinations
+
+    val current: Destination? get() = backStack.lastOrNull()
 
     /**
      * Go to the specified [Destination]
@@ -87,7 +90,7 @@ class NavigationManager {
     }
 
     private fun log() {
-        _destinations.tryEmit(backStack)
+        _destinations.update { backStack.toList() }
         val dest = backStack.lastOrNull().toString()
         Logger.i { "Current Destination: $dest" }
         ACRA.errorReporter.putCustomData("destination", dest)

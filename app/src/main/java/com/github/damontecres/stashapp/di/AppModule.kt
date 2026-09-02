@@ -15,6 +15,9 @@ import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinValueNotNull
 import com.github.damontecres.stashapp.util.preferences
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import okhttp3.OkHttpClient
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
@@ -30,6 +33,13 @@ annotation class StandardHttpClient
 
 @Named
 annotation class AuthHttpClient
+
+@Named
+annotation class DefaultCoroutineScope
+
+@Single
+@DefaultCoroutineScope
+fun provideDefaultCoroutineScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
 @Single
 @StandardHttpClient

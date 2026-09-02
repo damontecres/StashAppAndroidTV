@@ -81,6 +81,7 @@ fun FilterPage(
                             style = MaterialTheme.typography.displaySmall,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
                         )
                     }
                 }
