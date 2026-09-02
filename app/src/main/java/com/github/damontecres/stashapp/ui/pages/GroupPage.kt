@@ -259,16 +259,14 @@ fun GroupPage(
                             initialFilter = scenesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { scenesSubTags = it },
                             subToggleChecked = scenesSubTags,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { scenesFilter = it },
-                            cardContext = { _, _ -> cardContext },
-                            gridFocusRequester = focusRequester,
-                        )
+                        ) { _, _ -> cardContext }
                     }
                 }
 
@@ -298,14 +296,13 @@ fun GroupPage(
                             initialFilter = performerFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { performersSubTags = it },
                             subToggleChecked = performersSubTags,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { performerFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -338,14 +335,13 @@ fun GroupPage(
                             initialFilter = markersFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { markersSubTags = it },
                             subToggleChecked = markersSubTags,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { markersFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -373,12 +369,10 @@ fun GroupPage(
                         initialFilter = filter,
                         itemOnClick = viewModel.itemClicker,
                         longClicker = longClicker,
+                        composeUiConfig = uiConfig,
+                        gridFocusRequester = focusRequester,
                         modifier = modifier,
                         positionCallback = positionCallback,
-                        composeUiConfig = uiConfig,
-                        subToggleLabel = null,
-                        onFilterChange = { filter = it },
-                        gridFocusRequester = focusRequester,
                     )
                 }
 
@@ -411,6 +405,7 @@ fun GroupPage(
                         itemOnClick = viewModel.itemClicker,
                         longClicker = longClicker,
                         composeUiConfig = uiConfig,
+                        gridFocusRequester = focusRequester,
                         modifier = modifier,
                         positionCallback = positionCallback,
                         subToggleLabel =
@@ -419,8 +414,6 @@ fun GroupPage(
                             } else {
                                 null
                             },
-                        onFilterChange = { filter = it },
-                        gridFocusRequester = focusRequester,
                     )
                 }
 

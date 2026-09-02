@@ -302,15 +302,14 @@ fun StudioPage(
                             initialFilter = scenesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { scenesSubTags = it },
                             subToggleChecked = scenesSubTags,
                             subToggleEnabled = subToggleEnabled,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { scenesFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -341,15 +340,14 @@ fun StudioPage(
                             initialFilter = galleriesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { galleriesSubTags = it },
                             subToggleChecked = galleriesSubTags,
                             subToggleEnabled = subToggleEnabled,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { galleriesFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -375,15 +373,14 @@ fun StudioPage(
                             initialFilter = imagesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { imagesSubTags = it },
                             subToggleChecked = imagesSubTags,
                             subToggleEnabled = subToggleEnabled,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { imagesFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -415,15 +412,14 @@ fun StudioPage(
                             initialFilter = markersFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { markersSubTags = it },
                             subToggleChecked = markersSubTags,
                             subToggleEnabled = subToggleEnabled,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { markersFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -454,15 +450,14 @@ fun StudioPage(
                             initialFilter = performersFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { performersSubTags = it },
                             subToggleChecked = performersSubTags,
                             subToggleEnabled = subToggleEnabled,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { performersFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -489,15 +484,14 @@ fun StudioPage(
                             initialFilter = groupsFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { groupsSubTags = it },
                             subToggleChecked = groupsSubTags,
                             subToggleEnabled = subToggleEnabled,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { groupsFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -535,7 +529,6 @@ fun StudioPage(
                         itemOnClick = viewModel.itemClicker,
                         longClicker = longClicker,
                         modifier = modifier,
-                        positionCallback = positionCallback,
                         composeUiConfig = uiConfig,
                         subToggleLabel = null, // TODO
                         onFilterChange = { subStudioFilter = it },

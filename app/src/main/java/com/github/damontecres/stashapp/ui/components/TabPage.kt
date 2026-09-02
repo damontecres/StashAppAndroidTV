@@ -261,13 +261,10 @@ fun createTabFunc(
                 initialFilter = filter,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
+                composeUiConfig = composeUiConfig,
+                gridFocusRequester = focusRequester,
                 modifier = modifier,
                 positionCallback = positionCallback,
-                composeUiConfig = composeUiConfig,
-                onFilterChange = {
-                    filter = it
-                },
-                gridFocusRequester = focusRequester,
             )
         }
     }
@@ -279,7 +276,6 @@ fun StashGridTab(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     composeUiConfig: ComposeUiConfig,
-    onFilterChange: (FilterArgs) -> Unit,
     gridFocusRequester: FocusRequester,
     modifier: Modifier = Modifier,
     viewModel: FilterViewModel =
@@ -325,7 +321,7 @@ fun StashGridTab(
                 modifier = modifier,
                 positionCallback = positionCallback,
                 uiConfig = composeUiConfig,
-                updateFilter = { onFilterChange?.invoke(it) },
+                updateFilter = viewModel::updateFilter,
                 letterPosition = viewModel::findLetterPosition,
                 subToggleLabel = subToggleLabel,
                 onSubToggleCheck = onSubToggleCheck,

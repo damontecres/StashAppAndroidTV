@@ -256,15 +256,14 @@ fun TagPage(
                             initialFilter = scenesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { scenesSubTags = it },
                             subToggleChecked = scenesSubTags,
                             subToggleEnabled = subToggleEnabled,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { scenesFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -291,15 +290,14 @@ fun TagPage(
                             initialFilter = galleriesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { galleriesSubTags = it },
                             subToggleChecked = galleriesSubTags,
                             subToggleEnabled = subToggleEnabled,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { galleriesFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -325,15 +323,14 @@ fun TagPage(
                             initialFilter = imagesFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { imagesSubTags = it },
                             subToggleChecked = imagesSubTags,
                             subToggleEnabled = subToggleEnabled,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { imagesFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -359,15 +356,14 @@ fun TagPage(
                             initialFilter = markersFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { markersSubTags = it },
                             subToggleChecked = markersSubTags,
                             subToggleEnabled = subToggleEnabled,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { markersFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -394,15 +390,14 @@ fun TagPage(
                             initialFilter = performersFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { performersSubTags = it },
                             subToggleChecked = performersSubTags,
                             subToggleEnabled = subToggleEnabled,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { performersFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }
@@ -429,15 +424,14 @@ fun TagPage(
                             initialFilter = studiosFilter,
                             itemOnClick = viewModel.itemClicker,
                             longClicker = longClicker,
+                            composeUiConfig = uiConfig,
+                            gridFocusRequester = focusRequester,
                             modifier = modifier,
                             positionCallback = positionCallback,
                             subToggleLabel = subToggleLabel,
                             onSubToggleCheck = { studiosSubTags = it },
                             subToggleChecked = studiosSubTags,
                             subToggleEnabled = subToggleEnabled,
-                            composeUiConfig = uiConfig,
-                            onFilterChange = { studiosFilter = it },
-                            gridFocusRequester = focusRequester,
                         )
                     }
                 }

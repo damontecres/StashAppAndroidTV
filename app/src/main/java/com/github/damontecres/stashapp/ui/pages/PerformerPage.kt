@@ -456,7 +456,6 @@ fun PerformerDetailsPage(
                         dialogParams = DialogParams(true, item.name, dialogItems)
                     },
                     composeUiConfig = uiConfig,
-                    onFilterChange = {},
                     gridFocusRequester = focusRequester,
                     modifier = modifier,
                 )
