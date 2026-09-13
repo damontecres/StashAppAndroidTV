@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -40,7 +39,6 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -68,7 +66,6 @@ import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
-import kotlin.reflect.full.createInstance
 
 internal const val TAG = "CreateFilter"
 
@@ -128,12 +125,7 @@ fun CreateFilterContent(
 ) {
     val context = LocalContext.current
 
-    val ready by viewModel.ready.observeAsState(false)
-    val name by viewModel.filterName.observeAsState()
-    val findFilter by viewModel.findFilter.observeAsState(StashFindFilter(sortAndDirection = dataType.defaultSort))
-    val objectFilter by viewModel.objectFilter.observeAsState(dataType.filterType.createInstance())
-    val resultCount by viewModel.resultCount.observeAsState(-1)
-    val title by viewModel.title.observeAsState(AnnotatedString(""))
+    val state by viewModel.state.collectAsState()
 
     LaunchedEffect(initialFilter) {
         viewModel.initialize()
@@ -143,7 +135,7 @@ fun CreateFilterContent(
     Column(modifier = modifier) {
         if (isTvDevice) {
             Text(
-                text = title,
+                text = state.title,
                 style = MaterialTheme.typography.displaySmall,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
@@ -153,25 +145,17 @@ fun CreateFilterContent(
                         .padding(8.dp),
             )
         }
-        if (ready) {
+        if (state.ready) {
             CreateFilterColumns(
                 uiConfig = uiConfig,
                 dataType = dataType,
-                name = name,
-                resultCount = resultCount,
-                findFilter = findFilter,
-                objectFilter = objectFilter,
-                updateFilterName = {
-                    viewModel.filterName.value = it
-                },
-                updateFindFilter = {
-                    viewModel.findFilter.value = it
-                    viewModel.updateCount()
-                },
-                updateObjectFilter = {
-                    viewModel.objectFilter.value = it
-                    viewModel.updateCount()
-                },
+                name = state.filterName,
+                resultCount = state.resultCount,
+                findFilter = state.findFilter,
+                objectFilter = state.objectFilter,
+                updateFilterName = viewModel::updateFilterName,
+                updateFindFilter = viewModel::updateFindFilter,
+                updateObjectFilter = viewModel::updateObjectFilter,
                 idLookup = viewModel::lookupIds,
                 idStore = viewModel::store,
                 saveEnabled = saveEnabled,
@@ -196,7 +180,7 @@ fun CreateFilterColumns(
     resultCount: Int,
     findFilter: StashFindFilter,
     objectFilter: StashDataFilter,
-    updateFilterName: (String?) -> Unit,
+    updateFilterName: (String) -> Unit,
     updateFindFilter: (StashFindFilter) -> Unit,
     updateObjectFilter: (StashDataFilter) -> Unit,
     idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
