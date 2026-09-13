@@ -6,7 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -26,7 +26,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.di.services.NavigationManager
@@ -76,12 +78,7 @@ fun PinEntryPage(
             contentPadding = PaddingValues(16.dp),
             modifier =
                 Modifier
-                    .padding(top = 80.dp)
-                    .align(Alignment.TopCenter)
-                    .background(
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = RoundedCornerShape(16.dp),
-                    ),
+                    .align(Alignment.TopCenter),
         ) {
             item {
                 Text(
@@ -119,6 +116,46 @@ fun PinEntryPage(
                 ) {
                     Text(text = stringResource(R.string.stashapp_actions_submit))
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun PinEntryDialog(
+    onDismissRequest: () -> Unit,
+    requiredPin: String,
+    title: String,
+    onCorrectPin: () -> Unit,
+    preventBack: Boolean,
+    autoSubmit: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
+        Dialog(
+            onDismissRequest = onDismissRequest,
+        ) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                tonalElevation = 3.dp,
+                modifier = Modifier,
+            ) {
+                val focusRequester = remember { FocusRequester() }
+                LaunchedEffect(Unit) { focusRequester.tryRequestFocus() }
+                PinEntryPage(
+                    requiredPin = requiredPin,
+                    title = title,
+                    onCorrectPin = onCorrectPin,
+                    preventBack = preventBack,
+                    autoSubmit = autoSubmit,
+                    modifier =
+                        Modifier
+                            .focusRequester(focusRequester),
+                )
             }
         }
     }

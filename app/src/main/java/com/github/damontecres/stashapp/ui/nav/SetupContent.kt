@@ -1,13 +1,10 @@
 package com.github.damontecres.stashapp.ui.nav
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.SetupDestination
@@ -17,7 +14,6 @@ import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.components.LoadingPage
 import com.github.damontecres.stashapp.ui.components.server.InitialSetup
 import com.github.damontecres.stashapp.ui.components.server.ManageServers
-import com.github.damontecres.stashapp.ui.pages.PinEntryPage
 
 @Composable
 fun SetupContent(
@@ -41,17 +37,6 @@ fun SetupContent(
         SetupDestination.ServerList -> {
             ManageServers(
                 modifier = modifier,
-            )
-        }
-
-        SetupDestination.PinRequired -> {
-            PinEntryPage(
-                requiredPin = preferences.pinPreferences.pin,
-                title = stringResource(R.string.enter_pin),
-                onCorrectPin = onCorrectPin,
-                preventBack = true,
-                autoSubmit = preferences.pinPreferences.autoSubmit,
-                modifier = Modifier.fillMaxSize(),
             )
         }
 

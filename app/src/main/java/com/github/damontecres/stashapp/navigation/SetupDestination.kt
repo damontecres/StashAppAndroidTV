@@ -16,9 +16,6 @@ sealed interface SetupDestination : NavKey {
     data object ServerList : SetupDestination
 
     @Serializable
-    data object PinRequired : SetupDestination
-
-    @Serializable
     data class AppContent(
         val server: StashServer,
     ) : SetupDestination

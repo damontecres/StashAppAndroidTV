@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -14,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
@@ -38,13 +40,17 @@ import com.github.damontecres.stashapp.ui.components.LoadingPage
 import com.github.damontecres.stashapp.ui.defaultColorSchemeSet
 import com.github.damontecres.stashapp.ui.nav.CoilConfig
 import com.github.damontecres.stashapp.ui.nav.SetupContent
+import com.github.damontecres.stashapp.ui.pages.PinEntryDialog
 import com.github.damontecres.stashapp.ui.readThemeJson
 import com.github.damontecres.stashapp.util.StashJson
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchDefault
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import org.koin.android.ext.android.get
@@ -105,7 +111,8 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         Logger.i { "onPause" }
-        if (hasPin) setupNavigationManager.navigateTo(SetupDestination.PinRequired)
+//        if (hasPin) setupNavigationManager.navigateTo(SetupDestination.PinRequired)
+        if (hasPin) viewModel.showPin()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -127,8 +134,9 @@ class MainActivity : AppCompatActivity() {
     fun showContent() {
         Logger.i { "showContent" }
         setContent {
+            val state by viewModel.state.collectAsState()
             val preferences by preferences.data.collectAsState(null)
-            if (preferences == null) {
+            if (preferences == null || state.loading) {
                 LoadingPage(Modifier.fillMaxSize())
             } else {
                 preferences?.let { preferences ->
@@ -173,31 +181,44 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     AppTheme(colorScheme = colorScheme) {
-                        NavDisplay(
-                            backStack = setupNavigationManager.backStack,
-                            onBack = { setupNavigationManager.backStack.removeLastOrNull() },
-                            entryDecorators =
-                                listOf(
-                                    rememberSaveableStateHolderNavEntryDecorator(),
-                                    rememberViewModelStoreNavEntryDecorator(),
-                                ),
-                            entryProvider = { key ->
-                                NavEntry(key) {
-                                    SetupContent(
-                                        destination = key,
-                                        preferences = preferences,
-                                        navigationManager = navigationManager,
-                                        serverRepository = serverRepository,
-                                        onChangeTheme = onChangeTheme,
-                                        onCorrectPin = { viewModel.appStart(false) },
-                                        modifier =
-                                            Modifier
-                                                .fillMaxSize()
-                                                .background(MaterialTheme.colorScheme.background),
-                                    )
-                                }
-                            },
-                        )
+                        Box(Modifier.fillMaxSize()) {
+                            NavDisplay(
+                                backStack = setupNavigationManager.backStack,
+                                onBack = { setupNavigationManager.backStack.removeLastOrNull() },
+                                entryDecorators =
+                                    listOf(
+                                        rememberSaveableStateHolderNavEntryDecorator(),
+                                        rememberViewModelStoreNavEntryDecorator(),
+                                    ),
+                                entryProvider = { key ->
+                                    NavEntry(key) {
+                                        SetupContent(
+                                            destination = key,
+                                            preferences = preferences,
+                                            navigationManager = navigationManager,
+                                            serverRepository = serverRepository,
+                                            onChangeTheme = onChangeTheme,
+                                            onCorrectPin = { viewModel.appStart(false) },
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxSize()
+                                                    .background(MaterialTheme.colorScheme.background),
+                                        )
+                                    }
+                                },
+                            )
+                            if (state.showPin) {
+                                PinEntryDialog(
+                                    onDismissRequest = { this@MainActivity.finish() },
+                                    requiredPin = preferences.pinPreferences.pin,
+                                    title = stringResource(R.string.enter_pin),
+                                    onCorrectPin = { viewModel.clearPin() },
+                                    preventBack = true,
+                                    autoSubmit = preferences.pinPreferences.autoSubmit,
+                                    modifier = Modifier,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -218,34 +239,50 @@ class MainViewModel(
 ) : ViewModel() {
     private val logger: Logger = Logger.withTag("MainViewModel")
 
+    private val _state = MutableStateFlow(MainState())
+    val state: StateFlow<MainState> = _state
+
+    fun showPin() {
+        _state.update { it.copy(showPin = true) }
+    }
+
+    fun clearPin() {
+        _state.update { it.copy(showPin = false) }
+    }
+
     fun appStart(enforcePin: Boolean) {
         viewModelScope.launchDefault {
-            logger.d { "appState: enforcePin=$enforcePin" }
+            logger.d { "appStart: enforcePin=$enforcePin" }
             val prefs = preferences.data.first()
             val hasPin = prefs.pinPreferences.pin.isNotNullOrBlank()
+            if (hasPin && enforcePin) {
+                showPin()
+            }
+            _state.update { it.copy(loading = false) }
+
+            val currentServer = serverRepository.currentServer.first().server
+            val restoredServer = serverRepository.restore()
+            if (currentServer != restoredServer) {
+                logger.v { "A different server was restored" }
+                navigationManager.reloadMain()
+            }
             val destination =
-                if (hasPin && enforcePin) {
-                    logger.v { "Pin Required" }
-                    SetupDestination.PinRequired
+                if (restoredServer != null) {
+                    logger.v { "App content" }
+                    SetupDestination.AppContent(restoredServer)
+                } else if (serverRepository.getAll().isEmpty()) {
+                    logger.v { "No servers found, starting initial setup" }
+                    SetupDestination.InitialSetup
                 } else {
-                    val currentServer = serverRepository.currentServer.first().server
-                    val restoredServer = serverRepository.restore()
-                    if (currentServer != restoredServer) {
-                        logger.v { "A different server was restored" }
-                        navigationManager.reloadMain()
-                    }
-                    if (restoredServer != null) {
-                        logger.v { "App content" }
-                        SetupDestination.AppContent(restoredServer)
-                    } else if (serverRepository.getAll().isEmpty()) {
-                        logger.v { "No servers found, starting initial setup" }
-                        SetupDestination.InitialSetup
-                    } else {
-                        logger.v { "Server list" }
-                        SetupDestination.ServerList
-                    }
+                    logger.v { "Server list" }
+                    SetupDestination.ServerList
                 }
             setupNavigationManager.navigateTo(destination)
         }
     }
 }
+
+data class MainState(
+    val loading: Boolean = true,
+    val showPin: Boolean = false,
+)
