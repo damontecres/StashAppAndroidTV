@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.ui.components.scene
 
 import android.app.Application
 import androidx.datastore.core.DataStore
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
@@ -41,7 +40,10 @@ import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
@@ -80,49 +82,48 @@ class SceneDetailsViewModel(
 
     private var scene: FullSceneData? = null
 
-    val loadingState = MutableLiveData<SceneLoadingState>(SceneLoadingState.Loading)
-    val tags = MutableLiveData<List<TagData>>(listOf())
-    val performers = MutableLiveData<List<PerformerData>>(listOf())
-    val galleries = MutableLiveData<List<GalleryData>>(listOf())
-    val groups = MutableLiveData<List<GroupData>>(listOf())
-    val markers = MutableLiveData<List<MarkerData>>(listOf())
-    val studio = MutableLiveData<StudioData?>(null)
-    val suggestions = MutableLiveData<List<SlimSceneData>>()
-
-    val rating100 = MutableLiveData(0)
-    val oCount = MutableLiveData(0)
+    private val _state = MutableStateFlow(SceneDetailsState())
+    val state: StateFlow<SceneDetailsState> = _state
 
     fun init(): SceneDetailsViewModel {
         viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
             try {
                 val scene = queryEngine.getScene(sceneId)
                 if (scene != null) {
-                    rating100.value = scene.rating100 ?: 0
-                    oCount.value = scene.o_counter ?: 0
-                    tags.value = scene.tags.map { it.tagData }
-                    groups.value = scene.groups.map { it.group.groupData }
-                    markers.value = scene.scene_markers.map { it.asMarkerData(scene) }
-                    studio.value = scene.studio?.studioData
+                    _state.update {
+                        it.copy(
+                            rating100 = scene.rating100 ?: 0,
+                            oCount = scene.o_counter ?: 0,
+                            tags = scene.tags.map { it.tagData },
+                            groups = scene.groups.map { it.group.groupData },
+                            markers = scene.scene_markers.map { it.asMarkerData(scene) },
+                            studio = scene.studio?.studioData,
+                        )
+                    }
                     this@SceneDetailsViewModel.scene = scene
 
                     interfaceService.setTitle(scene.titleOrFilename)
 
-                    loadingState.value = SceneLoadingState.Success(scene)
+                    _state.update {
+                        it.copy(loadingState = SceneLoadingState.Success(scene))
+                    }
                     if (scene.performers.isNotEmpty()) {
-                        performers.value =
+                        val performers =
                             queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
+                        _state.update { it.copy(performers = performers) }
                     }
                     if (scene.galleries.isNotEmpty()) {
-                        galleries.value = queryEngine.getGalleries(scene.galleries.map { it.id })
+                        val galleries = queryEngine.getGalleries(scene.galleries.map { it.id })
+                        _state.update { it.copy(galleries = galleries) }
                     }
-                    if (!suggestions.isInitialized || suggestions.value?.isEmpty() == true) {
+                    if (state.value.suggestions.isEmpty()) {
                         refreshSuggestions()
                     }
                 } else {
-                    loadingState.value = SceneLoadingState.Error
+                    _state.update { it.copy(loadingState = SceneLoadingState.Error) }
                 }
             } catch (ex: Exception) {
-                loadingState.value = SceneLoadingState.Error
+                _state.update { it.copy(loadingState = SceneLoadingState.Error) }
                 serverLogger.logException(ex)
             }
         }
@@ -132,13 +133,13 @@ class SceneDetailsViewModel(
     private fun refreshSuggestions() {
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
             scene?.let {
-                suggestions.value = listOf()
+                _state.update { it.copy(suggestions = emptyList()) }
                 val filterArgs = createSceneSuggestionFilter(it)
                 if (filterArgs != null) {
                     val supplier =
                         DataSupplierFactory(serverRepository.currentServerVersion)
                             .create<Query.Data, SlimSceneData, Query.Data>(filterArgs)
-                    suggestions.value =
+                    val suggestions =
                         StashPagingSource<Query.Data, SlimSceneData, SlimSceneData, Query.Data>(
                             queryEngine,
                             supplier,
@@ -148,6 +149,7 @@ class SceneDetailsViewModel(
                                 .first()
                                 .searchPreferences.maxResults,
                         )
+                    _state.update { it.copy(suggestions = suggestions) }
                 }
             }
         }
@@ -161,7 +163,7 @@ class SceneDetailsViewModel(
         id: String,
         op: AddRemove,
     ) {
-        val perfs = performers.value?.map { it.id }
+        val perfs = state.value.performers.map { it.id }
         perfs?.let {
             val mutable = it.toMutableList()
             when (op) {
@@ -175,7 +177,7 @@ class SceneDetailsViewModel(
                         ?.performers
                         ?.map { it.performerData }
                         .orEmpty()
-                performers.value = results
+                _state.update { it.copy(performers = results) }
                 if (op == AddRemove.ADD) {
                     results.firstOrNull { it.id == id }?.let { showAddPerf(it) }
                 }
@@ -192,7 +194,7 @@ class SceneDetailsViewModel(
         id: String,
         op: AddRemove,
     ) {
-        val ids = tags.value?.map { it.id }
+        val ids = state.value.tags.map { it.id }
         ids?.let {
             val mutable = it.toMutableList()
             when (op) {
@@ -206,7 +208,7 @@ class SceneDetailsViewModel(
                         ?.tags
                         ?.map { it.tagData }
                         .orEmpty()
-                tags.value = results
+                _state.update { it.copy(tags = results) }
                 if (op == AddRemove.ADD) {
                     results.firstOrNull { it.id == id }?.let { showAddTag(it) }
                 }
@@ -223,7 +225,7 @@ class SceneDetailsViewModel(
         id: String,
         op: AddRemove,
     ) {
-        val ids = groups.value?.map { it.id }
+        val ids = state.value.groups.map { it.id }
         ids?.let {
             val mutable = it.toMutableList()
             when (op) {
@@ -237,7 +239,7 @@ class SceneDetailsViewModel(
                         ?.groups
                         ?.map { it.group.groupData }
                         .orEmpty()
-                groups.value = results
+                _state.update { it.copy(groups = results) }
                 if (op == AddRemove.ADD) {
                     results.firstOrNull { it.id == id }?.let { showAddGroup(it) }
                 }
@@ -253,7 +255,7 @@ class SceneDetailsViewModel(
     private fun mutateStudio(id: String?) {
         viewModelScope.launch(exceptionHandler) {
             val result = mutationEngine.setStudioOnScene(sceneId, id)?.studio?.studioData
-            studio.value = result
+            _state.update { it.copy(studio = result) }
             if (result != null) {
                 showSetStudio(result)
             }
@@ -271,12 +273,12 @@ class SceneDetailsViewModel(
                 )
             newMarker?.let {
                 val m = newMarker.asMarkerData(scene!!)
-                markers.value =
-                    markers.value
-                        ?.toMutableList()
-                        ?.apply { add(m) }
-                        ?.sortedBy { it.seconds }
-                        ?: listOf(m)
+                val markers =
+                    state.value.markers
+                        .toMutableList()
+                        .apply { add(m) }
+                        .sortedBy { it.seconds }
+                _state.update { it.copy(markers = markers) }
                 showAddMarker(m)
             }
         }
@@ -285,7 +287,7 @@ class SceneDetailsViewModel(
     fun removeMarker(id: String) {
         viewModelScope.launch(exceptionHandler) {
             if (mutationEngine.deleteMarker(id)) {
-                markers.value = markers.value?.filter { it.id != id }.orEmpty()
+                _state.update { it.copy(markers = it.markers.filter { it.id != id }) }
             }
         }
     }
@@ -298,7 +300,7 @@ class SceneDetailsViewModel(
         id: String,
         op: AddRemove,
     ) {
-        val ids = galleries.value?.map { it.id }
+        val ids = state.value.galleries.map { it.id }
         ids?.let {
             val mutable = it.toMutableList()
             when (op) {
@@ -312,7 +314,7 @@ class SceneDetailsViewModel(
                         ?.galleries
                         ?.map { it.galleryData }
                         .orEmpty()
-                galleries.value = results
+                _state.update { it.copy(galleries = results) }
                 if (op == AddRemove.ADD) {
                     results.firstOrNull { it.id == id }?.let { showAddGallery(it) }
                 }
@@ -323,7 +325,7 @@ class SceneDetailsViewModel(
     fun updateOCount(action: suspend MutationEngine.(String) -> OCounter) {
         viewModelScope.launch(exceptionHandler) {
             val newOCount = action.invoke(mutationEngine, sceneId)
-            oCount.value = newOCount.count
+            _state.update { it.copy(oCount = newOCount.count) }
         }
     }
 
@@ -331,7 +333,7 @@ class SceneDetailsViewModel(
         viewModelScope.launch(exceptionHandler) {
             val newRating =
                 mutationEngine.setRating(sceneId, rating100)?.rating100 ?: 0
-            this@SceneDetailsViewModel.rating100.value = newRating
+            _state.update { it.copy(rating100 = newRating) }
             showSetRatingToast(StashApplication.getApplication(), newRating)
         }
     }
@@ -341,12 +343,14 @@ class SceneDetailsViewModel(
         deleteGenerated: Boolean,
         onDeleted: (Boolean) -> Unit,
     ) {
-        loadingState.value = SceneLoadingState.Loading
+        _state.update { it.copy(loadingState = SceneLoadingState.Loading) }
         viewModelScope.launch(exceptionHandler) {
             val success = mutationEngine.deleteScene(sceneId, deleteFiles, deleteGenerated)
             onDeleted(success)
             if (!success) {
-                scene?.let { loadingState.value = SceneLoadingState.Success(it) }
+                scene?.let { scene ->
+                    _state.update { it.copy(loadingState = SceneLoadingState.Success(scene)) }
+                }
             }
         }
     }
@@ -378,3 +382,16 @@ enum class AddRemove {
         }
     }
 }
+
+data class SceneDetailsState(
+    val loadingState: SceneLoadingState = SceneLoadingState.Loading,
+    val tags: List<TagData> = emptyList(),
+    val performers: List<PerformerData> = emptyList(),
+    val galleries: List<GalleryData> = emptyList(),
+    val groups: List<GroupData> = emptyList(),
+    val markers: List<MarkerData> = emptyList(),
+    val studio: StudioData? = null,
+    val suggestions: List<SlimSceneData> = emptyList(),
+    val rating100: Int = 0,
+    val oCount: Int = 0,
+)

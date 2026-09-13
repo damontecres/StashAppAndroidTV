@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -111,23 +110,14 @@ fun SceneDetailsPage(
             parametersOf(sceneId)
         },
 ) {
-    val loadingState by viewModel.loadingState.observeAsState()
-    val tags by viewModel.tags.observeAsState(listOf())
-    val performers by viewModel.performers.observeAsState(listOf())
-    val galleries by viewModel.galleries.observeAsState(listOf())
-    val groups by viewModel.groups.observeAsState(listOf())
-    val markers by viewModel.markers.observeAsState(listOf())
-    val rating100 by viewModel.rating100.observeAsState(0)
-    val oCount by viewModel.oCount.observeAsState(0)
-    val studio by viewModel.studio.observeAsState(null)
-    val suggestions by viewModel.suggestions.observeAsState(listOf())
+    val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.init()
     }
 
-    when (val state = loadingState) {
+    when (val st = state.loadingState) {
         SceneLoadingState.Error -> {
             Text(
                 "Error",
@@ -145,16 +135,16 @@ fun SceneDetailsPage(
             SceneDetails(
                 serverPreferences = server.serverPreferences,
                 navigationManager = viewModel.navigationManager,
-                scene = state.scene,
-                rating100 = rating100,
-                oCount = oCount,
-                tags = tags,
-                performers = performers,
-                galleries = galleries,
-                groups = groups,
-                markers = markers,
-                studio = studio,
-                suggestions = suggestions,
+                scene = st.scene,
+                rating100 = state.rating100,
+                oCount = state.oCount,
+                tags = state.tags,
+                performers = state.performers,
+                galleries = state.galleries,
+                groups = state.groups,
+                markers = state.markers,
+                studio = state.studio,
+                suggestions = state.suggestions,
                 uiConfig = uiConfig,
                 itemOnClick = viewModel.itemClicker::onClick,
                 playOnClick = { position, mode ->
@@ -210,8 +200,6 @@ fun SceneDetailsPage(
                 modifier = modifier.animateContentSize(),
             )
         }
-
-        null -> {}
     }
 }
 
