@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -27,7 +26,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.tv.material3.MaterialTheme
@@ -91,11 +89,15 @@ import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.careerString
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 import org.koin.core.parameter.parametersOf
+import timber.log.Timber
 import kotlin.math.floor
 import kotlin.math.round
 import kotlin.math.roundToInt
@@ -119,13 +121,8 @@ class PerformerDetailsViewModel(
 
     private var performer: PerformerData? = null
 
-    val loadingState = MutableLiveData<PerformerLoadingState>(PerformerLoadingState.Loading)
-    val tags = MutableLiveData<List<TagData>>(listOf())
-    val studios = MutableLiveData<List<StudioData>>(listOf())
-
-    val favorite = MutableLiveData(false)
-    val rating100 = MutableLiveData(0)
-    val title = MutableLiveData(AnnotatedString(""))
+    private val _state = MutableStateFlow(PerformerState())
+    val state: StateFlow<PerformerState> = _state
 
     init {
         viewModelScope.launch(exceptionHandler.with("Error fetching performer")) {
@@ -134,10 +131,11 @@ class PerformerDetailsViewModel(
                 if (performer != null) {
                     refresh(performer)
                 } else {
-                    loadingState.value = PerformerLoadingState.Error
+                    _state.update { it.copy(loadingState = PerformerLoadingState.Error) }
                 }
             } catch (ex: Exception) {
-                loadingState.value = PerformerLoadingState.Error
+                Timber.e(ex, "Error fetching performer %s", performerId)
+                _state.update { it.copy(loadingState = PerformerLoadingState.Error) }
             }
         }
     }
@@ -156,17 +154,21 @@ class PerformerDetailsViewModel(
                 }
             }
         interfaceService.setTitleForPerformer(title)
-        this@PerformerDetailsViewModel.title.value = title
-        rating100.value = performer.rating100 ?: 0
-        favorite.value = performer.favorite
         this@PerformerDetailsViewModel.performer = performer
+        _state.update {
+            it.copy(
+                loadingState = PerformerLoadingState.Success(performer),
+                title = title,
+                rating100 = performer.rating100 ?: 0,
+                favorite = performer.favorite,
+            )
+        }
 
-        loadingState.value = PerformerLoadingState.Success(performer)
+        val tags = queryEngine.getTags(performer.tags.map { it.slimTagData.id })
+        _state.update { it.copy(tags = tags) }
+        Log.v(TAG, "Got ${tags.size} tags")
 
-        tags.value = queryEngine.getTags(performer.tags.map { it.slimTagData.id })
-        Log.v(TAG, "Got ${tags.value?.size} tags")
-
-        studios.value =
+        val studios =
             queryEngine.findStudios(
                 studioFilter =
                     StudioFilterType(
@@ -185,7 +187,8 @@ class PerformerDetailsViewModel(
                             ),
                     ),
             )
-        Log.v(TAG, "Got ${studios.value?.size} studios")
+        Log.v(TAG, "Got ${studios?.size} studios")
+        _state.update { it.copy(studios = studios) }
     }
 
     fun addTag(id: String) = mutateTags { add(id) }
@@ -193,7 +196,7 @@ class PerformerDetailsViewModel(
     fun removeTag(id: String) = mutateTags { remove(id) }
 
     private fun mutateTags(mutator: MutableList<String>.() -> Unit) {
-        val ids = tags.value?.map { it.id }
+        val ids = state.value.tags.map { it.id }
         ids?.let {
             val mutable = it.toMutableList()
             mutator.invoke(mutable)
@@ -210,7 +213,7 @@ class PerformerDetailsViewModel(
         viewModelScope.launch(exceptionHandler) {
             val newRating =
                 mutationEngine.updatePerformer(performerId, rating100 = rating100)?.rating100 ?: 0
-            this@PerformerDetailsViewModel.rating100.value = newRating
+            _state.update { it.copy(rating100 = newRating) }
             showSetRatingToast(StashApplication.getApplication(), newRating)
         }
     }
@@ -221,9 +224,9 @@ class PerformerDetailsViewModel(
                 mutationEngine
                     .updatePerformer(
                         performerId,
-                        favorite = !favorite.value!!,
+                        favorite = !state.value.favorite,
                     )?.favorite
-            this@PerformerDetailsViewModel.favorite.value = newFavorite
+            _state.update { it.copy(favorite = newFavorite ?: false) }
         }
     }
 }
@@ -238,6 +241,15 @@ sealed class PerformerLoadingState {
     ) : PerformerLoadingState()
 }
 
+data class PerformerState(
+    val loadingState: PerformerLoadingState = PerformerLoadingState.Loading,
+    val tags: List<TagData> = emptyList(),
+    val studios: List<StudioData> = emptyList(),
+    val favorite: Boolean = false,
+    val rating100: Int = 0,
+    val title: AnnotatedString = AnnotatedString(""),
+)
+
 @Composable
 fun PerformerPage(
     id: String,
@@ -249,14 +261,9 @@ fun PerformerPage(
             parametersOf(id)
         },
 ) {
-    val loadingState by viewModel.loadingState.observeAsState()
-    val tags by viewModel.tags.observeAsState(listOf())
-    val studios by viewModel.studios.observeAsState(listOf())
-    val favorite by viewModel.favorite.observeAsState(false)
-    val rating100 by viewModel.rating100.observeAsState(0)
-    val title by viewModel.title.observeAsState(AnnotatedString(""))
+    val state by viewModel.state.collectAsState()
 
-    when (val state = loadingState) {
+    when (val st = state.loadingState) {
         PerformerLoadingState.Error -> {
             Text(
                 "Error",
@@ -277,14 +284,14 @@ fun PerformerPage(
             val currentServer by viewModel.currentServer.collectAsState()
             PerformerDetailsPage(
                 serverPreferences = currentServer.serverPreferences,
-                perf = state.performer,
-                title = title,
-                tags = tags,
-                studios = studios,
+                perf = st.performer,
+                title = state.title,
+                tags = state.tags,
+                studios = state.studios,
                 uiConfig = uiConfig,
-                favorite = favorite,
+                favorite = state.favorite,
                 onFavoriteClick = viewModel::toggleFavorite,
-                rating100 = rating100,
+                rating100 = state.rating100,
                 onRatingChange = viewModel::updateRating,
                 itemOnClick = viewModel.itemClicker,
                 longClicker = longClicker,
