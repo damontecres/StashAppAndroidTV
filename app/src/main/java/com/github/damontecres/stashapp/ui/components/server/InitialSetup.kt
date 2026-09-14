@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -49,7 +49,7 @@ fun InitialSetup(
     var showPinDialog by remember { mutableStateOf(false) }
     val isNotTvDevice = isNotTvDevice
 
-    val serverConnection by serverViewModel.serverConnection.observeAsState()
+    val state by serverViewModel.state.collectAsState()
 
     fun submit(pin: String) {
         server?.let { newServer ->
@@ -94,10 +94,10 @@ fun InitialSetup(
                 },
                 modifier = Modifier,
             )
-            if (serverConnection is ServerViewModel.ServerConnection.Failure) {
+            if (state.serverConnection is ServerViewModel.ServerConnection.Failure) {
                 Text(
                     text =
-                        (serverConnection as? ServerViewModel.ServerConnection.Failure)?.exception?.localizedMessage
+                        (state.serverConnection as? ServerViewModel.ServerConnection.Failure)?.exception?.localizedMessage
                             ?: "",
                     color = MaterialTheme.colorScheme.error,
                 )
