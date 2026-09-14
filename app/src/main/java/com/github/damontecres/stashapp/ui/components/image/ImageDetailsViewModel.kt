@@ -2,11 +2,7 @@ package com.github.damontecres.stashapp.ui.components.image
 
 import android.util.Log
 import android.widget.Toast
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asFlow
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import coil3.imageLoader
 import coil3.request.ImageRequest
@@ -20,7 +16,6 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
-import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.data.VideoFilter
 import com.github.damontecres.stashapp.data.room.AppDatabase
 import com.github.damontecres.stashapp.data.room.PlaybackEffect
@@ -44,7 +39,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.annotation.InjectedParam
@@ -67,47 +64,15 @@ class ImageDetailsViewModel(
     private var saveFilters = true
     private lateinit var exceptionHandler: LoggingCoroutineExceptionHandler
 
-    private val _slideshow = MutableLiveData(false)
+    private val _state = MutableStateFlow(ImageDetailsPageState())
+    val state: StateFlow<ImageDetailsPageState> = _state
 
-    /**
-     * Whether slideshow mode is on or off
-     */
-    val slideshow: LiveData<Boolean> = _slideshow
-    private val _slideshowPaused = MutableLiveData(false)
-    val slideshowPaused: LiveData<Boolean> = _slideshowPaused
-
-    /**
-     * Whether the slideshow is actively running meaning slideshow mode is ON and is currently NOT paused
-     */
-    val slideshowActive =
-        slideshow
-            .asFlow()
-            .combine(slideshowPaused.asFlow()) { slideshow, paused ->
-                slideshow && !paused
-            }.asLiveData()
+    private val _imageFilter = MutableStateFlow(VideoFilter())
+    val imageFilter: StateFlow<VideoFilter> = _imageFilter
 
     var slideshowDelay by Delegates.notNull<Long>()
 
-    val pager = MutableLiveData<ComposePager<ImageData>>()
-    val position = MutableLiveData(0)
-
-    private val _image = MutableLiveData<ImageData>()
-    val image: LiveData<ImageData> = _image
-
-    val loadingState = MutableLiveData<ImageLoadingState>(ImageLoadingState.Loading)
-    val tags = MutableLiveData<List<TagData>>(listOf())
-    val performers = MutableLiveData<List<PerformerData>>(listOf())
-    val galleries = MutableLiveData<List<GalleryData>>(listOf())
-
-    val rating100 = MutableLiveData(0)
-    val oCount = MutableLiveData(0)
-    private val _imageFilter = MutableLiveData(VideoFilter())
-    val imageFilter = ThrottledLiveData(_imageFilter, 500L)
-
     private var galleryImageFilter = VideoFilter()
-
-    private val _galleryId = MutableLiveData<String?>(null)
-    val galleryId: LiveData<String?> = _galleryId
 
     fun init(
         slideshow: Boolean,
@@ -117,11 +82,14 @@ class ImageDetailsViewModel(
         Log.v(TAG, "View model init")
         this.saveFilters = saveFilters
         this.slideshowDelay = slideshowDelay
-        if (pager.value?.filter != filterArgs) {
+        val pager = state.value.pager
+        if (pager !is ComposePager<*> || pager.filter != filterArgs) {
             if (filterArgs.dataType != DataType.IMAGE) {
                 throw IllegalArgumentException("Cannot use ${filterArgs.dataType}")
             }
-            _galleryId.value = (filterArgs.objectFilter as? ImageFilterType)?.galleryId
+            _state.update {
+                it.copy(galleryId = (filterArgs.objectFilter as? ImageFilterType)?.galleryId)
+            }
             this.exceptionHandler =
                 LoggingCoroutineExceptionHandler(
                     serverRepository.currentServer.value,
@@ -146,15 +114,19 @@ class ImageDetailsViewModel(
             ) {
                 pager.init()
                 Log.v(TAG, "Pager size: ${pager.size}")
-                this@ImageDetailsViewModel.pager.value = pager
-                this@ImageDetailsViewModel._slideshow.value = slideshow
+                _state.update {
+                    it.copy(
+                        pager = pager,
+                        slideshow = slideshow,
+                    )
+                }
                 updatePosition(startPosition)
                 if (slideshow) {
                     startSlideshow()
                     pulseSlideshow()
                 }
             }
-            galleryId.value?.let { galleryId ->
+            state.value.galleryId?.let { galleryId ->
                 viewModelScope.launchIO {
                     viewModelScope.launchIO(StashCoroutineExceptionHandler()) {
                         val server = serverRepository.currentServer.value.server
@@ -167,13 +139,8 @@ class ImageDetailsViewModel(
                                 TAG,
                                 "Loaded VideoFilter for gallery $galleryId",
                             )
-                            withContext(Dispatchers.Main) {
-                                galleryImageFilter = vf.videoFilter
-                                // Pause throttling so that the image loads with the filter applied immediately
-                                imageFilter.stopThrottling(true)
-                                updateImageFilter(vf.videoFilter)
-                                imageFilter.startThrottling()
-                            }
+                            galleryImageFilter = vf.videoFilter
+                            updateImageFilter(vf.videoFilter)
                         }
                     }
                 }
@@ -184,9 +151,9 @@ class ImageDetailsViewModel(
     }
 
     fun nextImage(): Boolean {
-        val size = pager.value?.size
-        val newPosition = position.value!! + 1
-        return if (size != null && newPosition < size) {
+        val size = state.value.pager.size
+        val newPosition = state.value.position + 1
+        return if (newPosition < size) {
             updatePosition(newPosition)
             true
         } else {
@@ -195,7 +162,7 @@ class ImageDetailsViewModel(
     }
 
     fun previousImage(): Boolean {
-        val newPosition = position.value!! - 1
+        val newPosition = state.value.position - 1
         return if (newPosition >= 0) {
             updatePosition(newPosition)
             true
@@ -205,18 +172,26 @@ class ImageDetailsViewModel(
     }
 
     fun updatePosition(position: Int) {
-        pager.value?.let { pager ->
+        state.value.pager.let { pager ->
             viewModelScope.launch(StashCoroutineExceptionHandler()) {
                 try {
+                    if (pager.isEmpty() || position !in pager.indices) {
+                        return@launch
+                    }
+                    pager as ComposePager<ImageData>
                     val image = pager.getBlocking(position)
                     Log.v(TAG, "Got image for $position: ${image != null}")
                     if (image != null) {
-                        this@ImageDetailsViewModel.position.value = position
-                        rating100.value = image.rating100 ?: 0
-                        oCount.value = image.o_counter ?: 0
-                        tags.value = listOf()
-                        performers.value = listOf()
-                        galleries.value = listOf()
+                        _state.update {
+                            it.copy(
+                                position = position,
+                                rating100 = image.rating100 ?: 0,
+                                oCount = image.o_counter ?: 0,
+                                tags = emptyList(),
+                                performers = emptyList(),
+                                galleries = emptyList(),
+                            )
+                        }
                         // reset image filter
                         updateImageFilter(galleryImageFilter)
                         if (saveFilters) {
@@ -231,37 +206,39 @@ class ImageDetailsViewModel(
                                         TAG,
                                         "Loaded VideoFilter for image ${image.id}",
                                     )
-                                    withContext(Dispatchers.Main) {
-                                        // Pause throttling so that the image loads with the filter applied immediately
-                                        imageFilter.stopThrottling(true)
-                                        updateImageFilter(vf.videoFilter)
-                                        imageFilter.startThrottling()
-                                    }
-                                }
-                                withContext(Dispatchers.Main) {
-                                    _image.value = image
-                                    loadingState.value = ImageLoadingState.Success(image)
+                                    updateImageFilter(vf.videoFilter)
                                 }
                             }
-                        } else {
-                            _image.value = image
-                            loadingState.value = ImageLoadingState.Success(image)
+                        }
+                        _state.update {
+                            it.copy(
+                                image = image,
+                                loadingState = ImageLoadingState.Success(image),
+                            )
                         }
                         if (image.tags.isNotEmpty()) {
-                            tags.value =
+                            val tags =
                                 queryEngine.getTags(image.tags.map { it.id })
-                            Log.v(TAG, "Got ${tags.value?.size} tags")
+                            Log.v(TAG, "Got ${tags.size} tags")
+                            _state.update { it.copy(tags = tags) }
                         }
                         if (image.performers.isNotEmpty()) {
-                            performers.value =
+                            val performers =
                                 queryEngine.findPerformers(performerIds = image.performers.map { it.id })
+                            _state.update { it.copy(performers = performers) }
                         }
                         if (image.galleries.isNotEmpty()) {
-                            galleries.value =
+                            val galleries =
                                 queryEngine.findGalleries(galleryIds = image.galleries.map { it.id })
+                            _state.update { it.copy(galleries = galleries) }
                         }
                     } else {
-                        loadingState.value = ImageLoadingState.Error
+                        _state.update {
+                            it.copy(
+                                image = null,
+                                loadingState = ImageLoadingState.Error,
+                            )
+                        }
                     }
                     if (position + 1 in pager.indices) {
                         try {
@@ -280,7 +257,7 @@ class ImageDetailsViewModel(
                         }
                     }
                 } catch (ex: Exception) {
-                    loadingState.value = ImageLoadingState.Error
+                    _state.update { it.copy(loadingState = ImageLoadingState.Error) }
                     LoggingCoroutineExceptionHandler(
                         serverRepository.currentServer.value,
                         viewModelScope,
@@ -305,14 +282,14 @@ class ImageDetailsViewModel(
         imageId: String,
         mutator: MutableList<String>.() -> Unit,
     ) {
-        val ids = tags.value?.map { it.id }
+        val ids = state.value.tags.map { it.id }
         ids?.let {
             val mutable = it.toMutableList()
             mutator.invoke(mutable)
             viewModelScope.launch(exceptionHandler) {
                 val result = mutationEngine.updateImage(imageId = imageId, tagIds = mutable)
                 if (result != null) {
-                    tags.value = result.tags.map { it.tagData }
+                    _state.update { it.copy(tags = result.tags.map { it.tagData }) }
                 }
             }
         }
@@ -332,14 +309,14 @@ class ImageDetailsViewModel(
         imageId: String,
         mutator: MutableList<String>.() -> Unit,
     ) {
-        val perfs = performers.value?.map { it.id }
+        val perfs = state.value.performers.map { it.id }
         perfs?.let {
             val mutable = it.toMutableList()
             mutator.invoke(mutable)
             viewModelScope.launch(exceptionHandler) {
                 val result = mutationEngine.updateImage(imageId = imageId, performerIds = mutable)
                 if (result != null) {
-                    performers.value = result.performers.map { it.performerData }
+                    _state.update { it.copy(performers = result.performers.map { it.performerData }) }
                 }
             }
         }
@@ -352,45 +329,46 @@ class ImageDetailsViewModel(
         viewModelScope.launch(exceptionHandler) {
             val newRating =
                 mutationEngine.updateImage(imageId, rating100 = rating100)?.rating100 ?: 0
-            this@ImageDetailsViewModel.rating100.value = newRating
+            _state.update { it.copy(rating100 = newRating) }
             showSetRatingToast(StashApplication.getApplication(), newRating)
         }
     }
 
     fun updateOCount(action: suspend MutationEngine.(String) -> OCounter) {
         viewModelScope.launch(exceptionHandler) {
-            val newOCount = action.invoke(mutationEngine, _image.value!!.id)
-            oCount.value = newOCount.count
+            state.value.image?.let {
+                val newOCount = action.invoke(mutationEngine, it.id)
+                _state.update { it.copy(oCount = newOCount.count) }
+            }
         }
     }
 
     private var slideshowJob: Job? = null
 
     fun startSlideshow() {
-        _slideshow.value = true
-        _slideshowPaused.value = false
-        if (_image.value?.isImageClip == false) {
+        _state.update { it.copy(slideshow = true, slideshowPaused = false) }
+        if (state.value.image?.isImageClip == false) {
             pulseSlideshow()
         }
     }
 
     fun stopSlideshow() {
         slideshowJob?.cancel()
-        _slideshow.value = false
+        _state.update { it.copy(slideshow = false) }
     }
 
     fun pauseSlideshow() {
-        if (_slideshow.value == true) {
+        if (state.value.slideshow) {
             Log.v(TAG, "pauseSlideshow")
-            _slideshowPaused.value = true
+            _state.update { it.copy(slideshowPaused = true) }
             slideshowJob?.cancel()
         }
     }
 
     fun unpauseSlideshow() {
-        if (_slideshow.value == true) {
+        if (state.value.slideshow) {
             Log.v(TAG, "unpauseSlideshow")
-            _slideshowPaused.value = false
+            _state.update { it.copy(slideshowPaused = false) }
         }
     }
 
@@ -399,13 +377,13 @@ class ImageDetailsViewModel(
     fun pulseSlideshow(milliseconds: Long) {
         Log.v(TAG, "pulseSlideshow $milliseconds")
         slideshowJob?.cancel()
-        if (slideshow.value!!) {
+        if (state.value.slideshow) {
             slideshowJob =
                 viewModelScope
                     .launch(StashCoroutineExceptionHandler()) {
                         delay(milliseconds)
                         Log.v(TAG, "pulseSlideshow after delay")
-                        if (slideshowActive.value == true) {
+                        if (state.value.slideshowActive) {
                             nextImage()
                         }
                     }.apply {
@@ -415,11 +393,11 @@ class ImageDetailsViewModel(
     }
 
     fun updateImageFilter(newFilter: VideoFilter) {
-        _imageFilter.value = newFilter
+        _imageFilter.update { newFilter }
     }
 
     fun saveImageFilter() {
-        image.value?.let {
+        state.value.image?.let {
             viewModelScope.launchIO(StashCoroutineExceptionHandler(autoToast = true)) {
                 val server = serverRepository.currentServer.value.server
                 val vf = _imageFilter.value
@@ -442,10 +420,10 @@ class ImageDetailsViewModel(
     }
 
     fun saveGalleryFilter() {
-        galleryId.value?.let { galleryId ->
+        state.value.galleryId?.let { galleryId ->
             viewModelScope.launchIO(StashCoroutineExceptionHandler(autoToast = true)) {
                 val server = serverRepository.currentServer.value.server
-                val vf = _imageFilter.value
+                val vf = imageFilter.value
                 if (vf != null) {
                     galleryImageFilter = vf
                     database
@@ -484,4 +462,21 @@ sealed class ImageLoadingState {
     data class Success(
         val image: ImageData,
     ) : ImageLoadingState()
+}
+
+data class ImageDetailsPageState(
+    val slideshow: Boolean = false,
+    val slideshowPaused: Boolean = false,
+    val position: Int = 0,
+    val image: ImageData? = null,
+    val pager: List<ImageData?> = emptyList(),
+    val loadingState: ImageLoadingState = ImageLoadingState.Loading,
+    val tags: List<TagData> = emptyList(),
+    val performers: List<PerformerData> = emptyList(),
+    val galleries: List<GalleryData> = emptyList(),
+    val rating100: Int = 0,
+    val oCount: Int = 0,
+    val galleryId: String? = null,
+) {
+    val slideshowActive: Boolean = slideshow && !slideshowPaused
 }
