@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp.ui.components.prefs
 import android.app.Application
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil3.imageLoader
@@ -25,6 +24,9 @@ import com.github.damontecres.stashapp.util.launchDefault
 import com.github.damontecres.stashapp.util.plugin.CompanionPluginService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -44,28 +46,22 @@ class PreferencesViewModel(
     private val interfaceService: InterfaceService,
 ) : ViewModel() {
     private val lock = Mutex()
-    val runningJobs = MutableLiveData<List<StashJob>>(listOf())
-    val cacheUsage =
-        MutableLiveData<CacheUsage>(
-            CacheUsage(
-                networkDiskUsed = 0L,
-                imageMemoryUsed = 0L,
-                imageMemoryMax = 0L,
-                imageDiskUsed = 0L,
-            ),
-        )
+
+    private val _state = MutableStateFlow(PreferencesPageState())
+    val state: StateFlow<PreferencesPageState> = _state
 
     fun init() {
         interfaceService.setTitle(context.getString(R.string.preferences))
-        runningJobs.value = listOf()
+        _state.update { it.copy(runningJobs = emptyList()) }
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
-            runningJobs.value =
+            val runningJobs =
                 queryEngine
                     .executeQuery(JobQueueQuery())
                     .data
                     ?.jobQueue
                     ?.map { it.stashJob }
                     .orEmpty()
+            _state.update { it.copy(runningJobs = runningJobs) }
 
             subscriptionEngine.subscribeToJobs { update ->
                 val type = update.jobsSubscribe.type
@@ -83,7 +79,7 @@ class PreferencesViewModel(
         jobData: StashJob,
     ) {
         lock.withLock {
-            val mutable = runningJobs.value!!.toMutableList()
+            val mutable = state.value.runningJobs.toMutableList()
             val index = mutable.indexOfFirstOrNull { it.id == jobData.id }
             // Timer for removing?
             when (type) {
@@ -98,9 +94,9 @@ class PreferencesViewModel(
                     viewModelScope.launch(StashCoroutineExceptionHandler()) {
                         delay(10_000)
                         lock.withLock {
-                            val mutable = runningJobs.value!!.toMutableList()
+                            val mutable = state.value.runningJobs.toMutableList()
                             if (mutable.removeIf { it.id == jobData.id }) {
-                                runningJobs.value = mutable
+                                _state.update { it.copy(runningJobs = mutable) }
                             }
                         }
                     }
@@ -116,7 +112,7 @@ class PreferencesViewModel(
                     Log.w(TAG, "Unknown job update type for $jobData")
                 }
             }
-            runningJobs.value = mutable
+            _state.update { it.copy(runningJobs = mutable) }
         }
     }
 
@@ -125,13 +121,17 @@ class PreferencesViewModel(
         val imageUsedMemory = context.imageLoader.memoryCache?.size ?: 0L
         val imageMaxMemory = context.imageLoader.memoryCache?.maxSize ?: 0L
         val imageDisk = context.imageLoader.diskCache?.size ?: 0L
-        cacheUsage.value =
-            CacheUsage(
-                networkDiskUsed = networkDisk,
-                imageMemoryUsed = imageUsedMemory,
-                imageMemoryMax = imageMaxMemory,
-                imageDiskUsed = imageDisk,
+        _state.update {
+            it.copy(
+                cacheUsage =
+                    CacheUsage(
+                        networkDiskUsed = networkDisk,
+                        imageMemoryUsed = imageUsedMemory,
+                        imageMemoryMax = imageMaxMemory,
+                        imageDiskUsed = imageDisk,
+                    ),
             )
+        }
     }
 
     fun onTriggerScan() {
@@ -164,6 +164,17 @@ data class CacheUsage(
     val imageMemoryUsed: Long,
     val imageMemoryMax: Long,
     val imageDiskUsed: Long,
+)
+
+data class PreferencesPageState(
+    val runningJobs: List<StashJob> = emptyList(),
+    val cacheUsage: CacheUsage =
+        CacheUsage(
+            networkDiskUsed = 0L,
+            imageMemoryUsed = 0L,
+            imageMemoryMax = 0L,
+            imageDiskUsed = 0L,
+        ),
 )
 
 suspend fun clearCaches(context: Context) =

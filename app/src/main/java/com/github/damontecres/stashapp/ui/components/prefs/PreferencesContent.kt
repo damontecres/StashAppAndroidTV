@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -243,7 +242,7 @@ fun PreferencesContent(
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
     var focusedIndex by rememberSaveable { mutableStateOf(Pair(0, 0)) }
-    val state = rememberLazyListState()
+    val listState = rememberLazyListState()
     var preferences by remember { mutableStateOf(uiConfig.preferences) }
     val sharedPrefs = remember { PreferenceManager.getDefaultSharedPreferences(context) }
     LaunchedEffect(Unit) {
@@ -284,8 +283,9 @@ fun PreferencesContent(
             viewModel.init()
         }
     }
-    val jobQueue by viewModel.runningJobs.observeAsState(listOf())
-    val cacheUsage by viewModel.cacheUsage.observeAsState(CacheUsage(0, 0, 0, 0))
+    val state by viewModel.state.collectAsState()
+    val jobQueue = state.runningJobs
+    val cacheUsage = state.cacheUsage
 
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -305,7 +305,7 @@ fun PreferencesContent(
             focusRequester.tryRequestFocus()
         }
         LazyColumn(
-            state = state,
+            state = listState,
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(0.dp),
             contentPadding = PaddingValues(16.dp),
