@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -84,7 +83,8 @@ fun AddServer(
         mutableStateOf(preferences.advancedPreferences.trustSelfSignedCertificates)
     }
 
-    val connectionState by viewModel.connectionState.observeAsState(ConnectionState.Inactive)
+    val state by viewModel.state.collectAsState()
+    val connectionState = state.connectionState
 
     var showTrustDialog by remember { mutableStateOf(false) }
 

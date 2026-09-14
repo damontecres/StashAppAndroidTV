@@ -24,7 +24,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -48,8 +47,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.tv.material3.MaterialTheme
@@ -103,6 +100,8 @@ import com.github.damontecres.stashapp.util.launchDefault
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.views.formatBytes
 import com.github.damontecres.stashapp.views.formatNumber
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -124,8 +123,8 @@ class MainPageViewModel(
 ) : ViewModel() {
     val frontPageRows = mutableStateListOf<FrontPageParser.FrontPageRow.Success>()
 
-    private val _serverStats = MutableLiveData<StatisticsQuery.Stats?>()
-    val serverStats: LiveData<StatisticsQuery.Stats?> = _serverStats
+    private val _serverStats = MutableStateFlow<StatisticsQuery.Stats?>(null)
+    val serverStats: StateFlow<StatisticsQuery.Stats?> = _serverStats
 
     val currentServer get() = serverRepository.currentServer
 
@@ -205,7 +204,7 @@ fun MainPage(
     val context = LocalContext.current
 
     val frontPageRows = viewModel.frontPageRows // .observeAsState(listOf())
-    val serverStats by viewModel.serverStats.observeAsState()
+    val serverStats by viewModel.serverStats.collectAsState()
     val currentServer by viewModel.currentServer.collectAsState()
 
     val focusRequester = remember { FocusRequester() }

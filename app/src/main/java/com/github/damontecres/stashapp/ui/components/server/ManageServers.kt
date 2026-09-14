@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -62,8 +61,9 @@ fun ManageServers(
     viewModel: ManageServersViewModel = koinViewModel(),
 ) {
     val currentServer by viewModel.currentServer.collectAsState()
-    val allServers by viewModel.allServers.observeAsState(listOf())
-    val serverStatus by viewModel.serverStatus.observeAsState(mapOf())
+    val state by viewModel.state.collectAsState()
+    val allServers = state.allServers
+    val serverStatus = state.serverStatus
     val serversWithOutCurrent =
         remember(currentServer, allServers) {
             allServers.toMutableList().apply { remove(currentServer.server) }

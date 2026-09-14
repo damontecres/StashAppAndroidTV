@@ -50,7 +50,6 @@ class FilterViewModel(
 
     val interfaceState get() = interfaceService.state
 
-    //    val pager = MutableLiveData<ComposePager<StashData>>()
     private val config =
         SavedStateConfiguration {
             serializersModule = OptionalSerializersModule
