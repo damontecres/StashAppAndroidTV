@@ -23,8 +23,8 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,6 +59,7 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
+import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.CreatedTimestamp
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -68,6 +69,7 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.ui.components.UpdatedTimestamp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.DataLoadingState
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
@@ -89,10 +91,6 @@ fun MarkerPage(
     LaunchedEffect(Unit) {
         viewModel.init()
     }
-
-    val marker by viewModel.item.observeAsState()
-    val primaryTag by viewModel.primaryTag.observeAsState()
-    val tags by viewModel.tags.observeAsState(listOf())
 
     var showDialog by remember { mutableStateOf<DialogParams?>(null) }
     val removeLongClicker =
@@ -131,26 +129,47 @@ fun MarkerPage(
                 )
         }
 
-    if (marker != null && primaryTag != null) {
-        val title =
-            if (marker!!.title.isNotNullOrBlank()) {
-                marker!!.title
-            } else {
-                primaryTag!!.name
-            }
-        MarkerPageContent(
-            marker = marker!!,
-            markerTitle = if (isTvDevice) title else null,
-            primaryTag = primaryTag!!,
-            tags = tags,
-            itemOnClick = viewModel.itemClicker::onClick,
-            longClicker = removeLongClicker,
-            uiConfig = uiConfig,
-            setPrimaryTag = viewModel::setPrimaryTag,
-            addTag = viewModel::addTag,
-            removeTag = viewModel::removeTag,
-            modifier = modifier.fillMaxSize(),
-        )
+    val state by viewModel.state.collectAsState()
+    when (val st = state.item) {
+        is DataLoadingState.Error -> {
+            Text(
+                "Error",
+                style = MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = modifier,
+            )
+        }
+
+        DataLoadingState.Loading,
+        DataLoadingState.Pending,
+        -> {
+            CircularProgress(modifier)
+        }
+
+        is DataLoadingState.Success<FullMarkerData> -> {
+            val marker = st.data
+            val title =
+                remember(marker) {
+                    if (marker.title.isNotNullOrBlank()) {
+                        marker.title
+                    } else {
+                        marker.primary_tag.tagData.name
+                    }
+                }
+            MarkerPageContent(
+                marker = marker,
+                markerTitle = if (isTvDevice) title else null,
+                primaryTag = marker.primary_tag.tagData,
+                tags = state.tags,
+                itemOnClick = viewModel.itemClicker::onClick,
+                longClicker = removeLongClicker,
+                uiConfig = uiConfig,
+                setPrimaryTag = viewModel::setPrimaryTag,
+                addTag = viewModel::addTag,
+                removeTag = viewModel::removeTag,
+                modifier = modifier.fillMaxSize(),
+            )
+        }
     }
     showDialog?.let { params ->
         DialogPopup(
