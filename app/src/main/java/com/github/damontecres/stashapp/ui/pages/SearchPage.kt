@@ -11,14 +11,16 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -26,12 +28,12 @@ import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
@@ -58,6 +60,9 @@ import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.annotation.KoinViewModel
@@ -72,26 +77,8 @@ class SearchViewModel(
 ) : ViewModel() {
     private var currentQuery = ""
 
-    val scenes = MutableLiveData<List<Any>>(listOf())
-    val groups = MutableLiveData<List<Any>>(listOf())
-    val markers = MutableLiveData<List<Any>>(listOf())
-    val performers = MutableLiveData<List<Any>>(listOf())
-    val studios = MutableLiveData<List<Any>>(listOf())
-    val tags = MutableLiveData<List<Any>>(listOf())
-    val images = MutableLiveData<List<Any>>(listOf())
-    val galleries = MutableLiveData<List<Any>>(listOf())
-
-    val mapping =
-        mapOf(
-            DataType.SCENE to scenes,
-            DataType.GROUP to groups,
-            DataType.MARKER to markers,
-            DataType.PERFORMER to performers,
-            DataType.STUDIO to studios,
-            DataType.TAG to tags,
-            DataType.IMAGE to images,
-            DataType.GALLERY to galleries,
-        )
+    private val _state = MutableStateFlow(SearchPageState())
+    val state: StateFlow<SearchPageState> = _state
 
     fun init(
         initialQuery: String,
@@ -106,16 +93,18 @@ class SearchViewModel(
     ) {
         if (query.isNotBlank() && query != this.currentQuery) {
             this.currentQuery = query
-            DataType.entries.forEach {
-                val data = mapping[it]!!
-                data.value = listOf()
+            DataType.entries.forEach { dataType ->
+                _state.update { state ->
+                    state.results[dataType] = emptyList()
+                    state
+                }
 
                 val stashFindFilter =
                     StashFindFilter(
                         q = query,
                         sortAndDirection =
                             SortAndDirection(
-                                SortOption.sortByName(it),
+                                SortOption.sortByName(dataType),
                                 SortDirectionEnum.ASC,
                             ),
                     )
@@ -130,21 +119,33 @@ class SearchViewModel(
                         serverRepository.currentServer.value,
                         viewModelScope,
                         toastMessage = "Search for ${
-                            StashApplication.getApplication().getString(it.pluralStringId)
+                            StashApplication.getApplication().getString(dataType.pluralStringId)
                         } failed",
                     ),
                 ) {
-                    val results = queryEngine.find(it, findFilter)
+                    val results = queryEngine.find(dataType, findFilter)
                     if (results.isNotEmpty()) {
-                        data.value = results
+                        _state.update { state ->
+                            state.results[dataType] = results
+                            state
+                        }
                     }
                 }
             }
         } else if (query != this.currentQuery) {
-            mapping.values.forEach { it.value = listOf() }
+            _state.update { state ->
+                DataType.entries.forEach { state.results[it] = emptyList() }
+                state
+            }
         }
     }
 }
+
+data class SearchPageState(
+    val results: SnapshotStateMap<DataType, List<StashData>> =
+        mutableStateMapOf<DataType, List<StashData>>()
+            .apply { DataType.entries.forEach { put(it, emptyList()) } },
+)
 
 @Composable
 fun SearchPage(
@@ -161,27 +162,7 @@ fun SearchPage(
 
     var searchQuery by rememberSaveable { mutableStateOf(initialQuery) }
     val perPage = uiConfig.preferences.searchPreferences.maxResults
-
-    val scenes by viewModel.scenes.observeAsState(listOf())
-    val groups by viewModel.groups.observeAsState(listOf())
-    val markers by viewModel.markers.observeAsState(listOf())
-    val performers by viewModel.performers.observeAsState(listOf())
-    val studios by viewModel.studios.observeAsState(listOf())
-    val tags by viewModel.tags.observeAsState(listOf())
-    val images by viewModel.images.observeAsState(listOf())
-    val galleries by viewModel.galleries.observeAsState(listOf())
-
-    val itemLists =
-        mapOf(
-            DataType.SCENE to scenes,
-            DataType.GROUP to groups,
-            DataType.MARKER to markers,
-            DataType.PERFORMER to performers,
-            DataType.STUDIO to studios,
-            DataType.TAG to tags,
-            DataType.IMAGE to images,
-            DataType.GALLERY to galleries,
-        )
+    val state by viewModel.state.collectAsState()
 
     OneTimeLaunchedEffect {
         viewModel.init(initialQuery, perPage)
@@ -227,7 +208,7 @@ fun SearchPage(
         }
 
         DataType.entries.forEachIndexed { index, dataType ->
-            val data = itemLists[dataType]!!
+            val data = state.results[dataType].orEmpty()
             if (data.isNotEmpty()) {
                 item {
                     HomePageRow(
