@@ -10,7 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +30,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -43,7 +42,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -107,31 +105,23 @@ enum class CreateFilter {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun StashGridControls(
-    pager: ComposePager<StashData>,
+    filterArgs: FilterArgs,
     updateFilter: (FilterArgs) -> Unit,
-    itemOnClick: ItemOnClicker<Any>,
-    longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     filterUiMode: FilterUiMode,
     createFilter: (CreateFilter) -> Unit,
-    letterPosition: suspend (Char) -> Int,
     gridFocusRequester: FocusRequester,
+    searchInteractionSource: MutableInteractionSource,
+    showTopRow: Boolean,
     modifier: Modifier = Modifier,
-    initialPosition: Int = 0,
-    itemOnLongClick: ((Any) -> Unit)? = null,
-    positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
     subToggleLabel: String? = null,
     onSubToggleCheck: ((Boolean) -> Unit)? = null,
     subToggleChecked: Boolean = false,
     subToggleEnabled: Boolean = true,
-    cardContext: ((index: Int, item: StashData) -> CardContext)? = null,
 ) {
+    val dataType = filterArgs.dataType
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val filterArgs = pager.filter
-    val dataType = filterArgs.dataType
-    var showTopRowRaw by rememberSaveable { mutableStateOf(true) }
-    val showTopRow by remember { derivedStateOf { showTopRowRaw } }
     var checked by rememberSaveable(filterArgs) { mutableStateOf(subToggleChecked) }
     var searchQuery by rememberSaveable(filterArgs) {
         mutableStateOf(
@@ -154,10 +144,10 @@ fun StashGridControls(
                 LazyRow(
                     modifier =
                         Modifier
-                            .focusGroup()
-                            .onFocusChanged {
-                                if (it.isFocused) rowFocusRequester.tryRequestFocus()
-                            }.focusable(true),
+                            .focusGroup(),
+//                            .onFocusChanged {
+// //                                if (it.isFocused) rowFocusRequester.tryRequestFocus()
+//                            }.focusable(true),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     contentPadding = PaddingValues(8.dp),
@@ -277,39 +267,14 @@ fun StashGridControls(
                                 if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
                                     updateFilter(filterArgs.withQuery(searchQuery))
                                 }
-                                gridFocusRequester.tryRequestFocus()
+//                                gridFocusRequester.tryRequestFocus()
                             },
+                            interactionSource = searchInteractionSource,
                         )
                     }
                 }
             }
         }
-        StashGrid(
-            pager,
-            uiConfig,
-            itemOnClick,
-            longClicker,
-            letterPosition = letterPosition,
-            initialPosition = initialPosition,
-            positionCallback = { columns, position ->
-                showTopRowRaw = position < columns
-                positionCallback?.invoke(columns, position)
-            },
-            gridFocusRequester = gridFocusRequester,
-            cardContext = cardContext,
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .focusProperties {
-                        exit = {
-                            if (it == FocusDirection.Up) {
-                                rowFocusRequester
-                            } else {
-                                FocusRequester.Default
-                            }
-                        }
-                    },
-        )
     }
     if (showMarkerDialog) {
         MarkerDurationDialog(

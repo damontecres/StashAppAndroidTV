@@ -5,9 +5,12 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.PrimaryScrollableTabRow
@@ -291,45 +294,80 @@ fun StashGridTab(
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
     val state by viewModel.state.collectAsState()
-    when (val st = state.pager) {
-        is DataLoadingState.Error -> {
-            ErrorMessage(st, modifier)
-        }
 
-        DataLoadingState.Loading,
-        DataLoadingState.Pending,
-        -> {
-            LoadingPage(modifier)
-        }
+    val searchInteractionSource = remember { MutableInteractionSource() }
+    val searchIsFocused by searchInteractionSource.collectIsFocusedAsState()
+    val gridFocusRequester = remember { FocusRequester() }
+    val rowFocusRequester = remember { FocusRequester() }
 
-        is DataLoadingState.Success<ComposePager<StashData>> -> {
-            LaunchedEffect(Unit) { gridFocusRequester.tryRequestFocus() }
-            StashGridControls(
-                pager = st.data,
-                initialPosition = 0,
-                itemOnClick = itemOnClick,
-                longClicker = longClicker,
-                filterUiMode = FilterUiMode.CREATE_FILTER,
-                createFilter = {
-                    navigationManager.navigate(
-                        Destination.CreateFilter(
-                            dataType = st.data.filter.dataType,
-                            startingFilter = st.data.filter,
-                        ),
-                    )
-                },
-                modifier = modifier,
-                positionCallback = positionCallback,
-                uiConfig = composeUiConfig,
-                updateFilter = viewModel::updateFilter,
-                letterPosition = viewModel::findLetterPosition,
-                subToggleLabel = subToggleLabel,
-                onSubToggleCheck = onSubToggleCheck,
-                subToggleChecked = subToggleChecked,
-                subToggleEnabled = subToggleEnabled,
-                gridFocusRequester = gridFocusRequester,
-                cardContext = cardContext,
-            )
+    var showTopRow by rememberSaveable { mutableStateOf(true) }
+
+    Column(
+        modifier = modifier,
+    ) {
+        StashGridControls(
+            filterArgs = viewModel.filter,
+            filterUiMode = FilterUiMode.CREATE_FILTER,
+            createFilter = {
+                navigationManager.navigate(
+                    Destination.CreateFilter(
+                        dataType = viewModel.dataType,
+                        startingFilter = viewModel.filter,
+                    ),
+                )
+            },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .focusRequester(rowFocusRequester),
+            uiConfig = composeUiConfig,
+            updateFilter = viewModel::updateFilter,
+            subToggleLabel = subToggleLabel,
+            onSubToggleCheck = onSubToggleCheck,
+            subToggleChecked = subToggleChecked,
+            subToggleEnabled = subToggleEnabled,
+            gridFocusRequester = gridFocusRequester,
+            searchInteractionSource = searchInteractionSource,
+            showTopRow = showTopRow,
+        )
+
+        when (val st = state.pager) {
+            is DataLoadingState.Error -> {
+                ErrorMessage(st, Modifier)
+            }
+
+            DataLoadingState.Loading,
+            DataLoadingState.Pending,
+            -> {
+                LoadingPage(
+                    focusEnabled = !searchIsFocused,
+                    modifier = Modifier,
+                )
+            }
+
+            is DataLoadingState.Success<ComposePager<StashData>> -> {
+                LaunchedEffect(Unit) {
+                    if (!searchIsFocused) {
+                        gridFocusRequester.tryRequestFocus("grid")
+                    }
+                }
+
+                StashGrid(
+                    pager = st.data,
+                    uiConfig = composeUiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                    letterPosition = viewModel::findLetterPosition,
+                    initialPosition = 0,
+                    positionCallback = { columns, position ->
+                        showTopRow = position < columns
+                        positionCallback?.invoke(columns, position)
+                    },
+                    gridFocusRequester = gridFocusRequester,
+                    cardContext = cardContext,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }
