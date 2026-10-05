@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -64,6 +65,16 @@ fun FilterPage(
     val rowFocusRequester = remember { FocusRequester() }
 
     var showTopRow by rememberSaveable { mutableStateOf(!scrollToNextPage) }
+    var startPosition by
+        remember {
+            mutableIntStateOf(
+                if (scrollToNextPage) {
+                    uiConfig.preferences.searchPreferences.maxResults
+                } else {
+                    0
+                },
+            )
+        }
 
     Column(
         modifier = modifier,
@@ -130,27 +141,20 @@ fun FilterPage(
             }
 
             is DataLoadingState.Success<ComposePager<StashData>> -> {
-                val pager = st.data
-                val initialPosition =
-                    if (scrollToNextPage) {
-                        uiConfig.preferences.searchPreferences.maxResults
-                    } else {
-                        0
-                    }
-
                 LaunchedEffect(Unit) {
                     if (!searchIsFocused) {
                         gridFocusRequester.tryRequestFocus("grid")
                     }
+                    startPosition = 0
                 }
 
                 StashGrid(
-                    pager = pager,
+                    pager = st.data,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
                     letterPosition = viewModel::findLetterPosition,
-                    initialPosition = initialPosition,
+                    initialPosition = startPosition,
                     positionCallback = { columns, position ->
                         showTopRow = position < columns
 //                        positionCallback?.invoke(columns, position)
