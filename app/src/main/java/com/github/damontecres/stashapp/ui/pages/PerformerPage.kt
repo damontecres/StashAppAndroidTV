@@ -29,7 +29,6 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
@@ -67,9 +66,11 @@ import com.github.damontecres.stashapp.ui.components.BasicItemInfo
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.EditItem
+import com.github.damontecres.stashapp.ui.components.ErrorMessage
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.ItemsRow
+import com.github.damontecres.stashapp.ui.components.LoadingPage
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridTab
 import com.github.damontecres.stashapp.ui.components.TabPage
@@ -82,6 +83,7 @@ import com.github.damontecres.stashapp.ui.performerPreview
 import com.github.damontecres.stashapp.ui.tagPreview
 import com.github.damontecres.stashapp.ui.titleCount
 import com.github.damontecres.stashapp.ui.uiConfigPreview
+import com.github.damontecres.stashapp.ui.util.DataLoadingState
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.ageInYears
@@ -131,11 +133,11 @@ class PerformerDetailsViewModel(
                 if (performer != null) {
                     refresh(performer)
                 } else {
-                    _state.update { it.copy(loadingState = PerformerLoadingState.Error) }
+                    _state.update { it.copy(loadingState = DataLoadingState.Error("Not found")) }
                 }
             } catch (ex: Exception) {
                 Timber.e(ex, "Error fetching performer %s", performerId)
-                _state.update { it.copy(loadingState = PerformerLoadingState.Error) }
+                _state.update { it.copy(loadingState = DataLoadingState.Error(ex)) }
             }
         }
     }
@@ -157,7 +159,7 @@ class PerformerDetailsViewModel(
         this@PerformerDetailsViewModel.performer = performer
         _state.update {
             it.copy(
-                loadingState = PerformerLoadingState.Success(performer),
+                loadingState = DataLoadingState.Success(performer),
                 title = title,
                 rating100 = performer.rating100 ?: 0,
                 favorite = performer.favorite,
@@ -231,18 +233,8 @@ class PerformerDetailsViewModel(
     }
 }
 
-sealed class PerformerLoadingState {
-    data object Loading : PerformerLoadingState()
-
-    data object Error : PerformerLoadingState()
-
-    data class Success(
-        val performer: PerformerData,
-    ) : PerformerLoadingState()
-}
-
 data class PerformerState(
-    val loadingState: PerformerLoadingState = PerformerLoadingState.Loading,
+    val loadingState: DataLoadingState<PerformerData> = DataLoadingState.Pending,
     val tags: List<TagData> = emptyList(),
     val studios: List<StudioData> = emptyList(),
     val favorite: Boolean = false,
@@ -264,27 +256,21 @@ fun PerformerPage(
     val state by viewModel.state.collectAsState()
 
     when (val st = state.loadingState) {
-        PerformerLoadingState.Error -> {
-            Text(
-                "Error",
-                style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
+        is DataLoadingState.Error -> {
+            ErrorMessage(st, modifier)
         }
 
-        PerformerLoadingState.Loading -> {
-            Text(
-                "Loading...",
-                style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
+        DataLoadingState.Pending,
+        DataLoadingState.Loading,
+        -> {
+            LoadingPage(modifier)
         }
 
-        is PerformerLoadingState.Success -> {
+        is DataLoadingState.Success -> {
             val currentServer by viewModel.currentServer.collectAsState()
             PerformerDetailsPage(
                 serverPreferences = currentServer.serverPreferences,
-                perf = st.performer,
+                perf = st.data,
                 title = state.title,
                 tags = state.tags,
                 studios = state.studios,
