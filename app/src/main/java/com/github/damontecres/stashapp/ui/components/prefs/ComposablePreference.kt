@@ -41,8 +41,8 @@ import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SettingsFragment
-import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.di.server.CurrentServer
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -50,25 +50,24 @@ import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.components.server.ConfigurePin
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.util.AppUpgradeHandler
-import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
-import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.formatBytes
 import kotlinx.coroutines.launch
 
 @Suppress("UNCHECKED_CAST")
 @Composable
 fun <T> ComposablePreference(
-    server: StashServer,
+    currentServer: CurrentServer,
     navigationManager: NavigationManager,
     preference: StashPreference<T>,
     value: T?,
     onValueChange: (T) -> Unit,
     cacheUsage: CacheUsage,
     onCacheClear: () -> Unit,
+    onTriggerScan: () -> Unit,
+    onTriggerGenerate: () -> Unit,
+    onSendLogs: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
@@ -86,24 +85,23 @@ fun <T> ComposablePreference(
         scope.launch(StashCoroutineExceptionHandler()) {
             when (preference) {
                 StashPreference.CurrentServer -> {
-                    testStashConnection(context, true, server.apolloClient)
                 }
 
                 StashPreference.SendLogs -> {
-                    CompanionPlugin.sendLogCat(context, server, false)
+                    onSendLogs.invoke(false)
                 }
 
                 StashPreference.CacheClear -> {
-                    SettingsFragment.clearCaches(context)
+                    clearCaches(context)
                     onCacheClear.invoke()
                 }
 
                 StashPreference.TriggerScan -> {
-                    MutationEngine(server).triggerScan()
+                    onTriggerScan.invoke()
                 }
 
                 StashPreference.TriggerGenerate -> {
-                    MutationEngine(server).triggerGenerate()
+                    onTriggerGenerate.invoke()
                 }
 
                 StashPreference.MigratePreferences -> {
@@ -122,7 +120,7 @@ fun <T> ComposablePreference(
         scope.launch(StashCoroutineExceptionHandler()) {
             when (preference) {
                 StashPreference.SendLogs -> {
-                    CompanionPlugin.sendLogCat(context, server, true)
+                    onSendLogs.invoke(true)
                 }
 
                 else -> {
@@ -137,18 +135,7 @@ fun <T> ComposablePreference(
             ClickPreference(
                 title = title,
                 onClick = onClick,
-                summary = server.url,
-                interactionSource = interactionSource,
-                modifier = modifier,
-            )
-        }
-
-        StashPreference.UseNewUI -> {
-            SwitchPreference(
-                title = title,
-                value = value as Boolean,
-                onClick = { showConfirmOldUiDialog = true },
-                summary = preference.summary(context, value),
+                summary = currentServer.server.url,
                 interactionSource = interactionSource,
                 modifier = modifier,
             )

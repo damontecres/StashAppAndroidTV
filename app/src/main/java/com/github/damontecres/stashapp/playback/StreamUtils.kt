@@ -12,6 +12,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
+import co.touchlab.kermit.Logger
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.Caption
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -199,10 +200,9 @@ fun getStreamDecision(
         containerSupported &&
         scene.streamUrl != null
     ) {
-        Log.v(
-            PlaybackSceneFragment.TAG,
-            "Video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format}) supported",
-        )
+        Logger.v {
+            "Video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format}) supported"
+        }
         return StreamDecision(
             scene.id,
             TranscodeDecision.DirectPlay,
@@ -212,10 +212,9 @@ fun getStreamDecision(
             true,
         )
     } else if (mode == PlaybackMode.ForcedDirectPlay) {
-        Log.v(
-            PlaybackSceneFragment.TAG,
-            "Forcing direct play for video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})",
-        )
+        Logger.v {
+            "Forcing direct play for video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})"
+        }
         return StreamDecision(
             scene.id,
             TranscodeDecision.ForcedDirectPlay,
@@ -226,10 +225,9 @@ fun getStreamDecision(
         )
     } else {
         // Transcode
-        Log.v(
-            PlaybackSceneFragment.TAG,
-            "Transcoding video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})",
-        )
+        Logger.v {
+            "Transcoding video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})"
+        }
         return StreamDecision(
             scene.id,
             if (mode is PlaybackMode.ForcedTranscode) TranscodeDecision.ForcedTranscode(mode.streamLabel) else TranscodeDecision.Transcode,
@@ -536,7 +534,7 @@ fun switchToTranscode(
     current: MediaItem,
     prefs: PlaybackPreferences,
 ): MediaItem {
-    val currScene = (current.localConfiguration!!.tag as PlaylistFragment.MediaItemTag).item
+    val currScene = (current.localConfiguration!!.tag as MediaItemTag).item
     val transcodeDecision =
         getStreamDecision(
             context,
@@ -547,7 +545,7 @@ fun switchToTranscode(
             CodecSupport.getSupportedCodecs(prefs),
         )
     return buildMediaItem(context, transcodeDecision, currScene) {
-        setTag(PlaylistFragment.MediaItemTag(currScene, transcodeDecision))
+        setTag(MediaItemTag(currScene, transcodeDecision))
     }
 }
 
@@ -610,3 +608,13 @@ fun getTranscodeAboveFromPreferences(context: Context): Resolution {
             )
     return resolutionFromLabel(resolution ?: Resolution.UNSPECIFIED.label)
 }
+
+/**
+ * Holds an item to play and its [StreamDecision]
+ *
+ * This will added as a tag to the [MediaItem]s
+ */
+data class MediaItemTag(
+    val item: Scene,
+    val streamDecision: StreamDecision,
+)

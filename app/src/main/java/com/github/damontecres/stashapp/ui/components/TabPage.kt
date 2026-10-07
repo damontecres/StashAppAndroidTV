@@ -1,18 +1,25 @@
 package com.github.damontecres.stashapp.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,11 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
@@ -39,6 +46,7 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.di.server.ServerPreferences
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -49,10 +57,13 @@ import com.github.damontecres.stashapp.ui.cards.CardContext
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.filterArgsSaver
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.DataLoadingState
 import com.github.damontecres.stashapp.ui.util.OneTimeLaunchedEffect
+import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.PageFilterKey
-import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.delay
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,12 +100,13 @@ fun TabPage(
     var resolvedTabIndex by remember { mutableIntStateOf(selectedTabIndex) }
     LaunchedEffect(selectedTabIndex) {
         // Add a slight delay so if scrolling quickly through tabs, can skip rending the skipped tabs
-        delay(200.milliseconds)
+        delay(500.milliseconds)
         resolvedTabIndex = selectedTabIndex
         if (rememberTab) {
             preferences.edit { putInt(rememberTabKey, resolvedTabIndex) }
         }
     }
+    var tabRowFocused by rememberSaveable { mutableStateOf(false) }
 
     OneTimeLaunchedEffect {
         tabRowFocusRequester.tryRequestFocus()
@@ -113,7 +125,9 @@ fun TabPage(
             )
         }
         AnimatedVisibility(
-            showTabRow,
+            visible = showTabRow,
+            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top),
             modifier = Modifier.align(Alignment.CenterHorizontally),
         ) {
             if (isTvDevice) {
@@ -122,7 +136,10 @@ fun TabPage(
                     modifier =
                         Modifier
                             .focusRestorer(focusRequesters[selectedTabIndex])
-                            .focusRequester(tabRowFocusRequester),
+                            .focusRequester(tabRowFocusRequester)
+                            .onFocusChanged {
+                                tabRowFocused = it.hasFocus
+                            },
                 ) {
                     tabs.forEachIndexed { index, tab ->
                         key(index) {
@@ -184,8 +201,21 @@ fun TabPage(
         }
         if (tabs.isNotEmpty()) {
 //            Log.i("Tabs", "resolvedTabIndex=$resolvedTabIndex")
-            tabs[resolvedTabIndex].content(this) { columns, position ->
-                showTabRowRaw = position < columns
+            val focusRequester = remember { FocusRequester() }
+            LaunchedEffect(Unit) {
+                if (!tabRowFocused) {
+                    focusRequester.tryRequestFocus()
+                }
+            }
+            key(resolvedTabIndex) {
+                tabs[resolvedTabIndex].content.invoke(
+                    this,
+                    { columns, position ->
+                        showTabRowRaw = position < columns
+                    },
+                    focusRequester,
+                    Modifier.fillMaxSize(),
+                )
             }
         }
     }
@@ -199,11 +229,12 @@ data class TabProvider(
          * Callback when grid position changes, passed to [StashGrid]. None-StashGrid can probably ignore this
          */
         positionCallback: (columns: Int, position: Int) -> Unit,
+        focusRequester: FocusRequester,
+        modifier: Modifier,
     ) -> Unit,
 )
 
 fun createTabFunc(
-    server: StashServer,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     composeUiConfig: ComposeUiConfig,
@@ -222,7 +253,7 @@ fun createTabFunc(
                 DataType.IMAGE -> TabType.IMAGES
                 DataType.GALLERY -> TabType.GALLERIES
             }
-        TabProvider(name, type) { positionCallback ->
+        TabProvider(name, type) { positionCallback, focusRequester, modifier ->
             var filter by rememberSaveable(name, saver = filterArgsSaver) {
                 mutableStateOf(
                     initialFilter,
@@ -230,16 +261,13 @@ fun createTabFunc(
             }
             StashGridTab(
                 name = name,
-                server = server,
                 initialFilter = filter,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
-                modifier = Modifier,
-                positionCallback = positionCallback,
                 composeUiConfig = composeUiConfig,
-                onFilterChange = {
-                    filter = it
-                },
+                gridFocusRequester = focusRequester,
+                modifier = modifier,
+                positionCallback = positionCallback,
             )
         }
     }
@@ -247,14 +275,16 @@ fun createTabFunc(
 @Composable
 fun StashGridTab(
     name: String,
-    server: StashServer,
     initialFilter: FilterArgs,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     composeUiConfig: ComposeUiConfig,
-    onFilterChange: (FilterArgs) -> Unit,
+    gridFocusRequester: FocusRequester,
     modifier: Modifier = Modifier,
-    viewModel: FilterViewModel = viewModel(key = name),
+    viewModel: FilterViewModel =
+        koinViewModel(key = name) {
+            parametersOf(initialFilter)
+        },
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
     subToggleLabel: String? = null,
     onSubToggleCheck: ((Boolean) -> Unit)? = null,
@@ -263,46 +293,93 @@ fun StashGridTab(
     cardContext: ((index: Int, item: StashData) -> CardContext)? = null,
 ) {
     val navigationManager = LocalGlobalContext.current.navigationManager
-    LaunchedEffect(server, initialFilter) {
-        viewModel.setFilter(server, initialFilter, composeUiConfig.cardSettings.columns)
-    }
-    val pager by viewModel.pager.observeAsState()
-    pager?.let { newPager ->
+    val state by viewModel.state.collectAsState()
+
+    val searchInteractionSource = remember { MutableInteractionSource() }
+    val searchIsFocused by searchInteractionSource.collectIsFocusedAsState()
+    val gridFocusRequester = remember { FocusRequester() }
+    val rowFocusRequester = remember { FocusRequester() }
+
+    var showTopRow by rememberSaveable { mutableStateOf(true) }
+
+    Column(
+        modifier = modifier,
+    ) {
         StashGridControls(
-            server = server,
-            pager = newPager,
-            initialPosition = -1,
-            itemOnClick = itemOnClick,
-            longClicker = longClicker,
+            filterArgs = viewModel.filter,
             filterUiMode = FilterUiMode.CREATE_FILTER,
             createFilter = {
                 navigationManager.navigate(
                     Destination.CreateFilter(
-                        dataType = newPager.filter.dataType,
-                        startingFilter = newPager.filter,
+                        dataType = viewModel.dataType,
+                        startingFilter = viewModel.filter,
                     ),
                 )
             },
-            modifier = modifier,
-            positionCallback = positionCallback,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .focusRequester(rowFocusRequester),
             uiConfig = composeUiConfig,
-            updateFilter = { onFilterChange?.invoke(it) },
-            letterPosition = viewModel::findLetterPosition,
+            updateFilter = viewModel::updateFilter,
             subToggleLabel = subToggleLabel,
             onSubToggleCheck = onSubToggleCheck,
             subToggleChecked = subToggleChecked,
             subToggleEnabled = subToggleEnabled,
-            requestFocus = false,
-            cardContext = cardContext,
+            gridFocusRequester = gridFocusRequester,
+            searchInteractionSource = searchInteractionSource,
+            showTopRow = showTopRow,
         )
+
+        when (val st = state.pager) {
+            is DataLoadingState.Error -> {
+                ErrorMessage(st, Modifier)
+            }
+
+            DataLoadingState.Loading,
+            DataLoadingState.Pending,
+            -> {
+                LoadingPage(
+                    focusEnabled = !searchIsFocused,
+                    modifier = Modifier,
+                )
+            }
+
+            is DataLoadingState.Success<ComposePager<StashData>> -> {
+                LaunchedEffect(Unit) {
+                    val toFocus =
+                        when {
+                            !searchIsFocused && st.data.isNotEmpty() -> gridFocusRequester
+                            !searchIsFocused -> rowFocusRequester
+                            else -> null
+                        }
+                    toFocus?.tryRequestFocus()
+                }
+
+                StashGrid(
+                    pager = st.data,
+                    uiConfig = composeUiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                    letterPosition = viewModel::findLetterPosition,
+                    initialPosition = 0,
+                    positionCallback = { columns, position ->
+                        showTopRow = position < columns
+                        positionCallback?.invoke(columns, position)
+                    },
+                    gridFocusRequester = gridFocusRequester,
+                    cardContext = cardContext,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
     }
 }
 
 fun tabFindFilter(
-    server: StashServer,
+    serverPreferences: ServerPreferences,
     pageFilterKey: PageFilterKey,
 ): StashFindFilter? =
-    server.serverPreferences
-        .getDefaultPageFilter(pageFilterKey)
-        .findFilter
+    serverPreferences.defaultPageFilters[pageFilterKey]
+        ?.findFilter
         ?.withResolvedRandom()

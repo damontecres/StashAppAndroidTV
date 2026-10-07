@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.pages
 
 import android.Manifest
+import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -24,8 +25,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -42,14 +44,12 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
-import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.Material3AppTheme
 import com.github.damontecres.stashapp.ui.compat.Button
@@ -66,43 +66,46 @@ import com.github.damontecres.stashapp.views.formatBytes
 import com.mikepenz.markdown.m3.Markdown
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.annotation.KoinViewModel
 import java.io.InputStream
 import java.io.OutputStream
 
-class UpdateViewModel :
-    ViewModel(),
+@KoinViewModel
+class UpdateViewModel(
+    private val context: Application,
+    private val updateChecker: UpdateChecker,
+) : ViewModel(),
     DownloadCallback {
-    val release = MutableLiveData<DataLoadingState<Release>>(DataLoadingState.Pending)
-
-    val downloading = MutableLiveData<Boolean>(false)
-    val contentLength = MutableLiveData<Long>(-1)
-    val bytesDownloaded = MutableLiveData<Long>(-1)
-
-    val currentVersion = MutableLiveData<Version?>(null)
+    private val _state =
+        MutableStateFlow(UpdateAppState(currentVersion = UpdateChecker.getInstalledVersion(context)))
+    val state: StateFlow<UpdateAppState> = _state
 
     fun init(
         context: Context,
         updateUrl: String,
     ) {
-        release.value = DataLoadingState.Loading
+        _state.update { it.copy(release = DataLoadingState.Loading) }
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                withContext(Dispatchers.Main) {
-                    currentVersion.value = UpdateChecker.getInstalledVersion(context)
-                }
-                val release = UpdateChecker.getLatestRelease(context, updateUrl)
+                val release = updateChecker.getLatestRelease(updateUrl)
                 if (release != null) {
-                    withContext(Dispatchers.Main) {
-                        contentLength.value = -1
-                        bytesDownloaded.value = -1
-                        this@UpdateViewModel.release.value = DataLoadingState.Success(release)
+                    _state.update {
+                        it.copy(
+                            release = DataLoadingState.Success(release),
+                            contentLength = -1,
+                            bytesDownloaded = -1,
+                        )
                     }
                 }
             } catch (ex: Exception) {
                 Log.e(TAG, "Exception during release check", ex)
-                this@UpdateViewModel.release.value = DataLoadingState.Error(ex)
+                _state.update { it.copy(release = DataLoadingState.Error(ex)) }
             }
         }
     }
@@ -117,44 +120,40 @@ class UpdateViewModel :
             viewModelScope.launch(
                 Dispatchers.IO,
             ) {
-                withContext(Dispatchers.Main) {
-                    downloading.value = true
-                }
+                _state.update { it.copy(downloading = true) }
                 try {
-                    UpdateChecker.installRelease(
+                    updateChecker.installRelease(
                         context.findActivity()!!,
                         release,
                         this@UpdateViewModel,
                     )
                 } catch (ex: Exception) {
                     Log.e(TAG, "Exception during install", ex)
-                    withContext(Dispatchers.Main) {
-                        this@UpdateViewModel.release.value = DataLoadingState.Error(ex)
-                    }
+                    _state.update { it.copy(release = DataLoadingState.Error(ex)) }
                 }
-                withContext(Dispatchers.Main) {
-                    downloading.value = false
-                }
+                _state.update { it.copy(downloading = false) }
             }
     }
 
     fun cancelDownload() {
         viewModelScope.launch(Dispatchers.IO) {
             downloadJob?.cancel()
-            withContext(Dispatchers.Main) {
-                downloading.value = false
-                contentLength.value = -1
-                bytesDownloaded.value = -1
+            _state.update {
+                it.copy(
+                    downloading = false,
+                    contentLength = -1,
+                    bytesDownloaded = -1,
+                )
             }
         }
     }
 
     override fun contentLength(contentLength: Long) {
-        this@UpdateViewModel.contentLength.value = contentLength
+        _state.update { it.copy(contentLength = contentLength) }
     }
 
     override fun bytesDownloaded(bytes: Long) {
-        this@UpdateViewModel.bytesDownloaded.value = bytes
+        _state.update { it.copy(bytesDownloaded = bytes) }
     }
 }
 
@@ -184,6 +183,14 @@ suspend fun copyTo(
     return bytesCopied
 }
 
+data class UpdateAppState(
+    val release: DataLoadingState<Release> = DataLoadingState.Pending,
+    val downloading: Boolean = false,
+    val contentLength: Long = -1,
+    val bytesDownloaded: Long = -1,
+    val currentVersion: Version,
+)
+
 private const val TAG = "UpdateAppPage"
 
 @Composable
@@ -191,15 +198,16 @@ fun UpdateAppPage(
     composeUiConfig: ComposeUiConfig,
     navigationManager: NavigationManager,
     modifier: Modifier = Modifier,
-    viewModel: UpdateViewModel = viewModel(),
+    viewModel: UpdateViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
-    val release by viewModel.release.observeAsState(DataLoadingState.Pending)
-    val currentVersion by viewModel.currentVersion.observeAsState()
+    val state by viewModel.state.collectAsState()
+    val release = state.release
+    val currentVersion = state.currentVersion
 
-    val isDownloading by viewModel.downloading.observeAsState(false)
-    val contentLength by viewModel.contentLength.observeAsState(-1L)
-    val bytesDownloaded by viewModel.bytesDownloaded.observeAsState(-1)
+    val isDownloading = state.downloading
+    val contentLength by remember { derivedStateOf { state.contentLength } }
+    val bytesDownloaded by remember { derivedStateOf { state.bytesDownloaded } }
 
     LaunchedEffect(Unit) {
         viewModel.init(context, composeUiConfig.preferences.updatePreferences.updateUrl)
@@ -221,13 +229,14 @@ fun UpdateAppPage(
                 "Error: ${state.localizedMessage}",
                 style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.colorScheme.onBackground,
+                modifier = modifier,
             )
         }
 
         DataLoadingState.Loading,
         DataLoadingState.Pending,
         -> {
-            CircularProgress()
+            CircularProgress(modifier)
         }
 
         is DataLoadingState.Success -> {

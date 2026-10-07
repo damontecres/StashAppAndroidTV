@@ -1,72 +1,89 @@
 package com.github.damontecres.stashapp.filter
 
+import android.app.Application
 import android.util.Log
 import android.widget.Toast
-import androidx.lifecycle.MutableLiveData
+import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.api.Query
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SaveFilterInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.InterfaceService
+import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
-import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 import kotlin.reflect.cast
 import kotlin.reflect.full.createInstance
 
 /**
  * Tracks state while the user builds a new filter
  */
-class CreateFilterViewModel : ViewModel() {
-    val server = MutableLiveData(StashServer.requireCurrentServer())
-    val abbreviateCounters: Boolean get() = server.value!!.serverPreferences.abbreviateCounters
-    val queryEngine = QueryEngine(server.value!!)
+@KoinViewModel
+class CreateFilterViewModel(
+    private val application: Application,
+    private val serverRepository: ServerRepository,
+    private val serverLogger: ServerLogger,
+    private val queryEngine: QueryEngine,
+    private val mutationEngine: MutationEngine,
+    val navigationManager: NavigationManager,
+    private val interfaceService: InterfaceService,
+    @InjectedParam private val dataType: DataType,
+    @InjectedParam private val initialFilter: FilterArgs?,
+) : ViewModel() {
+    val currentServer get() = serverRepository.currentServer
 
-    val filterName = MutableLiveData<String?>(null)
-    val dataType = MutableLiveData<DataType>()
-    val objectFilter = MutableLiveData<StashDataFilter>()
-    val findFilter = MutableLiveData<StashFindFilter>()
+    private val _state = MutableStateFlow(CreateFilterState(dataType, initialFilter))
+    val state: StateFlow<CreateFilterState> = _state
 
     val storedItems = mutableMapOf<DataTypeId, NameDescription>()
 
-    val resultCount = MutableLiveData(-1)
     private var countJob: Job? = null
 
     private val currentSavedFilters = mutableMapOf<String?, String>()
 
-    val ready = MutableLiveData(false)
-
     /**
      * Initialize the state
      */
-    fun initialize(
-        dataType: DataType,
-        initialFilter: FilterArgs?,
-    ) {
-        ready.value = false
-
-        this.dataType.value = dataType
-        this.objectFilter.value =
-            initialFilter?.objectFilter ?: dataType.filterType.createInstance()
-        this.findFilter.value =
-            initialFilter?.findFilter ?: StashFindFilter(sortAndDirection = dataType.defaultSort)
-        this.filterName.value = initialFilter?.name
+    fun initialize() {
+        val title =
+            AnnotatedString(
+                application.getString(
+                    R.string.create_filter_for_type,
+                    application.getString(dataType.stringId),
+                ),
+            )
+        interfaceService.setTitle(title)
+        _state.update {
+            it.copy(
+                title = title,
+                ready = false,
+            )
+        }
 
         // Fetch all of the labels for any existing IDs in the initial object filter
         viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-            getIdsByDataType(dataType, objectFilter.value!!).entries.forEach {
+            getIdsByDataType(dataType, state.value.objectFilter).entries.forEach {
                 val dt = it.key
                 val ids = it.value
                 val items = queryEngine.getByIds(dt, ids)
@@ -74,7 +91,7 @@ class CreateFilterViewModel : ViewModel() {
                     storedItems[DataTypeId(dt, item.id)] = NameDescription(item)
                 }
             }
-            ready.value = true
+            _state.update { it.copy(ready = true) }
         }
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
             queryEngine.getSavedFilters(dataType).forEach {
@@ -91,20 +108,21 @@ class CreateFilterViewModel : ViewModel() {
         newItem: ValueType?,
     ) {
         Log.v(TAG, "updateFilter: name=${filterOption.name}, value==null: ${newItem == null}")
-        val currFilter = objectFilter.value!!
-        val newFilter =
-            filterOption.setter(
-                dataType.value!!.filterType.cast(currFilter),
-                Optional.presentIfNotNull(newItem),
-            )
-        objectFilter.value = newFilter
+        _state.update {
+            val newFilter =
+                filterOption.setter(
+                    dataType.filterType.cast(it.objectFilter),
+                    Optional.presentIfNotNull(newItem),
+                )
+            it.copy(objectFilter = newFilter)
+        }
     }
 
     /**
-     * Update the [resultCount] using the current [findFilter] & [objectFilter]
+     * Update the result count using the current findFilter & objectFilter
      */
     fun updateCount() {
-        resultCount.value = -1
+        _state.update { it.copy(resultCount = -1) }
         countJob?.cancel()
         countJob =
             viewModelScope.launch(
@@ -117,16 +135,20 @@ class CreateFilterViewModel : ViewModel() {
                 },
             ) {
                 val supplier =
-                    DataSupplierFactory(server.value!!.version).create<Query.Data, StashData, Query.Data>(
+                    DataSupplierFactory(serverRepository.currentServerVersion).create<Query.Data, StashData, Query.Data>(
                         FilterArgs(
-                            dataType = dataType.value!!,
-                            findFilter = findFilter.value,
-                            objectFilter = objectFilter.value,
+                            dataType = dataType,
+                            findFilter = state.value.findFilter,
+                            objectFilter = state.value.objectFilter,
                         ),
                     )
                 val pagingSource =
-                    StashPagingSource<Query.Data, StashData, Any, Query.Data>(queryEngine, supplier)
-                resultCount.value = pagingSource.getCount()
+                    StashPagingSource<Query.Data, StashData, Any, Query.Data>(
+                        queryEngine,
+                        supplier,
+                    )
+                val newCount = pagingSource.getCount()
+                _state.update { it.copy(resultCount = newCount) }
             }
     }
 
@@ -134,8 +156,8 @@ class CreateFilterViewModel : ViewModel() {
      * Get the sub-value for the current object filter
      */
     fun <ValueType : Any> getValue(filterOption: FilterOption<StashDataFilter, ValueType>): ValueType? {
-        val currFilter = objectFilter.value!!
-        val value = filterOption.getter(dataType.value!!.filterType.cast(currFilter))
+        val currFilter = state.value.objectFilter
+        val value = filterOption.getter(dataType.filterType.cast(currFilter))
         return value.getOrNull()
     }
 
@@ -182,33 +204,30 @@ class CreateFilterViewModel : ViewModel() {
     }
 
     fun createFilterArgs(): FilterArgs =
-        FilterArgs(
-            dataType = dataType.value!!,
-            name = filterName.value,
-            findFilter = findFilter.value,
-            objectFilter = objectFilter.value,
-        ).withResolvedRandom()
+        state.value.let {
+            FilterArgs(
+                dataType = dataType,
+                name = it.filterName,
+                findFilter = it.findFilter,
+                objectFilter = it.objectFilter,
+            ).withResolvedRandom()
+        }
 
     suspend fun createSaveFilterInput(): SaveFilterInput {
-        val queryEngine = QueryEngine(server.value!!)
         // Save it
         val filterWriter =
-            FilterWriter(dataType.value!!) { dataType, ids ->
+            FilterWriter(dataType) { dataType, ids ->
                 queryEngine
                     .getByIds(dataType, ids)
                     .associate { it.id to extractTitle(it) }
             }
-        val findFilter =
-            findFilter.value ?: StashFindFilter(
-                null,
-                dataType.value!!.defaultSort,
-            )
-        val objectFilterMap = filterWriter.convertFilter(objectFilter.value!!)
-        val existingId = getSavedFilterId(filterName.value)
+        val findFilter = state.value.findFilter
+        val objectFilterMap = filterWriter.convertFilter(state.value.objectFilter)
+        val existingId = getSavedFilterId(state.value.filterName)
         return SaveFilterInput(
             id = Optional.presentIfNotNull(existingId),
-            mode = dataType.value!!.filterMode,
-            name = filterName.value!!,
+            mode = dataType.filterMode,
+            name = state.value.filterName ?: "",
             find_filter =
                 Optional.presentIfNotNull(
                     findFilter.toFindFilterType(1, 40),
@@ -219,12 +238,51 @@ class CreateFilterViewModel : ViewModel() {
     }
 
     suspend fun saveFilter() {
-        val mutationEngine = MutationEngine(server.value!!)
         val input = createSaveFilterInput()
         mutationEngine.saveFilter(input)
+    }
+
+    fun updateFilterName(filterName: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(filterName = filterName) }
+        }
+    }
+
+    fun updateFindFilter(findFilter: StashFindFilter) {
+        viewModelScope.launch {
+            _state.update { it.copy(findFilter = findFilter) }
+            updateCount()
+        }
+    }
+
+    fun updateObjectFilter(objectFilter: StashDataFilter) {
+        viewModelScope.launch {
+            _state.update { it.copy(objectFilter = objectFilter) }
+            updateCount()
+        }
     }
 
     companion object {
         private const val TAG = "CreateFilterViewModel"
     }
+}
+
+data class CreateFilterState(
+    val filterName: String?,
+    val objectFilter: StashDataFilter,
+    val findFilter: StashFindFilter,
+    val resultCount: Int = -1,
+    val ready: Boolean = false,
+    val title: AnnotatedString = AnnotatedString(""),
+) {
+    constructor(
+        dataType: DataType,
+        initialFilter: FilterArgs?,
+    ) : this(
+        filterName = initialFilter?.name,
+        objectFilter = initialFilter?.objectFilter ?: dataType.filterType.createInstance(),
+        findFilter =
+            initialFilter?.findFilter
+                ?: StashFindFilter(sortAndDirection = dataType.defaultSort),
+    )
 }

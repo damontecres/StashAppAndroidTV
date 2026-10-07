@@ -58,6 +58,7 @@ private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
 
 @Composable
 fun ObjectFilterList(
+    uiConfig: ComposeUiConfig,
     dataType: DataType,
     current: StashDataFilter,
     onObjectFilterClick: (FilterOption<StashDataFilter, Any>) -> Unit,
@@ -83,7 +84,7 @@ fun ObjectFilterList(
             val value = item.getter.invoke(current).getOrNull()
             val subtitle =
                 value?.let { _ ->
-                    filterSummary(item.name, dataType, value, idLookup)
+                    filterSummary(item.name, dataType, value, uiConfig, idLookup)
                 }
             SimpleListItem(
                 title = context.getString(item.nameStringId),

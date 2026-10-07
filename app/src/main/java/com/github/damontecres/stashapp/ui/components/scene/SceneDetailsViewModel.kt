@@ -1,12 +1,10 @@
 package com.github.damontecres.stashapp.ui.components.scene
 
-import androidx.lifecycle.MutableLiveData
+import android.app.Application
+import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import co.touchlab.kermit.Logger
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -18,6 +16,14 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.OCounter
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.InterfaceService
+import com.github.damontecres.stashapp.di.services.ItemClicker
+import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.ServerLogger
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.ui.showAddGallery
@@ -26,79 +32,99 @@ import com.github.damontecres.stashapp.ui.showAddMarker
 import com.github.damontecres.stashapp.ui.showAddPerf
 import com.github.damontecres.stashapp.ui.showAddTag
 import com.github.damontecres.stashapp.ui.showSetStudio
-import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.createSceneSuggestionFilter
+import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.toLongMilliseconds
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
+import kotlin.coroutines.CoroutineContext
 
+@KoinViewModel
 class SceneDetailsViewModel(
-    val server: StashServer,
-    val sceneId: String,
-    val pageSize: Int,
+    private val context: Application,
+    private val serverLogger: ServerLogger,
+    private val queryEngine: QueryEngine,
+    private val mutationEngine: MutationEngine,
+    private val serverRepository: ServerRepository,
+    private val preferences: DataStore<StashPreferences>,
+    val navigationManager: NavigationManager,
+    val itemClicker: ItemClicker,
+    private val interfaceService: InterfaceService,
+    @InjectedParam val sceneId: String,
 ) : ViewModel() {
-    private val queryEngine = QueryEngine(server)
-    private val mutationEngine = MutationEngine(server)
     private val exceptionHandler =
-        LoggingCoroutineExceptionHandler(
-            server,
-            viewModelScope,
-            toastMessage = "Error updating scene",
-        )
+        object : CoroutineExceptionHandler {
+            override val key: CoroutineContext.Key<*>
+                get() = CoroutineExceptionHandler
+
+            override fun handleException(
+                context: CoroutineContext,
+                exception: Throwable,
+            ) {
+                Logger.e(exception) { "Exception" }
+                viewModelScope.launchIO {
+                    serverLogger.logException(exception, null)
+                }
+            }
+        }
+
+    val currentServer get() = serverRepository.currentServer
 
     private var scene: FullSceneData? = null
 
-    val loadingState = MutableLiveData<SceneLoadingState>(SceneLoadingState.Loading)
-    val tags = MutableLiveData<List<TagData>>(listOf())
-    val performers = MutableLiveData<List<PerformerData>>(listOf())
-    val galleries = MutableLiveData<List<GalleryData>>(listOf())
-    val groups = MutableLiveData<List<GroupData>>(listOf())
-    val markers = MutableLiveData<List<MarkerData>>(listOf())
-    val studio = MutableLiveData<StudioData?>(null)
-    val suggestions = MutableLiveData<List<SlimSceneData>>()
-
-    val rating100 = MutableLiveData(0)
-    val oCount = MutableLiveData(0)
+    private val _state = MutableStateFlow(SceneDetailsState())
+    val state: StateFlow<SceneDetailsState> = _state
 
     fun init(): SceneDetailsViewModel {
         viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
             try {
                 val scene = queryEngine.getScene(sceneId)
                 if (scene != null) {
-                    rating100.value = scene.rating100 ?: 0
-                    oCount.value = scene.o_counter ?: 0
-                    tags.value = scene.tags.map { it.tagData }
-                    groups.value = scene.groups.map { it.group.groupData }
-                    markers.value = scene.scene_markers.map { it.asMarkerData(scene) }
-                    studio.value = scene.studio?.studioData
+                    _state.update {
+                        it.copy(
+                            rating100 = scene.rating100 ?: 0,
+                            oCount = scene.o_counter ?: 0,
+                            tags = scene.tags.map { it.tagData },
+                            groups = scene.groups.map { it.group.groupData },
+                            markers = scene.scene_markers.map { it.asMarkerData(scene) },
+                            studio = scene.studio?.studioData,
+                        )
+                    }
                     this@SceneDetailsViewModel.scene = scene
 
-                    loadingState.value = SceneLoadingState.Success(scene)
+                    interfaceService.setTitle(scene.titleOrFilename)
+
+                    _state.update {
+                        it.copy(loadingState = SceneLoadingState.Success(scene))
+                    }
                     if (scene.performers.isNotEmpty()) {
-                        performers.value =
+                        val performers =
                             queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
+                        _state.update { it.copy(performers = performers) }
                     }
                     if (scene.galleries.isNotEmpty()) {
-                        galleries.value = queryEngine.getGalleries(scene.galleries.map { it.id })
+                        val galleries = queryEngine.getGalleries(scene.galleries.map { it.id })
+                        _state.update { it.copy(galleries = galleries) }
                     }
-                    if (!suggestions.isInitialized || suggestions.value?.isEmpty() == true) {
+                    if (state.value.suggestions.isEmpty()) {
                         refreshSuggestions()
                     }
                 } else {
-                    loadingState.value = SceneLoadingState.Error
+                    _state.update { it.copy(loadingState = SceneLoadingState.Error) }
                 }
             } catch (ex: Exception) {
-                loadingState.value = SceneLoadingState.Error
-                LoggingCoroutineExceptionHandler(
-                    server,
-                    viewModelScope,
-                    toastMessage = "Error loading scene",
-                ).handleException(ex)
+                _state.update { it.copy(loadingState = SceneLoadingState.Error) }
+                serverLogger.logException(ex)
             }
         }
         return this
@@ -107,17 +133,23 @@ class SceneDetailsViewModel(
     private fun refreshSuggestions() {
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
             scene?.let {
-                suggestions.value = listOf()
+                _state.update { it.copy(suggestions = emptyList()) }
                 val filterArgs = createSceneSuggestionFilter(it)
                 if (filterArgs != null) {
                     val supplier =
-                        DataSupplierFactory(server.version)
+                        DataSupplierFactory(serverRepository.currentServerVersion)
                             .create<Query.Data, SlimSceneData, Query.Data>(filterArgs)
-                    suggestions.value =
+                    val suggestions =
                         StashPagingSource<Query.Data, SlimSceneData, SlimSceneData, Query.Data>(
                             queryEngine,
                             supplier,
-                        ).fetchPage(1, pageSize)
+                        ).fetchPage(
+                            1,
+                            preferences.data
+                                .first()
+                                .searchPreferences.maxResults,
+                        )
+                    _state.update { it.copy(suggestions = suggestions) }
                 }
             }
         }
@@ -131,7 +163,7 @@ class SceneDetailsViewModel(
         id: String,
         op: AddRemove,
     ) {
-        val perfs = performers.value?.map { it.id }
+        val perfs = state.value.performers.map { it.id }
         perfs?.let {
             val mutable = it.toMutableList()
             when (op) {
@@ -145,7 +177,7 @@ class SceneDetailsViewModel(
                         ?.performers
                         ?.map { it.performerData }
                         .orEmpty()
-                performers.value = results
+                _state.update { it.copy(performers = results) }
                 if (op == AddRemove.ADD) {
                     results.firstOrNull { it.id == id }?.let { showAddPerf(it) }
                 }
@@ -162,7 +194,7 @@ class SceneDetailsViewModel(
         id: String,
         op: AddRemove,
     ) {
-        val ids = tags.value?.map { it.id }
+        val ids = state.value.tags.map { it.id }
         ids?.let {
             val mutable = it.toMutableList()
             when (op) {
@@ -176,7 +208,7 @@ class SceneDetailsViewModel(
                         ?.tags
                         ?.map { it.tagData }
                         .orEmpty()
-                tags.value = results
+                _state.update { it.copy(tags = results) }
                 if (op == AddRemove.ADD) {
                     results.firstOrNull { it.id == id }?.let { showAddTag(it) }
                 }
@@ -193,7 +225,7 @@ class SceneDetailsViewModel(
         id: String,
         op: AddRemove,
     ) {
-        val ids = groups.value?.map { it.id }
+        val ids = state.value.groups.map { it.id }
         ids?.let {
             val mutable = it.toMutableList()
             when (op) {
@@ -207,7 +239,7 @@ class SceneDetailsViewModel(
                         ?.groups
                         ?.map { it.group.groupData }
                         .orEmpty()
-                groups.value = results
+                _state.update { it.copy(groups = results) }
                 if (op == AddRemove.ADD) {
                     results.firstOrNull { it.id == id }?.let { showAddGroup(it) }
                 }
@@ -223,7 +255,7 @@ class SceneDetailsViewModel(
     private fun mutateStudio(id: String?) {
         viewModelScope.launch(exceptionHandler) {
             val result = mutationEngine.setStudioOnScene(sceneId, id)?.studio?.studioData
-            studio.value = result
+            _state.update { it.copy(studio = result) }
             if (result != null) {
                 showSetStudio(result)
             }
@@ -241,12 +273,12 @@ class SceneDetailsViewModel(
                 )
             newMarker?.let {
                 val m = newMarker.asMarkerData(scene!!)
-                markers.value =
-                    markers.value
-                        ?.toMutableList()
-                        ?.apply { add(m) }
-                        ?.sortedBy { it.seconds }
-                        ?: listOf(m)
+                val markers =
+                    state.value.markers
+                        .toMutableList()
+                        .apply { add(m) }
+                        .sortedBy { it.seconds }
+                _state.update { it.copy(markers = markers) }
                 showAddMarker(m)
             }
         }
@@ -255,7 +287,7 @@ class SceneDetailsViewModel(
     fun removeMarker(id: String) {
         viewModelScope.launch(exceptionHandler) {
             if (mutationEngine.deleteMarker(id)) {
-                markers.value = markers.value?.filter { it.id != id }.orEmpty()
+                _state.update { it.copy(markers = it.markers.filter { it.id != id }) }
             }
         }
     }
@@ -268,7 +300,7 @@ class SceneDetailsViewModel(
         id: String,
         op: AddRemove,
     ) {
-        val ids = galleries.value?.map { it.id }
+        val ids = state.value.galleries.map { it.id }
         ids?.let {
             val mutable = it.toMutableList()
             when (op) {
@@ -282,7 +314,7 @@ class SceneDetailsViewModel(
                         ?.galleries
                         ?.map { it.galleryData }
                         .orEmpty()
-                galleries.value = results
+                _state.update { it.copy(galleries = results) }
                 if (op == AddRemove.ADD) {
                     results.firstOrNull { it.id == id }?.let { showAddGallery(it) }
                 }
@@ -293,7 +325,7 @@ class SceneDetailsViewModel(
     fun updateOCount(action: suspend MutationEngine.(String) -> OCounter) {
         viewModelScope.launch(exceptionHandler) {
             val newOCount = action.invoke(mutationEngine, sceneId)
-            oCount.value = newOCount.count
+            _state.update { it.copy(oCount = newOCount.count) }
         }
     }
 
@@ -301,7 +333,7 @@ class SceneDetailsViewModel(
         viewModelScope.launch(exceptionHandler) {
             val newRating =
                 mutationEngine.setRating(sceneId, rating100)?.rating100 ?: 0
-            this@SceneDetailsViewModel.rating100.value = newRating
+            _state.update { it.copy(rating100 = newRating) }
             showSetRatingToast(StashApplication.getApplication(), newRating)
         }
     }
@@ -311,29 +343,16 @@ class SceneDetailsViewModel(
         deleteGenerated: Boolean,
         onDeleted: (Boolean) -> Unit,
     ) {
-        loadingState.value = SceneLoadingState.Loading
+        _state.update { it.copy(loadingState = SceneLoadingState.Loading) }
         viewModelScope.launch(exceptionHandler) {
             val success = mutationEngine.deleteScene(sceneId, deleteFiles, deleteGenerated)
             onDeleted(success)
             if (!success) {
-                scene?.let { loadingState.value = SceneLoadingState.Success(it) }
-            }
-        }
-    }
-
-    companion object {
-        val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
-        val SCENE_ID_KEY = object : CreationExtras.Key<String> {}
-        val PAGE_SIZE_KEY = object : CreationExtras.Key<Int> {}
-        val Factory: ViewModelProvider.Factory =
-            viewModelFactory {
-                initializer {
-                    val server = this[SERVER_KEY]!!
-                    val sceneId = this[SCENE_ID_KEY]!!
-                    val pageSize = this[PAGE_SIZE_KEY]!!
-                    SceneDetailsViewModel(server, sceneId, pageSize)
+                scene?.let { scene ->
+                    _state.update { it.copy(loadingState = SceneLoadingState.Success(scene)) }
                 }
             }
+        }
     }
 }
 
@@ -363,3 +382,16 @@ enum class AddRemove {
         }
     }
 }
+
+data class SceneDetailsState(
+    val loadingState: SceneLoadingState = SceneLoadingState.Loading,
+    val tags: List<TagData> = emptyList(),
+    val performers: List<PerformerData> = emptyList(),
+    val galleries: List<GalleryData> = emptyList(),
+    val groups: List<GroupData> = emptyList(),
+    val markers: List<MarkerData> = emptyList(),
+    val studio: StudioData? = null,
+    val suggestions: List<SlimSceneData> = emptyList(),
+    val rating100: Int = 0,
+    val oCount: Int = 0,
+)

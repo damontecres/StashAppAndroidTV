@@ -15,13 +15,8 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.preference.PreferenceManager
-import androidx.room.Room
-import com.github.damontecres.stashapp.data.room.AppDatabase
-import com.github.damontecres.stashapp.data.room.MIGRATION_4_TO_5
-import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.di.AppModule
 import com.github.damontecres.stashapp.util.AppUpgradeHandler
-import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.Version
 import dev.b3nedikt.restring.Restring
 import org.acra.ACRA
@@ -29,8 +24,14 @@ import org.acra.ReportField
 import org.acra.config.dialog
 import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.core.annotation.KoinApplication
+import org.koin.core.context.startKoin
+import org.koin.plugin.module.dsl.modules
 import timber.log.Timber
 
+@KoinApplication
 class StashApplication : Application() {
     @OptIn(ExperimentalComposeRuntimeApi::class)
     override fun onCreate() {
@@ -109,6 +110,12 @@ class StashApplication : Application() {
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(LifecycleObserverImpl())
 
+        startKoin {
+            androidLogger()
+            androidContext(this@StashApplication)
+            modules(AppModule::class)
+        }
+
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val currentVersion = prefs.getString(VERSION_NAME_CURRENT_KEY, null)
         val currentVersionCode = prefs.getLong(VERSION_CODE_CURRENT_KEY, -1)
@@ -142,21 +149,9 @@ class StashApplication : Application() {
                 }
             }
         }
-
-        setupDB()
     }
 
     override fun getResources(): Resources = Restring.wrapResources(applicationContext, super.getResources())
-
-    private fun setupDB() {
-        val dbName = getString(R.string.app_name)
-        database =
-            Room
-                .databaseBuilder(this, AppDatabase::class.java, dbName)
-                .addMigrations(MIGRATION_4_TO_5)
-                .fallbackToDestructiveMigration()
-                .build()
-    }
 
     @Deprecated("Deprecated in Java")
     override fun onLowMemory() {
@@ -172,31 +167,23 @@ class StashApplication : Application() {
     inner class LifecycleObserverImpl : DefaultLifecycleObserver {
         override fun onPause(owner: LifecycleOwner) {
             Log.v(TAG, "LifecycleObserverImpl.onPause")
-            StashExoPlayer.releasePlayer()
         }
 
         override fun onStop(owner: LifecycleOwner) {
             Log.v(TAG, "LifecycleObserverImpl.onStop")
-            StashExoPlayer.releasePlayer()
         }
 
         override fun onDestroy(owner: LifecycleOwner) {
             Log.v(TAG, "LifecycleObserverImpl.onDestroy")
-            StashExoPlayer.releasePlayer()
         }
     }
 
     companion object {
         private lateinit var application: StashApplication
-        private lateinit var database: AppDatabase
-        lateinit var navigationManager: NavigationManager
-        var currentServer: StashServer? = null
 
         private val fontCache = mutableMapOf<Int, Typeface>()
 
         fun getApplication(): StashApplication = application
-
-        fun requireCurrentServer(): StashServer = currentServer ?: throw QueryEngine.StashNotConfiguredException()
 
         fun getFont(
             @FontRes fontId: Int,
@@ -205,8 +192,6 @@ class StashApplication : Application() {
                 return ResourcesCompat.getFont(getApplication(), fontId)!!
             }
         }
-
-        fun getDatabase(): AppDatabase = database
 
         const val TAG = "StashApplication"
         const val VERSION_NAME_PREVIOUS_KEY = "VERSION_NAME_PREVIOUS_NAME"

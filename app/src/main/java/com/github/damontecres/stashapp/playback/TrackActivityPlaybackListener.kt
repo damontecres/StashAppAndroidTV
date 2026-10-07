@@ -5,9 +5,8 @@ import androidx.annotation.OptIn
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.di.server.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.toSeconds
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -24,15 +23,14 @@ import kotlin.time.Duration.Companion.seconds
  */
 @OptIn(UnstableApi::class)
 class TrackActivityPlaybackListener(
-    private val server: StashServer,
+    private val mutationEngine: MutationEngine,
+    private val minimumPlayPercent: Float,
     dispatcher: CoroutineDispatcher = Dispatchers.Main,
     val scene: Scene,
     private val getCurrentPosition: () -> Long,
 ) : Player.Listener {
-    private val mutationEngine = MutationEngine(server)
     private val coroutineScope = CoroutineScope(dispatcher)
     private val task: TimerTask
-    private val minimumPlayPercent = server.serverPreferences.minimumPlayPercent
     private val maxPlayPercent: Int = 98
 
     private var totalPlayDurationMilliseconds = AtomicLong(0)
@@ -154,24 +152,6 @@ class TrackActivityPlaybackListener(
                 mutationEngine.saveSceneActivity(scene.id, calcPosition, duration)
             }
         }
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as TrackActivityPlaybackListener
-
-        if (server != other.server) return false
-        if (scene != other.scene) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = server.hashCode()
-        result = 31 * result + scene.hashCode()
-        return result
     }
 
     companion object {

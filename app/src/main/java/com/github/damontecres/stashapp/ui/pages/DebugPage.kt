@@ -35,9 +35,8 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.BuildConfig
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.room.PlaybackEffect
+import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.TableRow
@@ -45,8 +44,7 @@ import com.github.damontecres.stashapp.ui.components.TableRowComposable
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
+import com.github.damontecres.stashapp.util.plugin.CompanionPluginService
 import com.github.damontecres.stashapp.util.toReadableString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -75,33 +73,22 @@ fun TableRowSmall(
 
 @Composable
 fun DebugPage(
-    server: StashServer,
+    currentServer: CurrentServer,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
+    val server = currentServer.server
     val context = LocalContext.current
     val columnState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
     val focusRequester = remember { FocusRequester() }
     val prefManager = remember { PreferenceManager.getDefaultSharedPreferences(context) }
-    val playbackEffects = remember { mutableStateListOf<PlaybackEffect>() }
     val logcat = remember { mutableStateListOf<String>() }
-
-    LaunchedEffect(Unit) {
-        val effects =
-            withContext(Dispatchers.IO) {
-                StashApplication
-                    .getDatabase()
-                    .playbackEffectsDao()
-                    .getPlaybackEffects(server.url)
-            }
-        playbackEffects.addAll(effects)
-    }
     LaunchedEffect(Unit) {
         val lines =
             withContext(Dispatchers.IO) {
-                CompanionPlugin.getLogCatLines(true)
+                CompanionPluginService.getLogCatLines(true)
             }
         logcat.addAll(lines)
     }
@@ -199,21 +186,18 @@ fun DebugPage(
                 TableRowSmall(it)
             }
 
-            val rows =
-                server.serverPreferences.preferences.all.let { prefs ->
-                    prefs.keys.sorted().mapNotNull {
-                        tableRow(it, prefs[it])
-                    }
-                }
+            val rows = currentServer.serverPreferences.toReadableString(true)
             Column {
                 Text(
                     text = "Server Preferences",
                     style = MaterialTheme.typography.displaySmall,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
-                rows.forEach { row ->
-                    TableRowSmall(row)
-                }
+                Text(
+                    text = rows,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
                 Text(
                     text = "Server default filters",
                     style = MaterialTheme.typography.displaySmall,
@@ -221,7 +205,7 @@ fun DebugPage(
                 )
                 DataType.entries
                     .mapNotNull {
-                        val filter = server.serverPreferences.getDefaultFilter(it)
+                        val filter = currentServer.serverPreferences.defaultFilters[it]!!
                         val value = "findFilter=${filter.findFilter}\nobjectFilter=${filter.objectFilter?.toReadableString(true)}"
                         TableRow.from(it.name, value)
                     }.forEach {
@@ -260,31 +244,6 @@ fun DebugPage(
                                     .weight(10f)
                                     .padding(4.dp),
                         )
-                    }
-                    playbackEffects.forEach {
-                        Row {
-                            Text(
-                                text = it.dataType.name,
-                                modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .padding(4.dp),
-                            )
-                            Text(
-                                text = it.id,
-                                modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .padding(4.dp),
-                            )
-                            Text(
-                                text = it.videoFilter.toString(),
-                                modifier =
-                                    Modifier
-                                        .weight(10f)
-                                        .padding(4.dp),
-                            )
-                        }
                     }
                 }
             }

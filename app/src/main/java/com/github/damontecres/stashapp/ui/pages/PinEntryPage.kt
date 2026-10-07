@@ -2,9 +2,13 @@ package com.github.damontecres.stashapp.ui.pages
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
@@ -22,13 +26,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.compat.Button
 import com.github.damontecres.stashapp.ui.components.EditTextBox
 import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.util.PreferenceScreenOption
 import com.github.damontecres.stashapp.util.findActivity
 
 @Composable
@@ -37,15 +46,13 @@ fun PinEntryPage(
     title: String,
     onCorrectPin: () -> Unit,
     preventBack: Boolean,
-    uiConfig: ComposeUiConfig,
+    autoSubmit: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     BackHandler(enabled = preventBack) {
         context.findActivity()?.finish()
     }
-
-    val autoSubmit = uiConfig.preferences.pinPreferences.autoSubmit
 
     val validate = { input: String ->
         input == requiredPin
@@ -66,8 +73,12 @@ fun PinEntryPage(
     }
     Box(modifier = modifier) {
         LazyColumn(
-            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(16.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter),
         ) {
             item {
                 Text(
@@ -108,4 +119,65 @@ fun PinEntryPage(
             }
         }
     }
+}
+
+@Composable
+fun PinEntryDialog(
+    onDismissRequest: () -> Unit,
+    requiredPin: String,
+    title: String,
+    onCorrectPin: () -> Unit,
+    preventBack: Boolean,
+    autoSubmit: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
+        Dialog(
+            onDismissRequest = onDismissRequest,
+        ) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                tonalElevation = 3.dp,
+                modifier = Modifier,
+            ) {
+                val focusRequester = remember { FocusRequester() }
+                LaunchedEffect(Unit) { focusRequester.tryRequestFocus() }
+                PinEntryPage(
+                    requiredPin = requiredPin,
+                    title = title,
+                    onCorrectPin = onCorrectPin,
+                    preventBack = preventBack,
+                    autoSubmit = autoSubmit,
+                    modifier =
+                        Modifier
+                            .focusRequester(focusRequester),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsPinPage(
+    navigationManager: NavigationManager,
+    preferences: StashPreferences,
+    modifier: Modifier = Modifier,
+) {
+    PinEntryPage(
+        title = stringResource(R.string.enter_settings_pin),
+        requiredPin = preferences.pinPreferences.readOnlyPin,
+        autoSubmit = preferences.pinPreferences.autoSubmit,
+        onCorrectPin = {
+            // Pop Destination.SettingsPin off the stack and go to settings
+            // This prevents showing the PIN entry again when going back from settings
+            navigationManager.goBack()
+            navigationManager.navigate(Destination.Settings(PreferenceScreenOption.BASIC))
+        },
+        preventBack = false,
+        modifier = modifier,
+    )
 }

@@ -1,43 +1,77 @@
 package com.github.damontecres.stashapp.ui.components.server
 
+import android.app.Application
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo.ApolloClient
-import com.apollographql.apollo.network.http.DefaultHttpEngine
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.CredentialsQuery
 import com.github.damontecres.stashapp.api.GenerateApiKeyMutation
-import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.di.StandardHttpClient
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.server.StashApi
+import com.github.damontecres.stashapp.di.server.StashServer
+import com.github.damontecres.stashapp.di.services.InterfaceService
+import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.SetupNavigationManager
+import com.github.damontecres.stashapp.navigation.SetupDestination
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.TRUST_ALL_CERTS
 import com.github.damontecres.stashapp.util.TestResult
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.launchDefault
+import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.testStashConnection
-import com.github.damontecres.stashapp.views.models.EqualityMutableLiveData
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.Cookie
+import okhttp3.CookieJar
 import okhttp3.FormBody
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.koin.core.annotation.KoinViewModel
+import java.security.SecureRandom
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLContext
 
-class ManageServersViewModel : ViewModel() {
-    val allServers = MutableLiveData<List<StashServer>>(listOf())
-    val serverStatus = MutableLiveData<Map<StashServer, ServerTestResult>>(mapOf())
+@KoinViewModel
+class ManageServersViewModel(
+    private val context: Application,
+    private val api: StashApi,
+    @param:StandardHttpClient private val httpClient: OkHttpClient,
+    private val serverRepository: ServerRepository,
+    private val navigationManager: NavigationManager,
+    private val setupNavigationManager: SetupNavigationManager,
+    private val interfaceService: InterfaceService,
+) : ViewModel() {
+    val currentServer get() = serverRepository.currentServer
 
-    val connectionState = EqualityMutableLiveData<ConnectionState>(ConnectionState.Inactive)
+    private val _state = MutableStateFlow(ManageServersState())
+    val state: StateFlow<ManageServersState> = _state
 
     init {
-        val servers = StashServer.getAll(StashApplication.getApplication())
-        allServers.value = servers
-        serverStatus.value = servers.associateWith { ServerTestResult.Pending }
-        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+        viewModelScope.launchIO {
+            interfaceService.setTitle(context.getString(R.string.manage_servers))
+            val servers = serverRepository.getAll()
+            _state.update {
+                it.copy(
+                    allServers = servers,
+                    serverStatus = servers.associateWith { ServerTestResult.Pending },
+                )
+            }
             servers.forEach { server ->
                 testServer(server)
             }
@@ -45,18 +79,25 @@ class ManageServersViewModel : ViewModel() {
     }
 
     fun clearConnectionStatus() {
-        connectionState.value = ConnectionState.Inactive
+        _state.update { it.copy(connectionState = ConnectionState.Inactive) }
     }
 
     fun testServer(server: StashServer) {
         viewModelScope.launch {
-            serverStatus.value =
-                serverStatus.value!!.toMutableMap().apply { put(server, ServerTestResult.Pending) }
+            _state.update {
+                it.copy(
+                    serverStatus =
+                        it.serverStatus
+                            .toMutableMap()
+                            .apply { put(server, ServerTestResult.Pending) },
+                )
+            }
+            val apolloClient = StashApi.createApolloClient(server, httpClient)
             val result =
                 testStashConnection(
-                    StashApplication.getApplication(),
+                    context,
                     false,
-                    server.apolloClient,
+                    apolloClient,
                 )
             val testResult =
                 when (result) {
@@ -69,29 +110,42 @@ class ManageServersViewModel : ViewModel() {
 
                     is TestResult.Success -> ServerTestResult.Success
                 }
-            serverStatus.value =
-                serverStatus.value!!.toMutableMap().apply { put(server, testResult) }
+            _state.update {
+                it.copy(
+                    serverStatus = it.serverStatus.toMutableMap().apply { put(server, testResult) },
+                )
+            }
         }
     }
 
     fun removeServer(server: StashServer) {
-        StashServer.removeStashServer(StashApplication.getApplication(), server)
-        val servers = StashServer.getAll(StashApplication.getApplication())
-        allServers.value = servers
-        serverStatus.value = serverStatus.value!!.toMutableMap().apply { remove(server) }
+        viewModelScope.launchIO {
+            serverRepository.removeStashServer(server)
+            val servers = serverRepository.getAll()
+            _state.update {
+                it.copy(
+                    allServers = servers,
+                    serverStatus = it.serverStatus.toMutableMap().apply { remove(server) },
+                )
+            }
+        }
     }
 
     fun addServer(server: StashServer) {
-        StashServer.addServer(StashApplication.getApplication(), server)
-        val servers = StashServer.getAll(StashApplication.getApplication())
-        allServers.value = servers
+        viewModelScope.launchIO {
+            serverRepository.addServer(server)
+            val servers = serverRepository.getAll()
+            _state.update { it.copy(allServers = servers) }
+        }
     }
 
     fun addServerAsCurrent(server: StashServer) {
-        StashServer.addServer(StashApplication.getApplication(), server)
-        StashServer.setCurrentStashServer(StashApplication.getApplication(), server)
-        val servers = StashServer.getAll(StashApplication.getApplication())
-        allServers.value = servers
+        viewModelScope.launchIO {
+            serverRepository.addServer(server)
+            serverRepository.setCurrentStashServer(server)
+            val servers = serverRepository.getAll()
+            _state.update { it.copy(allServers = servers) }
+        }
     }
 
     private var testServerJob: Job? = null
@@ -107,44 +161,48 @@ class ManageServersViewModel : ViewModel() {
         testServerJob =
             viewModelScope.launch(StashCoroutineExceptionHandler()) {
                 val context = StashApplication.getApplication()
-                connectionState.value = ConnectionState.Inactive
+                _state.update { it.copy(connectionState = ConnectionState.Inactive) }
                 if (serverUrl.isNotNullOrBlank()) {
-                    if (serverUrl in allServers.value!!.map { it.url }) {
-                        connectionState.value = ConnectionState.DuplicateServer
+                    if (serverUrl in state.value.allServers.map { it.url }) {
+                        _state.update { it.copy(connectionState = ConnectionState.DuplicateServer) }
                     } else {
-                        connectionState.value = ConnectionState.Testing
+                        _state.update { it.copy(connectionState = ConnectionState.Testing) }
                         delay(300L)
                         try {
                             if (useUsername && username.isNotNullOrBlank() && apiKey.isNotNullOrBlank()) {
                                 testWithUsername(serverUrl, username, apiKey, trustCerts)
                             } else {
-                                val apolloClient =
-                                    StashClient.createTestApolloClient(
-                                        context,
-                                        StashServer(serverUrl, apiKey?.ifBlank { null }),
-                                        trustCerts,
-                                    )
+                                val server = StashServer(serverUrl, apiKey?.ifBlank { null })
+                                val apolloClient = StashApi.createApolloClient(server, httpClient)
                                 val result = testStashConnection(context, false, apolloClient)
                                 if (result is TestResult.Error && result.exception is CancellationException) {
-                                    connectionState.value = ConnectionState.Inactive
+                                    _state.update { it.copy(connectionState = ConnectionState.Inactive) }
                                 } else {
-                                    connectionState.value = ConnectionState.Result(result)
+                                    _state.update {
+                                        it.copy(
+                                            connectionState =
+                                                ConnectionState.Result(
+                                                    result,
+                                                ),
+                                        )
+                                    }
                                 }
                             }
                         } catch (_: CancellationException) {
-                            connectionState.value = ConnectionState.Inactive
+                            _state.update { it.copy(connectionState = ConnectionState.Inactive) }
                         } catch (ex: Exception) {
-                            connectionState.value =
-                                ConnectionState.Result(
-                                    TestResult.Error(
-                                        ex.localizedMessage,
-                                        ex,
-                                    ),
+                            _state.update {
+                                it.copy(
+                                    connectionState =
+                                        ConnectionState.Result(
+                                            TestResult.Error(ex.localizedMessage, ex),
+                                        ),
                                 )
+                            }
                         }
                     }
                 }
-                Log.d(TAG, "connectionState=${connectionState.value}")
+                Log.d(TAG, "connectionState=${state.value.connectionState}")
             }
     }
 
@@ -155,7 +213,7 @@ class ManageServersViewModel : ViewModel() {
         trustCerts: Boolean,
     ) {
         try {
-            val httpClient = StashClient.createCookieHttpClient(trustCerts)
+            val httpClient = createCookieHttpClient(trustCerts)
             val loginUrl = StashClient.createLoginUrl(serverUrl)
             val request =
                 Request
@@ -173,16 +231,13 @@ class ManageServersViewModel : ViewModel() {
                     httpClient.newCall(request).execute()
                 }
             if (!response.isSuccessful) {
-                connectionState.value = ConnectionState.Result(TestResult.AuthRequired)
+                _state.update {
+                    it.copy(connectionState = ConnectionState.Result(TestResult.AuthRequired))
+                }
             } else {
-                val apolloClient =
-                    ApolloClient
-                        .Builder()
-                        .serverUrl(StashClient.cleanServerUrl(serverUrl))
-                        .httpEngine(DefaultHttpEngine(httpClient))
-                        .build()
-                val queryEngine = QueryEngine(apolloClient, null)
-                val mutationEngine = MutationEngine(apolloClient, null)
+                val testApi = api.createFor(StashServer(serverUrl, null), httpClient)
+                val queryEngine = QueryEngine(testApi)
+                val mutationEngine = MutationEngine(testApi)
 
                 val res = queryEngine.executeQuery(CredentialsQuery())
                 var currentApiKey =
@@ -199,28 +254,77 @@ class ManageServersViewModel : ViewModel() {
                             "Exception generating api key: ${genResult.errors?.joinToString(",")}",
                             genResult.exception,
                         )
-                        connectionState.value =
-                            ConnectionState.Result(
-                                TestResult.Error(
-                                    "Failed to generate API Key",
-                                    genResult.exception,
-                                ),
+                        _state.update {
+                            it.copy(
+                                connectionState =
+                                    ConnectionState.Result(
+                                        TestResult.Error(
+                                            "Failed to generate API Key",
+                                            genResult.exception,
+                                        ),
+                                    ),
                             )
+                        }
                     } else {
                         currentApiKey = newApiKey
                     }
                 }
-                connectionState.value = ConnectionState.NewApiKey(currentApiKey)
+                _state.update { it.copy(connectionState = ConnectionState.NewApiKey(currentApiKey)) }
             }
         } catch (ex: Exception) {
             Log.w(TAG, "Exception generating api key", ex)
-            connectionState.value =
-                ConnectionState.Result(
-                    TestResult.Error(
-                        ex.localizedMessage,
-                        ex,
-                    ),
+            _state.update {
+                it.copy(
+                    connectionState =
+                        ConnectionState.Result(TestResult.Error(ex.localizedMessage, ex)),
                 )
+            }
+        }
+    }
+
+    /**
+     * Build an [ApolloClient] suitable for testing connectivity for the specified server.
+     */
+    fun createCookieHttpClient(trustCerts: Boolean): OkHttpClient {
+        var builder =
+            httpClient
+                .newBuilder()
+                .cookieJar(
+                    object : CookieJar {
+                        private val cookies = mutableMapOf<String, List<Cookie>>()
+
+                        override fun loadForRequest(url: HttpUrl): List<Cookie> = cookies[url.host] ?: listOf()
+
+                        override fun saveFromResponse(
+                            url: HttpUrl,
+                            cookies: List<Cookie>,
+                        ) {
+                            this.cookies[url.host] = cookies
+                        }
+                    },
+                ).readTimeout(7, TimeUnit.SECONDS)
+                .writeTimeout(7, TimeUnit.SECONDS)
+
+        if (trustCerts) {
+            val sslContext = SSLContext.getInstance("SSL")
+            sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
+            builder =
+                builder
+                    .sslSocketFactory(
+                        sslContext.socketFactory,
+                        TRUST_ALL_CERTS,
+                    ).hostnameVerifier { _, _ ->
+                        true
+                    }
+        }
+        return builder.build()
+    }
+
+    fun switchServer(server: StashServer) {
+        viewModelScope.launchDefault {
+            serverRepository.setCurrentStashServer(server)
+            navigationManager.reloadMain()
+            setupNavigationManager.navigateTo(SetupDestination.AppContent(server))
         }
     }
 
@@ -238,3 +342,9 @@ sealed interface ServerTestResult {
         val result: TestResult,
     ) : ServerTestResult
 }
+
+data class ManageServersState(
+    val allServers: List<StashServer> = emptyList(),
+    val serverStatus: Map<StashServer, ServerTestResult> = emptyMap(),
+    val connectionState: ConnectionState = ConnectionState.Inactive,
+)

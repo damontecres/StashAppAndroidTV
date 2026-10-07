@@ -1,76 +1,124 @@
 package com.github.damontecres.stashapp.ui
 
-import android.util.Log
-import androidx.lifecycle.MutableLiveData
+import androidx.datastore.core.DataStore
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.serialization.saved
 import androidx.lifecycle.viewModelScope
+import androidx.savedstate.serialization.SavedStateConfiguration
+import co.touchlab.kermit.Logger
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.InterfaceService
+import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.PlayerFactory
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.ui.util.DataLoadingState
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
-import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.OptionalSerializersModule
+import com.github.damontecres.stashapp.util.launchIO
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
-class FilterViewModel : ViewModel() {
-    private var server: StashServer? = null
-    val pager = MutableLiveData<ComposePager<StashData>>()
+@KoinViewModel
+class FilterViewModel(
+    private val serverRepository: ServerRepository,
+    private val queryEngine: QueryEngine,
+    val navigationManager: NavigationManager,
+    // TODO remove this
+    val preferences: DataStore<StashPreferences>,
+    // TODO remove this
+    val playerFactory: PlayerFactory,
+    private val interfaceService: InterfaceService,
+    private val savedStateHandle: SavedStateHandle,
+    @InjectedParam initialFilter: FilterArgs,
+) : ViewModel() {
+    private val _state = MutableStateFlow(FilterPageState())
+    val state: StateFlow<FilterPageState> = _state
 
-    val currentFilter: FilterArgs? get() = pager.value?.filter
-    val dataType: DataType? get() = currentFilter?.dataType
+    val interfaceState get() = interfaceService.state
 
-    private var job: Job? = null
+    private val config =
+        SavedStateConfiguration {
+            serializersModule = OptionalSerializersModule
+        }
+    var filter by savedStateHandle.saved(configuration = config) {
+        initialFilter
+    }
 
-    fun setFilter(
-        server: StashServer,
-        filterArgs: FilterArgs,
-        columns: Int,
-    ) {
-        if (pager.value?.filter != filterArgs || server != this.server) {
-            job?.cancel()
-            Log.d("FilterPageViewModel", "filterArgs=$filterArgs, columns=$columns")
-            this.server = server
-            val dataSupplierFactory = DataSupplierFactory(server.version)
-            val dataSupplier =
-                dataSupplierFactory.create<Query.Data, StashData, Query.Data>(filterArgs)
-            val pagingSource =
-                StashPagingSource(QueryEngine(server), dataSupplier) { _, _, item -> item }
-            val pager =
-                ComposePager(filterArgs, pagingSource, viewModelScope, pageSize = columns * 10)
-            job =
-                viewModelScope.launch(LoggingCoroutineExceptionHandler(server, viewModelScope)) {
-                    pager.init()
-                    this@FilterViewModel.pager.value = pager
-                }
+    val dataType: DataType get() = filter.dataType
+
+    init {
+        viewModelScope.launchIO {
+            updateFilter(filter)
         }
     }
 
-    suspend fun findLetterPosition(letter: Char): Int {
-        val server = this.server!!
-        val filter = this.pager.value!!.filter
+    private var job: Job? = null
 
-        val dataSupplierFactory = DataSupplierFactory(server.version)
+    fun updateFilter(filterArgs: FilterArgs) {
+        job?.cancel()
+        _state.update { it.copy(pager = DataLoadingState.Loading) }
+        job =
+            viewModelScope.launchIO {
+                interfaceService.setTitle(filterArgs.name, filterArgs.dataType.pluralStringId)
+                try {
+                    Logger.d { "setFilter: filterArgs=$filterArgs" }
+                    val dataSupplierFactory =
+                        DataSupplierFactory(serverRepository.currentServerVersion)
+                    val dataSupplier =
+                        dataSupplierFactory.create<Query.Data, StashData, Query.Data>(filterArgs)
+                    val pagingSource =
+                        StashPagingSource(
+                            queryEngine,
+                            dataSupplier,
+                        ) { _, _, item -> item }
+                    val pager =
+                        ComposePager(filterArgs, pagingSource, viewModelScope, pageSize = 100)
+
+                    pager.init()
+                    filter = filterArgs
+                    _state.update { it.copy(pager = DataLoadingState.Success(pager)) }
+                } catch (ex: Exception) {
+                    Logger.e(ex) { "Error fetching for $filterArgs" }
+                }
+            }
+    }
+
+    suspend fun findLetterPosition(letter: Char): Int {
+        val dataSupplierFactory = DataSupplierFactory(serverRepository.currentServerVersion)
         val letterPosition =
             AlphabetSearchUtils.findPosition(
                 letter,
                 filter,
-                QueryEngine(server),
+                queryEngine,
                 dataSupplierFactory,
             )
         val jumpPosition =
             if (filter.sortAndDirection.direction == SortDirectionEnum.DESC) {
                 // Reverse if sorting descending
-                pager.value!!.size - letterPosition - 1
+                state.value.pager.successValue?.size?.let {
+                    it - letterPosition - 1
+                } ?: 0
             } else {
                 letterPosition
             }
         return jumpPosition
     }
 }
+
+data class FilterPageState(
+    val pager: DataLoadingState<ComposePager<StashData>> = DataLoadingState.Pending,
+)

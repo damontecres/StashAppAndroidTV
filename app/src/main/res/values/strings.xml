@@ -249,5 +249,7 @@
     <string name="pref_key_mpv_gpu_next">playback.mpv.gpuNext</string>
     <string name="mpv_gpu_next">MPV: Use gpu-next</string>
     <string name="mpv_settings">MPV Settings</string>
+    <string name="go_to_studio">Go to studio</string>
+    <string name="create_filter_for_type">Create %s filter</string>
 
 </resources>

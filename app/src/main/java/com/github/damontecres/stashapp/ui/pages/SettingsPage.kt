@@ -7,24 +7,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.AnnotatedString
 import androidx.tv.material3.MaterialTheme
-import com.github.damontecres.stashapp.PreferenceScreenOption
-import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.prefs.PreferencesContent
-import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.PreferenceScreenOption
 
 @SuppressLint("RestrictedApi")
 @Composable
 fun SettingsPage(
-    server: StashServer,
-    navigationManager: NavigationManager,
     preferenceScreenOption: PreferenceScreenOption,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
 ) {
     Box(
         modifier = modifier.background(MaterialTheme.colorScheme.background),
@@ -38,12 +32,9 @@ fun SettingsPage(
                 Modifier
             }
         PreferencesContent(
-            server,
-            navigationManager,
             uiConfig,
             preferenceScreenOption,
             newModifier,
-            onUpdateTitle,
         )
     }
 }

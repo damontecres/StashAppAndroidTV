@@ -55,8 +55,8 @@ fun EditTextBox(
     isInputValid: (String) -> Boolean = { true },
     supportingText: @Composable (() -> Unit)? = null,
     placeholder: @Composable (() -> Unit)? = null,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
     Material3AppTheme {
         // From ButtonDefaults
         val colors =
@@ -158,6 +158,7 @@ fun SearchEditTextBox(
     enabled: Boolean = true,
     readOnly: Boolean = false,
     height: Dp = 40.dp,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     EditTextBox(
         value,
@@ -185,6 +186,7 @@ fun SearchEditTextBox(
         enabled,
         readOnly,
         height,
+        interactionSource = interactionSource,
     )
 }
 

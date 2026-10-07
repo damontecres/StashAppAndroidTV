@@ -9,7 +9,6 @@ import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.navigation.Destination
@@ -21,6 +20,7 @@ import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.proto.StreamChoice
 import com.github.damontecres.stashapp.proto.TabType
 import com.github.damontecres.stashapp.proto.ThemeStyle
+import com.github.damontecres.stashapp.util.PreferenceScreenOption
 import com.github.damontecres.stashapp.util.StashDreamService
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -387,25 +387,6 @@ sealed interface StashPreference<T> {
                     }
                 },
                 summarizer = { value -> value?.let { "${value / 1000.0} seconds" } },
-            )
-
-        val UseNewUI =
-            StashSwitchPreference(
-                title = R.string.use_new_ui,
-                prefKey = R.string.pref_key_use_compose_ui,
-                defaultValue = true,
-                getter = { it.interfacePreferences.useComposeUi },
-                setter = { prefs, value ->
-                    val context = StashApplication.getApplication()
-                    PreferenceManager
-                        .getDefaultSharedPreferences(context)
-                        .edit(true) {
-                            putBoolean(context.getString(R.string.pref_key_use_compose_ui), value)
-                        }
-                    prefs.updateInterfacePreferences { useComposeUi = value }
-                },
-                summaryOn = R.string.stashapp_actions_enable,
-                summaryOff = R.string.transcode_options_disabled,
             )
 
         val GridJumpButtons =
