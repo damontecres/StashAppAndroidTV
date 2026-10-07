@@ -142,9 +142,13 @@ fun FilterPage(
 
             is DataLoadingState.Success<ComposePager<StashData>> -> {
                 LaunchedEffect(Unit) {
-                    if (!searchIsFocused) {
-                        gridFocusRequester.tryRequestFocus("grid")
-                    }
+                    val toFocus =
+                        when {
+                            !searchIsFocused && st.data.isNotEmpty() -> gridFocusRequester
+                            !searchIsFocused -> rowFocusRequester
+                            else -> null
+                        }
+                    toFocus?.tryRequestFocus()
                     startPosition = 0
                 }
 
