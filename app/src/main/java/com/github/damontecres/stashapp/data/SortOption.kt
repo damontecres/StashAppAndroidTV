@@ -359,6 +359,8 @@ sealed interface SortOption {
                 ScenesDuration,
                 TagCount,
                 SceneMarkersCount,
+                OCounter,
+                PerformerCount,
             )
 
         val TAG_SORT_OPTIONS =
