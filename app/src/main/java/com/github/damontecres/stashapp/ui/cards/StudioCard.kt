@@ -36,6 +36,7 @@ fun StudioCard(
         dataTypeMap[DataType.IMAGE] = item.image_count
         dataTypeMap[DataType.GALLERY] = item.gallery_count
         dataTypeMap[DataType.TAG] = item.tags.size
+        dataTypeMap[DataType.MARKER] = item.scene_marker_count
     }
 
     val title = item?.name ?: ""

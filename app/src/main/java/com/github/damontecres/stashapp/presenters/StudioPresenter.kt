@@ -43,6 +43,7 @@ class StudioPresenter(
         dataTypeMap[DataType.IMAGE] = item.image_count
         dataTypeMap[DataType.GALLERY] = item.gallery_count
         dataTypeMap[DataType.TAG] = item.tags.size
+        dataTypeMap[DataType.MARKER] = item.scene_marker_count
 
         cardView.setUpExtraRow(dataTypeMap, null)
 
