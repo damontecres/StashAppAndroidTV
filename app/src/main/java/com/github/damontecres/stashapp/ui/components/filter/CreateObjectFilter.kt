@@ -28,6 +28,7 @@ import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderEnum
+import com.github.damontecres.stashapp.api.type.HierarchicalCountInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
@@ -802,6 +803,48 @@ fun ObjectFilterPicker(
                         onSave = { saveObjectFilter(value) },
                         onRemove = { saveObjectFilter(null) },
                         modifier = modifier,
+                    )
+                }
+            }
+
+            HierarchicalCountInput::class -> {
+                LaunchedEffect(Unit) {
+                    if (initialValue == null) {
+                        value =
+                            HierarchicalCountInput(
+                                value = 0,
+                                value2 = Optional.absent(),
+                                modifier = CriterionModifier.EQUALS,
+                            )
+                    }
+                }
+                (value as? HierarchicalCountInput)?.let { input ->
+                    LaunchedEffect(Unit) { objectFilterChoiceFocusRequester.tryRequestFocus() }
+                    CriterionInputPicker(
+                        modifier = modifier,
+                        name = stringResource(filterOption.nameStringId),
+                        value = SimpleHierarchicalCountInput(input),
+                        removeEnabled = initialValue != null,
+                        onChangeCriterionModifier =
+                            onChangeCriterionModifier { input.copy(modifier = it) },
+                        onChangeValue =
+                            onChangeValue(
+                                input.value,
+                                KeyboardType.Number,
+                                isIntValid,
+                            ) {
+                                it.toIntOrNull()?.let { input.copy(value = it) }
+                            },
+                        onChangeValue2 =
+                            onChangeValue(
+                                input.value2.getOrNull(),
+                                KeyboardType.Number,
+                                isIntValid,
+                            ) {
+                                input.copy(value2 = Optional.presentIfNotNull(it.toIntOrNull()))
+                            },
+                        onSave = { saveObjectFilter(value) },
+                        onRemove = { saveObjectFilter(null) },
                     )
                 }
             }

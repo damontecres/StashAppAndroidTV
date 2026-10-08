@@ -11,6 +11,7 @@ import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
+import com.github.damontecres.stashapp.api.type.HierarchicalCountInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
@@ -24,6 +25,7 @@ import com.github.damontecres.stashapp.filter.picker.DatePickerFragment
 import com.github.damontecres.stashapp.filter.picker.DurationPickerFragment
 import com.github.damontecres.stashapp.filter.picker.FloatPickerFragment
 import com.github.damontecres.stashapp.filter.picker.GenderPickerFragment
+import com.github.damontecres.stashapp.filter.picker.HierarchicalCountPickerFragment
 import com.github.damontecres.stashapp.filter.picker.HierarchicalMultiCriterionFragment
 import com.github.damontecres.stashapp.filter.picker.IntPickerFragment
 import com.github.damontecres.stashapp.filter.picker.MultiCriterionFragment
@@ -209,6 +211,11 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
                         CircumcisionCriterionInput::class -> {
                             filterOption as FilterOption<StashDataFilter, CircumcisionCriterionInput>
                             nextStep(CircumcisionPickerFragment(filterOption))
+                        }
+
+                        HierarchicalCountInput::class -> {
+                            filterOption as FilterOption<StashDataFilter, HierarchicalCountInput>
+                            nextStep(HierarchicalCountPickerFragment(filterOption))
                         }
 
                         else -> {

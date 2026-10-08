@@ -10,6 +10,7 @@ import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.GroupFilterType
+import com.github.damontecres.stashapp.api.type.HierarchicalCountInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
@@ -975,11 +976,11 @@ private val TagFilterOptions =
             { filter, value -> filter.copy(favorite = value) },
             listOf(),
         ),
-        FilterOption<TagFilterType, IntCriterionInput>(
+        FilterOption<TagFilterType, HierarchicalCountInput>(
             "image_count",
             R.string.stashapp_image_count,
             null,
-            IntCriterionInput::class,
+            HierarchicalCountInput::class,
             { it.image_count },
             { filter, value -> filter.copy(image_count = value) },
             TwoValueCriterionModifiers,
@@ -993,47 +994,47 @@ private val TagFilterOptions =
             { filter, value -> filter.copy(name = value) },
             StringCriterionModifiers,
         ),
-        FilterOption<TagFilterType, IntCriterionInput>(
+        FilterOption<TagFilterType, HierarchicalCountInput>(
             "scene_count",
             R.string.stashapp_scene_count,
             null,
-            IntCriterionInput::class,
+            HierarchicalCountInput::class,
             { it.scene_count },
             { filter, value -> filter.copy(scene_count = value) },
             TwoValueCriterionModifiers,
         ),
-        FilterOption<TagFilterType, IntCriterionInput>(
+        FilterOption<TagFilterType, HierarchicalCountInput>(
             "studio_count",
             R.string.stashapp_studio_count,
             null,
-            IntCriterionInput::class,
+            HierarchicalCountInput::class,
             { it.studio_count },
             { filter, value -> filter.copy(studio_count = value) },
             TwoValueCriterionModifiers,
         ),
-        FilterOption<TagFilterType, IntCriterionInput>(
+        FilterOption<TagFilterType, HierarchicalCountInput>(
             "gallery_count",
             R.string.stashapp_gallery_count,
             null,
-            IntCriterionInput::class,
+            HierarchicalCountInput::class,
             { it.gallery_count },
             { filter, value -> filter.copy(gallery_count = value) },
             TwoValueCriterionModifiers,
         ),
-        FilterOption<TagFilterType, IntCriterionInput>(
+        FilterOption<TagFilterType, HierarchicalCountInput>(
             "marker_count",
             R.string.stashapp_marker_count,
             null,
-            IntCriterionInput::class,
+            HierarchicalCountInput::class,
             { it.marker_count },
             { filter, value -> filter.copy(marker_count = value) },
             TwoValueCriterionModifiers,
         ),
-        FilterOption<TagFilterType, IntCriterionInput>(
+        FilterOption<TagFilterType, HierarchicalCountInput>(
             "performer_count",
             R.string.stashapp_performer_count,
             null,
-            IntCriterionInput::class,
+            HierarchicalCountInput::class,
             { it.performer_count },
             { filter, value -> filter.copy(performer_count = value) },
             TwoValueCriterionModifiers,

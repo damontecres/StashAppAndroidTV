@@ -11,6 +11,7 @@ import com.github.damontecres.stashapp.api.type.FileDuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderEnum
+import com.github.damontecres.stashapp.api.type.HierarchicalCountInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
@@ -351,6 +352,19 @@ class FilterParser(
             }
         } else {
             null
+        }
+
+    fun convertHierarchicalCountInput(it: Map<String, *>?): HierarchicalCountInput? =
+        it?.let {
+            val value = it["value"]?.toString()?.toIntOrNull() ?: return null
+            val value2 = it["value2"]?.toString()?.toIntOrNull()
+            val depth = it["depth"]?.toString()?.toIntOrNull()
+            HierarchicalCountInput(
+                value = value,
+                value2 = Optional.presentIfNotNull(value2),
+                depth = Optional.presentIfNotNull(depth),
+                modifier = CriterionModifier.valueOf(it["modifier"]!! as String),
+            )
         }
 
     fun convertFilterMap(

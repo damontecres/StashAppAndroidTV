@@ -61,6 +61,7 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                                         "FingerprintFilterInput",
                                         "VideoFileFilterInput",
                                         "ImageFileFilterInput",
+                                        "HierarchicalCountInput",
                                     )
                                 ) {
                                     // Modify filter or filter input types

@@ -4,6 +4,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.HierarchicalCountInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
@@ -156,4 +157,12 @@ class SimpleRatingCriterionInput(
         }
         return true
     }
+}
+
+class SimpleHierarchicalCountInput(
+    val input: HierarchicalCountInput,
+) : SimpleCriterionInput<Int> {
+    override val value: Int = input.value
+    override val value2: Int? = input.value2.getOrNull()
+    override val modifier: CriterionModifier = input.modifier
 }
