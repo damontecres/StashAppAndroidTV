@@ -212,7 +212,7 @@ fun PlaybackOverlay(
         modifier,
     ) {
         AnimatedVisibility(
-            visible = controllerViewState.controlsVisible && !showDebugInfo,
+            visible = controllerViewState.controlsVisible,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier.matchParentSize(),
