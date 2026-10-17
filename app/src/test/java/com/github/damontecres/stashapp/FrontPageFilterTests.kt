@@ -9,9 +9,9 @@ import com.github.damontecres.stashapp.api.fragment.SavedFilter
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.QueryEngine
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import kotlinx.coroutines.runBlocking

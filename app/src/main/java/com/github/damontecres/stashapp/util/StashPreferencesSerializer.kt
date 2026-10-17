@@ -32,7 +32,6 @@ object StashPreferencesSerializer : Serializer<StashPreferences> {
                     InterfacePreferences
                         .newBuilder()
                         .apply {
-                            useComposeUi = StashPreference.UseNewUI.defaultValue
                             cardSize = StashPreference.CardSize.defaultValue
                             playVideoPreviews = StashPreference.PlayVideoPreviews.defaultValue
                             rememberSelectedTab = StashPreference.RememberTab.defaultValue

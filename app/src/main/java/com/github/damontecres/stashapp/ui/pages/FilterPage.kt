@@ -1,116 +1,184 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.style.TextAlign
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
-import com.github.damontecres.stashapp.ui.components.CircularProgress
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.CreateFilter
+import com.github.damontecres.stashapp.ui.components.ErrorMessage
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.LoadingPage
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.StashGrid
 import com.github.damontecres.stashapp.ui.components.StashGridControls
-import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.ui.tryRequestFocus
+import com.github.damontecres.stashapp.ui.util.DataLoadingState
+import com.github.damontecres.stashapp.util.ComposePager
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun FilterPage(
-    server: StashServer,
-    navigationManager: NavigationManagerCompose,
     initialFilter: FilterArgs,
     scrollToNextPage: Boolean,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
-    viewModel: FilterViewModel = viewModel(),
+    viewModel: FilterViewModel =
+        koinViewModel {
+            parametersOf(initialFilter)
+        },
 ) {
-    if (viewModel.currentFilter == null) {
-        // If the view model is populated, don't do it again
-        LaunchedEffect(server, initialFilter) {
-            viewModel.setFilter(server, initialFilter, uiConfig.cardSettings.columns)
-        }
-    }
-    val pager by viewModel.pager.observeAsState()
+    val state by viewModel.state.collectAsState()
 
-    val initialPosition =
-        if (scrollToNextPage) {
-            uiConfig.preferences.searchPreferences.maxResults
-        } else {
-            0
+    val searchInteractionSource = remember { MutableInteractionSource() }
+    val searchIsFocused by searchInteractionSource.collectIsFocusedAsState()
+    val gridFocusRequester = remember { FocusRequester() }
+    val rowFocusRequester = remember { FocusRequester() }
+
+    var showTopRow by rememberSaveable { mutableStateOf(!scrollToNextPage) }
+    var startPosition by
+        remember {
+            mutableIntStateOf(
+                if (scrollToNextPage) {
+                    uiConfig.preferences.searchPreferences.maxResults
+                } else {
+                    0
+                },
+            )
         }
+
     Column(
         modifier = modifier,
     ) {
-        val title = pager?.filter?.name ?: stringResource(initialFilter.dataType.pluralStringId)
-        if (onUpdateTitle == null) {
-            ProvideTextStyle(MaterialTheme.typography.displayMedium) {
+        if (isTvDevice) {
+            val interfaceState by viewModel.interfaceState.collectAsState()
+            interfaceState.title?.let { title ->
                 Text(
-                    modifier = Modifier.fillMaxWidth(),
                     text = title,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.displaySmall,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
                 )
             }
-        } else {
-            LaunchedEffect(title) { onUpdateTitle.invoke(AnnotatedString(title)) }
         }
-        if (pager != null) {
-            StashGridControls(
-                modifier = Modifier,
-                uiConfig = uiConfig,
-                server = server,
-                pager = pager!!,
-                filterUiMode = FilterUiMode.SAVED_FILTERS,
-                createFilter = {
-                    val dataType = initialFilter.dataType
-                    val currentFilter = viewModel.currentFilter
-                    when (it) {
-                        CreateFilter.FROM_CURRENT -> {
-                            navigationManager.navigate(
-                                Destination.CreateFilter(
-                                    dataType,
-                                    currentFilter,
-                                ),
-                            )
-                        }
 
-                        CreateFilter.NEW_FILTER -> {
-                            navigationManager.navigate(
-                                Destination.CreateFilter(
-                                    dataType,
-                                    null,
-                                ),
-                            )
-                        }
+        StashGridControls(
+            modifier = Modifier.focusRequester(rowFocusRequester),
+            uiConfig = uiConfig,
+            filterArgs = viewModel.filter,
+            filterUiMode = FilterUiMode.SAVED_FILTERS,
+            createFilter = {
+                val dataType = initialFilter.dataType
+                when (it) {
+                    CreateFilter.FROM_CURRENT -> {
+                        viewModel.navigationManager.navigate(
+                            Destination.CreateFilter(
+                                dataType,
+                                viewModel.filter,
+                            ),
+                        )
                     }
-                },
-                itemOnClick = itemOnClick,
-                longClicker = longClicker,
-                initialPosition = initialPosition,
-                updateFilter = {
-                    viewModel.setFilter(server, it, uiConfig.cardSettings.columns)
-                },
-                letterPosition = viewModel::findLetterPosition,
-                requestFocus = true,
-            )
-        } else {
-            CircularProgress()
+
+                    CreateFilter.NEW_FILTER -> {
+                        viewModel.navigationManager.navigate(
+                            Destination.CreateFilter(
+                                dataType,
+                                null,
+                            ),
+                        )
+                    }
+                }
+            },
+            updateFilter = viewModel::updateFilter,
+            gridFocusRequester = gridFocusRequester,
+            searchInteractionSource = searchInteractionSource,
+            showTopRow = showTopRow,
+        )
+
+        when (val st = state.pager) {
+            is DataLoadingState.Error -> {
+                ErrorMessage(st, Modifier)
+            }
+
+            DataLoadingState.Loading,
+            DataLoadingState.Pending,
+            -> {
+                LoadingPage(
+                    focusEnabled = !searchIsFocused,
+                    modifier = Modifier,
+                )
+            }
+
+            is DataLoadingState.Success<ComposePager<StashData>> -> {
+                LaunchedEffect(Unit) {
+                    val toFocus =
+                        when {
+                            !searchIsFocused && st.data.isNotEmpty() -> gridFocusRequester
+                            !searchIsFocused -> rowFocusRequester
+                            else -> null
+                        }
+                    toFocus?.tryRequestFocus()
+                    startPosition = 0
+                }
+
+                StashGrid(
+                    pager = st.data,
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                    letterPosition = viewModel::findLetterPosition,
+                    initialPosition = startPosition,
+                    positionCallback = { columns, position ->
+                        showTopRow = position < columns
+//                        positionCallback?.invoke(columns, position)
+                    },
+                    gridFocusRequester = gridFocusRequester,
+                    cardContext = null,
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .focusProperties {
+                                onExit = {
+                                    if (requestedFocusDirection == FocusDirection.Up) {
+                                        rowFocusRequester.tryRequestFocus("onExit")
+                                    } else {
+                                        FocusRequester.Default.tryRequestFocus("onExit2")
+                                    }
+                                }
+                            },
+                )
+            }
         }
     }
 }

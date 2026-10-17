@@ -1,79 +1,85 @@
 package com.github.damontecres.stashapp.views.models
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
+import com.github.damontecres.stashapp.di.services.InterfaceService
+import com.github.damontecres.stashapp.di.services.ItemClicker
+import com.github.damontecres.stashapp.di.services.NavigationManager
+import com.github.damontecres.stashapp.di.services.PlayerFactory
+import com.github.damontecres.stashapp.di.services.ServerLogger
 import com.github.damontecres.stashapp.ui.showAddTag
 import com.github.damontecres.stashapp.ui.showShort
-import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.ui.util.DataLoadingState
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-class MarkerDetailsViewModel : ViewModel() {
-    private lateinit var server: StashServer
+@KoinViewModel
+class MarkerDetailsViewModel(
+    private val serverRepository: ServerRepository,
+    private val serverLogger: ServerLogger,
+    private val queryEngine: QueryEngine,
+    val itemClicker: ItemClicker,
+    val mutationEngine: MutationEngine,
+    val navigationManager: NavigationManager,
+    val playerFactory: PlayerFactory,
+    private val interfaceService: InterfaceService,
+    @InjectedParam private val id: String,
+) : ViewModel() {
+    private val _state = MutableStateFlow(MarkerDetailsState())
+    val state: StateFlow<MarkerDetailsState> = _state
 
-    val seconds = MutableLiveData<Double>()
-    val endSeconds = MutableLiveData<Double?>(null)
-
-    val start = EqualityMutableLiveData<Duration>()
-    val end = EqualityMutableLiveData<Duration>()
-
-    private val _item = EqualityMutableLiveData<FullMarkerData?>()
-    val item: LiveData<FullMarkerData?> = _item
-
-    private val _tags = MutableLiveData<List<TagData>>()
-    val tags: LiveData<List<TagData>> = _tags
-
-    private val _primaryTag = EqualityMutableLiveData<TagData>()
-    val primaryTag: LiveData<TagData> = _primaryTag
-
-    fun init(
-        server: StashServer,
-        id: String,
-    ) {
-        this.server = server
+    fun init() {
         viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
-            val queryEngine = QueryEngine(server)
             val marker = queryEngine.getMarker(id)
-            _item.value = marker
             if (marker != null) {
-                seconds.value = marker.seconds
-                endSeconds.value = marker.end_seconds
-                start.value = marker.seconds.seconds
-                end.value = (marker.end_seconds ?: marker.seconds).seconds
-                _primaryTag.value = marker.primary_tag.tagData
-                _tags.value = marker.tags.map { it.tagData }
+                val title =
+                    if (marker.title.isNotNullOrBlank()) {
+                        marker.title
+                    } else {
+                        marker.primary_tag.tagData.name
+                    }
+                interfaceService.setTitle(title)
+
+                _state.update {
+                    it.copy(
+                        item = DataLoadingState.Success(marker),
+                        seconds = marker.seconds,
+                        endSeconds = marker.end_seconds,
+                        start = marker.seconds.seconds,
+                        end = (marker.end_seconds ?: marker.seconds).seconds,
+                        tags = marker.tags.map { it.tagData },
+                    )
+                }
             }
         }
     }
 
-    fun setMarker(marker: FullMarkerData) {
-        _item.value = marker
-    }
-
     fun setPrimaryTag(tagId: String) {
         viewModelScope.launch {
-            val mutationEngine = MutationEngine(server)
             val result =
                 mutationEngine.updateMarker(
                     SceneMarkerUpdateInput(
-                        id = item.value!!.id,
+                        id = id,
                         primary_tag_id = Optional.present(tagId),
                     ),
                 )
             if (result != null) {
-                _item.value = result
-                _primaryTag.value = result.primary_tag.tagData
-                _tags.value = result.tags.map { it.tagData }
+                update(result)
                 showShort("Set primary tag to '${result.primary_tag.tagData.name}'")
             }
         }
@@ -81,20 +87,20 @@ class MarkerDetailsViewModel : ViewModel() {
 
     fun addTag(tagId: String) {
         viewModelScope.launch {
-            val mutationEngine = MutationEngine(server)
-            val tagIds = tags.value!!.map { it.id }.toMutableList()
+            val tagIds =
+                state.value.tags
+                    .map { it.id }
+                    .toMutableList()
             tagIds.add(tagId)
             val result =
                 mutationEngine.updateMarker(
                     SceneMarkerUpdateInput(
-                        id = item.value!!.id,
+                        id = id,
                         tag_ids = Optional.present(tagIds),
                     ),
                 )
             if (result != null) {
-                _item.value = result
-                _primaryTag.value = result.primary_tag.tagData
-                _tags.value = result.tags.map { it.tagData }
+                update(result)
                 result.tags.firstOrNull { it.tagData.id == tagId }?.let { showAddTag(it.tagData) }
             }
         }
@@ -102,26 +108,52 @@ class MarkerDetailsViewModel : ViewModel() {
 
     fun removeTag(tagId: String) {
         viewModelScope.launch {
-            val mutationEngine = MutationEngine(server)
-            val tagIds = tags.value!!.map { it.id }.toMutableList()
+            val tagIds =
+                state.value.tags
+                    .map { it.id }
+                    .toMutableList()
             if (tagIds.remove(tagId)) {
                 val result =
                     mutationEngine.updateMarker(
                         SceneMarkerUpdateInput(
-                            id = item.value!!.id,
+                            id = id,
                             tag_ids = Optional.present(tagIds),
                         ),
                     )
                 if (result != null) {
-                    _item.value = result
-                    _primaryTag.value = result.primary_tag.tagData
-                    _tags.value = result.tags.map { it.tagData }
+                    update(result)
                 }
             }
         }
+    }
+
+    private fun update(result: FullMarkerData) {
+        _state.update {
+            it.copy(
+                item = DataLoadingState.Success(result),
+                tags = result.tags.map { it.tagData },
+            )
+        }
+    }
+
+    fun updateStart(start: Duration) {
+        _state.update { it.copy(start = start) }
+    }
+
+    fun updateEnd(end: Duration) {
+        _state.update { it.copy(end = end) }
     }
 
     companion object {
         private const val TAG = "MarkerDetailsViewModel"
     }
 }
+
+data class MarkerDetailsState(
+    val item: DataLoadingState<FullMarkerData> = DataLoadingState.Pending,
+    val seconds: Double = -1.0,
+    val endSeconds: Double? = null,
+    val start: Duration = Duration.ZERO,
+    val end: Duration = Duration.ZERO,
+    val tags: List<TagData> = emptyList(),
+)

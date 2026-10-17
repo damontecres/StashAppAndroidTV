@@ -1,8 +1,10 @@
 package com.github.damontecres.stashapp.ui.nav
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -10,10 +12,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.NavigationDrawerScope
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -54,16 +55,16 @@ fun NavigationDrawerScope.NavDrawerListItem(
                     } else {
                         Color.Unspecified
                     }
-                Text(
-                    stringResource(id = page.iconString),
-                    fontFamily = FontAwesome,
-                    textAlign = TextAlign.Center,
-                    modifier =
-                        Modifier
-                            // Centers the icon for some reason
-                            .padding(top = 4.dp),
-                    color = color,
-                )
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        stringResource(id = page.iconString),
+                        fontFamily = FontAwesome,
+                        textAlign = TextAlign.Center,
+                        fontSize = 16.sp,
+                        color = color,
+                        modifier = Modifier,
+                    )
+                }
             } else {
                 Icon(
                     painter = painterResource(id = R.drawable.vector_settings),

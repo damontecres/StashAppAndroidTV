@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -133,7 +132,7 @@ fun SceneDetailsHeader(
             )
         }
         Column(modifier = Modifier.ifElse(isTvDevice, Modifier.fillMaxWidth(0.8f))) {
-            if (isTvDevice) Spacer(modifier = Modifier.height(60.dp))
+            // if (isTvDevice) Spacer(modifier = Modifier.height(60.dp))
             SceneDetailsHeaderInfo(
                 scene = scene,
                 studio = studio,
@@ -144,7 +143,7 @@ fun SceneDetailsHeader(
                 onRatingChange = onRatingChange,
                 bringIntoViewRequester = bringIntoViewRequester,
                 removeLongClicker = removeLongClicker,
-                modifier = Modifier.padding(start = 16.dp),
+                modifier = Modifier,
                 showRatingBar = showRatingBar,
             )
             // Playback controls
@@ -185,6 +184,7 @@ fun SceneDetailsHeaderInfo(
     modifier: Modifier = Modifier,
     showRatingBar: Boolean = true,
 ) {
+    val startPadding = 16.dp
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     Column(
@@ -195,7 +195,7 @@ fun SceneDetailsHeaderInfo(
             text = scene.titleOrFilename ?: "",
             color = MaterialTheme.colorScheme.onSurface,
             style =
-                MaterialTheme.typography.displayMedium.copy(
+                MaterialTheme.typography.displaySmall.copy(
                     shadow =
                         Shadow(
                             color = Color.DarkGray,
@@ -205,6 +205,7 @@ fun SceneDetailsHeaderInfo(
                 ),
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(startPadding),
         )
 
         Column(
@@ -220,13 +221,13 @@ fun SceneDetailsHeaderInfo(
                     modifier =
                         Modifier
                             .height(ratingBarHeight)
-                            .padding(start = 12.dp),
+                            .padding(start = startPadding),
                 )
             }
             // Quick info
             val file = scene.files.firstOrNull()?.videoFile
             DotSeparatedRow(
-                modifier = Modifier.padding(top = 6.dp, start = 8.dp),
+                modifier = Modifier.padding(top = 8.dp, start = startPadding),
                 textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 texts =
                     listOfNotNullOrBlank(
@@ -248,6 +249,7 @@ fun SceneDetailsHeaderInfo(
                 Box(
                     modifier =
                         Modifier
+                            .padding(start = 8.dp)
                             .background(bgColor, shape = RoundedCornerShape(8.dp))
                             .onFocusChanged {
                                 if (it.isFocused) {
@@ -277,7 +279,7 @@ fun SceneDetailsHeaderInfo(
             Row(
                 modifier =
                     Modifier
-                        .padding(top = 8.dp, start = 16.dp)
+                        .padding(top = 8.dp, start = startPadding)
                         .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {

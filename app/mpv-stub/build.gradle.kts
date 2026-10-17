@@ -5,11 +5,19 @@ plugins {
 android {
     namespace = "com.github.damontecres.stashapp.mpvstub"
     compileSdk {
-        version = release(36)
+        version =
+            release(
+                libs.versions.compileSdk
+                    .get()
+                    .toInt(),
+            )
     }
 
     defaultConfig {
-        minSdk = 23
+        minSdk =
+            libs.versions.minSdk
+                .get()
+                .toInt()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

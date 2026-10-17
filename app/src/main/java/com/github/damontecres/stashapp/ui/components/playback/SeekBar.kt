@@ -58,6 +58,7 @@ fun SeekBarImpl(
 ) {
     val isFocused by interactionSource.collectIsFocusedAsState()
     val color = MaterialTheme.colorScheme.border
+    val onSurface = MaterialTheme.colorScheme.onSurface
     val animatedIndicatorHeight by animateDpAsState(
         targetValue = 6.dp.times((if (isFocused) 2f else 1f)),
     )
@@ -105,14 +106,14 @@ fun SeekBarImpl(
             onDraw = {
                 val yOffset = size.height.div(2)
                 drawLine(
-                    color = color.copy(alpha = 0.15f),
+                    color = onSurface.copy(alpha = 0.25f),
                     start = Offset(x = 0f, y = yOffset),
                     end = Offset(x = size.width, y = yOffset),
                     strokeWidth = size.height,
                     cap = StrokeCap.Round,
                 )
                 drawLine(
-                    color = color.copy(alpha = 0.50f),
+                    color = onSurface.copy(alpha = 0.65f),
                     start = Offset(x = 0f, y = yOffset),
                     end =
                         Offset(

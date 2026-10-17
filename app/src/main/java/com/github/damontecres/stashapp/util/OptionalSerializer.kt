@@ -10,8 +10,11 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.encoding.decodeStructure
+import kotlinx.serialization.encoding.encodeStructure
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 
@@ -33,6 +36,7 @@ val StashParcelable =
 val StashJson =
     Json {
         serializersModule = OptionalSerializersModule
+        classDiscriminator = "_type"
     }
 
 /**
@@ -40,28 +44,50 @@ val StashJson =
  *
  * Basically just writes a boolean for whether the [Optional] is present or absent before the value
  */
+@OptIn(ExperimentalSerializationApi::class)
 class OptionalSerializer<T>(
     private val dataSerializer: KSerializer<T>,
 ) : KSerializer<Optional<T>> {
-    override val descriptor: SerialDescriptor
-        get() = dataSerializer.descriptor
+    override val descriptor: SerialDescriptor =
+        buildClassSerialDescriptor(
+            Optional::class.qualifiedName!!,
+            dataSerializer.descriptor,
+        ) {
+            element<Boolean>("exists")
+            element("value", dataSerializer.descriptor)
+        }
 
     override fun deserialize(decoder: Decoder): Optional<T> =
-        if (decoder.decodeBoolean()) {
-            Optional.present(dataSerializer.deserialize(decoder))
-        } else {
-            Optional.Absent
+        decoder.decodeStructure(descriptor) {
+            var exists: Boolean = false
+            var value: T? = null
+            while (true) {
+                when (val index = decodeElementIndex(descriptor)) {
+                    0 -> exists = decodeBooleanElement(descriptor, 0)
+                    1 -> value = decodeNullableSerializableElement(descriptor, 1, dataSerializer)
+                    CompositeDecoder.DECODE_DONE -> break
+                    else -> error("Unexpected index: $index")
+                }
+            }
+            if (exists) {
+                Optional.present(value!!)
+            } else {
+                Optional.Absent
+            }
         }
 
     override fun serialize(
         encoder: Encoder,
         value: Optional<T>,
     ) {
-        if (value == Optional.Absent) {
-            encoder.encodeBoolean(false)
-        } else {
-            encoder.encodeBoolean(true)
-            dataSerializer.serialize(encoder, value.getOrNull()!!)
+        encoder.encodeStructure(descriptor) {
+            if (value == Optional.Absent) {
+                encodeBooleanElement(descriptor, 0, false)
+                encodeNullableSerializableElement(descriptor, 1, dataSerializer, null)
+            } else {
+                encodeBooleanElement(descriptor, 0, true)
+                encodeSerializableElement(descriptor, 1, dataSerializer, value.getOrNull()!!)
+            }
         }
     }
 }

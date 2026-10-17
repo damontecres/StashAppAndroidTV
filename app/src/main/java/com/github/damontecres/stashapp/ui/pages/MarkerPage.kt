@@ -23,8 +23,8 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,10 +40,8 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
@@ -60,6 +58,8 @@ import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.compat.Button
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
+import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.CreatedTimestamp
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -69,30 +69,28 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.ui.components.UpdatedTimestamp
 import com.github.damontecres.stashapp.ui.tryRequestFocus
-import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.ui.util.DataLoadingState
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun MarkerPage(
-    server: StashServer,
     markerId: String,
-    itemOnClick: ItemOnClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
-    viewModel: MarkerDetailsViewModel = viewModel(),
+    viewModel: MarkerDetailsViewModel =
+        koinViewModel {
+            parametersOf(markerId)
+        },
 ) {
     LaunchedEffect(Unit) {
-        viewModel.init(server, markerId)
+        viewModel.init()
     }
-
-    val marker by viewModel.item.observeAsState()
-    val primaryTag by viewModel.primaryTag.observeAsState()
-    val tags by viewModel.tags.observeAsState(listOf())
 
     var showDialog by remember { mutableStateOf<DialogParams?>(null) }
     val removeLongClicker =
@@ -106,7 +104,7 @@ fun MarkerPage(
                         buildList {
                             add(
                                 DialogItem("Go to", Icons.Default.PlayArrow) {
-                                    itemOnClick.onClick(
+                                    viewModel.itemClicker.onClick(
                                         item,
                                         filterAndPosition,
                                     )
@@ -131,28 +129,47 @@ fun MarkerPage(
                 )
         }
 
-    if (marker != null && primaryTag != null) {
-        val title =
-            if (marker!!.title.isNotNullOrBlank()) {
-                marker!!.title
-            } else {
-                primaryTag!!.name
-            }
-        onUpdateTitle?.invoke(AnnotatedString(title))
-        MarkerPageContent(
-            server = server,
-            marker = marker!!,
-            markerTitle = if (onUpdateTitle == null) title else null,
-            primaryTag = primaryTag!!,
-            tags = tags,
-            itemOnClick = itemOnClick,
-            longClicker = removeLongClicker,
-            uiConfig = uiConfig,
-            setPrimaryTag = viewModel::setPrimaryTag,
-            addTag = viewModel::addTag,
-            removeTag = viewModel::removeTag,
-            modifier = modifier.fillMaxSize(),
-        )
+    val state by viewModel.state.collectAsState()
+    when (val st = state.item) {
+        is DataLoadingState.Error -> {
+            Text(
+                "Error",
+                style = MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = modifier,
+            )
+        }
+
+        DataLoadingState.Loading,
+        DataLoadingState.Pending,
+        -> {
+            CircularProgress(modifier)
+        }
+
+        is DataLoadingState.Success<FullMarkerData> -> {
+            val marker = st.data
+            val title =
+                remember(marker) {
+                    if (marker.title.isNotNullOrBlank()) {
+                        marker.title
+                    } else {
+                        marker.primary_tag.tagData.name
+                    }
+                }
+            MarkerPageContent(
+                marker = marker,
+                markerTitle = if (isTvDevice) title else null,
+                primaryTag = marker.primary_tag.tagData,
+                tags = state.tags,
+                itemOnClick = viewModel.itemClicker::onClick,
+                longClicker = removeLongClicker,
+                uiConfig = uiConfig,
+                setPrimaryTag = viewModel::setPrimaryTag,
+                addTag = viewModel::addTag,
+                removeTag = viewModel::removeTag,
+                modifier = modifier.fillMaxSize(),
+            )
+        }
     }
     showDialog?.let { params ->
         DialogPopup(
@@ -167,7 +184,6 @@ fun MarkerPage(
 
 @Composable
 fun MarkerPageContent(
-    server: StashServer,
     marker: FullMarkerData,
     markerTitle: String?,
     primaryTag: TagData,

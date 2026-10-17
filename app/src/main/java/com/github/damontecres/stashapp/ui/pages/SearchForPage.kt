@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,15 +27,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.ViewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SearchForFragment
-import com.github.damontecres.stashapp.SearchForFragment.Companion.DATA_TYPE_SUGGESTIONS
-import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.fragment.GroupData
+import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -46,27 +49,29 @@ import com.github.damontecres.stashapp.api.type.TagCreateInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.data.room.AppDatabase
 import com.github.damontecres.stashapp.data.room.RecentSearchItem
+import com.github.damontecres.stashapp.di.server.MutationEngine
+import com.github.damontecres.stashapp.di.server.QueryEngine
+import com.github.damontecres.stashapp.di.server.ServerRepository
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.Material3AppTheme
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.ItemsRow
 import com.github.damontecres.stashapp.ui.components.SearchEditTextBox
 import com.github.damontecres.stashapp.util.CreateNew
 import com.github.damontecres.stashapp.util.LoggingCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.annotation.KoinViewModel
 
 private const val TAG = "SearchForPage"
 
@@ -98,7 +103,6 @@ fun SearchForDialog(
 ) {
     if (show) {
         Material3AppTheme {
-            val server = LocalGlobalContext.current.server
             Dialog(
                 onDismissRequest = onDismissRequest,
                 properties =
@@ -121,7 +125,6 @@ fun SearchForDialog(
                     propagateMinConstraints = true,
                 ) {
                     SearchForPage(
-                        server = server,
                         title = dialogTitle ?: ("Add " + stringResource(dataType.stringId)),
                         searchId = 0,
                         dataType = dataType,
@@ -144,9 +147,16 @@ fun SearchForDialog(
     }
 }
 
+@KoinViewModel
+class SearchForViewModel(
+    val serverRepository: ServerRepository,
+    val queryEngine: QueryEngine,
+    val mutationEngine: MutationEngine,
+    val database: AppDatabase,
+) : ViewModel()
+
 @Composable
 fun SearchForPage(
-    server: StashServer,
     title: String?,
     searchId: Long,
     dataType: DataType,
@@ -157,10 +167,13 @@ fun SearchForPage(
     showRecent: Boolean = true,
     allowCreate: Boolean = true,
     startingSearchQuery: String = "",
+    viewModel: SearchForViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val queryEngine = QueryEngine(server)
+
+    val currentServer by viewModel.serverRepository.currentServer.collectAsState()
+    val server = currentServer.server
 
     val searchDelay = uiConfig.preferences.searchPreferences.searchDelayMs
     val perPage = uiConfig.preferences.searchPreferences.maxResults
@@ -176,8 +189,7 @@ fun SearchForPage(
             if (item is StashData) {
                 if (dataType in DATA_TYPE_SUGGESTIONS) {
                     scope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                        StashApplication
-                            .getDatabase()
+                        viewModel.database
                             .recentSearchItemsDao()
                             .insert(RecentSearchItem(server.url, item.id, dataType))
                     }
@@ -185,11 +197,11 @@ fun SearchForPage(
                 itemOnClick.invoke(searchId, item)
             } else if (item is CreateNew) {
                 scope.launch(Dispatchers.Main + StashCoroutineExceptionHandler()) {
-                    val newItem = handleCreate(context, server, item.dataType, item.name)
+                    val newItem =
+                        handleCreate(context, viewModel.mutationEngine, item.dataType, item.name)
                     if (newItem != null) {
                         withContext(Dispatchers.IO) {
-                            StashApplication
-                                .getDatabase()
+                            viewModel.database
                                 .recentSearchItemsDao()
                                 .insert(RecentSearchItem(server.url, newItem.id, dataType))
                         }
@@ -205,12 +217,12 @@ fun SearchForPage(
         job?.cancel()
         if (query.isNotNullOrBlank()) {
             job =
-                scope.launch(LoggingCoroutineExceptionHandler(server, scope)) {
+                scope.launch(LoggingCoroutineExceptionHandler(currentServer, scope)) {
                     delay(searchDelay)
                     results = SearchState.Pending
                     Log.v(TAG, "Starting search")
                     val items =
-                        queryEngine.find(
+                        viewModel.queryEngine.find(
                             dataType,
                             FindFilterType(
                                 q = Optional.present(query),
@@ -224,7 +236,7 @@ fun SearchForPage(
                             SearchState.Success(
                                 if (allowCreate &&
                                     uiConfig.readOnlyModeDisabled &&
-                                    SearchForFragment.allowCreate(
+                                    allowCreate(
                                         dataType,
                                         query,
                                         items,
@@ -249,8 +261,7 @@ fun SearchForPage(
         LaunchedEffect(Unit) {
             scope.launch(StashCoroutineExceptionHandler() + Dispatchers.IO) {
                 val mostRecentIds =
-                    StashApplication
-                        .getDatabase()
+                    viewModel.database
                         .recentSearchItemsDao()
                         .getMostRecent(perPage, server.url, dataType)
                         .map { it.id }
@@ -258,23 +269,23 @@ fun SearchForPage(
                     recent =
                         when (dataType) {
                             DataType.PERFORMER -> {
-                                queryEngine.findPerformers(performerIds = mostRecentIds)
+                                viewModel.queryEngine.findPerformers(performerIds = mostRecentIds)
                             }
 
                             DataType.TAG -> {
-                                queryEngine.getTags(mostRecentIds)
+                                viewModel.queryEngine.getTags(mostRecentIds)
                             }
 
                             DataType.STUDIO -> {
-                                queryEngine.findStudios(studioIds = mostRecentIds)
+                                viewModel.queryEngine.findStudios(studioIds = mostRecentIds)
                             }
 
                             DataType.GALLERY -> {
-                                queryEngine.findGalleries(galleryIds = mostRecentIds)
+                                viewModel.queryEngine.findGalleries(galleryIds = mostRecentIds)
                             }
 
                             DataType.GROUP -> {
-                                queryEngine.findGroups(groupIds = mostRecentIds)
+                                viewModel.queryEngine.findGroups(groupIds = mostRecentIds)
                             }
 
                             else -> {
@@ -304,7 +315,7 @@ fun SearchForPage(
                     when (dataType) {
                         DataType.GALLERY -> {
                             // Cannot add an image to a zip/folder gallery, so exclude them
-                            queryEngine.findGalleries(
+                            viewModel.queryEngine.findGalleries(
                                 filter,
                                 GalleryFilterType(
                                     path =
@@ -319,7 +330,7 @@ fun SearchForPage(
                         }
 
                         else -> {
-                            queryEngine.find(dataType, filter)
+                            viewModel.queryEngine.find(dataType, filter)
                         }
                     }
             }
@@ -384,7 +395,7 @@ fun SearchForPage(
                         )
                         if (allowCreate &&
                             uiConfig.readOnlyModeDisabled &&
-                            SearchForFragment.allowCreate(
+                            allowCreate(
                                 dataType,
                                 searchQuery,
                                 listOf(),
@@ -453,13 +464,12 @@ fun SearchForPage(
 
 suspend fun handleCreate(
     context: Context,
-    server: StashServer,
+    mutationEngine: MutationEngine,
     dataType: DataType,
     query: String?,
 ): StashData? {
     if (query.isNotNullOrBlank()) {
         val name = query.replaceFirstChar(Char::titlecase)
-        val mutationEngine = MutationEngine(server)
         val item =
             when (dataType) {
                 DataType.TAG -> {
@@ -493,5 +503,59 @@ suspend fun handleCreate(
         return item
     } else {
         return null
+    }
+}
+
+val DATA_TYPE_SUGGESTIONS =
+    setOf(
+        DataType.TAG,
+        DataType.PERFORMER,
+        DataType.STUDIO,
+        DataType.GALLERY,
+        DataType.GROUP,
+    )
+
+fun allowCreate(
+    dataType: DataType,
+    query: String,
+    items: List<StashData>,
+): Boolean {
+    val q = query.lowercase()
+    return when (dataType) {
+        DataType.GROUP -> {
+            items as List<GroupData>
+            items.none { it.name.lowercase() == q || it.aliases?.lowercase() == q }
+        }
+
+        DataType.PERFORMER -> {
+            items as List<PerformerData>
+            items.none { it.name.lowercase() == q || it.alias_list.any { it.lowercase() == q } }
+        }
+
+        DataType.TAG -> {
+            items as List<TagData>
+            items.none { it.name.lowercase() == q || it.aliases.any { it.lowercase() == q } }
+        }
+
+        DataType.STUDIO -> {
+            items as List<StudioData>
+            items.none { it.name.lowercase() == q || it.aliases.any { it.lowercase() == q } }
+        }
+
+        DataType.SCENE -> {
+            false
+        }
+
+        DataType.MARKER -> {
+            false
+        }
+
+        DataType.IMAGE -> {
+            false
+        }
+
+        DataType.GALLERY -> {
+            false
+        }
     }
 }

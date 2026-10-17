@@ -33,22 +33,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.di.server.CurrentServer
+import com.github.damontecres.stashapp.di.services.NavigationManager
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
+import com.github.damontecres.stashapp.proto.StashPreferences
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
-import com.github.damontecres.stashapp.ui.util.ScreenSize
-import com.github.damontecres.stashapp.ui.util.screenSize
-import com.github.damontecres.stashapp.util.StashServer
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun NavScaffold(
-    server: StashServer,
-    navigationManager: NavigationManagerCompose,
+    title: AnnotatedString?,
+    preferences: StashPreferences,
+    currentServer: CurrentServer,
+    navigationManager: NavigationManager,
     composeUiConfig: ComposeUiConfig,
     destination: Destination,
     selectedScreen: DrawerPage?,
@@ -57,67 +57,14 @@ fun NavScaffold(
     longClicker: LongClicker<Any>,
     onSelectScreen: (DrawerPage) -> Unit,
     onChangeTheme: (String?) -> Unit,
-    onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var title by remember { mutableStateOf<AnnotatedString?>(null) }
-
-//    Log.v("WindowSize", "screenSize=${screenSize()}")
-
-    val titleStyle =
-        when (screenSize()) {
-            ScreenSize.COMPACT -> androidx.compose.material3.MaterialTheme.typography.headlineSmall
-            ScreenSize.MEDIUM -> androidx.compose.material3.MaterialTheme.typography.headlineMedium
-            ScreenSize.EXPANDED -> androidx.compose.material3.MaterialTheme.typography.headlineLarge
-        }
-
     Scaffold(
         modifier = modifier,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    val title =
-                        when (selectedScreen) {
-                            is DrawerPage.HomePage,
-                            is DrawerPage.SearchPage,
-                            -> AnnotatedString(stringResource(selectedScreen.name))
-
-                            else -> title
-                        }
-                    title?.let {
-                        val updatedTitle =
-                            if (destination is Destination.Item && destination.dataType == DataType.PERFORMER) {
-                                // TODO hack to adjust font sizes
-                                val newStyles =
-                                    if (title.spanStyles.size == 2) {
-                                        listOf(
-                                            title.spanStyles[0].let {
-                                                it.copy(item = it.item.copy(fontSize = titleStyle.fontSize))
-                                            },
-                                            title.spanStyles[1].let {
-                                                it.copy(item = it.item.copy(fontSize = titleStyle.fontSize * .75f))
-                                            },
-                                        )
-                                    } else if (title.spanStyles.size == 1) {
-                                        listOf(
-                                            title.spanStyles[0].let {
-                                                it.copy(item = it.item.copy(fontSize = titleStyle.fontSize))
-                                            },
-                                        )
-                                    } else {
-                                        listOf()
-                                    }
-
-                                AnnotatedString(title.text, newStyles, title.paragraphStyles)
-                            } else {
-                                it
-                            }
-                        Text(
-                            text = updatedTitle,
-                            style = titleStyle,
-                        )
-                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = {
@@ -181,18 +128,15 @@ fun NavScaffold(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             DestinationContent(
+                preferences = preferences,
+                currentServer = currentServer,
                 navManager = navigationManager,
-                server = server,
                 destination = destination,
                 composeUiConfig = composeUiConfig,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 onChangeTheme = onChangeTheme,
-                onSwitchServer = onSwitchServer,
-                modifier =
-                    Modifier
-                        .fillMaxSize(),
-                onUpdateTitle = { title = it },
+                modifier = Modifier.fillMaxSize(),
             )
         }
     }

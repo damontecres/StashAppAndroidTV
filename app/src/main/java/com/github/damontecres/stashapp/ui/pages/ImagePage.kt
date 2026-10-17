@@ -20,8 +20,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,7 +50,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -65,11 +64,9 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.size.Size
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
-import com.github.damontecres.stashapp.data.VideoFilter
-import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
+import com.github.damontecres.stashapp.di.server.CurrentServer
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.AppColors
@@ -77,7 +74,6 @@ import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.compat.isNotTvDevice
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
-import com.github.damontecres.stashapp.ui.components.image.DRAG_THROTTLE_DELAY
 import com.github.damontecres.stashapp.ui.components.image.ImageDetailsViewModel
 import com.github.damontecres.stashapp.ui.components.image.ImageFilterDialog
 import com.github.damontecres.stashapp.ui.components.image.ImageLoadingPlaceholder
@@ -88,12 +84,13 @@ import com.github.damontecres.stashapp.ui.components.playback.isDpad
 import com.github.damontecres.stashapp.ui.components.playback.isEnterKey
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.findActivity
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.keepScreenOn
 import com.github.damontecres.stashapp.util.maxFileSize
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.math.abs
 
 private const val TAG = "ImagePage"
@@ -103,8 +100,7 @@ private const val DEBUG = false
 @OptIn(UnstableApi::class)
 @Composable
 fun ImagePage(
-    server: StashServer,
-    navigationManager: NavigationManagerCompose,
+    currentServer: CurrentServer,
     filter: FilterArgs,
     startPosition: Int,
     startSlideshow: Boolean,
@@ -112,36 +108,25 @@ fun ImagePage(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
-    viewModel: ImageDetailsViewModel = viewModel(),
+    viewModel: ImageDetailsViewModel =
+        koinViewModel {
+            parametersOf(filter, startPosition)
+        },
 ) {
     val context = LocalContext.current
     val isNotTvDevice = isNotTvDevice
-    LaunchedEffect(server, filter) {
+    LaunchedEffect(currentServer, filter) {
         val slideshowDelay = uiConfig.preferences.interfacePreferences.slideShowIntervalMs
 
         viewModel.init(
-            server,
-            filter,
-            startPosition,
             startSlideshow,
             slideshowDelay,
             uiConfig.persistVideoFilters,
         )
-        if (isNotTvDevice) {
-            // Reduce the throttling for touch devices since a delay when dragging feels like lag
-            viewModel.imageFilter.startThrottling(DRAG_THROTTLE_DELAY)
-        }
     }
 
-    val imageState by viewModel.image.observeAsState()
-    val tags by viewModel.tags.observeAsState(listOf())
-    val performers by viewModel.performers.observeAsState(listOf())
-    val galleries by viewModel.galleries.observeAsState(listOf())
-    val rating100 by viewModel.rating100.observeAsState(0)
-    val oCount by viewModel.oCount.observeAsState(0)
-    val imageFilter by viewModel.imageFilter.observeAsState(VideoFilter())
-    val position by viewModel.position.observeAsState(0)
-    val pager by viewModel.pager.observeAsState()
+    val state by viewModel.state.collectAsState()
+    val imageFilter by viewModel.imageFilter.collectAsState()
 
     var zoomFactor by rememberSaveable { mutableFloatStateOf(1f) }
     val isZoomed = zoomFactor * 100 > 102
@@ -150,7 +135,6 @@ fun ImagePage(
     var showFilterDialog by rememberSaveable { mutableStateOf(false) }
     var panX by rememberSaveable { mutableFloatStateOf(0f) }
     var panY by rememberSaveable { mutableFloatStateOf(0f) }
-    val galleryId by viewModel.galleryId.observeAsState(null)
 
     val slideshowControls =
         object : SlideshowControls {
@@ -181,16 +165,13 @@ fun ImagePage(
         label = "image_panY",
     )
 
-    val state =
+    val transformState =
         rememberTransformableState { zoomChange, offsetChange, rotationChange ->
             zoomFactor *= zoomChange
             rotation += rotationChange
             panX += offsetChange.x
             panY += offsetChange.y
         }
-
-    val slideshowEnabled by viewModel.slideshow.observeAsState(false)
-    val slideshowActive by viewModel.slideshowActive.observeAsState(false)
 
     val focusRequester = remember { FocusRequester() }
 
@@ -255,41 +236,41 @@ fun ImagePage(
         }
     }
 
-    LaunchedEffect(imageState) {
+    LaunchedEffect(state.image) {
         reset(true)
     }
     val player =
         remember {
-            StashExoPlayer
-                .getInstance(context, server, uiConfig.preferences.playbackPreferences)
+            viewModel.playerFactory
+                .createPlayer(uiConfig.preferences.playbackPreferences)
                 .apply {
                     maybeMuteAudio(uiConfig.preferences, false, this)
                     repeatMode = Player.REPEAT_MODE_OFF
                     playWhenReady = true
                 }
         }
-    LifecycleStartEffect(Unit) {
-        onStopOrDispose {
-            StashExoPlayer.releasePlayer()
-        }
-    }
-
     val playSlideshowDelay = uiConfig.preferences.interfacePreferences.slideShowIntervalMs
-    val presentationState = rememberPresentationState(player)
-    LaunchedEffect(player) {
-        StashExoPlayer.addListener(
+    LifecycleStartEffect(Unit) {
+        val listener =
             object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_ENDED) {
                         viewModel.pulseSlideshow(playSlideshowDelay)
                     }
                 }
-            },
-        )
+            }
+        player.addListener(listener)
+        onStopOrDispose {
+            player.removeListener(listener)
+            player.release()
+        }
     }
-    LaunchedEffect(slideshowActive) {
-        player.repeatMode = if (slideshowEnabled) Player.REPEAT_MODE_OFF else Player.REPEAT_MODE_ONE
-        context.findActivity()?.keepScreenOn(slideshowActive)
+
+    val presentationState = rememberPresentationState(player)
+
+    LaunchedEffect(state.slideshowActive) {
+        player.repeatMode = if (state.slideshow) Player.REPEAT_MODE_OFF else Player.REPEAT_MODE_ONE
+        context.findActivity()?.keepScreenOn(state.slideshowActive)
     }
     DisposableEffect(Unit) {
         onDispose {
@@ -331,12 +312,12 @@ fun ImagePage(
                     condition = isZoomed || showOverlay,
                     Modifier
                         .transformable(
-                            state = state,
+                            state = transformState,
                             enabled = !showOverlay,
                             lockRotationOnZoomPan = true,
                         ),
                     Modifier
-                        .transformable(state, lockRotationOnZoomPan = true)
+                        .transformable(transformState, lockRotationOnZoomPan = true)
                         .pointerInput(Unit) {
                             // TODO use https://developer.android.com/develop/ui/compose/touch-input/pointer-input/drag-swipe-fling#swiping
                             detectDragGestures(
@@ -442,7 +423,7 @@ fun ImagePage(
                     result
                 },
     ) {
-        imageState?.let { image ->
+        state.image?.let { image ->
             if (image.paths.image.isNotNullOrBlank()) {
                 if (image.isImageClip) {
                     LaunchedEffect(image.id) {
@@ -453,7 +434,7 @@ fun ImagePage(
                                 .build()
                         player.setMediaItem(mediaItem)
                         player.repeatMode =
-                            if (slideshowEnabled) {
+                            if (state.slideshow) {
                                 Player.REPEAT_MODE_OFF
                             } else {
                                 Player.REPEAT_MODE_ONE
@@ -589,23 +570,22 @@ fun ImagePage(
                         contentModifier
                             .fillMaxSize()
                             .background(AppColors.TransparentBlack50),
-                    server = server,
                     player = player,
                     slideshowControls = slideshowControls,
-                    slideshowEnabled = slideshowEnabled,
+                    slideshowEnabled = state.slideshow,
                     image = image,
-                    tags = tags,
-                    performers = performers,
-                    galleries = galleries,
-                    position = position,
-                    count = pager?.size ?: -1,
+                    tags = state.tags,
+                    performers = state.performers,
+                    galleries = state.galleries,
+                    position = state.position,
+                    count = state.pager.size,
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
                     onZoom = ::zoom,
                     onRotate = { rotation += it },
                     onReset = { reset(true) },
-                    rating100 = rating100,
-                    oCount = oCount,
+                    rating100 = state.rating100,
+                    oCount = state.oCount,
                     uiConfig = uiConfig,
                     oCountAction = viewModel::updateOCount,
                     onRatingChange = { viewModel.updateRating(image.id, it) },
@@ -647,7 +627,7 @@ fun ImagePage(
                 ImageFilterDialog(
                     filter = imageFilter,
                     showVideoOptions = false,
-                    showSaveGalleryButton = galleryId != null,
+                    showSaveGalleryButton = state.galleryId != null,
                     uiConfig = uiConfig,
                     onChange = viewModel::updateImageFilter,
                     onClickSave = viewModel::saveImageFilter,

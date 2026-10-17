@@ -19,8 +19,8 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,53 +34,53 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItemDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.di.server.StashServer
+import com.github.damontecres.stashapp.ui.compat.isTvDevice
 import com.github.damontecres.stashapp.ui.components.CircularProgress
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.filter.SimpleListItem
 import com.github.damontecres.stashapp.ui.tryRequestFocus
 import com.github.damontecres.stashapp.ui.util.ifElse
-import com.github.damontecres.stashapp.util.StashServer
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun ManageServers(
-    currentServer: StashServer?,
-    onSwitchServer: (StashServer) -> Unit,
     modifier: Modifier = Modifier,
-    onUpdateTitle: ((AnnotatedString) -> Unit)? = null,
-    viewModel: ManageServersViewModel = viewModel(),
+    viewModel: ManageServersViewModel = koinViewModel(),
 ) {
-    val allServers by viewModel.allServers.observeAsState(listOf())
-    val serverStatus by viewModel.serverStatus.observeAsState(mapOf())
-    val serversWithOutCurrent = allServers.toMutableList().apply { remove(currentServer) }
+    val currentServer by viewModel.currentServer.collectAsState()
+    val state by viewModel.state.collectAsState()
+    val allServers = state.allServers
+    val serverStatus = state.serverStatus
+    val serversWithOutCurrent =
+        remember(currentServer, allServers) {
+            allServers.toMutableList().apply { remove(currentServer.server) }
+        }
 
     var showAddServer by remember { mutableStateOf(false) }
     var showServerDialog by remember { mutableStateOf<StashServer?>(null) }
 
     val focusRequester = remember { FocusRequester() }
-    val title = stringResource(R.string.manage_servers)
     LaunchedEffect(Unit) {
         focusRequester.tryRequestFocus()
-        onUpdateTitle?.invoke(AnnotatedString(title))
     }
 
     fun switchServer(server: StashServer) {
         val status = serverStatus[server]
         if (status == ServerTestResult.Success) {
-            onSwitchServer.invoke(server)
+            viewModel.switchServer(server)
         } else {
             viewModel.testServer(server)
         }
@@ -100,9 +100,9 @@ fun ManageServers(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (onUpdateTitle == null) {
+        if (isTvDevice) {
             Text(
-                text = title,
+                text = stringResource(R.string.manage_servers),
                 style = MaterialTheme.typography.displaySmall,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
@@ -115,7 +115,7 @@ fun ManageServers(
 
         currentServer?.let { current ->
             Text(
-                text = "Current: ${current.url}",
+                text = "Current: ${current.server.url}",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
@@ -210,7 +210,7 @@ fun ManageServers(
             AddServer(
                 onSubmit = {
                     viewModel.addServer(it)
-                    onSwitchServer.invoke(it)
+                    viewModel.switchServer(it)
                 },
                 modifier =
                     Modifier

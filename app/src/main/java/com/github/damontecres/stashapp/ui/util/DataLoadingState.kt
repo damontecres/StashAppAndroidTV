@@ -18,4 +18,7 @@ sealed interface DataLoadingState<out T> {
         val localizedMessage: String =
             listOfNotNull(message, exception?.localizedMessage).joinToString(" - ")
     }
+
+    val successValue: T?
+        get() = (this as? Success<T>)?.data
 }
